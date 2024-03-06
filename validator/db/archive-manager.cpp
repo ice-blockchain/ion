@@ -19,7 +19,10 @@
 #include "common/delay.h"
 #include "td/actor/MultiPromise.h"
 #include "td/db/RocksDb.h"
+#include "td/db/RocksDbSecondary.h"
+#include "td/db/RocksDbReadOnly.h"
 #include "td/utils/overloaded.h"
+#include "td/utils/port/path.h"
 
 #include "archive-manager.hpp"
 #include "files-async.hpp"
@@ -57,8 +60,8 @@ std::string PackageId::name() const {
 }
 
 ArchiveManager::ArchiveManager(td::actor::ActorId<RootDb> root, std::string db_root,
-                               td::Ref<ValidatorManagerOptions> opts)
-    : db_root_(db_root), opts_(opts) {
+                               td::Ref<ValidatorManagerOptions> opts, td::DbOpenMode mode)
+    : db_root_(db_root), opts_(opts), mode_(mode) {
 }
 
 void ArchiveManager::add_handle(BlockHandle handle, td::Promise<td::Unit> promise) {
@@ -663,7 +666,7 @@ void ArchiveManager::load_package(PackageId id) {
   }
 
   desc.file = td::actor::create_actor<ArchiveSlice>("slice", id.id, id.key, id.temp, false, 0, db_root_,
-                                                    archive_lru_.get(), statistics_);
+                                                    archive_lru_.get(), statistics_, mode_, opts_->get_secondary_working_dir());
 
   m.emplace(id, std::move(desc));
   update_permanent_slices();
@@ -700,7 +703,7 @@ const ArchiveManager::FileDescription *ArchiveManager::add_file_desc(ShardIdFull
   std::string prefix = PSTRING() << db_root_ << id.path() << id.name();
   new_desc.file = td::actor::create_actor<ArchiveSlice>("slice", id.id, id.key, id.temp, false,
                                                         id.key || id.temp ? 0 : cur_shard_split_depth_, db_root_,
-                                                        archive_lru_.get(), statistics_);
+                                                        archive_lru_.get(), statistics_, mode_);
   const FileDescription &desc = f.emplace(id, std::move(new_desc));
   if (!id.temp) {
     update_desc(f, desc, shard, seqno, ts, lt);
@@ -898,8 +901,21 @@ void ArchiveManager::start_up() {
   }
   td::RocksDbOptions db_options;
   db_options.statistics = statistics_.rocksdb_statistics;
-  index_ = std::make_shared<td::RocksDb>(
-      td::RocksDb::open(db_root_ + "/files/globalindex", std::move(db_options)).move_as_ok());
+  switch (mode_) {
+    case td::DbOpenMode::db_primary:
+      index_ = std::static_pointer_cast<td::KeyValue>(std::make_shared<td::RocksDb>(td::RocksDb::open(db_root_ + "/files/globalindex", std::move(db_options)).move_as_ok()));
+      break;
+    case td::DbOpenMode::db_secondary: {
+      auto secondary_working_dir = opts_->get_secondary_working_dir();
+      CHECK(secondary_working_dir);
+      td::RocksDbSecondaryOptions secondary_db_options{std::move(db_options), std::move(secondary_working_dir.value())};
+      index_ = std::static_pointer_cast<td::KeyValue>(std::make_shared<td::RocksDbSecondary>(td::RocksDbSecondary::open(db_root_ + "/files/globalindex", std::move(secondary_db_options)).move_as_ok()));
+      break;
+    }
+    case td::DbOpenMode::db_readonly:
+      index_ = std::static_pointer_cast<td::KeyValue>(std::make_shared<td::RocksDbReadOnly>(td::RocksDbReadOnly::open(db_root_ + "/files/globalindex", std::move(db_options)).move_as_ok()));
+      break;
+  }
   std::string value;
   auto v = index_->get(create_serialize_tl_object<ton_api::db_files_index_key>().as_slice(), value);
   v.ensure();
@@ -927,37 +943,40 @@ void ArchiveManager::start_up() {
     finalized_up_to_ = R.move_as_ok();
   }
 
-  td::WalkPath::run(db_root_ + "/archive/states/", [&](td::CSlice fname, td::WalkPath::Type t) -> void {
-    if (t == td::WalkPath::Type::RegularFile) {
-      LOG(ERROR) << "checking file " << fname;
-      auto pos = fname.rfind(TD_DIR_SLASH);
-      if (pos != td::Slice::npos) {
-        fname.remove_prefix(pos + 1);
-      }
-      auto R = FileReferenceShort::create(fname.str());
-      if (R.is_error()) {
-        auto R2 = FileReference::create(fname.str());
-        if (R2.is_error()) {
-          LOG(ERROR) << "deleting bad state file '" << fname << "': " << R.move_as_error() << R2.move_as_error();
+  if (mode_ == td::DbOpenMode::db_primary) {
+    td::WalkPath::run(db_root_ + "/archive/states/", [&](td::CSlice fname, td::WalkPath::Type t) -> void {
+      if (t == td::WalkPath::Type::RegularFile) {
+        LOG(ERROR) << "checking file " << fname;
+        auto pos = fname.rfind(TD_DIR_SLASH);
+        if (pos != td::Slice::npos) {
+          fname.remove_prefix(pos + 1);
+        }
+        auto R = FileReferenceShort::create(fname.str());
+        if (R.is_error()) {
+          auto R2 = FileReference::create(fname.str());
+          if (R2.is_error()) {
+            LOG(ERROR) << "deleting bad state file '" << fname << "': " << R.move_as_error() << R2.move_as_error();
+            td::unlink(db_root_ + "/archive/states/" + fname.str()).ignore();
+            return;
+          }
+          auto d = R2.move_as_ok();
+          auto newfname = d.filename_short();
+          td::rename(db_root_ + "/archive/states/" + fname.str(), db_root_ + "/archive/states/" + newfname).ensure();
+          R = FileReferenceShort::create(newfname);
+          R.ensure();
+        }
+        register_perm_state(R.move_as_ok());
+        if (!R.ok().is_state_like()) {
+          LOG(ERROR) << "deleting file that is not state-like '" << fname << "'";
           td::unlink(db_root_ + "/archive/states/" + fname.str()).ignore();
           return;
         }
-        auto d = R2.move_as_ok();
-        auto newfname = d.filename_short();
-        td::rename(db_root_ + "/archive/states/" + fname.str(), db_root_ + "/archive/states/" + newfname).ensure();
-        R = FileReferenceShort::create(newfname);
-        R.ensure();
+        register_perm_state(R.move_as_ok());
       }
-      if (!R.ok().is_state_like()) {
-        LOG(ERROR) << "deleting file that is not state-like '" << fname << "'";
-        td::unlink(db_root_ + "/archive/states/" + fname.str()).ignore();
-        return;
-      }
-      register_perm_state(R.move_as_ok());
-    }
-  }).ensure();
+    }).ensure();
 
-  persistent_state_gc({0, FileHash::zero()});
+    persistent_state_gc({0, FileHash::zero()});
+  }
 
   double open_since = td::Clocks::system() - opts_->get_archive_preload_period();
   for (auto it = files_.rbegin(); it != files_.rend(); ++it) {
@@ -985,8 +1004,11 @@ void ArchiveManager::start_up() {
 void ArchiveManager::alarm() {
   alarm_timestamp() = td::Timestamp::in(60.0);
   auto stats = statistics_.to_string_and_reset();
-  auto to_file_r =
-      td::FileFd::open(db_root_ + "/db_stats.txt", td::FileFd::Truncate | td::FileFd::Create | td::FileFd::Write, 0644);
+  std::string stats_file = db_root_ + "/db_stats.txt";
+  if (mode_ == td::DbOpenMode::db_secondary) {
+    stats_file = opts_->get_secondary_working_dir().value() + "/db_stats.txt";
+  }
+  auto to_file_r = td::FileFd::open(stats_file, td::FileFd::Truncate | td::FileFd::Create | td::FileFd::Write, 0644);
   if (to_file_r.is_error()) {
     LOG(ERROR) << "Failed to open db_stats.txt: " << to_file_r.move_as_error();
     return;
@@ -1000,7 +1022,128 @@ void ArchiveManager::alarm() {
   }
 }
 
+void ArchiveManager::try_catch_up_with_primary(td::Promise<td::Unit> promise) {
+  CHECK(mode_ == td::DbOpenMode::db_secondary);
+
+  auto index_secondary = std::static_pointer_cast<td::RocksDbSecondary>(index_);
+
+  auto index_res = index_secondary->try_catch_up_with_primary();
+  if (index_res.is_error()) {
+    promise.set_error(index_res.move_as_error());
+    return;
+  }
+
+  std::string value;
+  auto v = index_->get(create_serialize_tl_object<ton_api::db_files_index_key>().as_slice(), value);
+  v.ensure();
+
+  CHECK(v.move_as_ok() == td::KeyValue::GetStatus::Ok)
+  auto R = fetch_tl_object<ton_api::db_files_index_value>(value, true);
+  R.ensure();
+  auto x = R.move_as_ok();
+
+  for (auto &d : x->packages_) {
+    auto id = PackageId{static_cast<td::uint32>(d), false, false};
+    if (get_file_map(id).count(id) == 0) {
+      load_package(id);
+    } else {
+      auto res = catch_up_package(id);
+      if (res.is_error()) {
+        promise.set_error(std::move(res));
+        return;
+      }
+    }
+  }
+
+  for (auto &d : x->key_packages_) {
+    auto id = PackageId{static_cast<td::uint32>(d), true, false};
+    if (get_file_map(id).count(id) == 0) {
+      load_package(id);
+    } else {
+      auto res = catch_up_package(id);
+      if (res.is_error()) {
+        promise.set_error(std::move(res));
+        return;
+      }
+    }
+  }
+
+  for (auto &d : x->temp_packages_) {
+    auto id = PackageId{static_cast<td::uint32>(d), false, true};
+    if (get_file_map(id).count(id) == 0) {
+      load_package(id);
+    } else {
+      auto res = catch_up_package(id);
+      if (res.is_error()) {
+        promise.set_error(std::move(res));
+        return;
+      }
+    }
+  }
+  promise.set_value(td::Unit());
+}
+
+td::Status ArchiveManager::catch_up_package(const PackageId& id) {
+  auto key = create_serialize_tl_object<ton_api::db_files_package_key>(id.id, id.key, id.temp);
+
+  std::string value;
+  auto v = index_->get(key.as_slice(), value);
+  v.ensure();
+  CHECK(v.move_as_ok() == td::KeyValue::GetStatus::Ok);
+
+  auto R = fetch_tl_object<ton_api::db_files_package_value>(value, true);
+  R.ensure();
+  auto x = R.move_as_ok();
+
+  std::map<ShardIdFull, FileDescription::Desc> first_blocks;
+  if (!id.temp) {
+    for (auto &e : x->firstblocks_) {
+      first_blocks[ShardIdFull{e->workchain_, static_cast<ShardId>(e->shard_)}] = FileDescription::Desc{
+          static_cast<BlockSeqno>(e->seqno_), static_cast<UnixTime>(e->unixtime_), static_cast<LogicalTime>(e->lt_)};
+    }
+  }
+
+  auto& map = get_file_map(id);
+  auto it = map.find(id);
+  CHECK(it != map.end());
+  if (it->second.first_blocks != first_blocks || it->second.deleted != x->deleted_) {
+    FileDescription desc{id, x->deleted_};
+    desc.first_blocks = std::move(first_blocks);
+    if (x->deleted_) {
+      it->second.file.release();
+    } else {
+      desc.file = std::move(it->second.file);
+    }
+    map.erase(it);
+    map.emplace(id, std::move(desc));
+  }
+
+  return td::Status::OK();
+}
+
+void ArchiveManager::get_max_masterchain_seqno(td::Promise<BlockSeqno> promise) {
+  auto fd = get_file_desc_by_seqno(ton::AccountIdPrefixFull(ton::masterchainId, ton::shardIdAll), INT_MAX, false);
+  if (mode_ == td::DbOpenMode::db_secondary) {
+    auto R = td::PromiseCreator::lambda([SelfId = actor_id(this), promise = std::move(promise), file = fd->file.get()](td::Result<td::Unit> R) mutable {
+      if (R.is_error()) {
+        promise.set_error(R.move_as_error());
+      } else {
+        td::actor::send_closure(file, &ArchiveSlice::get_max_masterchain_seqno, std::move(promise));
+      }
+    });
+    td::actor::send_closure(fd->file, &ArchiveSlice::try_catch_up_with_primary, std::move(R));
+  } else {
+    td::actor::send_closure(fd->file, &ArchiveSlice::get_max_masterchain_seqno, std::move(promise));
+  }
+}
+
+void ArchiveManager::get_min_masterchain_seqno(td::Promise<BlockSeqno> promise) {
+  auto fd = get_file_map(PackageId{0, false, false}).get_next_file_desc(ShardIdFull(ton::masterchainId, ton::shardIdAll), nullptr);
+  td::actor::send_closure(fd->file, &ArchiveSlice::get_min_masterchain_seqno, std::move(promise));
+}
+
 void ArchiveManager::run_gc(UnixTime mc_ts, UnixTime gc_ts, double archive_ttl) {
+  CHECK(mode_ == td::DbOpenMode::db_primary);
   auto p = get_temp_package_id_by_unixtime((double)mc_ts - TEMP_PACKAGES_TTL);
   std::vector<PackageId> vec;
   for (auto &x : temp_files_) {
@@ -1273,6 +1416,7 @@ void ArchiveManager::iterate_temp_block_handles(std::function<void(const BlockHa
 }
 
 void ArchiveManager::truncate(BlockSeqno masterchain_seqno, ConstBlockHandle handle, td::Promise<td::Unit> promise) {
+  CHECK(mode_ == td::DbOpenMode::db_primary)
   index_->begin_transaction().ensure();
   td::MultiPromise mp;
   auto ig = mp.init_guard();

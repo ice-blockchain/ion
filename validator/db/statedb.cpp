@@ -18,6 +18,8 @@
 */
 #include "adnl/utils.hpp"
 #include "td/db/RocksDb.h"
+#include "td/db/RocksDbSecondary.h"
+#include "td/db/RocksDbReadOnly.h"
 #include "ton/ton-shard.h"
 #include "ton/ton-tl.hpp"
 
@@ -218,11 +220,23 @@ void StateDb::get_hardforks(td::Promise<std::vector<BlockIdExt>> promise) {
   promise.set_value(std::move(vec));
 }
 
-StateDb::StateDb(td::actor::ActorId<RootDb> root_db, std::string db_path) : root_db_(root_db), db_path_(db_path) {
+StateDb::StateDb(td::actor::ActorId<RootDb> root_db, std::string db_path, td::DbOpenMode mode) : root_db_(root_db), db_path_(db_path), mode_(mode) {
 }
 
 void StateDb::start_up() {
-  kv_ = std::make_shared<td::RocksDb>(td::RocksDb::open(db_path_).move_as_ok());
+  switch (mode_) {
+    case td::DbOpenMode::db_primary:
+      kv_ = std::make_shared<td::RocksDb>(td::RocksDb::open(db_path_).move_as_ok());
+      break;
+    case td::DbOpenMode::db_secondary:
+      kv_ = std::make_shared<td::RocksDbSecondary>(td::RocksDbSecondary::open(db_path_).move_as_ok());
+      break;
+    case td::DbOpenMode::db_readonly:
+      kv_ = std::make_shared<td::RocksDbReadOnly>(td::RocksDbReadOnly::open(db_path_).move_as_ok());
+      break;
+    default:
+      UNREACHABLE();
+  }
 
   std::string value;
   auto R = kv_->get(create_serialize_tl_object<ton_api::db_state_key_dbVersion>(), value);
@@ -369,6 +383,19 @@ void StateDb::get_persistent_state_descriptions(td::Promise<std::vector<td::Ref<
     result.push_back(td::Ref<PersistentStateDescription>(true, std::move(desc)));
   }
   promise.set_result(std::move(result));
+}
+
+void StateDb::try_catch_up_with_primary(td::Promise<td::Unit> promise) {
+  CHECK(mode_ == td::DbOpenMode::db_secondary)
+  auto secondary = dynamic_cast<td::RocksDbSecondary *>(kv_.get());
+  if (secondary == nullptr) {
+    promise.set_error(td::Status::Error("it's not secondary db"));
+  }
+  auto R = secondary->try_catch_up_with_primary();
+  if (R.is_error()) {
+    promise.set_error(R.move_as_error());
+  }
+  promise.set_result(td::Unit());
 }
 
 void StateDb::truncate(BlockSeqno masterchain_seqno, ConstBlockHandle handle, td::Promise<td::Unit> promise) {

@@ -25,6 +25,8 @@
 #include "rocksdb/utilities/optimistic_transaction_db.h"
 #include "td/actor/MultiPromise.h"
 #include "td/db/RocksDb.h"
+#include "td/db/RocksDbSecondary.h"
+#include "td/db/RocksDbReadOnly.h"
 #include "ton/ton-io.hpp"
 #include "ton/ton-tl.hpp"
 
@@ -73,8 +75,8 @@ void CellDbBase::execute_sync(std::function<void()> f) {
 }
 
 CellDbIn::CellDbIn(td::actor::ActorId<RootDb> root_db, td::actor::ActorId<CellDb> parent, std::string path,
-                   td::Ref<ValidatorManagerOptions> opts)
-    : root_db_(root_db), parent_(parent), path_(std::move(path)), opts_(opts) {
+                   td::Ref<ValidatorManagerOptions> opts, td::DbOpenMode mode)
+    : root_db_(root_db), parent_(parent), path_(std::move(path)), opts_(opts), mode_(mode) {
 }
 
 struct MergeOperatorAddCellRefcnt : public rocksdb::MergeOperator {
@@ -175,8 +177,11 @@ void CellDbIn::validate_meta() {
 void CellDbIn::start_up() {
   on_load_callback_ = [actor = std::make_shared<td::actor::ActorOwn<MigrationProxy>>(
                            td::actor::create_actor<MigrationProxy>("celldbmigration", actor_id(this))),
-                       compress_depth = opts_->get_celldb_compress_depth()](const vm::CellLoader::LoadResult& res) {
+                       compress_depth = opts_->get_celldb_compress_depth(), mode = mode_](const vm::CellLoader::LoadResult& res) {
     if (res.cell_.is_null()) {
+      return;
+    }
+    if (mode != td::DbOpenMode::db_primary) {
       return;
     }
     bool expected_stored_boc = res.cell_->get_depth() == compress_depth && compress_depth != 0;
@@ -263,9 +268,31 @@ void CellDbIn::start_up() {
     db_options.no_reads = true;
   }
 
-  auto rocks_db = std::make_shared<td::RocksDb>(td::RocksDb::open(path_, std::move(db_options)).move_as_ok());
-  rocks_db_ = rocks_db->raw_db();
-  cell_db_ = std::move(rocks_db);
+  switch (mode_) {
+    case td::DbOpenMode::db_primary: {
+      auto rocks_db = std::make_shared<td::RocksDb>(td::RocksDb::open(path_, std::move(db_options)).move_as_ok());
+      rocks_db_ = rocks_db->raw_db();
+      cell_db_ = std::move(rocks_db);
+      break;
+    }
+    case td::DbOpenMode::db_secondary: {
+      auto secondary_working_dir = opts_->get_secondary_working_dir();
+      CHECK(secondary_working_dir);
+      td::RocksDbSecondaryOptions secondary_db_options{std::move(db_options), std::move(secondary_working_dir.value())};
+      auto rocks_db = std::make_shared<td::RocksDbSecondary>(td::RocksDbSecondary::open(path_, std::move(secondary_db_options)).move_as_ok());
+      rocks_db_ = rocks_db->raw_db();
+      cell_db_ = std::move(rocks_db);
+      break;
+    }
+    case td::DbOpenMode::db_readonly: {
+      auto rocks_db = std::make_shared<td::RocksDbReadOnly>(td::RocksDbReadOnly::open(path_, std::move(db_options)).move_as_ok());
+      rocks_db_ = rocks_db->raw_db();
+      cell_db_ = std::move(rocks_db);
+      break;
+    }
+    default:
+      UNREACHABLE();
+  }
   if (!opts_->get_celldb_in_memory()) {
     if (opts_->get_celldb_v2()) {
       boc_ = vm::DynamicBagOfCellsDb::create_v2(*boc_v2_options);
@@ -356,6 +383,20 @@ void CellDbIn::start_up() {
     LOG_IF(FATAL, permanent_mode_ && opts_->get_celldb_in_memory())
         << "celldb permanent_mode and in_memory_mode are not compatible";
   }
+}
+
+void CellDbIn::try_catch_up_with_primary(td::Promise<td::Unit> promise) {
+  CHECK(mode_ == td::DbOpenMode::db_secondary)
+  auto secondary = std::static_pointer_cast<td::RocksDbSecondary>(cell_db_);
+  auto R = secondary->try_catch_up_with_primary();
+  if (R.is_error()) {
+    promise.set_error(R.move_as_error());
+  }
+
+  boc_->set_loader(std::make_unique<vm::CellLoader>(cell_db_->snapshot())).ensure();
+  td::actor::send_closure(parent_, &CellDb::update_snapshot, cell_db_->snapshot());
+
+  promise.set_result(td::Unit());
 }
 
 void CellDbIn::load_cell(RootHash hash, td::Promise<td::Ref<vm::DataCell>> promise) {
@@ -663,8 +704,12 @@ void CellDbIn::flush_db_stats() {
 
   auto stats =
       td::RocksDb::statistics_to_string(statistics_) + snapshot_statistics_->to_string() + ss.as_cslice().str();
+  std::string stats_file = path_ + "/db_stats.txt";
+  if (mode_ == td::DbOpenMode::db_secondary) {
+    stats_file = opts_->get_secondary_working_dir().value() + "/celldb_stats.txt";
+  }
   auto to_file_r =
-      td::FileFd::open(path_ + "/db_stats.txt", td::FileFd::Truncate | td::FileFd::Create | td::FileFd::Write, 0644);
+      td::FileFd::open(stats_file, td::FileFd::Truncate | td::FileFd::Create | td::FileFd::Write, 0644);
   if (to_file_r.is_error()) {
     LOG(ERROR) << "Failed to open db_stats.txt: " << to_file_r.move_as_error();
     return;
@@ -685,6 +730,11 @@ void CellDbIn::alarm() {
   if (statistics_flush_at_ && statistics_flush_at_.is_in_past()) {
     statistics_flush_at_ = td::Timestamp::in(60.0);
     flush_db_stats();
+  }
+
+  if (mode_ != td::DbOpenMode::db_primary) {
+    alarm_timestamp() = td::Timestamp::in(10.0);
+    return;
   }
 
   if (migrate_after_ && migrate_after_.is_in_past()) {
@@ -994,19 +1044,24 @@ void CellDb::load_cell(RootHash hash, td::Promise<td::Ref<vm::DataCell>> promise
   if (!started_) {
     td::actor::send_closure(cell_db_, &CellDbIn::load_cell, hash, std::move(promise));
   } else {
-    auto P = td::PromiseCreator::lambda(
-        [cell_db_in = cell_db_.get(), hash, promise = std::move(promise)](td::Result<td::Ref<vm::DataCell>> R) mutable {
-          if (R.is_error()) {
-            td::actor::send_closure(cell_db_in, &CellDbIn::load_cell, hash, std::move(promise));
-          } else {
-            promise.set_result(R.move_as_ok());
-          }
-        });
-    boc_->load_cell_async(hash.as_slice(), async_executor, std::move(P));
+    // auto P = td::PromiseCreator::lambda(
+    //     [cell_db_in = cell_db_.get(), hash, promise = std::move(promise)](td::Result<td::Ref<vm::DataCell>> R) mutable {
+    //       if (R.is_error()) {
+    //         td::actor::send_closure(cell_db_in, &CellDbIn::load_cell, hash, std::move(promise));
+    //       } else {
+    //         promise.set_result(R.move_as_ok());
+    //       }
+    //     });
+    // boc_->load_cell_async(hash.as_slice(), async_executor, std::move(P));
+
+    // CellDbIn::load_cell causes segmentation fault in case of not found.
+    // This is workaround to avoid it.
+    boc_->load_cell_async(hash.as_slice(), async_executor, std::move(promise));
   }
 }
 
 void CellDb::store_cell(BlockIdExt block_id, td::Ref<vm::Cell> cell, td::Promise<td::Ref<vm::DataCell>> promise) {
+  CHECK(mode_ == td::DbOpenMode::db_primary);
   td::actor::send_closure(cell_db_, &CellDbIn::store_cell, block_id, std::move(cell), std::move(promise));
 }
 
@@ -1026,11 +1081,14 @@ void CellDb::start_up() {
   CellDbBase::start_up();
   boc_ = vm::DynamicBagOfCellsDb::create();
   boc_->set_celldb_compress_depth(opts_->get_celldb_compress_depth());
-  cell_db_ = td::actor::create_actor<CellDbIn>("celldbin", root_db_, actor_id(this), path_, opts_);
+  cell_db_ = td::actor::create_actor<CellDbIn>("celldbin", root_db_, actor_id(this), path_, opts_, mode_);
   on_load_callback_ = [actor = std::make_shared<td::actor::ActorOwn<CellDbIn::MigrationProxy>>(
                            td::actor::create_actor<CellDbIn::MigrationProxy>("celldbmigration", cell_db_.get())),
-                       compress_depth = opts_->get_celldb_compress_depth()](const vm::CellLoader::LoadResult& res) {
+                       compress_depth = opts_->get_celldb_compress_depth(), mode = mode_](const vm::CellLoader::LoadResult& res) {
     if (res.cell_.is_null()) {
+      return;
+    }
+    if (mode != td::DbOpenMode::db_primary) {
       return;
     }
     bool expected_stored_boc = res.cell_->get_depth() == compress_depth && compress_depth != 0;
@@ -1039,6 +1097,10 @@ void CellDb::start_up() {
                               td::Bits256{res.cell_->get_hash().bits()});
     }
   };
+}
+
+void CellDb::try_catch_up_with_primary(td::Promise<td::Unit> promise) {
+  td::actor::send_closure(cell_db_, &CellDbIn::try_catch_up_with_primary, std::move(promise));
 }
 
 CellDbIn::DbEntry::DbEntry(tl_object_ptr<ton_api::db_celldb_value> entry)

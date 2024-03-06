@@ -128,6 +128,9 @@ struct ValidatorManagerOptionsImpl : public ValidatorManagerOptions {
   bool nonfinal_ls_queries_enabled() const override {
     return nonfinal_ls_queries_enabled_;
   }
+  td::optional<std::string> get_secondary_working_dir() const override {
+    return secondary_working_dir_;
+  }
   td::optional<td::uint64> get_celldb_cache_size() const override {
     return celldb_cache_size_;
   }
@@ -248,6 +251,9 @@ struct ValidatorManagerOptionsImpl : public ValidatorManagerOptions {
   void set_nonfinal_ls_queries_enabled(bool value) override {
     nonfinal_ls_queries_enabled_ = value;
   }
+  void set_secondary_working_dir(td::optional<std::string> value) override {
+    secondary_working_dir_ = std::move(value);
+  }
   void set_celldb_cache_size(td::uint64 value) override {
     celldb_cache_size_ = value;
   }
@@ -350,6 +356,7 @@ struct ValidatorManagerOptionsImpl : public ValidatorManagerOptions {
   double archive_preload_period_ = 0.0;
   bool disable_rocksdb_stats_;
   bool nonfinal_ls_queries_enabled_ = false;
+  td::optional<std::string> secondary_working_dir_;
   td::optional<td::uint64> celldb_cache_size_;
   bool celldb_direct_io_ = false;
   bool celldb_preload_all_ = false;

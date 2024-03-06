@@ -30,7 +30,7 @@ class RootDb;
 
 class ArchiveManager : public td::actor::Actor {
  public:
-  ArchiveManager(td::actor::ActorId<RootDb> root, std::string db_root, td::Ref<ValidatorManagerOptions> opts);
+  ArchiveManager(td::actor::ActorId<RootDb> root, std::string db_root, td::Ref<ValidatorManagerOptions> opts, td::DbOpenMode mode = td::DbOpenMode::db_primary);
 
   void add_handle(BlockHandle handle, td::Promise<td::Unit> promise);
   void update_handle(BlockHandle handle, td::Promise<td::Unit> promise);
@@ -77,6 +77,12 @@ class ArchiveManager : public td::actor::Actor {
   void start_up() override;
   void alarm() override;
 
+  void try_catch_up_with_primary(td::Promise<td::Unit> promise);
+  td::Status catch_up_package(const PackageId& id);
+
+  void get_max_masterchain_seqno(td::Promise<BlockSeqno> promise);
+  void get_min_masterchain_seqno(td::Promise<BlockSeqno> promise);
+
   void commit_transaction();
   void set_async_mode(bool mode, td::Promise<td::Unit> promise);
 
@@ -101,6 +107,10 @@ class ArchiveManager : public td::actor::Actor {
       BlockSeqno seqno;
       UnixTime ts;
       LogicalTime lt;
+
+      bool operator==(const Desc& other) const {
+        return seqno == other.seqno && ts == other.ts && lt == other.lt;
+      }
     };
     FileDescription(PackageId id, bool deleted) : id(id), deleted(deleted) {
     }
@@ -232,6 +242,7 @@ class ArchiveManager : public td::actor::Actor {
 
   std::string db_root_;
   td::Ref<ValidatorManagerOptions> opts_;
+  td::DbOpenMode mode_;
 
   std::shared_ptr<td::KeyValue> index_;
 

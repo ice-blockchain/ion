@@ -100,7 +100,8 @@ class ArchiveLru;
 class ArchiveSlice : public td::actor::Actor {
  public:
   ArchiveSlice(td::uint32 archive_id, bool key_blocks_only, bool temp, bool finalized, td::uint32 shard_split_depth,
-               std::string db_root, td::actor::ActorId<ArchiveLru> archive_lru, DbStatistics statistics = {});
+               std::string db_root, td::actor::ActorId<ArchiveLru> archive_lru, DbStatistics statistics = {}, 
+               td::DbOpenMode mode = td::DbOpenMode::db_primary, td::optional<std::string> secondary_workdir = {});
 
   void get_archive_id(BlockSeqno masterchain_seqno, ShardIdFull shard_prefix, td::Promise<td::uint64> promise);
 
@@ -120,6 +121,9 @@ class ArchiveSlice : public td::actor::Actor {
                         std::function<td::int32(ton_api::db_lt_el_value &)> compare, bool exact,
                         td::Promise<ConstBlockHandle> promise);
 
+  void get_max_masterchain_seqno(td::Promise<BlockSeqno> promise);
+  void get_min_masterchain_seqno(td::Promise<BlockSeqno> promise);
+
   void get_slice(td::uint64 archive_id, td::uint64 offset, td::uint32 limit, td::Promise<td::BufferSlice> promise);
 
   void destroy(td::Promise<td::Unit> promise);
@@ -131,6 +135,8 @@ class ArchiveSlice : public td::actor::Actor {
   void close_files();
 
   void iterate_block_handles(std::function<void(const BlockHandleInterface &)> f);
+  
+  td::Status try_catch_up_with_primary();
 
  private:
   void before_query();
@@ -138,6 +144,8 @@ class ArchiveSlice : public td::actor::Actor {
   template <typename T>
   td::Promise<T> begin_async_query(td::Promise<T> promise);
   void end_async_query();
+
+  td::Status try_catch_up_with_primary_impl();
 
   void begin_transaction();
   void commit_transaction();
@@ -174,6 +182,9 @@ class ArchiveSlice : public td::actor::Actor {
   td::actor::ActorId<ArchiveLru> archive_lru_;
   DbStatistics statistics_;
   std::unique_ptr<td::KeyValue> kv_;
+  td::DbOpenMode mode_;
+  td::optional<std::string> secondary_workdir_;
+  td::Timestamp last_catch_up_;
 
   struct PackageInfo {
     PackageInfo(std::shared_ptr<Package> package, td::actor::ActorOwn<PackageWriter> writer, BlockSeqno seqno,
@@ -208,6 +219,7 @@ class ArchiveSlice : public td::actor::Actor {
   void move_file(FileReference ref_id, Package *old_pack, Package *pack);
 
   BlockSeqno max_masterchain_seqno();
+  BlockSeqno min_masterchain_seqno();
 
   static constexpr td::uint32 default_package_version() {
     return 1;
