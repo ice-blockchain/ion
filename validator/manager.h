@@ -32,7 +32,9 @@ class ValidatorManagerFactory {
                                                                td::actor::ActorId<keyring::Keyring> keyring,
                                                                td::actor::ActorId<adnl::Adnl> adnl,
                                                                td::actor::ActorId<rldp::Rldp> rldp,
-                                                               td::actor::ActorId<overlay::Overlays> overlays);
+                                                               td::actor::ActorId<overlay::Overlays> overlays,
+                                                               bool allow_query_unsync,
+                                                               bool allow_broadcast_unsync);
 };
 
 }  // namespace validator

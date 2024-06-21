@@ -212,6 +212,9 @@ class ValidatorEngine : public td::actor::Actor {
   ton::BlockSeqno truncate_seqno_{0};
   std::string session_logs_file_;
 
+  bool allow_query_unsync_ = false;
+  bool allow_broadcast_unsync_ = false;
+
   std::set<ton::CatchainSeqno> unsafe_catchains_;
   std::map<ton::BlockSeqno, std::pair<ton::CatchainSeqno, td::uint32>> unsafe_catchain_rotations_;
 
@@ -272,6 +275,13 @@ class ValidatorEngine : public td::actor::Actor {
   void set_archive_preload_period(double value) {
     archive_preload_period_ = value;
   }
+  void set_allow_query_unsync() {
+    allow_query_unsync_ = true;
+  }
+  void set_allow_broadcast_unsync() {
+    allow_broadcast_unsync_ = true;
+  }
+
   void start_up() override;
   ValidatorEngine() {
   }

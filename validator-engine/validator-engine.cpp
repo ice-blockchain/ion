@@ -1798,7 +1798,8 @@ void ValidatorEngine::started_overlays() {
 void ValidatorEngine::start_validator() {
   validator_options_.write().set_allow_blockchain_init(config_.validators.size() > 0);
   validator_manager_ = ton::validator::ValidatorManagerFactory::create(
-      validator_options_, db_root_, keyring_.get(), adnl_.get(), rldp_.get(), overlay_manager_.get());
+      validator_options_, db_root_, keyring_.get(), adnl_.get(), rldp_.get(), overlay_manager_.get(),
+      allow_query_unsync_, allow_broadcast_unsync_);
 
   for (auto &v : config_.validators) {
     td::actor::send_closure(validator_manager_, &ton::validator::ValidatorManagerInterface::add_permanent_key, v.first,
@@ -3816,6 +3817,21 @@ int main(int argc, char *argv[]) {
   p.add_option('\0', "enable-precompiled-smc",
                "enable exectuion of precompiled contracts (experimental, disabled by default)",
                []() { block::precompiled::set_precompiled_execution_enabled(true); });
+
+  // ion options
+  p.add_checked_option(
+      '\0', "allow-query-unsync", "allow query node while it's not sync (default: not set)",
+      [&]() -> td::Status {
+        acts.push_back([&x]() { td::actor::send_closure(x, &ValidatorEngine::set_allow_query_unsync); });
+        return td::Status::OK();
+      });
+  p.add_checked_option(
+      '\0', "allow-broadcast-unsync", "allow broadcast a block while node isn't sync (default: not set)",
+      [&]() -> td::Status {
+        acts.push_back([&x]() { td::actor::send_closure(x, &ValidatorEngine::set_allow_broadcast_unsync); });
+        return td::Status::OK();
+      });
+
   auto S = p.run(argc, argv);
   if (S.is_error()) {
     LOG(ERROR) << "failed to parse options: " << S.move_as_error();

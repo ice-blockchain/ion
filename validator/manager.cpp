@@ -210,7 +210,7 @@ void ValidatorManagerImpl::validate_block(ReceivedBlock block, td::Promise<Block
 }
 
 void ValidatorManagerImpl::prevalidate_block(BlockBroadcast broadcast, td::Promise<td::Unit> promise) {
-  if (!started_) {
+  if (!started_ && !allow_broadcast_unsync_) {
     promise.set_error(td::Status::Error(ErrorCode::notready, "node not started"));
     return;
   }
@@ -535,7 +535,7 @@ void ValidatorManagerImpl::created_ext_server(td::actor::ActorOwn<adnl::AdnlExtS
 }
 
 void ValidatorManagerImpl::run_ext_query(td::BufferSlice data, td::Promise<td::BufferSlice> promise) {
-  if (!started_) {
+  if (!started_ && !allow_query_unsync_) {
     promise.set_error(td::Status::Error(ErrorCode::notready, "node not synced"));
     return;
   }
@@ -2843,9 +2843,9 @@ void ValidatorManagerImpl::process_lookup_block_for_litequery_error(AccountIdPre
 td::actor::ActorOwn<ValidatorManagerInterface> ValidatorManagerFactory::create(
     td::Ref<ValidatorManagerOptions> opts, std::string db_root, td::actor::ActorId<keyring::Keyring> keyring,
     td::actor::ActorId<adnl::Adnl> adnl, td::actor::ActorId<rldp::Rldp> rldp,
-    td::actor::ActorId<overlay::Overlays> overlays) {
+    td::actor::ActorId<overlay::Overlays> overlays, bool allow_query_unsync, bool allow_bradcast_unsync) {
   return td::actor::create_actor<validator::ValidatorManagerImpl>("manager", std::move(opts), db_root, keyring, adnl,
-                                                                  rldp, overlays);
+                                                                  rldp, overlays, allow_query_unsync, allow_bradcast_unsync);
 }
 
 }  // namespace validator
