@@ -356,6 +356,7 @@ void ValidatorManagerMasterchainStarter::got_init_block_state(td::Ref<Masterchai
 
   state_ = std::move(state);
 
+  LOG(INFO) << "rares was here";
   LOG(INFO) << "state_block_id: " << state_->get_block_id() << " == " << "opts_init_block_id: " << opts_->init_block_id();
   LOG(INFO) << "state_->ancestor_is_valid: " << state_->ancestor_is_valid(opts_->init_block_id());
   LOG(INFO) << "state_seqno: " << state_->get_block_id().seqno() << " < " << "opts_last_fork_masterchain_seqno: "
