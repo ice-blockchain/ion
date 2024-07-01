@@ -355,12 +355,11 @@ void ValidatorManagerMasterchainStarter::got_init_block_handle(BlockHandle handl
 void ValidatorManagerMasterchainStarter::got_init_block_state(td::Ref<MasterchainState> state) {
 
   state_ = std::move(state);
-  
-  LOG(INFO) << "state is " << state_->get_block_id();
-  LOG(INFO) << "last key block is " << state_->last_key_block_id();
-  LOG(INFO) << "state seqno is " << state_->get_block_id().seqno();
-  LOG(INFO) << "last key block seqno is " << state_->last_key_block_id().seqno();
-  LOG(INFO) << "last fork masterchain seqno"   << opts_->get_last_fork_masterchain_seqno();
+
+  LOG(INFO) << "state_block_id: " << state_->get_block_id() << " == " << "opts_init_block_id: " << opts_->init_block_id();
+  LOG(INFO) << "state_->ancestor_is_valid: " << state_->ancestor_is_valid(opts_->init_block_id());
+  LOG(INFO) << "state_seqno: " << state_->get_block_id().seqno() << " < " << "opts_last_fork_masterchain_seqno: "
+            << opts_->get_last_fork_masterchain_seqno();
 
   CHECK(state_->get_block_id() == opts_->init_block_id() || state_->ancestor_is_valid(opts_->init_block_id()) ||
         state_->get_block_id().seqno() < opts_->get_last_fork_masterchain_seqno());
