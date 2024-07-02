@@ -75,17 +75,17 @@ struct BlockHandleImpl : public BlockHandleInterface {
   RootHash state_;
   BlockSeqno masterchain_ref_seqno_;
 
-  static constexpr td::uint64 lock_const() {
-    return static_cast<td::uint64>(1) << 32;
-  }
+  static constexpr auto shift_bits = 32;
+  static constexpr td::uint64 lock_const = (static_cast<td::uint64>(1) << shift_bits);
+
   bool locked() const {
-    return version_.load(std::memory_order_consume) >> 32;
+    return version_.load(std::memory_order_consume) >> shift_bits;
   }
   void lock() {
-    version_ += 1 + lock_const();
+    version_.fetch_add(lock_const, std::memory_order_release);
   }
   void unlock() {
-    version_ -= lock_const();
+    version_.fetch_sub(lock_const, std::memory_order_release);
   }
 
  public:
