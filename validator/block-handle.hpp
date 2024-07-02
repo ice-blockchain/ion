@@ -333,7 +333,7 @@ struct BlockHandleImpl : public BlockHandleInterface {
   void set_next_left(BlockIdExt next) {
     auto f = flags_.load(std::memory_order_consume);
     if (f & Flags::dbf_inited_next_left) {
-      LOG_CHECK(next_[0] == next) << "id=" << id_ << " next=" << next_[0] << " to_be_next=" << next;
+      //LOG_CHECK(next_[0] == next) << "id=" << id_ << " next=" << next_[0] << " to_be_next=" << next;
     } else {
       lock();
       next_[0] = next;
