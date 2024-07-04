@@ -252,7 +252,7 @@ void Collator::start_up() {
     LOG(WARNING) << "generating a hardfork block";
   }
   // 4. load external messages
-  if (!is_hardfork_) {
+  //if (!is_hardfork_) {
     LOG(DEBUG) << "sending get_external_messages() query to Manager";
     ++pending;
     td::actor::send_closure_later(manager, &ValidatorManager::get_external_messages, shard_,
@@ -261,7 +261,7 @@ void Collator::start_up() {
                                     td::actor::send_closure_later(
                                         std::move(self), &Collator::after_get_external_messages, std::move(res));
                                   });
-  }
+  //}
   if (is_masterchain() && !is_hardfork_) {
     // 5. load shard block info messages
     LOG(DEBUG) << "sending get_shard_blocks() query to Manager";
