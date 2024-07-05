@@ -1668,7 +1668,7 @@ bool Transaction::prepare_compute_phase(const ComputePhaseConfig& cfg) {
   vm.set_c7(prepare_vm_c7(cfg));  // tuple with SmartContractInfo
   vm.set_chksig_always_succeed(cfg.ignore_chksig);
   vm.set_stop_on_accept_message(cfg.stop_on_accept_message);
-  // vm.incr_stack_trace(1);    // enable stack dump after each step
+  vm.incr_stack_trace(1);    // enable stack dump after each step
 
   LOG(DEBUG) << "starting VM";
   cp.vm_init_state_hash = vm.get_state_hash();
