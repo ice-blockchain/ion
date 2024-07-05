@@ -1701,6 +1701,13 @@ bool Transaction::prepare_compute_phase(const ComputePhaseConfig& cfg) {
             << ", limit=" << gas.gas_limit << ", credit=" << gas.gas_credit;
   LOG(INFO) << "out_of_gas=" << cp.out_of_gas << ", accepted=" << cp.accepted << ", success=" << cp.success
             << ", time=" << elapsed << "s";
+
+  if (!cp.accepted) {
+    std::stringstream ss;
+    stack->dump(ss, 4);
+    LOG(INFO) << "not accepted, stack trace: " << ss.str();
+  }
+
   if (logger != nullptr) {
     cp.vm_log = logger->get_log();
   }
