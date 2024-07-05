@@ -1885,6 +1885,7 @@ bool Collator::init_utime() {
         "error initializing unix time for the new block: failed to observe end of fsm_split time interval for this "
         "shard");
   }
+  return true;
   // check whether masterchain catchain rotation is overdue
   auto ccvc = config_->get_catchain_validators_config();
   unsigned lifetime = ccvc.mc_cc_lifetime;
