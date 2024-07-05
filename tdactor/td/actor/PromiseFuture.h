@@ -275,6 +275,12 @@ class Promise {
   Promise(F &&f) : promise_(promise_interface_ptr<T>(std::forward<F>(f))) {
   }
 
+  ~Promise() {
+    if (promise_) {
+      set_error(Status::Error(-1, "logic error, unused promise"));
+    }
+  }
+
   explicit operator bool() {
     return static_cast<bool>(promise_);
   }

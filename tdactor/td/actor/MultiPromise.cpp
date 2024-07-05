@@ -51,13 +51,10 @@ class MultiPromiseImpl {
     }
   }
   void add_promise(Promise<> promise) {
-    if (options_.ignore_errors) {
-      pending_.push_back(std::move(promise));
-    }
     Status status;
     {
       std::unique_lock<std::mutex> lock(mutex_);
-      if (pending_error_.is_error()) {
+      if (!options_.ignore_errors && pending_error_.is_error()) {
         status = pending_error_.clone();
       } else {
         pending_.push_back(std::move(promise));
