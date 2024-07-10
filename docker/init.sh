@@ -23,15 +23,19 @@ else
     echo -e "\e[1;33m[=]\e[0m Using VALIDATOR_PORT $VALIDATOR_PORT udp"
 fi
 
+if [ -z "$VALIDATOR_PORT" ]; then
+    VALIDATOR_PORT=30001
+    echo -e "\e[1;33m[=]\e[0m Using default VALIDATOR_PORT $VALIDATOR_PORT udp"
+else
+    echo -e "\e[1;33m[=]\e[0m Using VALIDATOR_PORT $VALIDATOR_PORT udp"
+fi
+
 # Init local config with IP:PORT
 if [ ! -z "$PUBLIC_IP" ]; then
-    if [ -z "$CONSOLE_PORT" ]; then
-        CONSOLE_PORT="43678"
-    fi
-    echo -e "\e[1;32m[+]\e[0m Using provided IP: $PUBLIC_IP:$CONSOLE_PORT"
+    echo -e "\e[1;32m[+]\e[0m Using provided IP: $PUBLIC_IP:$VALIDATOR_PORT"
     validator-engine -C /var/ion-work/db/ion-global.config --db /var/ion-work/db --ip "$PUBLIC_IP:$CONSOLE_PORT"
 else
-    echo -e "\e[1;31m[!]\e[0m No IP:PORT provided, exiting"
+    echo -e "\e[1;31m[!]\e[0m No PUBLIC_IP provided, exiting..."
     exit 1
 fi
 
@@ -136,6 +140,6 @@ else
     fi
 fi
 
-echo -e "\e[1;32m[+]\e[0m Running validator-engine"
+echo -e "\e[1;32m[+]\e[0m Starting validator-engine:"
 echo validator-engine -c /var/ion-work/db/config.json -C /var/ion-work/db/ion-global.config --db /var/ion-work/db --state-ttl $STATE_TTL --archive-ttl $ARCHIVE_TTL --threads $THREADS --verbosity $VERBOSITY $CUSTOM_ARG
 exec validator-engine -c /var/ion-work/db/config.json -C /var/ion-work/db/ion-global.config --db /var/ion-work/db --state-ttl $STATE_TTL --archive-ttl $ARCHIVE_TTL --threads $THREADS --verbosity $VERBOSITY $CUSTOM_ARG
