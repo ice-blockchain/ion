@@ -457,21 +457,18 @@ void ValidatorManagerMasterchainStarter::got_hardforks(std::vector<BlockIdExt> v
     return;
   }
   if (h.size() == vec.size()) {
-    if (h.size() > 0) {
-      if (*h.rbegin() != *vec.rbegin()) {
-        LOG(FATAL) << "cannot start: hardforks list changed";
-        return;
+    if (h.empty() || *h.rbegin() == *vec.rbegin()) {
+      if (opts_->need_db_truncate()) {
+        auto seq = opts_->get_truncate_seqno();
+        if (seq <= handle_->id().seqno()) {
+          got_truncate_block_seqno(seq);
+          return;
+        }
       }
+      start_shard_client();
+      return;
     }
-    if (opts_->need_db_truncate()) {
-      auto seq = opts_->get_truncate_seqno();
-      if (seq <= handle_->id().seqno()) {
-        got_truncate_block_seqno(seq);
-        return;
-      }
-    }
-    start_shard_client();
-    return;
+    // there is a new hardfork to apply
   }
   if (h.size() > vec.size() + 1) {
     LOG(FATAL) << "cannot start: number of hardforks increase is too big";
