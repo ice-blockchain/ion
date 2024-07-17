@@ -62,13 +62,13 @@ if [ "$with_tests" = true ]; then
 ninja storage-daemon storage-daemon-cli fift func tolk tonlib tonlibjson tonlib-cli \
       validator-engine lite-client validator-engine-console blockchain-explorer \
       generate-random-id json2tlo dht-server http-proxy rldp-http-proxy dht-ping-servers dht-resolve \
-      adnl-proxy create-state emulator proxy-liteserver all-tests
+      adnl-proxy create-state create-hardfork emulator proxy-liteserver all-tests
       test $? -eq 0 || { echo "Can't compile ion"; exit 1; }
 else
 ninja storage-daemon storage-daemon-cli fift func tolk tonlib tonlibjson tonlib-cli \
       validator-engine lite-client validator-engine-console blockchain-explorer \
       generate-random-id json2tlo dht-server http-proxy rldp-http-proxy \
-      adnl-proxy create-state emulator proxy-liteserver dht-ping-servers dht-resolve
+      adnl-proxy create-state emulator create-hardfork proxy-liteserver dht-ping-servers dht-resolve
       test $? -eq 0 || { echo "Can't compile ion"; exit 1; }
 fi
 

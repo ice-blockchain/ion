@@ -163,8 +163,6 @@ class Collator final : public td::actor::Actor {
   bool ihr_enabled_{false};
   bool create_stats_enabled_{false};
   bool report_version_{false};
-  bool skip_topmsgdescr_{false};
-  bool skip_extmsg_{false};
   bool short_dequeue_records_{false};
   bool allow_same_timestamp_{false};
   td::uint64 overload_history_{0}, underload_history_{0};

@@ -119,7 +119,9 @@ class MasterchainStateQ : public MasterchainState, public ShardStateQ {
   td::Ref<McShardHash> get_shard_from_config(ShardIdFull shard, bool exact) const override;
   CatchainSeqno get_shard_cc_seqno(ShardIdFull shard) const override;
   bool ancestor_is_valid(BlockIdExt id) const override {
-    return check_old_mc_block_id(id);
+    BlockIdExt old_id;
+    return (id.seqno() == 0 && check_old_mc_block_id(id))
+      || (get_old_mc_block_id(id.seqno() - 1, old_id) && old_id.is_valid_full());
   }
   bool workchain_is_active(WorkchainId workchain_id) const override {
     return has_workchain(workchain_id);

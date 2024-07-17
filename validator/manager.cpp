@@ -2043,7 +2043,8 @@ void ValidatorManagerImpl::finish_start_up() {
 
   if (last_masterchain_block_handle_->inited_next_left()) {
     auto b = last_masterchain_block_handle_->one_next(true);
-    if (opts_->is_hardfork(b) && !out_of_sync()) {
+    // if we are on hardfork block it has to be applied even node is out of sync
+    if (opts_->is_hardfork(b)) {
       auto P = td::PromiseCreator::lambda([SelfId = actor_id(this), b](td::Result<td::BufferSlice> R) {
         if (R.is_error()) {
           LOG(INFO) << "NO HARDFORK BLOCK IN STATIC FILES";
