@@ -257,15 +257,15 @@ void Collator::start_up() {
     LOG(WARNING) << "generating a hardfork block";
   }
   // 4. load external messages
-  if (!is_hardfork_) {
-    LOG(DEBUG) << "sending get_external_messages() query to Manager";
-    ++pending;
-    td::actor::send_closure_later(manager, &ValidatorManager::get_external_messages, shard_,
-        [self = get_self()](td::Result<std::vector<std::pair<Ref<ExtMessage>, int>>> res) -> void {
-          LOG(DEBUG) << "got answer to get_external_messages() query";
-          td::actor::send_closure_later(std::move(self), &Collator::after_get_external_messages, std::move(res));
-        });
-  }
+  // create-hardfork has to send external messages
+  LOG(DEBUG) << "sending get_external_messages() query to Manager";
+  ++pending;
+  td::actor::send_closure_later(manager, &ValidatorManager::get_external_messages, shard_,
+      [self = get_self()](td::Result<std::vector<std::pair<Ref<ExtMessage>, int>>> res) -> void {
+        LOG(DEBUG) << "got answer to get_external_messages() query";
+        td::actor::send_closure_later(std::move(self), &Collator::after_get_external_messages, std::move(res));
+      });
+
   if (is_masterchain() && !is_hardfork_) {
     // 5. load shard block info messages
     LOG(DEBUG) << "sending get_shard_blocks() query to Manager";
@@ -1636,9 +1636,6 @@ bool Collator::import_new_shard_top_blocks() {
   if (shard_block_descr_.empty()) {
     return true;
   }
-  if (skip_topmsgdescr_) {
-    return true;
-  }
   auto lt_limit = config_->lt + config_->get_max_lt_growth();
   std::sort(shard_block_descr_.begin(), shard_block_descr_.end(), cmp_shard_block_descr_ref);
   int tb_act = 0;
@@ -1929,37 +1926,6 @@ bool Collator::init_utime() {
     return fatal_error(
         "error initializing unix time for the new block: failed to observe end of fsm_split time interval for this "
         "shard");
-  }
-  // check whether masterchain catchain rotation is overdue
-  auto ccvc = config_->get_catchain_validators_config();
-  unsigned lifetime = ccvc.mc_cc_lifetime;
-  if (is_masterchain() && now_ / lifetime > prev_now_ / lifetime && now_ > (prev_now_ / lifetime + 1) * lifetime + 20) {
-    auto overdue = now_ - (prev_now_ / lifetime + 1) * lifetime;
-    // masterchain catchain rotation overdue, skip topsharddescr with some probability
-    skip_topmsgdescr_ = (td::Random::fast(0, 1023) < 256);  // probability 1/4
-    skip_extmsg_ = (td::Random::fast(0, 1023) < 256);       // skip ext msg probability 1/4
-    if (skip_topmsgdescr_) {
-      LOG(WARNING)
-          << "randomly skipping import of new shard data because of overdue masterchain catchain rotation (overdue by "
-          << overdue << " seconds)";
-    }
-    if (skip_extmsg_) {
-      LOG(WARNING)
-          << "randomly skipping external message import because of overdue masterchain catchain rotation (overdue by "
-          << overdue << " seconds)";
-    }
-  } else if (is_masterchain() && now_ > prev_now_ + 60) {
-    auto interval = now_ - prev_now_;
-    skip_topmsgdescr_ = (td::Random::fast(0, 1023) < 128);  // probability 1/8
-    skip_extmsg_ = (td::Random::fast(0, 1023) < 128);       // skip ext msg probability 1/8
-    if (skip_topmsgdescr_) {
-      LOG(WARNING) << "randomly skipping import of new shard data because of overdue masterchain block (last block was "
-                   << interval << " seconds ago)";
-    }
-    if (skip_extmsg_) {
-      LOG(WARNING) << "randomly skipping external message import because of overdue masterchain block (last block was "
-                   << interval << " seconds ago)";
-    }
   }
   return true;
 }
@@ -3642,10 +3608,6 @@ bool Collator::process_inbound_internal_messages() {
  * @returns True if the processing was successful, false otherwise.
  */
 bool Collator::process_inbound_external_messages() {
-  if (skip_extmsg_) {
-    LOG(INFO) << "skipping processing of inbound external messages";
-    return true;
-  }
   if (attempt_idx_ >= 2) {
     LOG(INFO) << "Attempt #" << attempt_idx_ << ": skip external messages";
     return true;
@@ -5659,9 +5621,11 @@ bool Collator::create_block_candidate() {
     td::actor::send_closure_later(actor_id(this), &Collator::return_block_candidate, td::Unit());
   } else {
     LOG(INFO) << "saving new BlockCandidate";
+    td::uint32 val_hash = is_hardfork_ ? 0 : validator_set_->get_validator_set_hash();
+    CatchainSeqno cc_seqno = is_hardfork_ ? 0 : validator_set_->get_catchain_seqno();
     td::actor::send_closure_later(
         manager, &ValidatorManager::set_block_candidate, block_candidate->id, block_candidate->clone(),
-        validator_set_->get_catchain_seqno(), validator_set_->get_validator_set_hash(),
+        cc_seqno, val_hash,
         [self = get_self()](td::Result<td::Unit> saved) -> void {
           LOG(DEBUG) << "got answer to set_block_candidate";
           td::actor::send_closure_later(std::move(self), &Collator::return_block_candidate, std::move(saved));
