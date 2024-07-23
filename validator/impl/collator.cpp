@@ -253,15 +253,15 @@ void Collator::start_up() {
     LOG(WARNING) << "generating a hardfork block";
   }
   // 4. load external messages
-  if (!is_hardfork_) {
-    LOG(DEBUG) << "sending get_external_messages() query to Manager";
-    ++pending;
-    td::actor::send_closure_later(manager, &ValidatorManager::get_external_messages, shard_,
-        [self = get_self()](td::Result<std::vector<std::pair<Ref<ExtMessage>, int>>> res) -> void {
-          LOG(DEBUG) << "got answer to get_external_messages() query";
-          td::actor::send_closure_later(std::move(self), &Collator::after_get_external_messages, std::move(res));
-        });
-  }
+  // create-hardfork has to send external messages
+  LOG(DEBUG) << "sending get_external_messages() query to Manager";
+  ++pending;
+  td::actor::send_closure_later(manager, &ValidatorManager::get_external_messages, shard_,
+      [self = get_self()](td::Result<std::vector<std::pair<Ref<ExtMessage>, int>>> res) -> void {
+        LOG(DEBUG) << "got answer to get_external_messages() query";
+        td::actor::send_closure_later(std::move(self), &Collator::after_get_external_messages, std::move(res));
+      });
+
   if (is_masterchain() && !is_hardfork_) {
     // 5. load shard block info messages
     LOG(DEBUG) << "sending get_shard_blocks() query to Manager";
