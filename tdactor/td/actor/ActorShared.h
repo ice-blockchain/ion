@@ -107,7 +107,7 @@ ActorShared<ToActorType> actor_dynamic_cast(ActorShared<FromActorType> from) {
 // common interface
 namespace core {  // for ADL
 template <class SelfT>
-ActorShared<SelfT> actor_shared(SelfT *self, uint64 id = static_cast<uint64>(-1)) {
+ActorShared<SelfT> actor_shared(SelfT *self, uint64 id = EmptyLinkToken) {
   return ActorShared<SelfT>(actor_id(self), id);
 }
 
