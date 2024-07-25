@@ -212,7 +212,7 @@ void ValidatorManagerImpl::validate_block(ReceivedBlock block, td::Promise<Block
 }
 
 void ValidatorManagerImpl::prevalidate_block(BlockBroadcast broadcast, td::Promise<td::Unit> promise) {
-  if (!started_) {
+  if (last_masterchain_state_.is_null()) {
     promise.set_error(td::Status::Error(ErrorCode::notready, "node not started"));
     return;
   }
@@ -615,8 +615,8 @@ void ValidatorManagerImpl::created_ext_server(td::actor::ActorOwn<adnl::AdnlExtS
 }
 
 void ValidatorManagerImpl::run_ext_query(td::BufferSlice data, td::Promise<td::BufferSlice> promise) {
-  if (!started_) {
-    promise.set_error(td::Status::Error(ErrorCode::notready, "node not synced"));
+  if (last_masterchain_state_.is_null()) {
+    promise.set_error(td::Status::Error(ErrorCode::notready, "node not started"));
     return;
   }
   auto F = fetch_tl_object<lite_api::liteServer_query>(data.clone(), true);
