@@ -449,7 +449,14 @@ void ValidatorManagerMasterchainStarter::got_hardforks(std::vector<BlockIdExt> v
     return;
   }
   if (h.size() == vec.size()) {
-    if (h.empty() || *h.rbegin() == *vec.rbegin()) {
+    // if hardfork is applied, block should exist in blockchain
+    auto hardfork_is_applied = h.empty() || *h.rbegin() == *vec.rbegin();
+    if (!h.empty() && *h.rbegin() == *vec.rbegin()) {
+      ton::BlockIdExt blkid;
+      hardfork_is_applied = state_->get_old_mc_block_id(h.rbegin()->seqno(), blkid)
+                         && blkid == *h.rbegin();
+    }
+    if (hardfork_is_applied) {
       if (opts_->need_db_truncate()) {
         auto seq = opts_->get_truncate_seqno();
         if (seq <= handle_->id().seqno()) {
