@@ -795,9 +795,7 @@ void ArchiveSlice::destroy(td::Promise<td::Unit> promise) {
   packages_.clear();
   kv_ = nullptr;
 
-  PackageId p_id{archive_id_, key_blocks_only_, temp_};
-  std::string db_path = PSTRING() << db_root_ << p_id.path() << p_id.name() << ".index";
-  delay_action([name = db_path, attempt = 0,
+  delay_action([name = db_path_, attempt = 0,
                 promise = ig.get_promise()]() mutable { destroy_db(name, attempt, std::move(promise)); },
                td::Timestamp::in(0.0));
 }
