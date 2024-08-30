@@ -112,7 +112,9 @@ class MasterchainStateQ : public MasterchainState, public ShardStateQ {
   std::vector<Ref<McShardHash>> get_shards() const override;
   td::Ref<McShardHash> get_shard_from_config(ShardIdFull shard) const override;
   bool ancestor_is_valid(BlockIdExt id) const override {
-    return check_old_mc_block_id(id);
+    BlockIdExt old_id;
+    return (id.seqno() == 0 && check_old_mc_block_id(id))
+      || (get_old_mc_block_id(id.seqno() - 1, old_id) && old_id.is_valid_full());
   }
   bool workchain_is_active(WorkchainId workchain_id) const override {
     return has_workchain(workchain_id);

@@ -212,7 +212,7 @@ void ValidatorManagerImpl::validate_block(ReceivedBlock block, td::Promise<Block
 }
 
 void ValidatorManagerImpl::prevalidate_block(BlockBroadcast broadcast, td::Promise<td::Unit> promise) {
-  if (!started_) {
+  if (last_masterchain_state_.is_null()) {
     promise.set_error(td::Status::Error(ErrorCode::notready, "node not started"));
     return;
   }
@@ -378,7 +378,7 @@ void ValidatorManagerImpl::new_external_message(td::BufferSlice data, int priori
     VLOG(VALIDATOR_NOTICE) << "dropping ext message: validator is not ready";
     return;
   }
-  if (ext_msgs_[priority].ext_messages_.size() > (size_t)max_mempool_num()) {
+  if (ext_msgs_[priority].size() > (size_t)max_mempool_num()) {
     return;
   }
   auto R = create_ext_message(std::move(data), last_masterchain_state_->get_ext_msg_limits());
@@ -390,26 +390,24 @@ void ValidatorManagerImpl::new_external_message(td::BufferSlice data, int priori
 }
 
 void ValidatorManagerImpl::add_external_message(td::Ref<ExtMessage> msg, int priority) {
-  auto &msgs = ext_msgs_[priority];
-  auto message = std::make_unique<MessageExt<ExtMessage>>(msg);
-  auto id = message->ext_id();
-  auto address = message->address();
-  unsigned long per_address_limit = 256;
-  auto it = msgs.ext_addr_messages_.find(address);
-  if (it != msgs.ext_addr_messages_.end() && it->second.size() >= per_address_limit) {
-    return;
-  }
-  auto it2 = ext_messages_hashes_.find(id.hash);
-  if (it2 != ext_messages_hashes_.end()) {
-    int old_priority = it2->second.first;
-    if (old_priority >= priority) {
+  auto hash = msg->hash();
+  auto it = ext_messages_hashes_.find(hash);
+  if (it != ext_messages_hashes_.end()) {
+    if (it->second.first >= priority) {
       return;
     }
-    ext_msgs_[old_priority].erase(id);
   }
-  msgs.ext_messages_.emplace(id, std::move(message));
-  msgs.ext_addr_messages_[address].emplace(id.hash, id);
-  ext_messages_hashes_[id.hash] = {priority, id};
+  auto ext_it = ext_msgs_[priority].insert(std::move(msg));
+  if (!ext_it) {
+    return;
+  }
+  if (it != ext_messages_hashes_.end()) {
+    auto [old_prority, old_ext_it] = it->second;
+    ext_msgs_[old_prority].erase(old_ext_it);
+  } else {
+    it = ext_messages_hashes_.try_emplace(hash).first;
+  }
+  it->second = {priority, *ext_it};
 }
 void ValidatorManagerImpl::check_external_message(td::BufferSlice data, td::Promise<td::Ref<ExtMessage>> promise) {
   auto state = do_get_last_liteserver_state();
@@ -615,8 +613,8 @@ void ValidatorManagerImpl::created_ext_server(td::actor::ActorOwn<adnl::AdnlExtS
 }
 
 void ValidatorManagerImpl::run_ext_query(td::BufferSlice data, td::Promise<td::BufferSlice> promise) {
-  if (!started_) {
-    promise.set_error(td::Status::Error(ErrorCode::notready, "node not synced"));
+  if (last_masterchain_state_.is_null()) {
+    promise.set_error(td::Status::Error(ErrorCode::notready, "node not started"));
     return;
   }
   auto F = fetch_tl_object<lite_api::liteServer_query>(data.clone(), true);
@@ -873,30 +871,27 @@ void ValidatorManagerImpl::get_external_messages(
   td::Random::Fast rnd;
   for (auto iter = ext_msgs_.rbegin(); iter != ext_msgs_.rend(); ++iter) {
     std::vector<std::pair<td::Ref<ExtMessage>, int>> cur_res;
-    int priority = iter->first;
-    auto &msgs = iter->second;
-    auto it = msgs.ext_messages_.lower_bound(left);
-    while (it != msgs.ext_messages_.end()) {
-      auto s = it->first;
-      if (!shard_contains(shard, s.dst)) {
+    auto &[priority, msgs] = *iter;
+    auto it = msgs.lower_bound(left);
+    while (it != msgs.end()) {
+      if (!shard_contains(shard, it->first.dst)) {
         break;
       }
       ++processed;
-      if (it->second->expired()) {
-        msgs.ext_addr_messages_[it->second->address()].erase(it->first.hash);
+      if (it->second.expired()) {
         ext_messages_hashes_.erase(it->first.hash);
-        it = msgs.ext_messages_.erase(it);
+        it = msgs.erase(it);
         ++deleted;
         continue;
       }
-      if (it->second->is_active()) {
-        cur_res.emplace_back(it->second->message(), priority);
+      if (it->second.is_active()) {
+        cur_res.emplace_back(it->second.message(), priority);
       }
       it++;
     }
     td::random_shuffle(td::as_mutable_span(cur_res), rnd);
     res.insert(res.end(), cur_res.begin(), cur_res.end());
-    total_msgs += msgs.ext_messages_.size();
+    total_msgs += msgs.size();
   }
   LOG(WARNING) << "get_external_messages to shard " << shard.to_str() << " : time=" << t.elapsed()
                << " result_size=" << res.size() << " processed=" << processed << " expired=" << deleted
@@ -940,9 +935,8 @@ void ValidatorManagerImpl::complete_external_messages(std::vector<ExtMessage::Ha
   for (auto &hash : to_delete) {
     auto it = ext_messages_hashes_.find(hash);
     if (it != ext_messages_hashes_.end()) {
-      int priority = it->second.first;
-      auto msg_id = it->second.second;
-      ext_msgs_[priority].erase(msg_id);
+      auto [priority, ext_it] = it->second;
+      ext_msgs_[priority].erase(ext_it);
       ext_messages_hashes_.erase(it);
     }
   }
@@ -950,14 +944,12 @@ void ValidatorManagerImpl::complete_external_messages(std::vector<ExtMessage::Ha
   for (auto &hash : to_delay) {
     auto it = ext_messages_hashes_.find(hash);
     if (it != ext_messages_hashes_.end()) {
-      int priority = it->second.first;
-      auto msg_id = it->second.second;
+      auto [priority, msg_it] = it->second;
       auto &msgs = ext_msgs_[priority];
-      auto it2 = msgs.ext_messages_.find(msg_id);
-      if ((msgs.ext_messages_.size() < soft_mempool_limit) && it2->second->can_postpone()) {
-        it2->second->postpone();
+      if (msgs.size() < soft_mempool_limit && msg_it->second.can_postpone()) {
+        msg_it->second.postpone();
       } else {
-        msgs.erase(msg_id);
+        msgs.erase(msg_it);
         ext_messages_hashes_.erase(it);
       }
     }
@@ -1717,7 +1709,8 @@ void ValidatorManagerImpl::read_gc_list(std::vector<ValidatorSessionId> list) {
 
   if (last_masterchain_block_handle_->inited_next_left()) {
     auto b = last_masterchain_block_handle_->one_next(true);
-    if (opts_->is_hardfork(b) && !out_of_sync()) {
+    // if we are on hardfork block it has to be applied even node is out of sync
+    if (opts_->is_hardfork(b)) {
       auto P = td::PromiseCreator::lambda([SelfId = actor_id(this), b](td::Result<td::BufferSlice> R) {
         if (R.is_error()) {
           LOG(INFO) << "NO HARDFORK BLOCK IN STATIC FILES";

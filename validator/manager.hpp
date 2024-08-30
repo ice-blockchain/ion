@@ -19,11 +19,13 @@
 #pragma once
 
 #include "common/refcnt.hpp"
+#include "interfaces/external-message.h"
 #include "interfaces/validator-manager.h"
 #include "interfaces/db.h"
 #include "td/actor/PromiseFuture.h"
 #include "td/utils/SharedSlice.h"
 #include "td/utils/buffer.h"
+#include "td/utils/optional.h"
 #include "td/utils/port/Poll.h"
 #include "td/utils/port/StdStreams.h"
 #include "validator-group.hpp"
@@ -229,18 +231,49 @@ class ValidatorManagerImpl : public ValidatorManager {
   std::list<BlockIdExt> cached_block_candidates_lru_;
 
   struct ExtMessages {
-    std::map<MessageId<ExtMessage>, std::unique_ptr<MessageExt<ExtMessage>>> ext_messages_;
-    std::map<std::pair<ton::WorkchainId, ton::StdSmcAddress>, std::map<ExtMessage::Hash, MessageId<ExtMessage>>>
-        ext_addr_messages_;
-    void erase(const MessageId<ExtMessage>& id) {
-      auto it = ext_messages_.find(id);
-      CHECK(it != ext_messages_.end());
-      ext_addr_messages_[it->second->address()].erase(id.hash);
-      ext_messages_.erase(it);
+    using ext_msg_map = std::map<MessageId<ExtMessage>, MessageExt<ExtMessage>>;
+    using iterator = ext_msg_map::iterator;
+    auto begin() {
+      return ext_messages_.begin();
     }
+    auto end() {
+      return ext_messages_.end();
+    }
+    auto find(const MessageId<ExtMessage> &id) {
+      return ext_messages_.find(id);
+    }
+    auto lower_bound(const MessageId<ExtMessage> &id) {
+      return ext_messages_.lower_bound(id);
+    }
+    auto size() const {
+      return ext_messages_.size();
+    }
+    auto erase(iterator it) {
+      CHECK(it != ext_messages_.end());
+      auto it2 = ext_addr_messages_.find(it->second.address());
+      CHECK(it2 != ext_addr_messages_.end());
+      it2->second.erase(it->second.hash());
+      if (it2->second.empty()) {
+        ext_addr_messages_.erase(it2);
+      }
+      return ext_messages_.erase(it);
+    }
+    td::optional<iterator> insert(MessageExt<ExtMessage> msg) {
+      constexpr unsigned long per_address_limit = 256;
+      auto it = ext_addr_messages_.try_emplace(msg.address()).first;
+      if (it->second.size() >= per_address_limit) {
+        return {};
+      }
+      auto id = msg.ext_id();
+      it->second.insert(id.hash);
+      return ext_messages_.emplace(id, std::move(msg)).first;
+    }
+    private:
+      ext_msg_map ext_messages_;
+      std::map<std::pair<ton::WorkchainId, ton::StdSmcAddress>, std::set<ExtMessage::Hash>> ext_addr_messages_;
   };
   std::map<int, ExtMessages> ext_msgs_;  // priority -> messages
-  std::map<ExtMessage::Hash, std::pair<int, MessageId<ExtMessage>>> ext_messages_hashes_;  // hash -> priority
+  std::map<ExtMessage::Hash, std::pair<int, ExtMessages::iterator>> ext_messages_hashes_;  // hash -> priority
   td::Timestamp cleanup_mempool_at_;
   // IHR ?
   std::map<MessageId<IhrMessage>, std::unique_ptr<MessageExt<IhrMessage>>> ihr_messages_;

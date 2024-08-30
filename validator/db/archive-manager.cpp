@@ -1172,22 +1172,22 @@ void ArchiveManager::truncate(BlockSeqno masterchain_seqno, ConstBlockHandle han
         if (!it->second.deleted) {
           td::actor::send_closure(it->second.file_actor_id(), &ArchiveSlice::truncate, masterchain_seqno, handle,
                                   ig.get_promise());
+          it++;
+          continue;
         }
-        it++;
-      } else {
-        auto it2 = it;
-        it++;
-        if (!it2->second.deleted) {
-          td::actor::send_closure(it2->second.file_actor_id(), &ArchiveSlice::destroy, ig.get_promise());
-        }
-        it2->second.file.release();
-        index_
-            ->erase(create_serialize_tl_object<ton_api::db_files_package_key>(it2->second.id.id, it2->second.id.key,
-                                                                              it2->second.id.temp)
-                        .as_slice())
-            .ensure();
-        key_files_.erase(it2);
       }
+      auto it2 = it;
+      it++;
+      if (!it2->second.deleted) {
+        td::actor::send_closure(it2->second.file_actor_id(), &ArchiveSlice::destroy, ig.get_promise());
+      }
+      it2->second.file.release();
+      index_
+          ->erase(create_serialize_tl_object<ton_api::db_files_package_key>(it2->second.id.id, it2->second.id.key,
+                                                                            it2->second.id.temp)
+                      .as_slice())
+          .ensure();
+      key_files_.erase(it2);
     }
   }
   {
@@ -1197,22 +1197,22 @@ void ArchiveManager::truncate(BlockSeqno masterchain_seqno, ConstBlockHandle han
         if (!it->second.deleted) {
           td::actor::send_closure(it->second.file_actor_id(), &ArchiveSlice::truncate, masterchain_seqno, handle,
                                   ig.get_promise());
+          it++;
+          continue;
         }
-        it++;
-      } else {
-        auto it2 = it;
-        it++;
-        if (!it2->second.deleted) {
-          td::actor::send_closure(it2->second.file_actor_id(), &ArchiveSlice::destroy, ig.get_promise());
-        }
-        it2->second.file.release();
-        index_
-            ->erase(create_serialize_tl_object<ton_api::db_files_package_key>(it2->second.id.id, it2->second.id.key,
-                                                                              it2->second.id.temp)
-                        .as_slice())
-            .ensure();
-        files_.erase(it2);
       }
+      auto it2 = it;
+      it++;
+      if (!it2->second.deleted) {
+        td::actor::send_closure(it2->second.file_actor_id(), &ArchiveSlice::destroy, ig.get_promise());
+      }
+      it2->second.file.release();
+      index_
+          ->erase(create_serialize_tl_object<ton_api::db_files_package_key>(it2->second.id.id, it2->second.id.key,
+                                                                            it2->second.id.temp)
+                      .as_slice())
+          .ensure();
+      files_.erase(it2);
     }
   }
   {

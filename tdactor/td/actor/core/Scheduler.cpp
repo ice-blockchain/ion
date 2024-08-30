@@ -38,7 +38,10 @@ Scheduler::Scheduler(std::shared_ptr<SchedulerGroupInfo> scheduler_group_info, S
     : scheduler_group_info_(std::move(scheduler_group_info))
     , cpu_threads_(cpu_threads_count)
     , skip_timeouts_(skip_timeouts) {
-  scheduler_group_info_->active_scheduler_count++;
+  {
+    std::unique_lock<std::mutex> lock(scheduler_group_info_->active_scheduler_count_mutex);
+    scheduler_group_info_->active_scheduler_count++;
+  }
   info_ = &scheduler_group_info_->schedulers.at(id.value());
   info_->id = id;
   if (cpu_threads_count != 0) {

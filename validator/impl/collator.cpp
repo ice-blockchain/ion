@@ -253,15 +253,15 @@ void Collator::start_up() {
     LOG(WARNING) << "generating a hardfork block";
   }
   // 4. load external messages
-  if (!is_hardfork_) {
-    LOG(DEBUG) << "sending get_external_messages() query to Manager";
-    ++pending;
-    td::actor::send_closure_later(manager, &ValidatorManager::get_external_messages, shard_,
-        [self = get_self()](td::Result<std::vector<std::pair<Ref<ExtMessage>, int>>> res) -> void {
-          LOG(DEBUG) << "got answer to get_external_messages() query";
-          td::actor::send_closure_later(std::move(self), &Collator::after_get_external_messages, std::move(res));
-        });
-  }
+  // create-hardfork has to send external messages
+  LOG(DEBUG) << "sending get_external_messages() query to Manager";
+  ++pending;
+  td::actor::send_closure_later(manager, &ValidatorManager::get_external_messages, shard_,
+      [self = get_self()](td::Result<std::vector<std::pair<Ref<ExtMessage>, int>>> res) -> void {
+        LOG(DEBUG) << "got answer to get_external_messages() query";
+        td::actor::send_closure_later(std::move(self), &Collator::after_get_external_messages, std::move(res));
+      });
+
   if (is_masterchain() && !is_hardfork_) {
     // 5. load shard block info messages
     LOG(DEBUG) << "sending get_shard_blocks() query to Manager";
@@ -1600,9 +1600,6 @@ bool Collator::import_new_shard_top_blocks() {
   if (shard_block_descr_.empty()) {
     return true;
   }
-  if (skip_topmsgdescr_) {
-    return true;
-  }
   auto lt_limit = config_->lt + config_->get_max_lt_growth();
   std::sort(shard_block_descr_.begin(), shard_block_descr_.end(), cmp_shard_block_descr_ref);
   int tb_act = 0;
@@ -1884,37 +1881,6 @@ bool Collator::init_utime() {
     return fatal_error(
         "error initializing unix time for the new block: failed to observe end of fsm_split time interval for this "
         "shard");
-  }
-  // check whether masterchain catchain rotation is overdue
-  auto ccvc = config_->get_catchain_validators_config();
-  unsigned lifetime = ccvc.mc_cc_lifetime;
-  if (is_masterchain() && now_ / lifetime > prev_now_ / lifetime && now_ > (prev_now_ / lifetime + 1) * lifetime + 20) {
-    auto overdue = now_ - (prev_now_ / lifetime + 1) * lifetime;
-    // masterchain catchain rotation overdue, skip topsharddescr with some probability
-    skip_topmsgdescr_ = (td::Random::fast(0, 1023) < 256);  // probability 1/4
-    skip_extmsg_ = (td::Random::fast(0, 1023) < 256);       // skip ext msg probability 1/4
-    if (skip_topmsgdescr_) {
-      LOG(WARNING)
-          << "randomly skipping import of new shard data because of overdue masterchain catchain rotation (overdue by "
-          << overdue << " seconds)";
-    }
-    if (skip_extmsg_) {
-      LOG(WARNING)
-          << "randomly skipping external message import because of overdue masterchain catchain rotation (overdue by "
-          << overdue << " seconds)";
-    }
-  } else if (is_masterchain() && now_ > prev_now_ + 60) {
-    auto interval = now_ - prev_now_;
-    skip_topmsgdescr_ = (td::Random::fast(0, 1023) < 128);  // probability 1/8
-    skip_extmsg_ = (td::Random::fast(0, 1023) < 128);       // skip ext msg probability 1/8
-    if (skip_topmsgdescr_) {
-      LOG(WARNING) << "randomly skipping import of new shard data because of overdue masterchain block (last block was "
-                   << interval << " seconds ago)";
-    }
-    if (skip_extmsg_) {
-      LOG(WARNING) << "randomly skipping external message import because of overdue masterchain block (last block was "
-                   << interval << " seconds ago)";
-    }
   }
   return true;
 }
@@ -3408,10 +3374,6 @@ bool Collator::process_inbound_internal_messages() {
  * @returns True if the processing was successful, false otherwise.
  */
 bool Collator::process_inbound_external_messages() {
-  if (skip_extmsg_) {
-    LOG(INFO) << "skipping processing of inbound external messages";
-    return true;
-  }
   if (out_msg_queue_size_ > SKIP_EXTERNALS_QUEUE_SIZE) {
     LOG(INFO) << "skipping processing of inbound external messages (except for high-priority) because out_msg_queue is "
                  "too big ("

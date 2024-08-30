@@ -47,7 +47,7 @@ class MultiPromise {
     InitGuard &operator=(const InitGuard &other) = delete;
 
     void add_promise(Promise<> promise);
-    Promise<> get_promise();
+    TD_WARN_UNUSED_RESULT Promise<> get_promise();
     bool empty() const;
     explicit operator bool() const;
 

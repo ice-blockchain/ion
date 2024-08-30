@@ -42,7 +42,7 @@ void AsyncStateSerializer::start_up() {
 }
 
 void AsyncStateSerializer::got_self_state(AsyncSerializerState state) {
-  if (state.last_block_id.is_valid()) {
+  if (state.last_block_id.is_valid_full()) {
     last_block_id_ = state.last_block_id;
     last_key_block_id_ = state.last_written_block_id;
     last_key_block_ts_ = state.last_written_block_ts;
@@ -191,7 +191,8 @@ void AsyncStateSerializer::next_iteration() {
 }
 
 void AsyncStateSerializer::got_top_masterchain_handle(BlockIdExt block_id) {
-  if (masterchain_handle_ && masterchain_handle_->id().id.seqno < block_id.id.seqno) {
+  if (masterchain_handle_ && masterchain_handle_->id().is_valid_full() &&
+    masterchain_handle_->id().id.seqno < block_id.id.seqno) {
     CHECK(masterchain_handle_->inited_next_left());
   }
 }
