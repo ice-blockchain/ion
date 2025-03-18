@@ -1,8 +1,7 @@
 <div align="center">
   <a href="https://ice.io">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://ice.io/download/ion_logo_dark_background.svg">
-      <img alt="ION logo" src="https://ice.io/download/ion_logo_light_background.svg">
+      <img alt="ION logo" src="https://avatars.githubusercontent.com/u/102382658?s=200">
     </picture>
   </a>
   <h3>Reference implementation of ION Node and tools</h3>
@@ -12,32 +11,10 @@
 ## 
 
 <p align="center">
-  <a href="https://ionresear.ch">
-    <img src="https://img.shields.io/badge/ION%20Research-0098EA?style=flat&logo=discourse&label=Forum&labelColor=gray" alt="Ton Research">
-  </a>
-  <a href="https://t.me/ioncoin">
-    <img src="https://img.shields.io/badge/ION%20Community-0098EA?logo=telegram&logoColor=white&style=flat" alt="Telegram Community Group">
-  </a>
-  <a href="https://t.me/ionblockchain">
-    <img src="https://img.shields.io/badge/ION%20Foundation-0098EA?logo=telegram&logoColor=white&style=flat" alt="Telegram Foundation Group">
-  </a>
-  <a href="https://t.me/iondev_eng">
-    <img src="https://img.shields.io/badge/chat-IONDev-0098EA?logo=telegram&logoColor=white&style=flat" alt="Telegram Community Chat">
+  <a href="https://twitter.com/ice_blockchain">
+    <img src="https://img.shields.io/twitter/follow/ice_blockchain" alt="Twitter Group">
   </a>
 </p>
-
-<p align="center">
-  <a href="https://twitter.com/ion_blockchain">
-    <img src="https://img.shields.io/twitter/follow/ion_blockchain" alt="Twitter Group">
-  </a>
-  <a href="https://answers.ion.org">
-    <img src="https://img.shields.io/badge/-ION%20Overflow-FE7A16?style=flat&logo=stack-overflow&logoColor=white" alt="ION Overflow Group">
-  </a>
-  <a href="https://stackoverflow.com/questions/tagged/ion">
-    <img src="https://img.shields.io/badge/-Stack%20Overflow-FE7A16?style=flat&logo=stack-overflow&logoColor=white" alt="Stack Overflow Group">
-  </a>
-</p>
-
 
 
 Main ION monorepo, which includes the code of the node/validator, lite-client, tonlib, FunC compiler, etc.
@@ -46,10 +23,9 @@ Main ION monorepo, which includes the code of the node/validator, lite-client, t
 
 __Ice Open Network (ION)__ is a fast, secure, scalable blockchain focused on handling _millions of transactions per second_ (TPS) with the goal of reaching hundreds of millions of blockchain users.
 - To learn more about different aspects of ION blockchain and its underlying ecosystem check [documentation](https://docs.ice.io)
-- To run node, validator or lite-server check [Participate section](https://docs.ice.io/participate/nodes/run-node)
-- To develop decentralised apps check [Tutorials](https://docs.ion.org/v3/guidelines/smart-contracts/guidelines), [FunC docs](https://docs.ice.io/develop/func/overview) and [DApp tutorials](https://docs.ion.org/v3/guidelines/dapps/overview)
-- To work on ION check [wallets](https://ion.app/wallets), [explorers](https://ion.app/explorers), [DEXes](https://ion.app/dex) and [utilities](https://ion.app/utilities)
-- To interact with ION check [APIs](https://docs.ion.org/v3/guidelines/dapps/apis-sdks/overview)
+- To run node, validator or lite-server check [Participate section](https://docs.ice.io/ion-blockchain/validator)
+- To develop decentralised apps check TON Tutorials [Tutorials](https://docs.ton.org/v3/guidelines/smart-contracts/guidelines), [FunC docs](https://ton.org/docs/develop/func/overview) and [DApp tutorials](https://docs.ton.org/v3/guidelines/dapps/overview)
+- To interact with TON check APIs: [Indexer](https://api.mainnet.ice.io/indexer/v3/index.html) and [HTPP](https://api.mainnet.ice.io/http/v2/)
 
 ## Updates flow
 
