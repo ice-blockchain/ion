@@ -1,12 +1,12 @@
 /* 
-    This file is part of TON Blockchain source code.
+    This file is part of ION Blockchain source code.
 
-    TON Blockchain is free software; you can redistribute it and/or
+    ION Blockchain is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
     as published by the Free Software Foundation; either version 2
     of the License, or (at your option) any later version.
 
-    TON Blockchain is distributed in the hope that it will be useful,
+    ION Blockchain is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
@@ -21,14 +21,14 @@
     but you are not obligated to do so. If you do not wish to do so, delete this 
     exception statement from your version. If you delete this exception statement 
     from all source files in the program, then also delete it here.
-    along with TON Blockchain.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
 #include <iostream>
 
-#include "auto/tl/ton_api.h"
-#include "auto/tl/ton_api_json.h"
+#include "auto/tl/ion_api.h"
+#include "auto/tl/ion_api_json.h"
 
 #include "tl/tl_json.h"
 #include "td/utils/Random.h"
@@ -94,7 +94,7 @@ int main() {
 
   auto decode_encode = [](auto obj_json) {
     auto as_json_value = td::json_decode(obj_json).move_as_ok();
-    ton::ton_api::object_ptr<ton::ton_api::Object> obj2;
+    ion::ion_api::object_ptr<ion::ion_api::Object> obj2;
     from_json(obj2, std::move(as_json_value)).ensure();
     CHECK(obj2 != nullptr);
     return td::json_encode<std::string>(td::ToJson(obj2));
@@ -110,18 +110,18 @@ int main() {
 
   td::Bits256 uint256;
   uint256.set_ones();
-  test_tl_json(ton::ton_api::make_object<ton::ton_api::adnl_id_short>(uint256));
+  test_tl_json(ion::ion_api::make_object<ion::ion_api::adnl_id_short>(uint256));
 
-  test_tl_json(ton::ton_api::make_object<ton::ton_api::testObject>(
-      1, ton::ton_api::make_object<ton::ton_api::adnl_id_short>(uint256),
-      ton::ton_api::make_object<ton::ton_api::getTestObject>()));
+  test_tl_json(ion::ion_api::make_object<ion::ion_api::testObject>(
+      1, ion::ion_api::make_object<ion::ion_api::adnl_id_short>(uint256),
+      ion::ion_api::make_object<ion::ion_api::getTestObject>()));
 
   std::cout << decode_encode(config) << std::endl;
   std::cout << decode_encode(config2) << std::endl;
 
   auto decode_encode_local = [](auto obj_json) {
     auto as_json_value = td::json_decode(obj_json).move_as_ok();
-    ton::ton_api::config_local config_local;
+    ion::ion_api::config_local config_local;
     from_json(config_local, as_json_value.get_object()).ensure();
     return td::json_encode<std::string>(td::ToJson(config_local));
   };
@@ -135,7 +135,7 @@ int main() {
     res.emplace_back("fdj\0\x01\xff\x7fkld");
     return res;
   };
-  test_tl_json(ton::ton_api::make_object<ton::ton_api::testVectorBytes>(create_vector_bytes()));
+  test_tl_json(ion::ion_api::make_object<ion::ion_api::testVectorBytes>(create_vector_bytes()));
 
   td::Bits256 x;
   td::Random::secure_bytes(x.as_slice());

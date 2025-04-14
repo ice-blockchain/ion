@@ -1,18 +1,18 @@
 /* 
-    This file is part of TON Blockchain source code.
+    This file is part of ION Blockchain source code.
 
-    TON Blockchain is free software; you can redistribute it and/or
+    ION Blockchain is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
     as published by the Free Software Foundation; either version 2
     of the License, or (at your option) any later version.
 
-    TON Blockchain is distributed in the hope that it will be useful,
+    ION Blockchain is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with TON Blockchain.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain.  If not, see <http://www.gnu.org/licenses/>.
 
     In addition, as a special exception, the copyright holders give permission 
     to link the code of portions of this program with the OpenSSL library. 
@@ -45,7 +45,7 @@ int main() {
 
   {
     auto id_str = td::Slice("WQUA224U42HFSKN63K6NU23X42VK4IJRLFGG65CU62JAOL6U47HRCHD");
-    auto id = ton::adnl::AdnlNodeIdShort::parse(id_str).move_as_ok();
+    auto id = ion::adnl::AdnlNodeIdShort::parse(id_str).move_as_ok();
     CHECK(td::hex_decode("a1406b5ca73472c94df6d5e6d35bbf355571098aca637ba2a7b490397ea73e78").ok() == id.as_slice());
     CHECK(id.serialize() == td::to_lower(id_str));
   }
@@ -58,54 +58,54 @@ int main() {
 
   td::set_default_failure_signal_handler().ensure();
 
-  td::actor::ActorOwn<ton::keyring::Keyring> keyring;
-  td::actor::ActorOwn<ton::adnl::TestLoopbackNetworkManager> network_manager;
-  td::actor::ActorOwn<ton::adnl::Adnl> adnl;
+  td::actor::ActorOwn<ion::keyring::Keyring> keyring;
+  td::actor::ActorOwn<ion::adnl::TestLoopbackNetworkManager> network_manager;
+  td::actor::ActorOwn<ion::adnl::Adnl> adnl;
 
-  ton::adnl::AdnlNodeIdShort src;
-  ton::adnl::AdnlNodeIdShort dst;
+  ion::adnl::AdnlNodeIdShort src;
+  ion::adnl::AdnlNodeIdShort dst;
 
   td::actor::Scheduler scheduler({7});
 
   scheduler.run_in_context([&] {
-    keyring = ton::keyring::Keyring::create(db_root_);
-    network_manager = td::actor::create_actor<ton::adnl::TestLoopbackNetworkManager>("test network manager");
-    adnl = ton::adnl::Adnl::create(db_root_, keyring.get());
-    td::actor::send_closure(adnl, &ton::adnl::Adnl::register_network_manager, network_manager.get());
+    keyring = ion::keyring::Keyring::create(db_root_);
+    network_manager = td::actor::create_actor<ion::adnl::TestLoopbackNetworkManager>("test network manager");
+    adnl = ion::adnl::Adnl::create(db_root_, keyring.get());
+    td::actor::send_closure(adnl, &ion::adnl::Adnl::register_network_manager, network_manager.get());
 
-    auto pk1 = ton::PrivateKey{ton::privkeys::Ed25519::random()};
+    auto pk1 = ion::PrivateKey{ion::privkeys::Ed25519::random()};
     auto pub1 = pk1.compute_public_key();
-    src = ton::adnl::AdnlNodeIdShort{pub1.compute_short_id()};
-    td::actor::send_closure(keyring, &ton::keyring::Keyring::add_key, std::move(pk1), true, [](td::Unit) {});
+    src = ion::adnl::AdnlNodeIdShort{pub1.compute_short_id()};
+    td::actor::send_closure(keyring, &ion::keyring::Keyring::add_key, std::move(pk1), true, [](td::Unit) {});
 
-    auto pk2 = ton::PrivateKey{ton::privkeys::Ed25519::random()};
+    auto pk2 = ion::PrivateKey{ion::privkeys::Ed25519::random()};
     auto pub2 = pk2.compute_public_key();
-    dst = ton::adnl::AdnlNodeIdShort{pub2.compute_short_id()};
-    td::actor::send_closure(keyring, &ton::keyring::Keyring::add_key, std::move(pk2), true, [](td::Unit) {});
+    dst = ion::adnl::AdnlNodeIdShort{pub2.compute_short_id()};
+    td::actor::send_closure(keyring, &ion::keyring::Keyring::add_key, std::move(pk2), true, [](td::Unit) {});
 
-    auto addr = ton::adnl::TestLoopbackNetworkManager::generate_dummy_addr_list();
+    auto addr = ion::adnl::TestLoopbackNetworkManager::generate_dummy_addr_list();
 
-    td::actor::send_closure(adnl, &ton::adnl::Adnl::add_id, ton::adnl::AdnlNodeIdFull{pub1}, addr,
+    td::actor::send_closure(adnl, &ion::adnl::Adnl::add_id, ion::adnl::AdnlNodeIdFull{pub1}, addr,
                             static_cast<td::uint8>(0));
-    td::actor::send_closure(adnl, &ton::adnl::Adnl::add_id, ton::adnl::AdnlNodeIdFull{pub2}, addr,
+    td::actor::send_closure(adnl, &ion::adnl::Adnl::add_id, ion::adnl::AdnlNodeIdFull{pub2}, addr,
                             static_cast<td::uint8>(0));
 
-    td::actor::send_closure(adnl, &ton::adnl::Adnl::add_peer, src, ton::adnl::AdnlNodeIdFull{pub2}, addr);
+    td::actor::send_closure(adnl, &ion::adnl::Adnl::add_peer, src, ion::adnl::AdnlNodeIdFull{pub2}, addr);
 
-    td::actor::send_closure(network_manager, &ton::adnl::TestLoopbackNetworkManager::add_node_id, src, true, false);
-    td::actor::send_closure(network_manager, &ton::adnl::TestLoopbackNetworkManager::add_node_id, dst, false, true);
+    td::actor::send_closure(network_manager, &ion::adnl::TestLoopbackNetworkManager::add_node_id, src, true, false);
+    td::actor::send_closure(network_manager, &ion::adnl::TestLoopbackNetworkManager::add_node_id, dst, false, true);
   });
 
   {
     td::Bits256 proxy_id;
     td::Random::secure_bytes(proxy_id.as_slice());
-    auto obj = ton::create_tl_object<ton::ton_api::adnl_proxy_fast>(proxy_id, td::BufferSlice{"1234"});
-    auto R = ton::adnl::AdnlProxy::create(*obj.get());
+    auto obj = ion::create_tl_object<ion::ion_api::adnl_proxy_fast>(proxy_id, td::BufferSlice{"1234"});
+    auto R = ion::adnl::AdnlProxy::create(*obj.get());
     R.ensure();
     auto P = R.move_as_ok();
     td::BufferSlice z{64};
     td::Random::secure_bytes(z.as_slice());
-    auto packet = P->encrypt(ton::adnl::AdnlProxy::Packet{15, 2, 3, 4, 5, 6, z.clone()});
+    auto packet = P->encrypt(ion::adnl::AdnlProxy::Packet{15, 2, 3, 4, 5, 6, z.clone()});
     auto packet2R = P->decrypt(std::move(packet));
     packet2R.ensure();
     auto packet2 = packet2R.move_as_ok();
@@ -121,7 +121,7 @@ int main() {
   {
     auto f = td::Clocks::system();
     for (int i = 0; i < 10000; i++) {
-      auto pk = ton::PrivateKey{ton::privkeys::Ed25519::random()};
+      auto pk = ion::PrivateKey{ion::privkeys::Ed25519::random()};
       auto pub = pk.compute_public_key();
       auto dec = pk.create_decryptor().move_as_ok();
       auto enc = pub.create_encryptor().move_as_ok();
@@ -134,7 +134,7 @@ int main() {
     LOG(ERROR) << "Encrypted 10000 of 1KiB packets. Time=" << (td::Clocks::system() - f);
     f = td::Clocks::system();
     {
-      auto pk = ton::PrivateKey{ton::privkeys::Ed25519::random()};
+      auto pk = ion::PrivateKey{ion::privkeys::Ed25519::random()};
       auto pub = pk.compute_public_key();
       auto dec = pk.create_decryptor().move_as_ok();
       auto enc = pub.create_encryptor().move_as_ok();
@@ -149,7 +149,7 @@ int main() {
     LOG(ERROR) << "Encrypted 10000 of 1KiB packets with one key. Time=" << (td::Clocks::system() - f);
     f = td::Clocks::system();
     for (int i = 0; i < 10000; i++) {
-      auto pk = ton::PrivateKey{ton::privkeys::Ed25519::random()};
+      auto pk = ion::PrivateKey{ion::privkeys::Ed25519::random()};
       auto pub = pk.compute_public_key();
       auto dec = pk.create_decryptor().move_as_ok();
       auto enc = pub.create_encryptor().move_as_ok();
@@ -162,7 +162,7 @@ int main() {
     LOG(ERROR) << "Signed 10000 of 1KiB packets. Time=" << (td::Clocks::system() - f);
     f = td::Clocks::system();
     {
-      auto pk = ton::PrivateKey{ton::privkeys::Ed25519::random()};
+      auto pk = ion::PrivateKey{ion::privkeys::Ed25519::random()};
       auto pub = pk.compute_public_key();
       auto dec = pk.create_decryptor().move_as_ok();
       auto enc = pub.create_encryptor().move_as_ok();
@@ -193,11 +193,11 @@ int main() {
 
   std::atomic<td::uint32> remaining{0};
   scheduler.run_in_context([&] {
-    class Callback : public ton::adnl::Adnl::Callback {
+    class Callback : public ion::adnl::Adnl::Callback {
      public:
-      void receive_message(ton::adnl::AdnlNodeIdShort src, ton::adnl::AdnlNodeIdShort dst,
+      void receive_message(ion::adnl::AdnlNodeIdShort src, ion::adnl::AdnlNodeIdShort dst,
                            td::BufferSlice data) override {
-        CHECK(data.size() <= ton::adnl::Adnl::huge_packet_max_size());
+        CHECK(data.size() <= ion::adnl::Adnl::huge_packet_max_size());
         CHECK(src == src);
         CHECK(dst == dst);
         if (data.size() >= 5) {
@@ -207,7 +207,7 @@ int main() {
         CHECK(remaining_ > 0);
         remaining_--;
       }
-      void receive_query(ton::adnl::AdnlNodeIdShort src, ton::adnl::AdnlNodeIdShort dst, td::BufferSlice data,
+      void receive_query(ion::adnl::AdnlNodeIdShort src, ion::adnl::AdnlNodeIdShort dst, td::BufferSlice data,
                          td::Promise<td::BufferSlice> promise) override {
         UNREACHABLE();
       }
@@ -217,7 +217,7 @@ int main() {
      private:
       std::atomic<td::uint32> &remaining_;
     };
-    td::actor::send_closure(adnl, &ton::adnl::Adnl::subscribe, dst, "1", std::make_unique<Callback>(remaining));
+    td::actor::send_closure(adnl, &ion::adnl::Adnl::subscribe, dst, "1", std::make_unique<Callback>(remaining));
   });
 
   LOG(ERROR) << "Ed25519 version is " << td::Ed25519::version();
@@ -229,11 +229,11 @@ int main() {
     // Channels are disabled, so packet rate is limited
     for (td::uint32 i : {1, 2, 3, 4, 100, 500, 900}) {
       remaining++;
-      td::actor::send_closure(adnl, &ton::adnl::Adnl::send_message, src, dst, send_packet(i));
+      td::actor::send_closure(adnl, &ion::adnl::Adnl::send_message, src, dst, send_packet(i));
     }
-    for (td::uint32 i = 1024; i <= ton::adnl::Adnl::huge_packet_max_size() /* 1024 * 8 */; i += 1024) {
+    for (td::uint32 i = 1024; i <= ion::adnl::Adnl::huge_packet_max_size() /* 1024 * 8 */; i += 1024) {
       remaining++;
-      td::actor::send_closure(adnl, &ton::adnl::Adnl::send_message, src, dst, send_packet(i));
+      td::actor::send_closure(adnl, &ion::adnl::Adnl::send_message, src, dst, send_packet(i));
     }
   });
 
@@ -250,12 +250,12 @@ int main() {
   LOG(ERROR) << "successfully tested delivering of packets of various sizes. Time=" << (td::Clocks::system() - f);
 
   scheduler.run_in_context([&] {
-    td::actor::send_closure(network_manager, &ton::adnl::TestLoopbackNetworkManager::add_node_id, src, true, true);
-    td::actor::send_closure(network_manager, &ton::adnl::TestLoopbackNetworkManager::add_node_id, dst, true, true);
+    td::actor::send_closure(network_manager, &ion::adnl::TestLoopbackNetworkManager::add_node_id, src, true, true);
+    td::actor::send_closure(network_manager, &ion::adnl::TestLoopbackNetworkManager::add_node_id, dst, true, true);
   });
 
   scheduler.run_in_context(
-      [&] { td::actor::send_closure(adnl, &ton::adnl::Adnl::send_message, dst, src, send_packet(1)); });
+      [&] { td::actor::send_closure(adnl, &ion::adnl::Adnl::send_message, dst, src, send_packet(1)); });
   t = td::Timestamp::in(1.0);
   while (scheduler.run(1)) {
     if (t.is_in_past()) {
@@ -267,9 +267,9 @@ int main() {
 
   f = td::Clocks::system();
   scheduler.run_in_context([&] {
-    for (td::uint32 i = 1; i <= ton::adnl::Adnl::huge_packet_max_size(); i++) {
+    for (td::uint32 i = 1; i <= ion::adnl::Adnl::huge_packet_max_size(); i++) {
       remaining++;
-      td::actor::send_closure(adnl, &ton::adnl::Adnl::send_message, src, dst, send_packet(i));
+      td::actor::send_closure(adnl, &ion::adnl::Adnl::send_message, src, dst, send_packet(i));
     }
   });
 
@@ -286,13 +286,13 @@ int main() {
              << (td::Clocks::system() - f);
 
   scheduler.run_in_context([&] {
-    class Callback : public ton::adnl::Adnl::Callback {
+    class Callback : public ion::adnl::Adnl::Callback {
      public:
-      void receive_message(ton::adnl::AdnlNodeIdShort src, ton::adnl::AdnlNodeIdShort dst,
+      void receive_message(ion::adnl::AdnlNodeIdShort src, ion::adnl::AdnlNodeIdShort dst,
                            td::BufferSlice data) override {
         UNREACHABLE();
       }
-      void receive_query(ton::adnl::AdnlNodeIdShort src, ton::adnl::AdnlNodeIdShort dst, td::BufferSlice data,
+      void receive_query(ion::adnl::AdnlNodeIdShort src, ion::adnl::AdnlNodeIdShort dst, td::BufferSlice data,
                          td::Promise<td::BufferSlice> promise) override {
         CHECK(data.size() == 5);
 
@@ -313,11 +313,11 @@ int main() {
       Callback() {
       }
     };
-    td::actor::send_closure(adnl, &ton::adnl::Adnl::subscribe, dst, "2", std::make_unique<Callback>());
+    td::actor::send_closure(adnl, &ion::adnl::Adnl::subscribe, dst, "2", std::make_unique<Callback>());
   });
 
   LOG(ERROR) << "testing queries";
-  for (td::uint32 i = 1; i <= ton::adnl::Adnl::huge_packet_max_size(); i++) {
+  for (td::uint32 i = 1; i <= ion::adnl::Adnl::huge_packet_max_size(); i++) {
     remaining++;
     td::BufferSlice d{5};
     d.as_slice()[0] = '2';
@@ -337,7 +337,7 @@ int main() {
       remaining--;
     });
     scheduler.run_in_context([&] {
-      td::actor::send_closure(adnl, &ton::adnl::Adnl::send_query, src, dst, PSTRING() << "query" << i, std::move(P),
+      td::actor::send_closure(adnl, &ion::adnl::Adnl::send_query, src, dst, PSTRING() << "query" << i, std::move(P),
                               td::Timestamp::in(320.0), std::move(d));
     });
   }
@@ -357,29 +357,29 @@ int main() {
 
   // too big answer
   scheduler.run_in_context([&] {
-    auto x = ton::adnl::Adnl::huge_packet_max_size() + 1;
+    auto x = ion::adnl::Adnl::huge_packet_max_size() + 1;
     td::BufferSlice d{5};
     d.as_slice()[0] = '2';
     d.as_slice().remove_prefix(1).copy_from(td::Slice{reinterpret_cast<td::uint8 *>(&x), 4});
     auto P = td::PromiseCreator::lambda([](td::Result<td::BufferSlice> R) { CHECK(R.is_error()); });
-    td::actor::send_closure(adnl, &ton::adnl::Adnl::send_query, src, dst, PSTRING() << "query" << x, std::move(P),
+    td::actor::send_closure(adnl, &ion::adnl::Adnl::send_query, src, dst, PSTRING() << "query" << x, std::move(P),
                             td::Timestamp::in(320.0), std::move(d));
   });
   // too big packet
   scheduler.run_in_context([&] {
-    auto x = ton::adnl::Adnl::huge_packet_max_size() + 1;
-    td::actor::send_closure(adnl, &ton::adnl::Adnl::send_message, src, dst, send_packet(x));
+    auto x = ion::adnl::Adnl::huge_packet_max_size() + 1;
+    td::actor::send_closure(adnl, &ion::adnl::Adnl::send_message, src, dst, send_packet(x));
   });
   // no callbacks
   scheduler.run_in_context([&] {
     td::BufferSlice d{1};
     d.as_slice()[0] = '3';
-    td::actor::send_closure(adnl, &ton::adnl::Adnl::send_message, src, dst, std::move(d));
+    td::actor::send_closure(adnl, &ion::adnl::Adnl::send_message, src, dst, std::move(d));
   });
   // no callbacks 2
   scheduler.run_in_context([&] {
     td::BufferSlice d{};
-    td::actor::send_closure(adnl, &ton::adnl::Adnl::send_message, src, dst, std::move(d));
+    td::actor::send_closure(adnl, &ion::adnl::Adnl::send_message, src, dst, std::move(d));
   });
   t = td::Timestamp::in(2.0);
   while (scheduler.run(1)) {
@@ -393,9 +393,9 @@ int main() {
   LOG(ERROR) << "successfully tested ignoring";
 
   if (true) {
-    auto a = ton::adnl::Adnl::adnl_start_time();
+    auto a = ion::adnl::Adnl::adnl_start_time();
     std::this_thread::sleep_for(std::chrono::milliseconds(10000));
-    CHECK(a == ton::adnl::Adnl::adnl_start_time());
+    CHECK(a == ion::adnl::Adnl::adnl_start_time());
   }
 
   td::rmrf(db_root_).ensure();

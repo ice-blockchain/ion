@@ -1,28 +1,28 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
 #include "download-state.hpp"
-#include "ton/ton-tl.hpp"
-#include "ton/ton-io.hpp"
+#include "ion/ion-tl.hpp"
+#include "ion/ion-io.hpp"
 #include "td/utils/overloaded.h"
 #include "full-node.h"
 
-namespace ton {
+namespace ion {
 
 namespace validator {
 
@@ -136,10 +136,10 @@ void DownloadState::got_node_to_download(adnl::AdnlNodeIdShort node) {
 
   td::BufferSlice query;
   if (masterchain_block_id_.is_valid()) {
-    query = create_serialize_tl_object<ton_api::tonNode_preparePersistentState>(
+    query = create_serialize_tl_object<ion_api::tonNode_preparePersistentState>(
         create_tl_block_id(block_id_), create_tl_block_id(masterchain_block_id_));
   } else {
-    query = create_serialize_tl_object<ton_api::tonNode_prepareZeroState>(create_tl_block_id(block_id_));
+    query = create_serialize_tl_object<ion_api::tonNode_prepareZeroState>(create_tl_block_id(block_id_));
   }
 
   if (client_.empty()) {
@@ -147,26 +147,26 @@ void DownloadState::got_node_to_download(adnl::AdnlNodeIdShort node) {
                             "get_prepare", std::move(P), td::Timestamp::in(1.0), std::move(query));
   } else {
     td::actor::send_closure(client_, &adnl::AdnlExtClient::send_query, "get_prepare",
-                            create_serialize_tl_object_suffix<ton_api::tonNode_query>(std::move(query)),
+                            create_serialize_tl_object_suffix<ion_api::tonNode_query>(std::move(query)),
                             td::Timestamp::in(1.0), std::move(P));
   }
 }
 
 void DownloadState::got_block_state_description(td::BufferSlice data) {
-  auto F = fetch_tl_object<ton_api::tonNode_PreparedState>(std::move(data), true);
+  auto F = fetch_tl_object<ion_api::tonNode_PreparedState>(std::move(data), true);
   if (F.is_error()) {
     abort_query(F.move_as_error());
     return;
   }
   prev_logged_timer_ = td::Timer();
 
-  ton_api::downcast_call(
+  ion_api::downcast_call(
       *F.move_as_ok().get(),
       td::overloaded(
-          [&](ton_api::tonNode_notFoundState &f) {
+          [&](ion_api::tonNode_notFoundState &f) {
             abort_query(td::Status::Error(ErrorCode::notready, "state not found"));
           },
-          [&, self = this](ton_api::tonNode_preparedState &f) {
+          [&, self = this](ion_api::tonNode_preparedState &f) {
             if (masterchain_block_id_.is_valid()) {
               got_block_state_part(td::BufferSlice{}, 0);
               return;
@@ -180,14 +180,14 @@ void DownloadState::got_block_state_description(td::BufferSlice data) {
             });
 
             td::BufferSlice query =
-                create_serialize_tl_object<ton_api::tonNode_downloadZeroState>(create_tl_block_id(block_id_));
+                create_serialize_tl_object<ion_api::tonNode_downloadZeroState>(create_tl_block_id(block_id_));
             if (client_.empty()) {
               td::actor::send_closure(overlays_, &overlay::Overlays::send_query_via, download_from_, local_id_,
                                       overlay_id_, "download state", std::move(P), td::Timestamp::in(3.0),
                                       std::move(query), FullNode::max_state_size(), rldp_);
             } else {
               td::actor::send_closure(client_, &adnl::AdnlExtClient::send_query, "download state",
-                                      create_serialize_tl_object_suffix<ton_api::tonNode_query>(std::move(query)),
+                                      create_serialize_tl_object_suffix<ion_api::tonNode_query>(std::move(query)),
                                       td::Timestamp::in(3.0), std::move(P));
             }
           }));
@@ -233,7 +233,7 @@ void DownloadState::got_block_state_part(td::BufferSlice data, td::uint32 reques
     }
   });
 
-  td::BufferSlice query = create_serialize_tl_object<ton_api::tonNode_downloadPersistentStateSlice>(
+  td::BufferSlice query = create_serialize_tl_object<ion_api::tonNode_downloadPersistentStateSlice>(
       create_tl_block_id(block_id_), create_tl_block_id(masterchain_block_id_), sum_, part_size);
   if (client_.empty()) {
     td::actor::send_closure(overlays_, &overlay::Overlays::send_query_via, download_from_, local_id_, overlay_id_,
@@ -241,7 +241,7 @@ void DownloadState::got_block_state_part(td::BufferSlice data, td::uint32 reques
                             FullNode::max_state_size(), rldp_);
   } else {
     td::actor::send_closure(client_, &adnl::AdnlExtClient::send_query, "download state",
-                            create_serialize_tl_object_suffix<ton_api::tonNode_query>(std::move(query)),
+                            create_serialize_tl_object_suffix<ion_api::tonNode_query>(std::move(query)),
                             td::Timestamp::in(20.0), std::move(P));
   }
 }
@@ -256,4 +256,4 @@ void DownloadState::got_block_state(td::BufferSlice data) {
 
 }  // namespace validator
 
-}  // namespace ton
+}  // namespace ion

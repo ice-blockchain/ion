@@ -1,29 +1,29 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
 #include "adnl-network-manager.hpp"
 #include "adnl-peer-table.h"
 
-#include "auto/tl/ton_api.hpp"
+#include "auto/tl/ion_api.hpp"
 
 #include "td/utils/overloaded.h"
 
-namespace ton {
+namespace ion {
 
 namespace adnl {
 
@@ -165,17 +165,17 @@ void AdnlNetworkManagerImpl::receive_udp_message(td::UdpMessage message, size_t 
         return;
       }
       if (packet.flags & (1 << 17)) {
-        auto F = fetch_tl_object<ton_api::adnl_ProxyControlPacket>(std::move(packet.data), true);
+        auto F = fetch_tl_object<ion_api::adnl_ProxyControlPacket>(std::move(packet.data), true);
         if (F.is_error()) {
           VLOG(ADNL_WARNING) << this << ": dropping proxy packet: bad control packet";
           return;
         }
-        ton_api::downcast_call(*F.move_as_ok().get(),
+        ion_api::downcast_call(*F.move_as_ok().get(),
                                td::overloaded(
-                                   [&](const ton_api::adnl_proxyControlPacketPing &f) {
+                                   [&](const ion_api::adnl_proxyControlPacketPing &f) {
                                      auto &v = *proxy_iface.out_desc;
                                      auto data =
-                                         create_serialize_tl_object<ton_api::adnl_proxyControlPacketPong>(f.id_);
+                                         create_serialize_tl_object<ion_api::adnl_proxyControlPacketPong>(f.id_);
                                      AdnlProxy::Packet p;
                                      p.flags = 6 | (1 << 17);
                                      p.ip = 0;
@@ -192,8 +192,8 @@ void AdnlNetworkManagerImpl::receive_udp_message(td::UdpMessage message, size_t 
 
                                      td::actor::send_closure(socket.server, &td::UdpServer::send, std::move(M));
                                    },
-                                   [&](const ton_api::adnl_proxyControlPacketPong &f) {},
-                                   [&](const ton_api::adnl_proxyControlPacketRegister &f) {}));
+                                   [&](const ion_api::adnl_proxyControlPacketPong &f) {},
+                                   [&](const ion_api::adnl_proxyControlPacketRegister &f) {}));
         return;
       }
       message.data = std::move(packet.data);
@@ -264,7 +264,7 @@ void AdnlNetworkManagerImpl::send_udp_packet(AdnlNodeIdShort src_id, AdnlNodeIdS
 }
 
 void AdnlNetworkManagerImpl::proxy_register(OutDesc &desc) {
-  auto data = create_serialize_tl_object<ton_api::adnl_proxyControlPacketRegister>(0, 0);
+  auto data = create_serialize_tl_object<ion_api::adnl_proxyControlPacketRegister>(0, 0);
   AdnlProxy::Packet p;
   p.flags = 6 | (1 << 17);
   p.ip = 0;
@@ -296,4 +296,4 @@ void AdnlNetworkManagerImpl::alarm() {
 
 }  // namespace adnl
 
-}  // namespace ton
+}  // namespace ion

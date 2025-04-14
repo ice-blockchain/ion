@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -40,7 +40,7 @@ void parse(td::BitArray<N> &arr, ParserT &parser) {
 }
 
 template <class StorerT>
-void store(const ton::ZeroStateIdExt &zero_state_id, StorerT &storer) {
+void store(const ion::ZeroStateIdExt &zero_state_id, StorerT &storer) {
   using td::store;
   using tonlib::store;
   store(zero_state_id.workchain, storer);
@@ -48,7 +48,7 @@ void store(const ton::ZeroStateIdExt &zero_state_id, StorerT &storer) {
   store(zero_state_id.file_hash, storer);
 }
 template <class ParserT>
-void parse(ton::ZeroStateIdExt &zero_state_id, ParserT &parser) {
+void parse(ion::ZeroStateIdExt &zero_state_id, ParserT &parser) {
   using td::parse;
   using tonlib::parse;
   parse(zero_state_id.workchain, parser);
@@ -56,7 +56,7 @@ void parse(ton::ZeroStateIdExt &zero_state_id, ParserT &parser) {
   parse(zero_state_id.file_hash, parser);
 }
 template <class StorerT>
-void store(const ton::BlockId &block_id, StorerT &storer) {
+void store(const ion::BlockId &block_id, StorerT &storer) {
   using td::store;
   using tonlib::store;
   store(block_id.workchain, storer);
@@ -64,7 +64,7 @@ void store(const ton::BlockId &block_id, StorerT &storer) {
   store(block_id.seqno, storer);
 }
 template <class ParserT>
-void parse(ton::BlockId &block_id, ParserT &parser) {
+void parse(ion::BlockId &block_id, ParserT &parser) {
   using td::parse;
   using tonlib::parse;
   parse(block_id.workchain, parser);
@@ -72,7 +72,7 @@ void parse(ton::BlockId &block_id, ParserT &parser) {
   parse(block_id.seqno, parser);
 }
 template <class StorerT>
-void store(const ton::BlockIdExt &block_id, StorerT &storer) {
+void store(const ion::BlockIdExt &block_id, StorerT &storer) {
   using td::store;
   using tonlib::store;
   store(block_id.id, storer);
@@ -80,7 +80,7 @@ void store(const ton::BlockIdExt &block_id, StorerT &storer) {
   store(block_id.file_hash, storer);
 }
 template <class ParserT>
-void parse(ton::BlockIdExt &block_id, ParserT &parser) {
+void parse(ion::BlockIdExt &block_id, ParserT &parser) {
   using td::parse;
   using tonlib::parse;
   parse(block_id.id, parser);
@@ -88,11 +88,11 @@ void parse(ton::BlockIdExt &block_id, ParserT &parser) {
   parse(block_id.file_hash, parser);
 }
 struct LastBlockState {
-  ton::ZeroStateIdExt zero_state_id;
-  ton::BlockIdExt last_key_block_id;
-  ton::BlockIdExt last_block_id;
+  ion::ZeroStateIdExt zero_state_id;
+  ion::BlockIdExt last_key_block_id;
+  ion::BlockIdExt last_block_id;
   td::int64 utime{0};
-  ton::BlockIdExt init_block_id;
+  ion::BlockIdExt init_block_id;
   td::int32 vert_seqno{0};
 
   static constexpr td::int32 magic = 0xa7f171a4;
@@ -208,28 +208,28 @@ class LastBlock : public td::actor::Actor {
 
   std::vector<td::Promise<LastBlockState>> promises_;
 
-  void do_check_init_block(ton::BlockIdExt from, ton::BlockIdExt to);
+  void do_check_init_block(ion::BlockIdExt from, ion::BlockIdExt to);
   void on_init_block_proof(
-      ton::BlockIdExt from, ton::BlockIdExt to,
-      td::Result<ton::ton_api::object_ptr<ton::lite_api::liteServer_partialBlockProof>> r_block_proof);
-  void on_masterchain_info(td::Result<ton::ton_api::object_ptr<ton::lite_api::liteServer_masterchainInfo>> r_info);
+      ion::BlockIdExt from, ion::BlockIdExt to,
+      td::Result<ion::ion_api::object_ptr<ion::lite_api::liteServer_partialBlockProof>> r_block_proof);
+  void on_masterchain_info(td::Result<ion::ion_api::object_ptr<ion::lite_api::liteServer_masterchainInfo>> r_info);
   void do_get_last_block();
-  void on_block_proof(ton::BlockIdExt from,
-                      td::Result<ton::ton_api::object_ptr<ton::lite_api::liteServer_partialBlockProof>> r_block_proof);
+  void on_block_proof(ion::BlockIdExt from,
+                      td::Result<ion::ion_api::object_ptr<ion::lite_api::liteServer_partialBlockProof>> r_block_proof);
   td::Result<std::unique_ptr<block::BlockProofChain>> process_block_proof(
-      ton::BlockIdExt from,
-      td::Result<ton::ton_api::object_ptr<ton::lite_api::liteServer_partialBlockProof>> r_block_proof);
+      ion::BlockIdExt from,
+      td::Result<ion::ion_api::object_ptr<ion::lite_api::liteServer_partialBlockProof>> r_block_proof);
 
   td::Result<std::unique_ptr<block::BlockProofChain>> process_block_proof(
-      ton::BlockIdExt from, ton::ton_api::object_ptr<ton::lite_api::liteServer_partialBlockProof> block_proof);
+      ion::BlockIdExt from, ion::ion_api::object_ptr<ion::lite_api::liteServer_partialBlockProof> block_proof);
 
   void update_state(block::BlockProofChain &chain);
-  void update_zero_state(ton::ZeroStateIdExt zero_state_id, td::Slice source);
+  void update_zero_state(ion::ZeroStateIdExt zero_state_id, td::Slice source);
 
-  bool update_mc_last_block(ton::BlockIdExt mc_block_id);
-  bool update_mc_last_key_block(ton::BlockIdExt mc_key_block_id);
+  bool update_mc_last_block(ion::BlockIdExt mc_block_id);
+  bool update_mc_last_key_block(ion::BlockIdExt mc_key_block_id);
   void update_utime(td::int64 utime);
-  bool update_init_block(ton::BlockIdExt init_block_id);
+  bool update_init_block(ion::BlockIdExt init_block_id);
 
   void save_state();
   void on_sync_ok();

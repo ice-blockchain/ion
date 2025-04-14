@@ -1,28 +1,28 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
 #pragma once
 
 #include "validator/validator.h"
-#include "ton/ton-tl.hpp"
+#include "ion/ion-tl.hpp"
 #include "full-node-serializer.hpp"
 
-namespace ton {
+namespace ion {
 
 namespace validator {
 
@@ -35,7 +35,7 @@ class BlockFullSender : public td::actor::Actor {
       : block_id_(block_id), next_(next), manager_(manager), promise_(std::move(promise)) {
   }
   void abort_query(td::Status error) {
-    promise_.set_value(create_serialize_tl_object<ton_api::tonNode_dataFullEmpty>());
+    promise_.set_value(create_serialize_tl_object<ion_api::tonNode_dataFullEmpty>());
     stop();
   }
   void finish_query() {
@@ -130,4 +130,4 @@ class BlockFullSender : public td::actor::Actor {
 
 }  // namespace validator
 
-}  // namespace ton
+}  // namespace ion

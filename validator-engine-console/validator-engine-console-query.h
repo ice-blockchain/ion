@@ -1,18 +1,18 @@
 /* 
-    This file is part of TON Blockchain source code.
+    This file is part of ION Blockchain source code.
 
-    TON Blockchain is free software; you can redistribute it and/or
+    ION Blockchain is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
     as published by the Free Software Foundation; either version 2
     of the License, or (at your option) any later version.
 
-    TON Blockchain is distributed in the hope that it will be useful,
+    ION Blockchain is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with TON Blockchain.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain.  If not, see <http://www.gnu.org/licenses/>.
 
     In addition, as a special exception, the copyright holders give permission 
     to link the code of portions of this program with the OpenSSL library. 
@@ -33,7 +33,7 @@
 #include "td/utils/SharedSlice.h"
 #include "td/utils/port/IPAddress.h"
 #include "td/actor/actor.h"
-#include "ton/ton-types.h"
+#include "ion/ion-types.h"
 
 #include "keys/keys.hpp"
 #include "td/utils/base64.h"
@@ -112,9 +112,9 @@ inline td::Result<td::Bits256> Tokenizer::get_token() {
 }
 
 template <>
-inline td::Result<ton::PublicKeyHash> Tokenizer::get_token() {
+inline td::Result<ion::PublicKeyHash> Tokenizer::get_token() {
   TRY_RESULT(x, get_token<td::Bits256>());
-  return ton::PublicKeyHash{x};
+  return ion::PublicKeyHash{x};
 }
 
 template <>
@@ -146,15 +146,15 @@ inline td::Result<std::vector<T>> Tokenizer::get_token_vector() {
 }
 
 template <>
-inline td::Result<ton::ShardIdFull> Tokenizer::get_token() {
+inline td::Result<ion::ShardIdFull> Tokenizer::get_token() {
   TRY_RESULT(word, get_raw_token());
-  auto r_wc = td::to_integer_safe<ton::WorkchainId>(word);
+  auto r_wc = td::to_integer_safe<ion::WorkchainId>(word);
   if (r_wc.is_ok()) {
     TRY_RESULT_ASSIGN(word, get_raw_token());
-    TRY_RESULT(shard, td::to_integer_safe<ton::ShardId>(word));
-    return ton::ShardIdFull{r_wc.move_as_ok(), shard};
+    TRY_RESULT(shard, td::to_integer_safe<ion::ShardId>(word));
+    return ion::ShardIdFull{r_wc.move_as_ok(), shard};
   }
-  return ton::ShardIdFull::parse(word);
+  return ion::ShardIdFull::parse(word);
 }
 
 class QueryRunner {
@@ -351,7 +351,7 @@ class ExportPublicKeyQuery : public Query {
   }
 
  private:
-  ton::PublicKeyHash key_hash_;
+  ion::PublicKeyHash key_hash_;
 };
 
 class ExportPublicKeyFileQuery : public Query {
@@ -373,7 +373,7 @@ class ExportPublicKeyFileQuery : public Query {
   }
 
  private:
-  ton::PublicKeyHash key_hash_;
+  ion::PublicKeyHash key_hash_;
   std::string file_name_;
 };
 
@@ -396,7 +396,7 @@ class SignQuery : public Query {
   }
 
  private:
-  ton::PublicKeyHash key_hash_;
+  ion::PublicKeyHash key_hash_;
   td::BufferSlice data_;
 };
 
@@ -419,7 +419,7 @@ class SignFileQuery : public Query {
   }
 
  private:
-  ton::PublicKeyHash key_hash_;
+  ion::PublicKeyHash key_hash_;
   std::string in_file_;
   std::string out_file_;
 };
@@ -445,7 +445,7 @@ class ExportAllPrivateKeysQuery : public Query {
 
  private:
   std::string directory_;
-  ton::PrivateKey client_pk_;
+  ion::PrivateKey client_pk_;
 };
 
 class AddAdnlAddrQuery : public Query {
@@ -467,7 +467,7 @@ class AddAdnlAddrQuery : public Query {
   }
 
  private:
-  ton::PublicKeyHash key_hash_;
+  ion::PublicKeyHash key_hash_;
   td::uint32 category_;
 };
 
@@ -490,7 +490,7 @@ class AddDhtIdQuery : public Query {
   }
 
  private:
-  ton::PublicKeyHash key_hash_;
+  ion::PublicKeyHash key_hash_;
 };
 
 class AddValidatorPermanentKeyQuery : public Query {
@@ -512,7 +512,7 @@ class AddValidatorPermanentKeyQuery : public Query {
   }
 
  private:
-  ton::PublicKeyHash key_hash_;
+  ion::PublicKeyHash key_hash_;
   td::uint32 election_date_;
   td::uint32 expire_at_;
 };
@@ -536,8 +536,8 @@ class AddValidatorTempKeyQuery : public Query {
   }
 
  private:
-  ton::PublicKeyHash perm_key_hash_;
-  ton::PublicKeyHash key_hash_;
+  ion::PublicKeyHash perm_key_hash_;
+  ion::PublicKeyHash key_hash_;
   td::uint32 expire_at_;
 };
 
@@ -560,8 +560,8 @@ class AddValidatorAdnlAddrQuery : public Query {
   }
 
  private:
-  ton::PublicKeyHash perm_key_hash_;
-  ton::PublicKeyHash key_hash_;
+  ion::PublicKeyHash perm_key_hash_;
+  ion::PublicKeyHash key_hash_;
   td::uint32 expire_at_;
 };
 
@@ -584,7 +584,7 @@ class ChangeFullNodeAdnlAddrQuery : public Query {
   }
 
  private:
-  ton::PublicKeyHash key_hash_;
+  ion::PublicKeyHash key_hash_;
 };
 
 class AddLiteServerQuery : public Query {
@@ -607,7 +607,7 @@ class AddLiteServerQuery : public Query {
 
  private:
   td::uint16 port_;
-  ton::PublicKeyHash key_hash_;
+  ion::PublicKeyHash key_hash_;
 };
 
 class DelAdnlAddrQuery : public Query {
@@ -629,7 +629,7 @@ class DelAdnlAddrQuery : public Query {
   }
 
  private:
-  ton::PublicKeyHash key_hash_;
+  ion::PublicKeyHash key_hash_;
 };
 
 class DelDhtIdQuery : public Query {
@@ -651,7 +651,7 @@ class DelDhtIdQuery : public Query {
   }
 
  private:
-  ton::PublicKeyHash key_hash_;
+  ion::PublicKeyHash key_hash_;
 };
 
 class DelValidatorPermanentKeyQuery : public Query {
@@ -673,7 +673,7 @@ class DelValidatorPermanentKeyQuery : public Query {
   }
 
  private:
-  ton::PublicKeyHash key_hash_;
+  ion::PublicKeyHash key_hash_;
 };
 
 class DelValidatorTempKeyQuery : public Query {
@@ -695,8 +695,8 @@ class DelValidatorTempKeyQuery : public Query {
   }
 
  private:
-  ton::PublicKeyHash perm_key_hash_;
-  ton::PublicKeyHash key_hash_;
+  ion::PublicKeyHash perm_key_hash_;
+  ion::PublicKeyHash key_hash_;
 };
 
 class DelValidatorAdnlAddrQuery : public Query {
@@ -718,8 +718,8 @@ class DelValidatorAdnlAddrQuery : public Query {
   }
 
  private:
-  ton::PublicKeyHash perm_key_hash_;
-  ton::PublicKeyHash key_hash_;
+  ion::PublicKeyHash perm_key_hash_;
+  ion::PublicKeyHash key_hash_;
 };
 
 class GetConfigQuery : public Query {
@@ -951,7 +951,7 @@ class CheckDhtServersQuery : public Query {
   }
 
  private:
-  ton::PublicKeyHash id_;
+  ion::PublicKeyHash id_;
 };
 
 class GetOverlaysStatsQuery : public Query {
@@ -1025,9 +1025,9 @@ class SignCertificateQuery : public Query {
   td::int32 expire_at_;
   td::uint32 max_size_;
   std::string out_file_;
-  ton::PublicKeyHash signer_;
+  ion::PublicKeyHash signer_;
   td::BufferSlice signature_;
-  std::unique_ptr<ton::ton_api::PublicKey> pubkey_;
+  std::unique_ptr<ion::ion_api::PublicKey> pubkey_;
   bool has_signature_{0};
   bool has_pubkey_{0};
 };
@@ -1053,7 +1053,7 @@ class ImportCertificateQuery : public Query {
  private:
   td::Bits256 overlay_;
   td::Bits256 id_;
-  ton::PublicKeyHash kh_;
+  ion::PublicKeyHash kh_;
   std::string in_file_;
 };
 
@@ -1078,9 +1078,9 @@ class SignShardOverlayCertificateQuery : public Query {
 
  private:
 
-  ton::ShardIdFull shard_;
+  ion::ShardIdFull shard_;
   td::int32 expire_at_;
-  ton::PublicKeyHash key_;
+  ion::PublicKeyHash key_;
   td::uint32 max_size_;
   std::string out_file_;
 };
@@ -1107,8 +1107,8 @@ class ImportShardOverlayCertificateQuery : public Query {
 
  private:
 
-  ton::ShardIdFull shard_;
-  ton::PublicKeyHash key_;
+  ion::ShardIdFull shard_;
+  ion::PublicKeyHash key_;
   std::string in_file_;
 };
 
@@ -1177,8 +1177,8 @@ class GetShardOutQueueSizeQuery : public Query {
   }
 
  private:
-  ton::BlockId block_id_;
-  ton::ShardIdFull dest_ = ton::ShardIdFull{ton::workchainInvalid};
+  ion::BlockId block_id_;
+  ion::ShardIdFull dest_ = ion::ShardIdFull{ion::workchainInvalid};
 };
 
 class SetExtMessagesBroadcastDisabledQuery : public Query {
@@ -1419,7 +1419,7 @@ class AddShardQuery : public Query {
   }
 
  private:
-  ton::ShardIdFull shard_;
+  ion::ShardIdFull shard_;
 };
 
 class DelShardQuery : public Query {
@@ -1441,5 +1441,5 @@ class DelShardQuery : public Query {
   }
 
  private:
-  ton::ShardIdFull shard_;
+  ion::ShardIdFull shard_;
 };

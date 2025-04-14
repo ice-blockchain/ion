@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -30,7 +30,7 @@
 
 #include "catchain/catchain.h"
 
-namespace ton {
+namespace ion {
 
 namespace validatorsession {
 
@@ -73,7 +73,7 @@ class ValidatorSessionImpl : public ValidatorSession {
   ValidatorSessionCandidateId signed_block_;
   td::BufferSlice signature_;
 
-  std::map<ValidatorSessionCandidateId, tl_object_ptr<ton_api::validatorSession_candidate>> blocks_;
+  std::map<ValidatorSessionCandidateId, tl_object_ptr<ion_api::validatorSession_candidate>> blocks_;
   // src_round_candidate_[src_id][round] -> candidate id
   std::vector<std::map<td::uint32, ValidatorSessionCandidateId>> src_round_candidate_;
 
@@ -146,7 +146,7 @@ class ValidatorSessionImpl : public ValidatorSession {
   td::uint32 local_idx() {
     return description_->get_self_idx();
   }
-  ton::PublicKeyHash local_id() {
+  ion::PublicKeyHash local_id() {
     return description_->get_source_id(description_->get_self_idx());
   }
 
@@ -175,7 +175,7 @@ class ValidatorSessionImpl : public ValidatorSession {
       ValidatorSessionCandidateId candidate_id = ValidatorSessionCandidateId::zero());
   ValidatorSessionStats::Producer *stats_get_candidate_stat_by_id(td::uint32 round,
                                                                   ValidatorSessionCandidateId candidate_id);
-  void stats_process_action(td::uint32 node_id, ton_api::validatorSession_round_Message &action);
+  void stats_process_action(td::uint32 node_id, ion_api::validatorSession_round_Message &action);
 
  public:
   ValidatorSessionImpl(catchain::CatChainSessionId session_id, ValidatorSessionOptions opts, PublicKeyHash local_id,
@@ -241,12 +241,12 @@ class ValidatorSessionImpl : public ValidatorSession {
 
 }  // namespace validatorsession
 
-}  // namespace ton
+}  // namespace ion
 
 namespace td {
 
 inline td::StringBuilder &operator<<(td::StringBuilder &sb,
-                                     const ton::validatorsession::ValidatorSessionImpl *session) {
+                                     const ion::validatorsession::ValidatorSessionImpl *session) {
   sb << session->print_id();
   return sb;
 }

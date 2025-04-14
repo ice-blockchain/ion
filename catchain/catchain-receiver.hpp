@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -29,7 +29,7 @@
 
 #include "td/db/KeyValueAsync.h"
 
-namespace ton {
+namespace ion {
 
 namespace catchain {
 
@@ -69,8 +69,8 @@ class CatChainReceiverImpl final : public CatChainReceiver {
   void receive_message_from_overlay(adnl::AdnlNodeIdShort src, td::BufferSlice data);
   void receive_query_from_overlay(adnl::AdnlNodeIdShort src, td::BufferSlice data,
                                   td::Promise<td::BufferSlice> promise);
-  void process_query(adnl::AdnlNodeIdShort src, ton_api::catchain_getBlock query, td::Promise<td::BufferSlice> promise);
-  void process_query(adnl::AdnlNodeIdShort src, ton_api::catchain_getDifference query,
+  void process_query(adnl::AdnlNodeIdShort src, ion_api::catchain_getBlock query, td::Promise<td::BufferSlice> promise);
+  void process_query(adnl::AdnlNodeIdShort src, ion_api::catchain_getDifference query,
                      td::Promise<td::BufferSlice> promise);
   template <class T>
   void process_query(adnl::AdnlNodeIdShort src, const T &query, td::Promise<td::BufferSlice> promise) {
@@ -79,14 +79,14 @@ class CatChainReceiverImpl final : public CatChainReceiver {
   }
   void receive_broadcast_from_overlay(const PublicKeyHash &src, td::BufferSlice data);
 
-  void receive_block(adnl::AdnlNodeIdShort src, tl_object_ptr<ton_api::catchain_block> block, td::BufferSlice payload);
+  void receive_block(adnl::AdnlNodeIdShort src, tl_object_ptr<ion_api::catchain_block> block, td::BufferSlice payload);
   void receive_block_answer(adnl::AdnlNodeIdShort src, td::BufferSlice);
 
-  CatChainReceivedBlock *create_block(tl_object_ptr<ton_api::catchain_block> block, td::SharedSlice payload) override;
-  CatChainReceivedBlock *create_block(tl_object_ptr<ton_api::catchain_block_dep> block) override;
+  CatChainReceivedBlock *create_block(tl_object_ptr<ion_api::catchain_block> block, td::SharedSlice payload) override;
+  CatChainReceivedBlock *create_block(tl_object_ptr<ion_api::catchain_block_dep> block) override;
 
-  td::Status validate_block_sync(const tl_object_ptr<ton_api::catchain_block_dep> &dep) const override;
-  td::Status validate_block_sync(const tl_object_ptr<ton_api::catchain_block> &block,
+  td::Status validate_block_sync(const tl_object_ptr<ion_api::catchain_block_dep> &dep) const override;
+  td::Status validate_block_sync(const tl_object_ptr<ion_api::catchain_block> &block,
                                  const td::Slice &payload) const override;
 
   void send_fec_broadcast(td::BufferSlice data) override;
@@ -99,12 +99,12 @@ class CatChainReceiverImpl final : public CatChainReceiver {
 
   void run_scheduler();
   void add_block(td::BufferSlice data, std::vector<CatChainBlockHash> deps) override;
-  void add_block_cont(tl_object_ptr<ton_api::catchain_block> block, td::BufferSlice payload);
-  void add_block_cont_2(tl_object_ptr<ton_api::catchain_block> block, td::BufferSlice payload);
-  void add_block_cont_3(tl_object_ptr<ton_api::catchain_block> block, td::BufferSlice payload);
+  void add_block_cont(tl_object_ptr<ion_api::catchain_block> block, td::BufferSlice payload);
+  void add_block_cont_2(tl_object_ptr<ion_api::catchain_block> block, td::BufferSlice payload);
+  void add_block_cont_3(tl_object_ptr<ion_api::catchain_block> block, td::BufferSlice payload);
   void debug_add_fork(td::BufferSlice payload, CatChainBlockHeight height,
                       std::vector<CatChainBlockHash> deps) override;
-  void debug_add_fork_cont(tl_object_ptr<ton_api::catchain_block> block, td::BufferSlice payload);
+  void debug_add_fork_cont(tl_object_ptr<ion_api::catchain_block> block, td::BufferSlice payload);
   void on_blame(td::uint32 src) override {
     callback_->blame(src);
   }
@@ -228,11 +228,11 @@ class CatChainReceiverImpl final : public CatChainReceiver {
 
 }  // namespace catchain
 
-}  // namespace ton
+}  // namespace ion
 
 namespace td {
 
-inline td::StringBuilder &operator<<(td::StringBuilder &sb, const ton::catchain::CatChainReceiverImpl *catchain) {
+inline td::StringBuilder &operator<<(td::StringBuilder &sb, const ion::catchain::CatChainReceiverImpl *catchain) {
   sb << catchain->print_id();
   return sb;
 }

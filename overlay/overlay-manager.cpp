@@ -1,24 +1,24 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
 #include "overlay-manager.h"
-#include "auto/tl/ton_api.h"
-#include "auto/tl/ton_api.hpp"
+#include "auto/tl/ion_api.h"
+#include "auto/tl/ion_api.hpp"
 #include "overlay.h"
 
 #include "adnl/utils.hpp"
@@ -35,7 +35,7 @@
 #include "td/utils/port/Poll.h"
 #include <vector>
 
-namespace ton {
+namespace ion {
 
 namespace overlay {
 
@@ -54,16 +54,16 @@ void OverlayManager::register_overlay(adnl::AdnlNodeIdShort local_id, OverlayIdS
   VLOG(OVERLAY_INFO) << this << ": registering overlay " << overlay_id << "@" << local_id;
   if (it == overlays_.end()) {
     td::actor::send_closure(adnl_, &adnl::Adnl::subscribe, local_id,
-                            adnl::Adnl::int_to_bytestring(ton_api::overlay_message::ID),
+                            adnl::Adnl::int_to_bytestring(ion_api::overlay_message::ID),
                             std::make_unique<AdnlCallback>(actor_id(this)));
     td::actor::send_closure(adnl_, &adnl::Adnl::subscribe, local_id,
-                            adnl::Adnl::int_to_bytestring(ton_api::overlay_query::ID),
+                            adnl::Adnl::int_to_bytestring(ion_api::overlay_query::ID),
                             std::make_unique<AdnlCallback>(actor_id(this)));
     td::actor::send_closure(adnl_, &adnl::Adnl::subscribe, local_id,
-                            adnl::Adnl::int_to_bytestring(ton_api::overlay_messageWithExtra::ID),
+                            adnl::Adnl::int_to_bytestring(ion_api::overlay_messageWithExtra::ID),
                             std::make_unique<AdnlCallback>(actor_id(this)));
     td::actor::send_closure(adnl_, &adnl::Adnl::subscribe, local_id,
-                            adnl::Adnl::int_to_bytestring(ton_api::overlay_queryWithExtra::ID),
+                            adnl::Adnl::int_to_bytestring(ion_api::overlay_queryWithExtra::ID),
                             std::make_unique<AdnlCallback>(actor_id(this)));
   }
   overlays_[local_id][overlay_id] = OverlayDescription{std::move(overlay), std::move(cert)};
@@ -76,21 +76,21 @@ void OverlayManager::register_overlay(adnl::AdnlNodeIdShort local_id, OverlayIdS
         R.ensure();
         auto value = R.move_as_ok();
         if (value.status == td::KeyValue::GetStatus::Ok) {
-          auto F = fetch_tl_object<ton_api::overlay_db_Nodes>(std::move(value.value), true);
+          auto F = fetch_tl_object<ion_api::overlay_db_Nodes>(std::move(value.value), true);
           F.ensure();
-          ton_api::downcast_call(
+          ion_api::downcast_call(
               *F.move_as_ok(), td::overloaded(
-                                   [&](ton_api::overlay_db_nodes &V) {
+                                   [&](ion_api::overlay_db_nodes &V) {
                                      auto nodes = std::move(V.nodes_);
                                      td::actor::send_closure(id, &Overlay::receive_nodes_from_db, std::move(nodes));
                                    },
-                                   [&](ton_api::overlay_db_nodesV2 &V) {
+                                   [&](ion_api::overlay_db_nodesV2 &V) {
                                      auto nodes = std::move(V.nodes_);
                                      td::actor::send_closure(id, &Overlay::receive_nodes_from_db_v2, std::move(nodes));
                                    }));
         }
       });
-  auto key = create_hash_tl_object<ton_api::overlay_db_key_nodes>(local_id.bits256_value(), overlay_id.bits256_value());
+  auto key = create_hash_tl_object<ion_api::overlay_db_key_nodes>(local_id.bits256_value(), overlay_id.bits256_value());
   db_.get(key, std::move(P));
 }
 
@@ -100,13 +100,13 @@ void OverlayManager::delete_overlay(adnl::AdnlNodeIdShort local_id, OverlayIdSho
     it->second.erase(overlay_id);
     if (it->second.size() == 0) {
       td::actor::send_closure(adnl_, &adnl::Adnl::unsubscribe, local_id,
-                              adnl::Adnl::int_to_bytestring(ton_api::overlay_message::ID));
+                              adnl::Adnl::int_to_bytestring(ion_api::overlay_message::ID));
       td::actor::send_closure(adnl_, &adnl::Adnl::unsubscribe, local_id,
-                              adnl::Adnl::int_to_bytestring(ton_api::overlay_query::ID));
+                              adnl::Adnl::int_to_bytestring(ion_api::overlay_query::ID));
       td::actor::send_closure(adnl_, &adnl::Adnl::unsubscribe, local_id,
-                              adnl::Adnl::int_to_bytestring(ton_api::overlay_messageWithExtra::ID));
+                              adnl::Adnl::int_to_bytestring(ion_api::overlay_messageWithExtra::ID));
       td::actor::send_closure(adnl_, &adnl::Adnl::unsubscribe, local_id,
-                              adnl::Adnl::int_to_bytestring(ton_api::overlay_queryWithExtra::ID));
+                              adnl::Adnl::int_to_bytestring(ion_api::overlay_queryWithExtra::ID));
       overlays_.erase(it);
     }
   }
@@ -164,13 +164,13 @@ void OverlayManager::create_semiprivate_overlay(adnl::AdnlNodeIdShort local_id, 
 
 void OverlayManager::receive_message(adnl::AdnlNodeIdShort src, adnl::AdnlNodeIdShort dst, td::BufferSlice data) {
   OverlayIdShort overlay_id;
-  tl_object_ptr<ton_api::overlay_messageExtra> extra;
-  auto R = fetch_tl_prefix<ton_api::overlay_messageWithExtra>(data, true);
+  tl_object_ptr<ion_api::overlay_messageExtra> extra;
+  auto R = fetch_tl_prefix<ion_api::overlay_messageWithExtra>(data, true);
   if (R.is_ok()) {
     overlay_id = OverlayIdShort{R.ok()->overlay_};
     extra = std::move(R.ok()->extra_);
   } else {
-    auto R2 = fetch_tl_prefix<ton_api::overlay_message>(data, true);
+    auto R2 = fetch_tl_prefix<ion_api::overlay_message>(data, true);
     if (R2.is_ok()) {
       overlay_id = OverlayIdShort{R2.ok()->overlay_};
     } else {
@@ -198,13 +198,13 @@ void OverlayManager::receive_message(adnl::AdnlNodeIdShort src, adnl::AdnlNodeId
 void OverlayManager::receive_query(adnl::AdnlNodeIdShort src, adnl::AdnlNodeIdShort dst, td::BufferSlice data,
                                    td::Promise<td::BufferSlice> promise) {
   OverlayIdShort overlay_id;
-  tl_object_ptr<ton_api::overlay_messageExtra> extra;
-  auto R = fetch_tl_prefix<ton_api::overlay_queryWithExtra>(data, true);
+  tl_object_ptr<ion_api::overlay_messageExtra> extra;
+  auto R = fetch_tl_prefix<ion_api::overlay_queryWithExtra>(data, true);
   if (R.is_ok()) {
     overlay_id = OverlayIdShort{R.ok()->overlay_};
     extra = std::move(R.ok()->extra_);
   } else {
-    auto R2 = fetch_tl_prefix<ton_api::overlay_query>(data, true);
+    auto R2 = fetch_tl_prefix<ion_api::overlay_query>(data, true);
     if (R2.is_ok()) {
       overlay_id = OverlayIdShort{R2.ok()->overlay_};
     } else {
@@ -246,7 +246,7 @@ void OverlayManager::send_query_via(adnl::AdnlNodeIdShort dst, adnl::AdnlNodeIdS
                                     td::actor::ActorId<adnl::AdnlSenderInterface> via) {
   CHECK(query.size() <= adnl::Adnl::huge_packet_max_size());
 
-  auto extra = create_tl_object<ton_api::overlay_messageExtra>();
+  auto extra = create_tl_object<ion_api::overlay_messageExtra>();
   extra->flags_ = 0;
 
   auto it = overlays_.find(src);
@@ -270,9 +270,9 @@ void OverlayManager::send_query_via(adnl::AdnlNodeIdShort dst, adnl::AdnlNodeIdS
 
   auto extra_flags = extra->flags_;
   td::BufferSlice serialized_query =
-      (extra_flags ? create_serialize_tl_object_suffix<ton_api::overlay_queryWithExtra>(
+      (extra_flags ? create_serialize_tl_object_suffix<ion_api::overlay_queryWithExtra>(
                          query.as_slice(), overlay_id.tl(), std::move(extra))
-                   : create_serialize_tl_object_suffix<ton_api::overlay_query>(query.as_slice(), overlay_id.tl()));
+                   : create_serialize_tl_object_suffix<ion_api::overlay_query>(query.as_slice(), overlay_id.tl()));
 
   td::actor::send_closure(via, &adnl::AdnlSenderInterface::send_query_ex, src, dst, std::move(name), std::move(promise),
                           timeout, std::move(serialized_query), max_answer_size);
@@ -282,7 +282,7 @@ void OverlayManager::send_message_via(adnl::AdnlNodeIdShort dst, adnl::AdnlNodeI
                                       td::BufferSlice object, td::actor::ActorId<adnl::AdnlSenderInterface> via) {
   CHECK(object.size() <= adnl::Adnl::huge_packet_max_size());
 
-  auto extra = create_tl_object<ton_api::overlay_messageExtra>();
+  auto extra = create_tl_object<ion_api::overlay_messageExtra>();
   extra->flags_ = 0;
 
   auto it = overlays_.find(src);
@@ -304,9 +304,9 @@ void OverlayManager::send_message_via(adnl::AdnlNodeIdShort dst, adnl::AdnlNodeI
 
   auto extra_flags = extra->flags_;
   td::BufferSlice serialized_message =
-      (extra_flags ? create_serialize_tl_object_suffix<ton_api::overlay_messageWithExtra>(
+      (extra_flags ? create_serialize_tl_object_suffix<ion_api::overlay_messageWithExtra>(
                          object.as_slice(), overlay_id.tl(), std::move(extra))
-                   : create_serialize_tl_object_suffix<ton_api::overlay_message>(object.as_slice(), overlay_id.tl()));
+                   : create_serialize_tl_object_suffix<ion_api::overlay_message>(object.as_slice(), overlay_id.tl()));
 
   td::actor::send_closure(via, &adnl::AdnlSenderInterface::send_message, src, dst, std::move(serialized_message));
 }
@@ -433,31 +433,31 @@ void OverlayManager::save_to_db(adnl::AdnlNodeIdShort local_id, OverlayIdShort o
   if (!with_db_) {
     return;
   }
-  std::vector<tl_object_ptr<ton_api::overlay_node>> nodes_vec;
+  std::vector<tl_object_ptr<ion_api::overlay_node>> nodes_vec;
   for (auto &n : nodes) {
     nodes_vec.push_back(n.tl());
   }
-  auto obj = create_tl_object<ton_api::overlay_nodes>(std::move(nodes_vec));
+  auto obj = create_tl_object<ion_api::overlay_nodes>(std::move(nodes_vec));
 
-  auto key = create_hash_tl_object<ton_api::overlay_db_key_nodes>(local_id.bits256_value(), overlay_id.bits256_value());
-  db_.set(key, create_serialize_tl_object<ton_api::overlay_db_nodes>(std::move(obj)));
+  auto key = create_hash_tl_object<ion_api::overlay_db_key_nodes>(local_id.bits256_value(), overlay_id.bits256_value());
+  db_.set(key, create_serialize_tl_object<ion_api::overlay_db_nodes>(std::move(obj)));
 }
 
-void OverlayManager::get_stats(td::Promise<tl_object_ptr<ton_api::engine_validator_overlaysStats>> promise) {
+void OverlayManager::get_stats(td::Promise<tl_object_ptr<ion_api::engine_validator_overlaysStats>> promise) {
   class Cb : public td::actor::Actor {
    public:
-    Cb(td::Promise<tl_object_ptr<ton_api::engine_validator_overlaysStats>> promise) : promise_(std::move(promise)) {
+    Cb(td::Promise<tl_object_ptr<ion_api::engine_validator_overlaysStats>> promise) : promise_(std::move(promise)) {
     }
     void incr_pending() {
       pending_++;
     }
     void decr_pending() {
       if (!--pending_) {
-        promise_.set_result(create_tl_object<ton_api::engine_validator_overlaysStats>(std::move(res_)));
+        promise_.set_result(create_tl_object<ion_api::engine_validator_overlaysStats>(std::move(res_)));
         stop();
       }
     }
-    void receive_answer(tl_object_ptr<ton_api::engine_validator_overlayStats> res) {
+    void receive_answer(tl_object_ptr<ion_api::engine_validator_overlayStats> res) {
       if (res) {
         res_.push_back(std::move(res));
       }
@@ -465,9 +465,9 @@ void OverlayManager::get_stats(td::Promise<tl_object_ptr<ton_api::engine_validat
     }
 
    private:
-    std::vector<tl_object_ptr<ton_api::engine_validator_overlayStats>> res_;
+    std::vector<tl_object_ptr<ion_api::engine_validator_overlayStats>> res_;
     size_t pending_{1};
-    td::Promise<tl_object_ptr<ton_api::engine_validator_overlaysStats>> promise_;
+    td::Promise<tl_object_ptr<ion_api::engine_validator_overlaysStats>> promise_;
   };
 
   auto act = td::actor::create_actor<Cb>("overlaysstatsmerger", std::move(promise)).release();
@@ -476,7 +476,7 @@ void OverlayManager::get_stats(td::Promise<tl_object_ptr<ton_api::engine_validat
     for (auto &b : a.second) {
       td::actor::send_closure(act, &Cb::incr_pending);
       td::actor::send_closure(b.second.overlay, &Overlay::get_stats,
-                              [act](td::Result<tl_object_ptr<ton_api::engine_validator_overlayStats>> R) {
+                              [act](td::Result<tl_object_ptr<ion_api::engine_validator_overlayStats>> R) {
                                 if (R.is_ok()) {
                                   td::actor::send_closure(act, &Cb::receive_answer, R.move_as_ok());
                                 } else {
@@ -535,10 +535,10 @@ constexpr td::uint32 cert_default_flags(td::uint32 max_size) {
 
 td::BufferSlice Certificate::to_sign(OverlayIdShort overlay_id, PublicKeyHash issued_to) const {
   if (flags_ == cert_default_flags(max_size_)) {
-    return create_serialize_tl_object<ton_api::overlay_certificateId>(overlay_id.tl(), issued_to.tl(), expire_at_,
+    return create_serialize_tl_object<ion_api::overlay_certificateId>(overlay_id.tl(), issued_to.tl(), expire_at_,
                                                                       max_size_);
   } else {
-    return create_serialize_tl_object<ton_api::overlay_certificateIdV2>(overlay_id.tl(), issued_to.tl(), expire_at_,
+    return create_serialize_tl_object<ion_api::overlay_certificateIdV2>(overlay_id.tl(), issued_to.tl(), expire_at_,
                                                                         max_size_, flags_);
   }
 }
@@ -553,17 +553,17 @@ const PublicKey &Certificate::issuer() const {
   return issued_by_.get<PublicKey>();
 }
 
-td::Result<std::shared_ptr<Certificate>> Certificate::create(tl_object_ptr<ton_api::overlay_Certificate> cert) {
+td::Result<std::shared_ptr<Certificate>> Certificate::create(tl_object_ptr<ion_api::overlay_Certificate> cert) {
   std::shared_ptr<Certificate> res;
-  ton_api::downcast_call(*cert.get(),
-                         td::overloaded([&](ton_api::overlay_emptyCertificate &obj) { res = nullptr; },
-                                        [&](ton_api::overlay_certificate &obj) {
+  ion_api::downcast_call(*cert.get(),
+                         td::overloaded([&](ion_api::overlay_emptyCertificate &obj) { res = nullptr; },
+                                        [&](ion_api::overlay_certificate &obj) {
                                           res = std::make_shared<Certificate>(PublicKey{obj.issued_by_}, obj.expire_at_,
                                                                               static_cast<td::uint32>(obj.max_size_),
                                                                               cert_default_flags(obj.max_size_),
                                                                               std::move(obj.signature_));
                                         },
-                                        [&](ton_api::overlay_certificateV2 &obj) {
+                                        [&](ion_api::overlay_certificateV2 &obj) {
                                           res = std::make_shared<Certificate>(PublicKey{obj.issued_by_}, obj.expire_at_,
                                                                               static_cast<td::uint32>(obj.max_size_),
                                                                               static_cast<td::uint32>(obj.flags_),
@@ -599,26 +599,26 @@ BroadcastCheckResult Certificate::check(PublicKeyHash node, OverlayIdShort overl
   return (flags_ & CertificateFlags::Trusted) ? BroadcastCheckResult::Allowed : BroadcastCheckResult::NeedCheck;
 }
 
-tl_object_ptr<ton_api::overlay_Certificate> Certificate::tl() const {
-  return create_tl_object<ton_api::overlay_certificate>(issued_by_.get<PublicKey>().tl(), expire_at_, max_size_,
+tl_object_ptr<ion_api::overlay_Certificate> Certificate::tl() const {
+  return create_tl_object<ion_api::overlay_certificate>(issued_by_.get<PublicKey>().tl(), expire_at_, max_size_,
                                                         signature_.clone_as_buffer_slice());
 }
 
-tl_object_ptr<ton_api::overlay_Certificate> Certificate::empty_tl() {
-  return create_tl_object<ton_api::overlay_emptyCertificate>();
+tl_object_ptr<ion_api::overlay_Certificate> Certificate::empty_tl() {
+  return create_tl_object<ion_api::overlay_emptyCertificate>();
 }
 
-OverlayMemberCertificate::OverlayMemberCertificate(const ton_api::overlay_MemberCertificate *cert) {
+OverlayMemberCertificate::OverlayMemberCertificate(const ion_api::overlay_MemberCertificate *cert) {
   if (!cert) {
     expire_at_ = std::numeric_limits<td::int32>::max();
     return;
   }
-  if (cert->get_id() == ton_api::overlay_emptyMemberCertificate::ID) {
+  if (cert->get_id() == ion_api::overlay_emptyMemberCertificate::ID) {
     expire_at_ = std::numeric_limits<td::int32>::max();
     return;
   }
-  CHECK(cert->get_id() == ton_api::overlay_memberCertificate::ID);
-  const auto *real_cert = static_cast<const ton_api::overlay_memberCertificate *>(cert);
+  CHECK(cert->get_id() == ion_api::overlay_memberCertificate::ID);
+  const auto *real_cert = static_cast<const ion_api::overlay_memberCertificate *>(cert);
   signed_by_ = PublicKey(real_cert->issued_by_);
   flags_ = real_cert->flags_;
   slot_ = real_cert->slot_;
@@ -639,4 +639,4 @@ td::Status OverlayMemberCertificate::check_signature(const adnl::AdnlNodeIdShort
 
 }  // namespace overlay
 
-}  // namespace ton
+}  // namespace ion

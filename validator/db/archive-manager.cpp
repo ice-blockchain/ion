@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2019-2020 Telegram Systems LLP
 */
@@ -23,7 +23,7 @@
 #include "td/db/RocksDb.h"
 #include "common/delay.h"
 
-namespace ton {
+namespace ion {
 
 namespace validator {
 
@@ -527,14 +527,14 @@ void ArchiveManager::get_block_by_seqno(AccountIdPrefixFull account_id, BlockSeq
 }
 
 void ArchiveManager::delete_package(PackageId id, td::Promise<td::Unit> promise) {
-  auto key = create_serialize_tl_object<ton_api::db_files_package_key>(id.id, id.key, id.temp);
+  auto key = create_serialize_tl_object<ion_api::db_files_package_key>(id.id, id.key, id.temp);
 
   std::string value;
   auto v = index_->get(key.as_slice(), value);
   v.ensure();
   CHECK(v.move_as_ok() == td::KeyValue::GetStatus::Ok);
 
-  auto R = fetch_tl_object<ton_api::db_files_package_value>(value, true);
+  auto R = fetch_tl_object<ion_api::db_files_package_value>(value, true);
   R.ensure();
   auto x = R.move_as_ok();
 
@@ -560,14 +560,14 @@ void ArchiveManager::delete_package(PackageId id, td::Promise<td::Unit> promise)
 }
 
 void ArchiveManager::deleted_package(PackageId id, td::Promise<td::Unit> promise) {
-  auto key = create_serialize_tl_object<ton_api::db_files_package_key>(id.id, id.key, id.temp);
+  auto key = create_serialize_tl_object<ion_api::db_files_package_key>(id.id, id.key, id.temp);
 
   std::string value;
   auto v = index_->get(key.as_slice(), value);
   v.ensure();
   CHECK(v.move_as_ok() == td::KeyValue::GetStatus::Ok);
 
-  auto R = fetch_tl_object<ton_api::db_files_package_value>(value, true);
+  auto R = fetch_tl_object<ion_api::db_files_package_value>(value, true);
   R.ensure();
   auto x = R.move_as_ok();
 
@@ -594,14 +594,14 @@ void ArchiveManager::load_package(PackageId id) {
     LOG(WARNING) << "Duplicate id " << id.name();
     return;
   }
-  auto key = create_serialize_tl_object<ton_api::db_files_package_key>(id.id, id.key, id.temp);
+  auto key = create_serialize_tl_object<ion_api::db_files_package_key>(id.id, id.key, id.temp);
 
   std::string value;
   auto v = index_->get(key.as_slice(), value);
   v.ensure();
   CHECK(v.move_as_ok() == td::KeyValue::GetStatus::Ok);
 
-  auto R = fetch_tl_object<ton_api::db_files_package_value>(value, true);
+  auto R = fetch_tl_object<ion_api::db_files_package_value>(value, true);
   R.ensure();
   auto x = R.move_as_ok();
 
@@ -667,9 +667,9 @@ const ArchiveManager::FileDescription *ArchiveManager::add_file_desc(ShardIdFull
     update_desc(f, desc, shard, seqno, ts, lt);
   }
 
-  std::vector<tl_object_ptr<ton_api::db_files_package_firstBlock>> vec;
+  std::vector<tl_object_ptr<ion_api::db_files_package_firstBlock>> vec;
   for (auto &e : desc.first_blocks) {
-    vec.push_back(create_tl_object<ton_api::db_files_package_firstBlock>(e.first.workchain, e.first.shard,
+    vec.push_back(create_tl_object<ion_api::db_files_package_firstBlock>(e.first.workchain, e.first.shard,
                                                                          e.second.seqno, e.second.ts, e.second.lt));
   }
 
@@ -689,16 +689,16 @@ const ArchiveManager::FileDescription *ArchiveManager::add_file_desc(ShardIdFull
       tt.push_back(e.first.id);
     }
     index_
-        ->set(create_serialize_tl_object<ton_api::db_files_index_key>().as_slice(),
-              create_serialize_tl_object<ton_api::db_files_index_value>(std::move(t), std::move(tk), std::move(tt))
+        ->set(create_serialize_tl_object<ion_api::db_files_index_key>().as_slice(),
+              create_serialize_tl_object<ion_api::db_files_index_value>(std::move(t), std::move(tk), std::move(tt))
                   .as_slice())
         .ensure();
   }
   // add package info key
   {
     index_
-        ->set(create_serialize_tl_object<ton_api::db_files_package_key>(id.id, id.key, id.temp).as_slice(),
-              create_serialize_tl_object<ton_api::db_files_package_value>(id.id, id.key, id.temp, std::move(vec), false)
+        ->set(create_serialize_tl_object<ion_api::db_files_package_key>(id.id, id.key, id.temp).as_slice(),
+              create_serialize_tl_object<ion_api::db_files_package_value>(id.id, id.key, id.temp, std::move(vec), false)
                   .as_slice())
         .ensure();
   }
@@ -714,15 +714,15 @@ void ArchiveManager::update_desc(FileMap &f, const FileDescription &desc, ShardI
     return;
   }
   f.set_shard_first_block(desc, shard, FileDescription::Desc{seqno, ts, lt});
-  std::vector<tl_object_ptr<ton_api::db_files_package_firstBlock>> vec;
+  std::vector<tl_object_ptr<ion_api::db_files_package_firstBlock>> vec;
   for (auto &e : desc.first_blocks) {
-    vec.push_back(create_tl_object<ton_api::db_files_package_firstBlock>(e.first.workchain, e.first.shard,
+    vec.push_back(create_tl_object<ion_api::db_files_package_firstBlock>(e.first.workchain, e.first.shard,
                                                                          e.second.seqno, e.second.ts, e.second.lt));
   }
   index_->begin_transaction().ensure();
   index_
-      ->set(create_serialize_tl_object<ton_api::db_files_package_key>(desc.id.id, desc.id.key, desc.id.temp).as_slice(),
-            create_serialize_tl_object<ton_api::db_files_package_value>(desc.id.id, desc.id.key, desc.id.temp,
+      ->set(create_serialize_tl_object<ion_api::db_files_package_key>(desc.id.id, desc.id.key, desc.id.temp).as_slice(),
+            create_serialize_tl_object<ion_api::db_files_package_value>(desc.id.id, desc.id.key, desc.id.temp,
                                                                         std::move(vec), false)
                 .as_slice())
       .ensure();
@@ -862,10 +862,10 @@ void ArchiveManager::start_up() {
   index_ = std::make_shared<td::RocksDb>(
       td::RocksDb::open(db_root_ + "/files/globalindex", std::move(db_options)).move_as_ok());
   std::string value;
-  auto v = index_->get(create_serialize_tl_object<ton_api::db_files_index_key>().as_slice(), value);
+  auto v = index_->get(create_serialize_tl_object<ion_api::db_files_index_key>().as_slice(), value);
   v.ensure();
   if (v.move_as_ok() == td::KeyValue::GetStatus::Ok) {
-    auto R = fetch_tl_object<ton_api::db_files_index_value>(value, true);
+    auto R = fetch_tl_object<ion_api::db_files_index_value>(value, true);
     R.ensure();
     auto x = R.move_as_ok();
 
@@ -1250,7 +1250,7 @@ void ArchiveManager::truncate(BlockSeqno masterchain_seqno, ConstBlockHandle han
         }
         it2->second.file.release();
         index_
-            ->erase(create_serialize_tl_object<ton_api::db_files_package_key>(it2->second.id.id, it2->second.id.key,
+            ->erase(create_serialize_tl_object<ion_api::db_files_package_key>(it2->second.id.id, it2->second.id.key,
                                                                               it2->second.id.temp)
                         .as_slice())
             .ensure();
@@ -1275,7 +1275,7 @@ void ArchiveManager::truncate(BlockSeqno masterchain_seqno, ConstBlockHandle han
         }
         it2->second.file.release();
         index_
-            ->erase(create_serialize_tl_object<ton_api::db_files_package_key>(it2->second.id.id, it2->second.id.key,
+            ->erase(create_serialize_tl_object<ion_api::db_files_package_key>(it2->second.id.id, it2->second.id.key,
                                                                               it2->second.id.temp)
                         .as_slice())
             .ensure();
@@ -1297,8 +1297,8 @@ void ArchiveManager::truncate(BlockSeqno masterchain_seqno, ConstBlockHandle han
       tt.push_back(e.first.id);
     }
     index_
-        ->set(create_serialize_tl_object<ton_api::db_files_index_key>().as_slice(),
-              create_serialize_tl_object<ton_api::db_files_index_value>(std::move(t), std::move(tk), std::move(tt))
+        ->set(create_serialize_tl_object<ion_api::db_files_index_key>().as_slice(),
+              create_serialize_tl_object<ion_api::db_files_index_value>(std::move(t), std::move(tk), std::move(tt))
                   .as_slice())
         .ensure();
   }
@@ -1440,4 +1440,4 @@ void ArchiveManager::update_permanent_slices() {
 
 }  // namespace validator
 
-}  // namespace ton
+}  // namespace ion

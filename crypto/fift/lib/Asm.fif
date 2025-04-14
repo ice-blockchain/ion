@@ -695,7 +695,7 @@ x{CF3D} @Defop BCHKBITSQ
 x{CF3E} @Defop BCHKREFSQ
 x{CF3F} @Defop BCHKBITREFSQ
 x{CF40} @Defop STZEROES
-x{CF41} @Defop STONES
+x{CF41} @Defop SIONES
 x{CF42} @Defop STSAME
 { tuck sbitrefs swap 22 + swap @havebitrefs not
   { swap PUSHSLICE STSLICER }
@@ -706,7 +706,7 @@ x{CF42} @Defop STSAME
   } cond
 } : STSLICECONST
 x{CF81} @Defop STZERO
-x{CF83} @Defop STONE
+x{CF83} @Defop SIONE
 
 // cell deserialization (CellSlice primitives)
 x{D0} @Defop CTOS

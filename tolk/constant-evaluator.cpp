@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "constant-evaluator.h"
 #include "ast.h"
@@ -20,14 +20,14 @@
 #include "openssl/digest.hpp"
 #include "crypto/common/util.h"
 #include "td/utils/crypto.h"
-#include "ton/ton-types.h"
+#include "ion/ion-types.h"
 
 namespace tolk {
 
 // parse address like "EQCRDM9h4k3UJdOePPuyX40mCgA4vxge5Dc5vjBR8djbEKC5"
 // based on unpack_std_smc_addr() from block.cpp
-// (which is not included to avoid linking with ton_crypto)
-static bool parse_friendly_address(const char packed[48], ton::WorkchainId& workchain, ton::StdSmcAddress& addr) {
+// (which is not included to avoid linking with ion_crypto)
+static bool parse_friendly_address(const char packed[48], ion::WorkchainId& workchain, ion::StdSmcAddress& addr) {
   unsigned char buffer[36];
   if (!td::buff_base64_decode(td::MutableSlice{buffer, 36}, td::Slice{packed, 48}, true)) {
     return false;
@@ -43,11 +43,11 @@ static bool parse_friendly_address(const char packed[48], ton::WorkchainId& work
 
 // parse address like "0:527964d55cfa6eb731f4bfc07e9d025098097ef8505519e853986279bd8400d8"
 // based on StdAddress::parse_addr() from block.cpp
-// (which is not included to avoid linking with ton_crypto)
-static bool parse_raw_address(const std::string& acc_string, int& workchain, ton::StdSmcAddress& addr) {
+// (which is not included to avoid linking with ion_crypto)
+static bool parse_raw_address(const std::string& acc_string, int& workchain, ion::StdSmcAddress& addr) {
   size_t pos = acc_string.find(':');
   if (pos != std::string::npos) {
-    td::Result<int> r_wc = td::to_integer_safe<ton::WorkchainId>(acc_string.substr(0, pos));
+    td::Result<int> r_wc = td::to_integer_safe<ion::WorkchainId>(acc_string.substr(0, pos));
     if (r_wc.is_error()) {
       return false;
     }
@@ -98,8 +98,8 @@ static std::string parse_vertex_string_const_as_slice(V<ast_string_const> v) {
       return str;
     }
     case 'a': {  // MsgAddress
-      ton::WorkchainId workchain;
-      ton::StdSmcAddress addr;
+      ion::WorkchainId workchain;
+      ion::StdSmcAddress addr;
       bool correct = (str.size() == 48 && parse_friendly_address(str.data(), workchain, addr)) ||
                      (str.size() != 48 && parse_raw_address(str, workchain, addr));
       if (!correct) {
@@ -112,7 +112,7 @@ static std::string parse_vertex_string_const_as_slice(V<ast_string_const> v) {
       unsigned char data[3 + 8 + 256];  // addr_std$10 anycast:(Maybe Anycast) workchain_id:int8 address:bits256 = MsgAddressInt;
       td::bitstring::bits_store_long_top(data, 0, static_cast<uint64_t>(4) << (64 - 3), 3);
       td::bitstring::bits_store_long_top(data, 3, static_cast<uint64_t>(workchain) << (64 - 8), 8);
-      td::bitstring::bits_memcpy(data, 3 + 8, addr.bits().ptr, 0, ton::StdSmcAddress::size());
+      td::bitstring::bits_memcpy(data, 3 + 8, addr.bits().ptr, 0, ion::StdSmcAddress::size());
       return td::BitSlice{data, sizeof(data)}.to_hex();
     }
     default:

@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -25,11 +25,11 @@
 
 #include "td/utils/format.h"
 
-#include "auto/tl/ton_api.hpp"
+#include "auto/tl/ion_api.hpp"
 
 #include "dht-query.hpp"
 
-namespace ton {
+namespace ion {
 
 namespace dht {
 
@@ -103,12 +103,12 @@ void DhtQuery::finish_query(adnl::AdnlNodeIdShort id, bool success) {
 }
 
 void DhtQueryFindNodes::send_one_query(adnl::AdnlNodeIdShort id) {
-  auto P = create_serialize_tl_object<ton_api::dht_findNode>(get_key().tl(), get_k());
+  auto P = create_serialize_tl_object<ion_api::dht_findNode>(get_key().tl(), get_k());
   td::BufferSlice B;
   if (client_only_) {
     B = std::move(P);
   } else {
-    B = create_serialize_tl_object_suffix<ton_api::dht_query>(P.as_slice(), self_.tl());
+    B = create_serialize_tl_object_suffix<ion_api::dht_query>(P.as_slice(), self_.tl());
   }
 
   auto Pr = td::PromiseCreator::lambda([SelfId = actor_id(this), dst = id](td::Result<td::BufferSlice> R) {
@@ -126,7 +126,7 @@ void DhtQueryFindNodes::on_result(td::Result<td::BufferSlice> R, adnl::AdnlNodeI
     return;
   }
 
-  auto Res = fetch_tl_object<ton_api::dht_nodes>(R.move_as_ok(), true);
+  auto Res = fetch_tl_object<ion_api::dht_nodes>(R.move_as_ok(), true);
   if (Res.is_error()) {
     VLOG(DHT_WARNING) << this << ": incorrect result on dht.findNodes query from " << dst << ": "
                       << Res.move_as_error();
@@ -141,12 +141,12 @@ void DhtQueryFindNodes::finish(DhtNodesList list) {
 }
 
 void DhtQueryFindValue::send_one_query(adnl::AdnlNodeIdShort id) {
-  auto P = create_serialize_tl_object<ton_api::dht_findValue>(get_key().tl(), get_k());
+  auto P = create_serialize_tl_object<ion_api::dht_findValue>(get_key().tl(), get_k());
   td::BufferSlice B;
   if (client_only_) {
     B = std::move(P);
   } else {
-    B = create_serialize_tl_object_suffix<ton_api::dht_query>(P.as_slice(), self_.tl());
+    B = create_serialize_tl_object_suffix<ion_api::dht_query>(P.as_slice(), self_.tl());
   }
 
   auto Pr = td::PromiseCreator::lambda([SelfId = actor_id(this), dst = id](td::Result<td::BufferSlice> R) {
@@ -158,12 +158,12 @@ void DhtQueryFindValue::send_one_query(adnl::AdnlNodeIdShort id) {
 }
 
 void DhtQueryFindValue::send_one_query_nodes(adnl::AdnlNodeIdShort id) {
-  auto P = create_serialize_tl_object<ton_api::dht_findNode>(get_key().tl(), get_k());
+  auto P = create_serialize_tl_object<ion_api::dht_findNode>(get_key().tl(), get_k());
   td::BufferSlice B;
   if (client_only_) {
     B = std::move(P);
   } else {
-    B = create_serialize_tl_object_suffix<ton_api::dht_query>(P.as_slice(), self_.tl());
+    B = create_serialize_tl_object_suffix<ion_api::dht_query>(P.as_slice(), self_.tl());
   }
 
   auto Pr = td::PromiseCreator::lambda([SelfId = actor_id(this), dst = id](td::Result<td::BufferSlice> R) {
@@ -180,7 +180,7 @@ void DhtQueryFindValue::on_result(td::Result<td::BufferSlice> R, adnl::AdnlNodeI
     finish_query(dst, false);
     return;
   }
-  auto Res = fetch_tl_object<ton_api::dht_ValueResult>(R.move_as_ok(), true);
+  auto Res = fetch_tl_object<ion_api::dht_ValueResult>(R.move_as_ok(), true);
   if (Res.is_error()) {
     VLOG(DHT_WARNING) << this << ": dropping incorrect answer on dht.findValue query from " << dst << ": "
                       << Res.move_as_error();
@@ -192,9 +192,9 @@ void DhtQueryFindValue::on_result(td::Result<td::BufferSlice> R, adnl::AdnlNodeI
   bool send_get_nodes = false;
 
   auto A = Res.move_as_ok();
-  ton_api::downcast_call(
+  ion_api::downcast_call(
       *A, td::overloaded(
-              [&](ton_api::dht_valueFound &v) {
+              [&](ion_api::dht_valueFound &v) {
                 auto valueR = DhtValue::create(std::move(v.value_), true);
                 if (valueR.is_error()) {
                   VLOG(DHT_WARNING) << this << ": received incorrect dht answer on find value query from " << dst
@@ -216,7 +216,7 @@ void DhtQueryFindValue::on_result(td::Result<td::BufferSlice> R, adnl::AdnlNodeI
                   need_stop = true;
                 }
               },
-              [&](ton_api::dht_valueNotFound &v) {
+              [&](ion_api::dht_valueNotFound &v) {
                 add_nodes(DhtNodesList{std::move(v.nodes_), our_network_id()});
               }));
   if (need_stop) {
@@ -234,7 +234,7 @@ void DhtQueryFindValue::on_result_nodes(td::Result<td::BufferSlice> R, adnl::Adn
     finish_query(dst, false);
     return;
   }
-  auto Res = fetch_tl_object<ton_api::dht_nodes>(R.move_as_ok(), true);
+  auto Res = fetch_tl_object<ion_api::dht_nodes>(R.move_as_ok(), true);
   if (Res.is_error()) {
     VLOG(DHT_WARNING) << this << ": dropping incorrect answer on dht.findNodes query from " << dst << ": "
                       << Res.move_as_error();
@@ -242,7 +242,7 @@ void DhtQueryFindValue::on_result_nodes(td::Result<td::BufferSlice> R, adnl::Adn
     return;
   }
   auto r = Res.move_as_ok();
-  add_nodes(DhtNodesList{create_tl_object<ton_api::dht_nodes>(std::move(r->nodes_)), our_network_id()});
+  add_nodes(DhtNodesList{create_tl_object<ion_api::dht_nodes>(std::move(r->nodes_)), our_network_id()});
   finish_query(dst);
 }
 
@@ -330,7 +330,7 @@ void DhtQueryStore::send_stores(td::Result<DhtNodesList> R) {
     auto P = td::PromiseCreator::lambda([SelfId = actor_id(this)](td::Result<td::BufferSlice> R) {
       td::actor::send_closure(SelfId, &DhtQueryStore::store_ready, std::move(R));
     });
-    auto M = create_serialize_tl_object<ton_api::dht_store>(value_.tl());
+    auto M = create_serialize_tl_object<ion_api::dht_store>(value_.tl());
     td::actor::send_closure(adnl_, &adnl::Adnl::send_query, src_, node.adnl_id().compute_short_id(), "dht store",
                             std::move(P), td::Timestamp::in(2.0 + td::Random::fast(0, 20) * 0.1), std::move(M));
   }
@@ -341,7 +341,7 @@ void DhtQueryStore::store_ready(td::Result<td::BufferSlice> R) {
     fail_++;
     VLOG(DHT_INFO) << this << ": failed store query: " << R.move_as_error();
   } else {
-    auto R2 = fetch_tl_object<ton_api::dht_stored>(R.move_as_ok(), true);
+    auto R2 = fetch_tl_object<ion_api::dht_stored>(R.move_as_ok(), true);
     if (R2.is_error()) {
       fail_++;
       VLOG(DHT_WARNING) << this << ": can not parse answer (expected dht.stored): " << R2.move_as_error();
@@ -378,7 +378,7 @@ DhtQueryRegisterReverseConnection::DhtQueryRegisterReverseConnection(
   node_ = node;
   adnl_ = adnl;
   src_ = src;
-  query_ = create_serialize_tl_object<ton_api::dht_registerReverseConnection>(client.tl(), ttl, std::move(signature));
+  query_ = create_serialize_tl_object<ion_api::dht_registerReverseConnection>(client.tl(), ttl, std::move(signature));
 }
 
 void DhtQueryRegisterReverseConnection::start_up() {
@@ -424,7 +424,7 @@ void DhtQueryRegisterReverseConnection::ready(td::Result<td::BufferSlice> R) {
     fail_++;
     VLOG(DHT_INFO) << this << ": failed register reverse connection query: " << R.move_as_error();
   } else {
-    auto R2 = fetch_tl_object<ton_api::dht_stored>(R.move_as_ok(), true);
+    auto R2 = fetch_tl_object<ion_api::dht_stored>(R.move_as_ok(), true);
     if (R2.is_error()) {
       fail_++;
       VLOG(DHT_WARNING) << this << ": can not parse answer (expected dht.stored): " << R2.move_as_error();
@@ -449,7 +449,7 @@ void DhtQueryRequestReversePing::send_one_query(adnl::AdnlNodeIdShort id) {
   if (client_only_) {
     B = query_.clone();
   } else {
-    B = create_serialize_tl_object_suffix<ton_api::dht_query>(query_.as_slice(), self_.tl());
+    B = create_serialize_tl_object_suffix<ion_api::dht_query>(query_.as_slice(), self_.tl());
   }
   auto P = td::PromiseCreator::lambda([SelfId = actor_id(this), dst = id](td::Result<td::BufferSlice> R) {
     td::actor::send_closure(SelfId, &DhtQueryRequestReversePing::on_result, std::move(R), dst);
@@ -464,7 +464,7 @@ void DhtQueryRequestReversePing::on_result(td::Result<td::BufferSlice> R, adnl::
     finish_query(dst, false);
     return;
   }
-  auto Res = fetch_tl_object<ton_api::dht_ReversePingResult>(R.move_as_ok(), true);
+  auto Res = fetch_tl_object<ion_api::dht_ReversePingResult>(R.move_as_ok(), true);
   if (Res.is_error()) {
     VLOG(DHT_WARNING) << this << ": dropping incorrect answer on dht.requestReversePing query from " << dst << ": "
                       << Res.move_as_error();
@@ -473,12 +473,12 @@ void DhtQueryRequestReversePing::on_result(td::Result<td::BufferSlice> R, adnl::
   }
 
   auto A = Res.move_as_ok();
-  ton_api::downcast_call(*A, td::overloaded(
-                                 [&](ton_api::dht_reversePingOk &v) {
+  ion_api::downcast_call(*A, td::overloaded(
+                                 [&](ion_api::dht_reversePingOk &v) {
                                    promise_.set_value(td::Unit());
                                    stop();
                                  },
-                                 [&](ton_api::dht_clientNotFound &v) {
+                                 [&](ion_api::dht_clientNotFound &v) {
                                    add_nodes(DhtNodesList{std::move(v.nodes_), our_network_id()});
                                    finish_query(dst);
                                  }));
@@ -490,4 +490,4 @@ void DhtQueryRequestReversePing::finish(DhtNodesList list) {
 
 }  // namespace dht
 
-}  // namespace ton
+}  // namespace ion

@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -26,15 +26,15 @@
 #include "fabric.h"
 #include "manager.h"
 #include "validate-broadcast.hpp"
-#include "ton/ton-tl.hpp"
-#include "ton/ton-io.hpp"
+#include "ion/ion-tl.hpp"
+#include "ion/ion-io.hpp"
 #include "state-serializer.hpp"
 #include "get-next-key-blocks.h"
 #include "import-db-slice.hpp"
 
 #include "auto/tl/lite_api.h"
 #include "tl-utils/lite-utils.hpp"
-#include "auto/tl/ton_api_json.h"
+#include "auto/tl/ion_api_json.h"
 #include "tl/tl_json.h"
 
 #include "td/utils/Random.h"
@@ -48,7 +48,7 @@
 
 #include <fstream>
 
-namespace ton {
+namespace ion {
 
 namespace validator {
 
@@ -1513,7 +1513,7 @@ void ValidatorManagerImpl::register_block_handle(BlockHandle handle) {
 
 void ValidatorManagerImpl::get_top_masterchain_state(td::Promise<td::Ref<MasterchainState>> promise) {
   if (last_masterchain_state_.is_null()) {
-    promise.set_error(td::Status::Error(ton::ErrorCode::notready, "not started"));
+    promise.set_error(td::Status::Error(ion::ErrorCode::notready, "not started"));
   } else {
     promise.set_result(last_masterchain_state_);
   }
@@ -1542,7 +1542,7 @@ td::Ref<MasterchainState> ValidatorManagerImpl::do_get_last_liteserver_state() {
 
 void ValidatorManagerImpl::get_top_masterchain_block(td::Promise<BlockIdExt> promise) {
   if (!last_masterchain_block_id_.is_valid()) {
-    promise.set_error(td::Status::Error(ton::ErrorCode::notready, "not started"));
+    promise.set_error(td::Status::Error(ion::ErrorCode::notready, "not started"));
   } else {
     promise.set_result(last_masterchain_block_id_);
   }
@@ -1551,7 +1551,7 @@ void ValidatorManagerImpl::get_top_masterchain_block(td::Promise<BlockIdExt> pro
 void ValidatorManagerImpl::get_top_masterchain_state_block(
     td::Promise<std::pair<td::Ref<MasterchainState>, BlockIdExt>> promise) {
   if (last_masterchain_state_.is_null()) {
-    promise.set_error(td::Status::Error(ton::ErrorCode::notready, "not started"));
+    promise.set_error(td::Status::Error(ion::ErrorCode::notready, "not started"));
   } else {
     promise.set_result(
         std::pair<td::Ref<MasterchainState>, BlockIdExt>{last_masterchain_state_, last_masterchain_block_id_});
@@ -1562,7 +1562,7 @@ void ValidatorManagerImpl::get_last_liteserver_state_block(
     td::Promise<std::pair<td::Ref<MasterchainState>, BlockIdExt>> promise) {
   auto state = do_get_last_liteserver_state();
   if (state.is_null()) {
-    promise.set_error(td::Status::Error(ton::ErrorCode::notready, "not started"));
+    promise.set_error(td::Status::Error(ion::ErrorCode::notready, "not started"));
   } else {
     promise.set_result(std::pair<td::Ref<MasterchainState>, BlockIdExt>{state, state->get_block_id()});
   }
@@ -1650,7 +1650,7 @@ void ValidatorManagerImpl::send_block_broadcast(BlockBroadcast broadcast, int mo
 }
 
 void ValidatorManagerImpl::send_validator_telemetry(PublicKeyHash key,
-                                                    tl_object_ptr<ton_api::validator_telemetry> telemetry) {
+                                                    tl_object_ptr<ion_api::validator_telemetry> telemetry) {
   callback_->send_validator_telemetry(key, std::move(telemetry));
 }
 
@@ -2287,24 +2287,24 @@ void ValidatorManagerImpl::update_shard_blocks() {
 ValidatorSessionId ValidatorManagerImpl::get_validator_set_id(ShardIdFull shard, td::Ref<ValidatorSet> val_set,
                                                               td::Bits256 opts_hash, BlockSeqno last_key_block_seqno,
                                                               const validatorsession::ValidatorSessionOptions &opts) {
-  std::vector<tl_object_ptr<ton_api::validator_groupMember>> vec;
+  std::vector<tl_object_ptr<ion_api::validator_groupMember>> vec;
   auto v = val_set->export_vector();
   auto vert_seqno = opts_->get_maximal_vertical_seqno();
   for (auto &n : v) {
     auto pub_key = PublicKey{pubkeys::Ed25519{n.key}};
     vec.push_back(
-        create_tl_object<ton_api::validator_groupMember>(pub_key.compute_short_id().bits256_value(), n.addr, n.weight));
+        create_tl_object<ion_api::validator_groupMember>(pub_key.compute_short_id().bits256_value(), n.addr, n.weight));
   }
   if (!opts.new_catchain_ids) {
     if (vert_seqno == 0) {
-      return create_hash_tl_object<ton_api::validator_group>(shard.workchain, shard.shard,
+      return create_hash_tl_object<ion_api::validator_group>(shard.workchain, shard.shard,
                                                              val_set->get_catchain_seqno(), opts_hash, std::move(vec));
     } else {
-      return create_hash_tl_object<ton_api::validator_groupEx>(
+      return create_hash_tl_object<ion_api::validator_groupEx>(
           shard.workchain, shard.shard, vert_seqno, val_set->get_catchain_seqno(), opts_hash, std::move(vec));
     }
   } else {
-    return create_hash_tl_object<ton_api::validator_groupNew>(shard.workchain, shard.shard, vert_seqno,
+    return create_hash_tl_object<ion_api::validator_groupNew>(shard.workchain, shard.shard, vert_seqno,
                                                               last_key_block_seqno, val_set->get_catchain_seqno(),
                                                               opts_hash, std::move(vec));
   }
@@ -2955,16 +2955,16 @@ void ValidatorManagerImpl::log_validator_session_stats(BlockIdExt block_id,
     return;
   }
 
-  std::vector<tl_object_ptr<ton_api::validatorSession_statsRound>> rounds;
+  std::vector<tl_object_ptr<ion_api::validatorSession_statsRound>> rounds;
   for (const auto &round : stats.rounds) {
-    std::vector<tl_object_ptr<ton_api::validatorSession_statsProducer>> producers;
+    std::vector<tl_object_ptr<ion_api::validatorSession_statsProducer>> producers;
     for (const auto &producer : round.producers) {
       BlockIdExt cur_block_id{block_id.id, producer.root_hash, producer.file_hash};
       auto it = recorded_block_stats_.find(cur_block_id);
-      tl_object_ptr<ton_api::validatorSession_collationStats> collation_stats;
+      tl_object_ptr<ion_api::validatorSession_collationStats> collation_stats;
       if (it != recorded_block_stats_.end() && it->second.collator_stats_) {
         auto &stats = it->second.collator_stats_.value();
-        collation_stats = create_tl_object<ton_api::validatorSession_collationStats>(
+        collation_stats = create_tl_object<ion_api::validatorSession_collationStats>(
             stats.bytes, stats.gas, stats.lt_delta, stats.cat_bytes, stats.cat_gas, stats.cat_lt_delta,
             stats.limits_log, stats.ext_msgs_total, stats.ext_msgs_filtered, stats.ext_msgs_accepted,
             stats.ext_msgs_rejected);
@@ -2976,7 +2976,7 @@ void ValidatorManagerImpl::log_validator_session_stats(BlockIdExt block_id,
       for (bool x : producer.signers) {
         signers += (x ? '1' : '0');
       }
-      producers.push_back(create_tl_object<ton_api::validatorSession_statsProducer>(
+      producers.push_back(create_tl_object<ion_api::validatorSession_statsProducer>(
           producer.id.bits256_value(), producer.candidate_id, producer.block_status, producer.root_hash,
           producer.file_hash, producer.comment, producer.block_timestamp, producer.is_accepted, producer.is_ours,
           producer.got_submit_at, producer.collation_time, producer.collated_at, producer.collation_cached,
@@ -2989,10 +2989,10 @@ void ValidatorManagerImpl::log_validator_session_stats(BlockIdExt block_id,
           producer.signed_weight, producer.signed_33pct_at, producer.signed_66pct_at, std::move(signers),
           producer.serialize_time, producer.deserialize_time, producer.serialized_size));
     }
-    rounds.push_back(create_tl_object<ton_api::validatorSession_statsRound>(round.timestamp, std::move(producers)));
+    rounds.push_back(create_tl_object<ion_api::validatorSession_statsRound>(round.timestamp, std::move(producers)));
   }
 
-  auto obj = create_tl_object<ton_api::validatorSession_stats>(
+  auto obj = create_tl_object<ion_api::validatorSession_stats>(
       stats.success, create_tl_block_id(block_id), stats.timestamp, stats.self.bits256_value(), stats.session_id,
       stats.cc_seqno, stats.creator.bits256_value(), stats.total_validators, stats.total_weight, stats.signatures,
       stats.signatures_weight, stats.approve_signatures, stats.approve_signatures_weight, stats.first_round,
@@ -3013,12 +3013,12 @@ void ValidatorManagerImpl::log_new_validator_group_stats(validatorsession::NewVa
   if (fname.empty()) {
     return;
   }
-  std::vector<tl_object_ptr<ton_api::validatorSession_newValidatorGroupStats_node>> nodes;
+  std::vector<tl_object_ptr<ion_api::validatorSession_newValidatorGroupStats_node>> nodes;
   for (const auto &node : stats.nodes) {
     nodes.push_back(
-        create_tl_object<ton_api::validatorSession_newValidatorGroupStats_node>(node.id.bits256_value(), node.weight));
+        create_tl_object<ion_api::validatorSession_newValidatorGroupStats_node>(node.id.bits256_value(), node.weight));
   }
-  auto obj = create_tl_object<ton_api::validatorSession_newValidatorGroupStats>(
+  auto obj = create_tl_object<ion_api::validatorSession_newValidatorGroupStats>(
       stats.session_id, stats.shard.workchain, stats.shard.shard, stats.cc_seqno, stats.last_key_block_seqno,
       stats.timestamp, stats.self_idx, std::move(nodes));
   auto s = td::json_encode<std::string>(td::ToJson(*obj.get()), false);
@@ -3038,12 +3038,12 @@ void ValidatorManagerImpl::log_end_validator_group_stats(validatorsession::EndVa
   if (fname.empty()) {
     return;
   }
-  std::vector<tl_object_ptr<ton_api::validatorSession_endValidatorGroupStats_node>> nodes;
+  std::vector<tl_object_ptr<ion_api::validatorSession_endValidatorGroupStats_node>> nodes;
   for (const auto &node : stats.nodes) {
-    nodes.push_back(create_tl_object<ton_api::validatorSession_endValidatorGroupStats_node>(node.id.bits256_value(),
+    nodes.push_back(create_tl_object<ion_api::validatorSession_endValidatorGroupStats_node>(node.id.bits256_value(),
                                                                                             node.catchain_blocks));
   }
-  auto obj = create_tl_object<ton_api::validatorSession_endValidatorGroupStats>(stats.session_id, stats.timestamp,
+  auto obj = create_tl_object<ion_api::validatorSession_endValidatorGroupStats>(stats.session_id, stats.timestamp,
                                                                                 std::move(nodes));
   auto s = td::json_encode<std::string>(td::ToJson(*obj.get()), false);
   s.erase(std::remove_if(s.begin(), s.end(), [](char c) { return c == '\n' || c == '\r'; }), s.end());
@@ -3504,4 +3504,4 @@ void ValidatorManagerImpl::init_validator_telemetry() {
 
 }  // namespace validator
 
-}  // namespace ton
+}  // namespace ion

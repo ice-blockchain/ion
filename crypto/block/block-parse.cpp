@@ -1,25 +1,25 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
 #include "td/utils/bits.h"
 #include "block/block-parse.h"
 #include "block/block-auto.h"
-#include "ton/ton-shard.h"
+#include "ion/ion-shard.h"
 #include "common/util.h"
 #include "td/utils/crypto.h"
 
@@ -114,11 +114,11 @@ bool MsgAddressInt::skip_get_depth(vm::CellSlice& cs, int& depth) const {
   return false;
 }
 
-ton::AccountIdPrefixFull MsgAddressInt::get_prefix(vm::CellSlice&& cs) {
+ion::AccountIdPrefixFull MsgAddressInt::get_prefix(vm::CellSlice&& cs) {
   if (!cs.have(3 + 8 + 64)) {
     return {};
   }
-  ton::WorkchainId workchain;
+  ion::WorkchainId workchain;
   unsigned long long prefix;
   int t = (int)cs.prefetch_ulong(2 + 1 + 5);
   switch (t >> 5) {
@@ -167,11 +167,11 @@ ton::AccountIdPrefixFull MsgAddressInt::get_prefix(vm::CellSlice&& cs) {
   return {};
 }
 
-ton::AccountIdPrefixFull MsgAddressInt::get_prefix(const vm::CellSlice& cs) {
+ion::AccountIdPrefixFull MsgAddressInt::get_prefix(const vm::CellSlice& cs) {
   return get_prefix(vm::CellSlice{cs});
 }
 
-ton::AccountIdPrefixFull MsgAddressInt::get_prefix(Ref<vm::CellSlice> cs_ref) {
+ion::AccountIdPrefixFull MsgAddressInt::get_prefix(Ref<vm::CellSlice> cs_ref) {
   if (cs_ref->is_unique()) {
     return get_prefix(std::move(cs_ref.unique_write()));
   } else {
@@ -179,8 +179,8 @@ ton::AccountIdPrefixFull MsgAddressInt::get_prefix(Ref<vm::CellSlice> cs_ref) {
   }
 }
 
-bool MsgAddressInt::extract_std_address(Ref<vm::CellSlice> cs_ref, ton::WorkchainId& workchain,
-                                        ton::StdSmcAddress& addr, bool rewrite) const {
+bool MsgAddressInt::extract_std_address(Ref<vm::CellSlice> cs_ref, ion::WorkchainId& workchain,
+                                        ion::StdSmcAddress& addr, bool rewrite) const {
   if (cs_ref.is_null()) {
     return false;
   } else if (cs_ref->is_unique()) {
@@ -191,7 +191,7 @@ bool MsgAddressInt::extract_std_address(Ref<vm::CellSlice> cs_ref, ton::Workchai
   }
 }
 
-bool MsgAddressInt::extract_std_address(vm::CellSlice& cs, ton::WorkchainId& workchain, ton::StdSmcAddress& addr,
+bool MsgAddressInt::extract_std_address(vm::CellSlice& cs, ion::WorkchainId& workchain, ion::StdSmcAddress& addr,
                                         bool do_rewrite) const {
   if (!cs.have(3 + 8 + 64)) {
     return {};
@@ -249,8 +249,8 @@ bool MsgAddressInt::extract_std_address(vm::CellSlice& cs, block::StdAddress& ad
   return extract_std_address(cs, addr.workchain, addr.addr, rewrite);
 }
 
-bool MsgAddressInt::store_std_address(vm::CellBuilder& cb, ton::WorkchainId workchain,
-                                      const ton::StdSmcAddress& addr) const {
+bool MsgAddressInt::store_std_address(vm::CellBuilder& cb, ion::WorkchainId workchain,
+                                      const ion::StdSmcAddress& addr) const {
   if (workchain >= -128 && workchain < 128) {
     return cb.store_long_bool(4, 3)             // addr_std$10 anycast:(Maybe Anycast)
            && cb.store_long_bool(workchain, 8)  // workchain_id:int8
@@ -262,7 +262,7 @@ bool MsgAddressInt::store_std_address(vm::CellBuilder& cb, ton::WorkchainId work
   }
 }
 
-Ref<vm::CellSlice> MsgAddressInt::pack_std_address(ton::WorkchainId workchain, const ton::StdSmcAddress& addr) const {
+Ref<vm::CellSlice> MsgAddressInt::pack_std_address(ion::WorkchainId workchain, const ion::StdSmcAddress& addr) const {
   vm::CellBuilder cb;
   if (store_std_address(cb, workchain, addr)) {
     return vm::load_cell_slice_ref(cb.finalize());
@@ -2191,13 +2191,13 @@ bool OutMsgQueueInfo::validate_skip(int* ops, vm::CellSlice& cs, bool weak) cons
 const OutMsgQueueInfo t_OutMsgQueueInfo;
 const RefTo<OutMsgQueueInfo> t_Ref_OutMsgQueueInfo;
 
-bool ExtBlkRef::unpack(vm::CellSlice& cs, ton::BlockIdExt& blkid, ton::LogicalTime* end_lt) const {
+bool ExtBlkRef::unpack(vm::CellSlice& cs, ion::BlockIdExt& blkid, ion::LogicalTime* end_lt) const {
   block::gen::ExtBlkRef::Record data;
   if (!tlb::unpack(cs, data)) {
     blkid.invalidate();
     return false;
   }
-  blkid.id = ton::BlockId{ton::masterchainId, ton::shardIdAll, data.seq_no};
+  blkid.id = ion::BlockId{ion::masterchainId, ion::shardIdAll, data.seq_no};
   blkid.root_hash = data.root_hash;
   blkid.file_hash = data.file_hash;
   if (end_lt) {
@@ -2206,13 +2206,13 @@ bool ExtBlkRef::unpack(vm::CellSlice& cs, ton::BlockIdExt& blkid, ton::LogicalTi
   return true;
 }
 
-bool ExtBlkRef::unpack(Ref<vm::CellSlice> cs_ref, ton::BlockIdExt& blkid, ton::LogicalTime* end_lt) const {
+bool ExtBlkRef::unpack(Ref<vm::CellSlice> cs_ref, ion::BlockIdExt& blkid, ion::LogicalTime* end_lt) const {
   block::gen::ExtBlkRef::Record data;
   if (!tlb::csr_unpack_safe(std::move(cs_ref), data)) {
     blkid.invalidate();
     return false;
   }
-  blkid.id = ton::BlockId{ton::masterchainId, ton::shardIdAll, data.seq_no};
+  blkid.id = ion::BlockId{ion::masterchainId, ion::shardIdAll, data.seq_no};
   blkid.root_hash = data.root_hash;
   blkid.file_hash = data.file_hash;
   if (end_lt) {
@@ -2221,19 +2221,19 @@ bool ExtBlkRef::unpack(Ref<vm::CellSlice> cs_ref, ton::BlockIdExt& blkid, ton::L
   return true;
 }
 
-bool ExtBlkRef::store(vm::CellBuilder& cb, const ton::BlockIdExt& blkid, ton::LogicalTime end_lt) const {
+bool ExtBlkRef::store(vm::CellBuilder& cb, const ion::BlockIdExt& blkid, ion::LogicalTime end_lt) const {
   return cb.store_long_bool(end_lt, 64)            // ext_blk_ref$_ end_lt:uint64
          && cb.store_long_bool(blkid.seqno(), 32)  // seq_no:uint32
          && cb.store_bits_bool(blkid.root_hash)    // root_hash:bits256
          && cb.store_bits_bool(blkid.file_hash);   // file_hash:bits256 = ExtBlkRef;
 }
 
-Ref<vm::Cell> ExtBlkRef::pack_cell(const ton::BlockIdExt& blkid, ton::LogicalTime end_lt) const {
+Ref<vm::Cell> ExtBlkRef::pack_cell(const ion::BlockIdExt& blkid, ion::LogicalTime end_lt) const {
   vm::CellBuilder cb;
   return store(cb, blkid, end_lt) ? cb.finalize() : Ref<vm::Cell>{};
 }
 
-bool ExtBlkRef::pack_to(Ref<vm::Cell>& cell, const ton::BlockIdExt& blkid, ton::LogicalTime end_lt) const {
+bool ExtBlkRef::pack_to(Ref<vm::Cell>& cell, const ion::BlockIdExt& blkid, ion::LogicalTime end_lt) const {
   vm::CellBuilder cb;
   return store(cb, blkid, end_lt) && cb.finalize_to(cell);
 }
@@ -2245,7 +2245,7 @@ bool ShardIdent::validate_skip(int* ops, vm::CellSlice& cs, bool weak) const {
   int shard_pfx_len, workchain_id;
   unsigned long long shard_pfx;
   if (cs.fetch_ulong(2) == 0 && cs.fetch_uint_to(6, shard_pfx_len) && cs.fetch_int_to(32, workchain_id) &&
-      workchain_id != ton::workchainInvalid && cs.fetch_uint_to(64, shard_pfx)) {
+      workchain_id != ion::workchainInvalid && cs.fetch_uint_to(64, shard_pfx)) {
     auto pow2 = (1ULL << (63 - shard_pfx_len));
     if (!(shard_pfx & (pow2 - 1))) {
       return true;
@@ -2255,7 +2255,7 @@ bool ShardIdent::validate_skip(int* ops, vm::CellSlice& cs, bool weak) const {
 }
 
 bool ShardIdent::Record::check() const {
-  return workchain_id != ton::workchainInvalid && !(shard_prefix & ((1ULL << (63 - shard_pfx_bits)) - 1));
+  return workchain_id != ion::workchainInvalid && !(shard_prefix & ((1ULL << (63 - shard_pfx_bits)) - 1));
 }
 
 bool ShardIdent::unpack(vm::CellSlice& cs, ShardIdent::Record& data) const {
@@ -2273,7 +2273,7 @@ bool ShardIdent::pack(vm::CellBuilder& cb, const Record& data) const {
          cb.store_long_rchk_bool(data.workchain_id, 32) && cb.store_ulong_rchk_bool(data.shard_prefix, 64);
 }
 
-bool ShardIdent::unpack(vm::CellSlice& cs, ton::WorkchainId& workchain, ton::ShardId& shard) const {
+bool ShardIdent::unpack(vm::CellSlice& cs, ion::WorkchainId& workchain, ion::ShardId& shard) const {
   int bits;
   unsigned long long pow2;
   auto assign = [](auto& a, auto b) { return a = b; };
@@ -2283,16 +2283,16 @@ bool ShardIdent::unpack(vm::CellSlice& cs, ton::WorkchainId& workchain, ton::Sha
          && assign(pow2, (1ULL << (63 - bits)))  // (power)
          && cs.fetch_int_to(32, workchain)       // workchain_id:int32
          && cs.fetch_uint_to(64, shard)          // shard_prefix:uint64
-         && workchain != ton::workchainInvalid && !(shard & (2 * pow2 - 1)) && assign_or(shard, pow2);
+         && workchain != ion::workchainInvalid && !(shard & (2 * pow2 - 1)) && assign_or(shard, pow2);
 }
 
-bool ShardIdent::unpack(vm::CellSlice& cs, ton::ShardIdFull& data) const {
+bool ShardIdent::unpack(vm::CellSlice& cs, ion::ShardIdFull& data) const {
   return unpack(cs, data.workchain, data.shard);
 }
 
-bool ShardIdent::pack(vm::CellBuilder& cb, ton::WorkchainId workchain, ton::ShardId shard) const {
-  int bits = ton::shard_prefix_length(shard);
-  return workchain != ton::workchainInvalid               // check workchain
+bool ShardIdent::pack(vm::CellBuilder& cb, ion::WorkchainId workchain, ion::ShardId shard) const {
+  int bits = ion::shard_prefix_length(shard);
+  return workchain != ion::workchainInvalid               // check workchain
          && shard                                         // check shard
          && cb.store_long_bool(0, 2)                      // shard_ident$00
          && cb.store_uint_leq(60, bits)                   // shard_pfx_bits:(#<= 60)
@@ -2300,7 +2300,7 @@ bool ShardIdent::pack(vm::CellBuilder& cb, ton::WorkchainId workchain, ton::Shar
          && cb.store_long_bool(shard & (shard - 1), 64);  // shard_prefix:uint64
 }
 
-bool ShardIdent::pack(vm::CellBuilder& cb, ton::ShardIdFull data) const {
+bool ShardIdent::pack(vm::CellBuilder& cb, ion::ShardIdFull data) const {
   return pack(cb, data.workchain, data.shard);
 }
 
@@ -2310,14 +2310,14 @@ bool BlockIdExt::validate_skip(int* ops, vm::CellSlice& cs, bool weak) const {
   return t_ShardIdent.validate_skip(ops, cs, weak) && cs.advance(32 + 256 * 2);
 }
 
-bool BlockIdExt::unpack(vm::CellSlice& cs, ton::BlockIdExt& data) const {
+bool BlockIdExt::unpack(vm::CellSlice& cs, ion::BlockIdExt& data) const {
   return t_ShardIdent.unpack(cs, data.id.workchain, data.id.shard)  // block_id_ext$_ shard_id:ShardIdent
          && cs.fetch_uint_to(32, data.id.seqno)                     // seq_no:uint32
          && cs.fetch_bits_to(data.root_hash)                        // root_hash:bits256
          && cs.fetch_bits_to(data.file_hash);                       // file_hash:bits256
 }
 
-bool BlockIdExt::pack(vm::CellBuilder& cb, const ton::BlockIdExt& data) const {
+bool BlockIdExt::pack(vm::CellBuilder& cb, const ion::BlockIdExt& data) const {
   return t_ShardIdent.pack(cb, data.id.workchain, data.id.shard)  // block_id_ext$_ shard_id:ShardIdent
          && cb.store_long_bool(data.id.seqno, 32)                 // seq_no:uint32
          && cb.store_bits_bool(data.root_hash)                    // root_hash:bits256

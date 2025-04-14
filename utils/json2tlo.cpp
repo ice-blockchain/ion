@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain source code.
+    This file is part of ION Blockchain source code.
 
-    TON Blockchain is free software; you can redistribute it and/or
+    ION Blockchain is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
     as published by the Free Software Foundation; either version 2
     of the License, or (at your option) any later version.
 
-    TON Blockchain is distributed in the hope that it will be useful,
+    ION Blockchain is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with TON Blockchain.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain.  If not, see <http://www.gnu.org/licenses/>.
 
     In addition, as a special exception, the copyright holders give permission
     to link the code of portions of this program with the OpenSSL library.
@@ -32,13 +32,13 @@
 #include <cassert>
 #include "td/utils/OptionParser.h"
 #include "keys/encryptor.h"
-#include "auto/tl/ton_api_json.h"
+#include "auto/tl/ion_api_json.h"
 #include "td/utils/filesystem.h"
 #include "common/io.hpp"
 #include "common/checksum.h"
 #include "tl/tl_json.h"
-#include "auto/tl/ton_api.h"
-#include "auto/tl/ton_api_json.h"
+#include "auto/tl/ion_api.h"
+#include "auto/tl/ion_api_json.h"
 #include "git.h"
 
 int main(int argc, char *argv[]) {
@@ -80,12 +80,12 @@ int main(int argc, char *argv[]) {
     td::BufferSlice out_data;
     if (!reverse_) {
       TRY_RESULT(j, td::json_decode(in_data.as_slice()));
-      ton::tl_object_ptr<ton::ton_api::Object> s_data;
+      ion::tl_object_ptr<ion::ion_api::Object> s_data;
       TRY_STATUS(td::from_json(s_data, std::move(j)));
 
       out_data = serialize_tl_object(s_data, true);
     } else {
-      TRY_RESULT(X, ton::fetch_tl_object<ton::ton_api::Object>(std::move(in_data), true));
+      TRY_RESULT(X, ion::fetch_tl_object<ion::ion_api::Object>(std::move(in_data), true));
       out_data = td::json_encode<td::BufferSlice>(td::ToJson(*X.get()));
     }
     auto hash = td::sha256_bits256(out_data.as_slice());

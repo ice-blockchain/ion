@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -20,11 +20,11 @@
 
 #include "td/utils/buffer.h"
 #include "td/utils/SharedSlice.h"
-#include "auto/tl/ton_api.h"
+#include "auto/tl/ion_api.h"
 
 #include "catchain/catchain-receiver.h"
 
-namespace ton {
+namespace ion {
 
 namespace catchain {
 
@@ -50,8 +50,8 @@ class CatChainReceivedBlock {
   virtual td::uint32 get_fork_id() const = 0;
   virtual td::uint32 get_source_id() const = 0;
 
-  virtual tl_object_ptr<ton_api::catchain_block> export_tl() const = 0;
-  virtual tl_object_ptr<ton_api::catchain_block_dep> export_tl_dep() const = 0;
+  virtual tl_object_ptr<ion_api::catchain_block> export_tl() const = 0;
+  virtual tl_object_ptr<ion_api::catchain_block_dep> export_tl_dep() const = 0;
 
   virtual void find_pending_deps(std::vector<CatChainBlockHash> &vec, td::uint32 max_size) const = 0;
 
@@ -67,36 +67,36 @@ class CatChainReceivedBlock {
 
  public:
   //change state
-  virtual void initialize(tl_object_ptr<ton_api::catchain_block> block, td::SharedSlice payload) = 0;
+  virtual void initialize(tl_object_ptr<ion_api::catchain_block> block, td::SharedSlice payload) = 0;
   virtual void set_ill() = 0;
   virtual void written() = 0;
   virtual void run() = 0;
 
  public:
-  static std::unique_ptr<CatChainReceivedBlock> create(tl_object_ptr<ton_api::catchain_block> block,
+  static std::unique_ptr<CatChainReceivedBlock> create(tl_object_ptr<ion_api::catchain_block> block,
                                                        td::SharedSlice payload, CatChainReceiver *chain);
-  static std::unique_ptr<CatChainReceivedBlock> create(tl_object_ptr<ton_api::catchain_block_dep> block,
+  static std::unique_ptr<CatChainReceivedBlock> create(tl_object_ptr<ion_api::catchain_block_dep> block,
                                                        CatChainReceiver *chain);
   static std::unique_ptr<CatChainReceivedBlock> create_root(td::uint32 source_id, CatChainSessionId session_id,
                                                             CatChainReceiver *chain);
 
-  static tl_object_ptr<ton_api::catchain_block_id> block_id(const CatChainReceiver *chain,
-                                                            const tl_object_ptr<ton_api::catchain_block> &block,
+  static tl_object_ptr<ion_api::catchain_block_id> block_id(const CatChainReceiver *chain,
+                                                            const tl_object_ptr<ion_api::catchain_block> &block,
                                                             const td::Slice &payload);
-  static tl_object_ptr<ton_api::catchain_block_id> block_id(const CatChainReceiver *chain,
-                                                            const tl_object_ptr<ton_api::catchain_block_dep> &block);
+  static tl_object_ptr<ion_api::catchain_block_id> block_id(const CatChainReceiver *chain,
+                                                            const tl_object_ptr<ion_api::catchain_block_dep> &block);
   static CatChainBlockHash block_hash(const CatChainReceiver *chain,
-                                      const tl_object_ptr<ton_api::catchain_block> &block,
+                                      const tl_object_ptr<ion_api::catchain_block> &block,
                                       const td::Slice &payload);
   static CatChainBlockHash block_hash(const CatChainReceiver *chain,
-                                      const tl_object_ptr<ton_api::catchain_block_dep> &block);
+                                      const tl_object_ptr<ion_api::catchain_block_dep> &block);
   static td::Status pre_validate_block(const CatChainReceiver *chain,
-                                       const tl_object_ptr<ton_api::catchain_block> &block,
+                                       const tl_object_ptr<ion_api::catchain_block> &block,
                                        const td::Slice &payload);
   static td::Status pre_validate_block(const CatChainReceiver *chain,
-                                       const tl_object_ptr<ton_api::catchain_block_dep> &block);
+                                       const tl_object_ptr<ion_api::catchain_block_dep> &block);
   static CatChainBlockPayloadHash data_payload_hash(const CatChainReceiver *chain,
-                                                    const tl_object_ptr<ton_api::catchain_block_data> &data,
+                                                    const tl_object_ptr<ion_api::catchain_block_data> &data,
                                                     const td::Slice &payload);
 
 
@@ -105,16 +105,16 @@ class CatChainReceivedBlock {
 
 }  // namespace catchain
 
-}  // namespace ton
+}  // namespace ion
 
 namespace td {
 
-inline td::StringBuilder &operator<<(td::StringBuilder &sb, const ton::catchain::CatChainReceivedBlock &block) {
+inline td::StringBuilder &operator<<(td::StringBuilder &sb, const ion::catchain::CatChainReceivedBlock &block) {
   sb << "[block " << block.get_chain()->get_incarnation() << " " << block.get_source_id() << " " << block.get_fork_id()
      << " " << block.get_hash() << "]";
   return sb;
 }
-inline td::StringBuilder &operator<<(td::StringBuilder &sb, const ton::catchain::CatChainReceivedBlock *block) {
+inline td::StringBuilder &operator<<(td::StringBuilder &sb, const ion::catchain::CatChainReceivedBlock *block) {
   sb << *block;
   return sb;
 }

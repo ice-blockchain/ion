@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -38,8 +38,8 @@
 
 #include "tl-utils/tl-utils.hpp"
 
-#include "auto/tl/ton_api.h"
-#include "auto/tl/ton_api.hpp"
+#include "auto/tl/ion_api.h"
+#include "auto/tl/ion_api.hpp"
 
 #include "td/actor/actor.h"
 
@@ -70,7 +70,7 @@ constexpr td::uint64 Byte = 1;
 constexpr td::uint64 KiloByte = (1 << 10) * Byte;
 constexpr td::uint64 MegaByte = (1 << 10) * KiloByte;
 
-using namespace ton::rldp2;
+using namespace ion::rldp2;
 
 extern "C" {
 double ndtri(double y0);
@@ -799,7 +799,7 @@ TEST(MerkleTree, Manual) {
   timer = {};
   LOG(INFO) << "Init merkle tree";
   size_t i = 0;
-  ton::MerkleTree tree(td::transform(hashes, [&i](auto &x) { return ton::MerkleTree::Piece{i++, x}; }));
+  ion::MerkleTree tree(td::transform(hashes, [&i](auto &x) { return ion::MerkleTree::Piece{i++, x}; }));
   LOG(INFO) << timer;
 
   auto root_proof = tree.gen_proof(0, chunks_count - 1).move_as_ok();
@@ -818,15 +818,15 @@ TEST(MerkleTree, Manual) {
     LOG(INFO) << "Proof size: " << vm::std_boc_serialize(tree.gen_proof(0, stride - 1).move_as_ok()).ok().size();
     LOG(INFO) << "Download file, stride = " << stride;
     {
-      ton::MerkleTree new_tree(chunks_count, root_hash);
-      ton::MerkleTree other_new_tree(chunks_count, root_hash);
+      ion::MerkleTree new_tree(chunks_count, root_hash);
+      ion::MerkleTree other_new_tree(chunks_count, root_hash);
       for (size_t i = 0; i < chunks_count; i += stride) {
         new_tree.gen_proof(i, i + stride - 1).ignore();
         new_tree.add_proof(tree.gen_proof(i, i + stride - 1).move_as_ok()).ensure();
         other_new_tree.add_proof(tree.gen_proof(i, i + stride - 1).move_as_ok()).ensure();
         other_new_tree.gen_proof(i, i + stride - 1).ensure();
         other_new_tree.get_root(2);
-        std::vector<ton::MerkleTree::Piece> chunks;
+        std::vector<ion::MerkleTree::Piece> chunks;
         for (size_t j = 0; j < stride && i + j < chunks_count; j++) {
           chunks.push_back({i + j, hashes.at(i + j)});
         }
@@ -834,7 +834,7 @@ TEST(MerkleTree, Manual) {
       }
 
       if (stride == 1) {
-        std::vector<ton::MerkleTree::Piece> chunks;
+        std::vector<ion::MerkleTree::Piece> chunks;
 
         for (size_t i = 0; i < chunks_count; i++) {
           if (rnd.fast(0, 1) == 1) {
@@ -870,9 +870,9 @@ TEST(MerkleTree, Stress) {
       }
     }
     size_t i = 0;
-    ton::MerkleTree tree(td::transform(hashes, [&i](auto &x) { return ton::MerkleTree::Piece{i++, x}; }));
+    ion::MerkleTree tree(td::transform(hashes, [&i](auto &x) { return ion::MerkleTree::Piece{i++, x}; }));
     for (int t2 = 0; t2 < 1000; t2++) {
-      std::vector<ton::MerkleTree::Piece> chunks;
+      std::vector<ion::MerkleTree::Piece> chunks;
 
       int mask = rnd.fast(0, (1 << chunks_count) - 1);
       for (size_t i = 0; i < chunks_count; i++) {
@@ -884,7 +884,7 @@ TEST(MerkleTree, Stress) {
       }
       td::Bitset bitmask_strict;
       td::Bitset bitmask;
-      ton::MerkleTree new_tree(chunks_count, tree.get_root(rnd.fast(1, 5)));
+      ion::MerkleTree new_tree(chunks_count, tree.get_root(rnd.fast(1, 5)));
       tree.add_pieces(chunks, bitmask_strict);
       new_tree.add_pieces(chunks, bitmask);
       for (size_t i = 0; i < chunks_count; i++) {
@@ -900,7 +900,7 @@ TEST(MerkleTree, Stress) {
 };*/
 
 struct TorrentMetas {
-  td::optional<ton::Torrent> torrent;
+  td::optional<ion::Torrent> torrent;
   struct File {
     std::string name;
     td::BlobView buffer;
@@ -910,7 +910,7 @@ struct TorrentMetas {
 
 TorrentMetas create_random_torrent(td::Random::Xorshift128plus &rnd, td::int64 total_size = 0,
                                    td::int32 piece_size = 0) {
-  ton::Torrent::Creator::Options options;
+  ion::Torrent::Creator::Options options;
   if (piece_size == 0) {
     options.piece_size = rnd.fast(1, 1024);
   } else {
@@ -919,7 +919,7 @@ TorrentMetas create_random_torrent(td::Random::Xorshift128plus &rnd, td::int64 t
   if (total_size == 0) {
     total_size = rnd.fast(100, 40000);
   }
-  ton::Torrent::Creator creator{options};
+  ion::Torrent::Creator creator{options};
 
   TorrentMetas res;
   auto files_n = rnd.fast(0, 40);
@@ -945,18 +945,18 @@ TorrentMetas create_random_torrent(td::Random::Xorshift128plus &rnd, td::int64 t
   }
   LOG(INFO) << "Finalize...";
   res.torrent = creator.finalize().move_as_ok();
-  ton::Torrent::GetMetaOptions opt;
-  LOG(INFO) << "Meta size (full): " << res.torrent.value().get_meta_str(ton::Torrent::GetMetaOptions()).size();
+  ion::Torrent::GetMetaOptions opt;
+  LOG(INFO) << "Meta size (full): " << res.torrent.value().get_meta_str(ion::Torrent::GetMetaOptions()).size();
   LOG(INFO) << "Meta size (only proof): "
-            << res.torrent.value().get_meta_str(ton::Torrent::GetMetaOptions().without_header()).size();
+            << res.torrent.value().get_meta_str(ion::Torrent::GetMetaOptions().without_header()).size();
   LOG(INFO) << "Meta size (only small proof): "
             << res.torrent.value()
-                   .get_meta_str(ton::Torrent::GetMetaOptions().without_header().with_proof_depth_limit(10))
+                   .get_meta_str(ion::Torrent::GetMetaOptions().without_header().with_proof_depth_limit(10))
                    .size();
   LOG(INFO) << "Meta size (only header): "
-            << res.torrent.value().get_meta_str(ton::Torrent::GetMetaOptions().without_proof()).size();
+            << res.torrent.value().get_meta_str(ion::Torrent::GetMetaOptions().without_proof()).size();
   LOG(INFO) << "Meta size (min): "
-            << res.torrent.value().get_meta_str(ton::Torrent::GetMetaOptions().without_proof().without_header()).size();
+            << res.torrent.value().get_meta_str(ion::Torrent::GetMetaOptions().without_proof().without_header()).size();
   return res;
 }
 
@@ -970,17 +970,17 @@ TEST(Torrent, Meta) {
     // test TorrentMeta
     auto torrent_str = torrent.get_meta_str();
 
-    auto torrent_file = ton::TorrentMeta::deserialize(torrent_str).move_as_ok();
+    auto torrent_file = ion::TorrentMeta::deserialize(torrent_str).move_as_ok();
     CHECK(torrent_file.serialize() == torrent_str);
     torrent_str.back()++;
-    ton::TorrentMeta::deserialize(torrent_str).ensure_error();
+    ion::TorrentMeta::deserialize(torrent_str).ensure_error();
     CHECK(torrent.get_info().get_hash() == torrent_file.info.get_hash());
 
-    ton::Torrent::Options options;
+    ion::Torrent::Options options;
     options.in_memory = true;
     torrent_file.header = {};
     torrent_file.root_proof = {};
-    auto new_torrent = ton::Torrent::open(options, torrent_file).move_as_ok();
+    auto new_torrent = ion::Torrent::open(options, torrent_file).move_as_ok();
     new_torrent.enable_write_to_files();
 
     std::vector<size_t> order;
@@ -1015,17 +1015,17 @@ TEST(Torrent, OneFile) {
   td::mkdir("second").ensure();
 
   td::write_file("first/hello.txt", "Hello world!").ensure();
-  ton::Torrent::Creator::Options options;
+  ion::Torrent::Creator::Options options;
   //options.dir_name = "first/";
   options.piece_size = 1024;
-  auto torrent = ton::Torrent::Creator::create_from_path(options, "first/hello.txt").move_as_ok();
-  auto meta = ton::TorrentMeta::deserialize(torrent.get_meta().serialize()).move_as_ok();
+  auto torrent = ion::Torrent::Creator::create_from_path(options, "first/hello.txt").move_as_ok();
+  auto meta = ion::TorrentMeta::deserialize(torrent.get_meta().serialize()).move_as_ok();
   CHECK(torrent.is_completed());
 
   {
-    ton::Torrent::Options options;
+    ion::Torrent::Options options;
     options.root_dir = "first/";
-    auto other_torrent = ton::Torrent::open(options, meta).move_as_ok();
+    auto other_torrent = ion::Torrent::open(options, meta).move_as_ok();
     CHECK(!other_torrent.is_completed());
     other_torrent.validate();
     CHECK(other_torrent.is_completed());
@@ -1033,9 +1033,9 @@ TEST(Torrent, OneFile) {
   }
 
   {
-    ton::Torrent::Options options;
+    ion::Torrent::Options options;
     options.root_dir = "second/";
-    auto other_torrent = ton::Torrent::open(options, meta).move_as_ok();
+    auto other_torrent = ion::Torrent::open(options, meta).move_as_ok();
     other_torrent.enable_write_to_files();
     CHECK(!other_torrent.is_completed());
     other_torrent.add_piece(0, torrent.get_piece_data(0).move_as_ok(), torrent.get_piece_proof(0).move_as_ok())
@@ -1047,7 +1047,7 @@ TEST(Torrent, OneFile) {
 
 TEST(Torrent, PartsHelper) {
   int parts_count = 100;
-  ton::PartsHelper parts(parts_count);
+  ion::PartsHelper parts(parts_count);
 
   auto a_token = parts.register_peer(1);
   auto b_token = parts.register_peer(2);
@@ -1069,19 +1069,19 @@ TEST(Torrent, PartsHelper) {
   ASSERT_EQ(3u, parts.get_rarest_parts(10).size());
 }
 
-void print_debug(ton::Torrent *torrent) {
+void print_debug(ion::Torrent *torrent) {
   LOG(ERROR) << torrent->get_stats_str();
 }
 
 TEST(Torrent, Peer) {
   class PeerManager : public td::actor::Actor {
    public:
-    void send_query(ton::PeerId src, ton::PeerId dst, td::BufferSlice query, td::Promise<td::BufferSlice> promise) {
+    void send_query(ion::PeerId src, ion::PeerId dst, td::BufferSlice query, td::Promise<td::BufferSlice> promise) {
       send_closure(get_outbound_channel(src), &NetChannel::send, query.size(),
                    promise.send_closure(actor_id(this), &PeerManager::do_send_query, src, dst, std::move(query)));
     }
 
-    void do_send_query(ton::PeerId src, ton::PeerId dst, td::BufferSlice query, td::Result<td::Unit> res,
+    void do_send_query(ion::PeerId src, ion::PeerId dst, td::BufferSlice query, td::Result<td::Unit> res,
                        td::Promise<td::BufferSlice> promise) {
       TRY_RESULT_PROMISE(promise, x, std::move(res));
       (void)x;
@@ -1089,7 +1089,7 @@ TEST(Torrent, Peer) {
                    promise.send_closure(actor_id(this), &PeerManager::execute_query, src, dst, std::move(query)));
     }
 
-    void execute_query(ton::PeerId src, ton::PeerId dst, td::BufferSlice query, td::Result<td::Unit> res,
+    void execute_query(ion::PeerId src, ion::PeerId dst, td::BufferSlice query, td::Result<td::Unit> res,
                        td::Promise<td::BufferSlice> promise) {
       TRY_RESULT_PROMISE(promise, x, std::move(res));
       (void)x;
@@ -1103,25 +1103,25 @@ TEST(Torrent, Peer) {
           promise.set_error(td::Status::Error("Unknown query destination"));
           return;
         }
-        send_closure(node_it->second, &ton::NodeActor::start_peer, src,
+        send_closure(node_it->second, &ion::NodeActor::start_peer, src,
                      [promise = std::move(promise),
-                      query = std::move(query)](td::Result<td::actor::ActorId<ton::PeerActor>> r_peer) mutable {
+                      query = std::move(query)](td::Result<td::actor::ActorId<ion::PeerActor>> r_peer) mutable {
                        TRY_RESULT_PROMISE(promise, peer, std::move(r_peer));
-                       send_closure(peer, &ton::PeerActor::execute_query, std::move(query), std::move(promise));
+                       send_closure(peer, &ion::PeerActor::execute_query, std::move(query), std::move(promise));
                      });
         return;
       }
-      send_closure(it->second, &ton::PeerActor::execute_query, std::move(query), std::move(promise));
+      send_closure(it->second, &ion::PeerActor::execute_query, std::move(query), std::move(promise));
     }
 
-    void send_response(ton::PeerId src, ton::PeerId dst, td::Result<td::BufferSlice> r_response,
+    void send_response(ion::PeerId src, ion::PeerId dst, td::Result<td::BufferSlice> r_response,
                        td::Promise<td::BufferSlice> promise) {
       TRY_RESULT_PROMISE(promise, response, std::move(r_response));
       send_closure(get_outbound_channel(dst), &NetChannel::send, response.size(),
                    promise.send_closure(actor_id(this), &PeerManager::do_send_response, src, dst, std::move(response)));
     }
 
-    void do_send_response(ton::PeerId src, ton::PeerId dst, td::BufferSlice response, td::Result<td::Unit> res,
+    void do_send_response(ion::PeerId src, ion::PeerId dst, td::BufferSlice response, td::Result<td::Unit> res,
                           td::Promise<td::BufferSlice> promise) {
       TRY_RESULT_PROMISE(promise, x, std::move(res));
       (void)x;
@@ -1130,18 +1130,18 @@ TEST(Torrent, Peer) {
           promise.send_closure(actor_id(this), &PeerManager::do_execute_response, src, dst, std::move(response)));
     }
 
-    void do_execute_response(ton::PeerId src, ton::PeerId dst, td::BufferSlice response, td::Result<td::Unit> res,
+    void do_execute_response(ion::PeerId src, ion::PeerId dst, td::BufferSlice response, td::Result<td::Unit> res,
                              td::Promise<td::BufferSlice> promise) {
       TRY_RESULT_PROMISE(promise, x, std::move(res));
       (void)x;
       promise.set_value(std::move(response));
     }
 
-    void register_peer(ton::PeerId src, ton::PeerId dst, td::actor::ActorId<ton::PeerActor> peer) {
+    void register_peer(ion::PeerId src, ion::PeerId dst, td::actor::ActorId<ion::PeerActor> peer) {
       peers_[std::make_pair(src, dst)] = std::move(peer);
     }
 
-    void register_node(ton::PeerId src, td::actor::ActorId<ton::NodeActor> node) {
+    void register_node(ion::PeerId src, td::actor::ActorId<ion::NodeActor> node) {
       nodes_[src] = std::move(node);
     }
     ~PeerManager() {
@@ -1154,17 +1154,17 @@ TEST(Torrent, Peer) {
     }
 
    private:
-    std::map<std::pair<ton::PeerId, ton::PeerId>, td::actor::ActorId<ton::PeerActor>> peers_;
-    std::map<ton::PeerId, td::actor::ActorId<ton::NodeActor>> nodes_;
-    std::map<ton::PeerId, td::actor::ActorOwn<NetChannel>> inbound_channel_;
-    std::map<ton::PeerId, td::actor::ActorOwn<NetChannel>> outbound_channel_;
+    std::map<std::pair<ion::PeerId, ion::PeerId>, td::actor::ActorId<ion::PeerActor>> peers_;
+    std::map<ion::PeerId, td::actor::ActorId<ion::NodeActor>> nodes_;
+    std::map<ion::PeerId, td::actor::ActorOwn<NetChannel>> inbound_channel_;
+    std::map<ion::PeerId, td::actor::ActorOwn<NetChannel>> outbound_channel_;
 
     td::actor::ActorOwn<Sleep> sleep_;
     void start_up() override {
       sleep_ = Sleep::create();
     }
 
-    td::actor::ActorId<NetChannel> get_outbound_channel(ton::PeerId peer_id) {
+    td::actor::ActorId<NetChannel> get_outbound_channel(ion::PeerId peer_id) {
       auto &res = outbound_channel_[peer_id];
       if (res.empty()) {
         NetChannel::Options options;
@@ -1175,7 +1175,7 @@ TEST(Torrent, Peer) {
       }
       return res.get();
     }
-    td::actor::ActorId<NetChannel> get_inbound_channel(ton::PeerId peer_id) {
+    td::actor::ActorId<NetChannel> get_inbound_channel(ion::PeerId peer_id) {
       auto &res = inbound_channel_[peer_id];
       if (res.empty()) {
         NetChannel::Options options;
@@ -1188,27 +1188,27 @@ TEST(Torrent, Peer) {
     }
   };
 
-  class PeerCreator : public ton::NodeActor::NodeCallback {
+  class PeerCreator : public ion::NodeActor::NodeCallback {
    public:
-    PeerCreator(td::actor::ActorId<PeerManager> peer_manager, ton::PeerId self_id, std::vector<ton::PeerId> peers)
+    PeerCreator(td::actor::ActorId<PeerManager> peer_manager, ion::PeerId self_id, std::vector<ion::PeerId> peers)
         : peer_manager_(std::move(peer_manager)), peers_(std::move(peers)), self_id_(self_id) {
     }
-    void get_peers(ton::PeerId src, td::Promise<std::vector<ton::PeerId>> promise) override {
+    void get_peers(ion::PeerId src, td::Promise<std::vector<ion::PeerId>> promise) override {
       auto peers = peers_;
       promise.set_value(std::move(peers));
     }
-    void register_self(td::actor::ActorId<ton::NodeActor> self) override {
+    void register_self(td::actor::ActorId<ion::NodeActor> self) override {
       self_ = self;
       send_closure(peer_manager_, &PeerManager::register_node, self_id_, self_);
     }
-    td::actor::ActorOwn<ton::PeerActor> create_peer(ton::PeerId self_id, ton::PeerId peer_id,
-                                                    std::shared_ptr<ton::PeerState> state) override {
-      class PeerCallback : public ton::PeerActor::Callback {
+    td::actor::ActorOwn<ion::PeerActor> create_peer(ion::PeerId self_id, ion::PeerId peer_id,
+                                                    std::shared_ptr<ion::PeerState> state) override {
+      class PeerCallback : public ion::PeerActor::Callback {
        public:
-        PeerCallback(ton::PeerId self_id, ton::PeerId peer_id, td::actor::ActorId<PeerManager> peer_manager)
+        PeerCallback(ion::PeerId self_id, ion::PeerId peer_id, td::actor::ActorId<PeerManager> peer_manager)
             : self_id_{self_id}, peer_id_{peer_id}, peer_manager_(peer_manager) {
         }
-        void register_self(td::actor::ActorId<ton::PeerActor> self) override {
+        void register_self(td::actor::ActorId<ion::PeerActor> self) override {
           self_ = std::move(self);
           send_closure(peer_manager_, &PeerManager::register_peer, self_id_, peer_id_, self_);
         }
@@ -1232,29 +1232,29 @@ TEST(Torrent, Peer) {
               peer_manager_, &PeerManager::send_query, self_id_, peer_id_, std::move(query),
               [self = self_, query_id,
                tmp = td::actor::create_actor<X>(PSLICE() << self_id_ << "->" << peer_id_ << " : " << query_id)](
-                  auto x) { promise_send_closure(self, &ton::PeerActor::on_query_result, query_id)(std::move(x)); });
+                  auto x) { promise_send_closure(self, &ion::PeerActor::on_query_result, query_id)(std::move(x)); });
         }
 
        private:
-        ton::PeerId self_id_;
-        ton::PeerId peer_id_;
-        td::actor::ActorId<ton::PeerActor> self_;
+        ion::PeerId self_id_;
+        ion::PeerId peer_id_;
+        td::actor::ActorId<ion::PeerActor> self_;
         td::actor::ActorId<PeerManager> peer_manager_;
       };
 
-      return td::actor::create_actor<ton::PeerActor>(PSLICE() << "ton::PeerActor " << self_id << "->" << peer_id,
+      return td::actor::create_actor<ion::PeerActor>(PSLICE() << "ion::PeerActor " << self_id << "->" << peer_id,
                                                      td::make_unique<PeerCallback>(self_id, peer_id, peer_manager_),
                                                      std::move(state));
     }
 
    private:
     td::actor::ActorId<PeerManager> peer_manager_;
-    std::vector<ton::PeerId> peers_;
-    ton::PeerId self_id_;
-    td::actor::ActorId<ton::NodeActor> self_;
+    std::vector<ion::PeerId> peers_;
+    ion::PeerId self_id_;
+    td::actor::ActorId<ion::NodeActor> self_;
   };
 
-  class TorrentCallback : public ton::NodeActor::Callback {
+  class TorrentCallback : public ion::NodeActor::Callback {
    public:
     TorrentCallback(std::shared_ptr<td::Destructor> stop_watcher, std::shared_ptr<td::Destructor> complete_watcher)
         : stop_watcher_(stop_watcher), complete_watcher_(complete_watcher) {
@@ -1264,7 +1264,7 @@ TEST(Torrent, Peer) {
       complete_watcher_.reset();
     }
 
-    void on_closed(ton::Torrent torrent) override {
+    void on_closed(ion::Torrent torrent) override {
       CHECK(torrent.is_completed());
       //TODO: validate torrent
       stop_watcher_.reset();
@@ -1282,12 +1282,12 @@ TEST(Torrent, Peer) {
   auto torrent = create_random_torrent(rnd, file_size, 128 * KiloByte).torrent.unwrap();
   LOG(INFO) << "Random torrent is created";
 
-  std::vector<ton::PeerId> peers;
+  std::vector<ion::PeerId> peers;
   for (size_t i = 1; i <= peers_n; i++) {
     peers.push_back(i);
   }
   auto gen_peers = [&](size_t self_id, size_t n) {
-    std::vector<ton::PeerId> peers;
+    std::vector<ion::PeerId> peers;
     if (n > peers_n - 1) {
       n = peers_n - 1;
     }
@@ -1307,16 +1307,16 @@ TEST(Torrent, Peer) {
 
   struct StatsActor : public td::actor::Actor {
    public:
-    StatsActor(td::actor::ActorId<ton::NodeActor> node_actor) : node_actor_(node_actor) {
+    StatsActor(td::actor::ActorId<ion::NodeActor> node_actor) : node_actor_(node_actor) {
     }
 
    private:
-    td::actor::ActorId<ton::NodeActor> node_actor_;
+    td::actor::ActorId<ion::NodeActor> node_actor_;
     void start_up() override {
       alarm_timestamp() = td::Timestamp::in(1);
     }
     void alarm() override {
-      send_closure(node_actor_, &ton::NodeActor::with_torrent, [](td::Result<ton::NodeActor::NodeState> r_state) {
+      send_closure(node_actor_, &ion::NodeActor::with_torrent, [](td::Result<ion::NodeActor::NodeState> r_state) {
         if (r_state.is_error()) {
           return;
         }
@@ -1336,19 +1336,19 @@ TEST(Torrent, Peer) {
 
   scheduler.run_in_context([&] {
     auto peer_manager = td::actor::create_actor<PeerManager>("PeerManager");
-    guard->push_back(td::actor::create_actor<ton::NodeActor>(
+    guard->push_back(td::actor::create_actor<ion::NodeActor>(
         "Node#1", 1, std::move(torrent),
         td::make_unique<TorrentCallback>(stop_watcher, complete_watcher),
-        td::make_unique<PeerCreator>(peer_manager.get(), 1, gen_peers(1, 2)), nullptr, ton::SpeedLimiters{}));
+        td::make_unique<PeerCreator>(peer_manager.get(), 1, gen_peers(1, 2)), nullptr, ion::SpeedLimiters{}));
     for (size_t i = 2; i <= peers_n; i++) {
-      ton::Torrent::Options options;
+      ion::Torrent::Options options;
       options.in_memory = true;
-      auto other_torrent = ton::Torrent::open(options, ton::TorrentMeta(info)).move_as_ok();
-      auto node_actor = td::actor::create_actor<ton::NodeActor>(
+      auto other_torrent = ion::Torrent::open(options, ion::TorrentMeta(info)).move_as_ok();
+      auto node_actor = td::actor::create_actor<ion::NodeActor>(
           PSLICE() << "Node#" << i, i, std::move(other_torrent),
           td::make_unique<TorrentCallback>(stop_watcher, complete_watcher),
           td::make_unique<PeerCreator>(peer_manager.get(), i, gen_peers(i, 2)),
-          nullptr, ton::SpeedLimiters{});
+          nullptr, ion::SpeedLimiters{});
 
       if (i == 3) {
         td::actor::create_actor<StatsActor>("StatsActor", node_actor.get()).release();

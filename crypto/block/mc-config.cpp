@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     In addition, as a special exception, the copyright holders give permission 
     to link the code of portions of this program with the OpenSSL library. 
@@ -33,8 +33,8 @@
 #include "vm/dict.h"
 #include "td/utils/bits.h"
 #include "td/utils/uint128.h"
-#include "ton/ton-types.h"
-#include "ton/ton-shard.h"
+#include "ion/ion-types.h"
+#include "ion/ion-shard.h"
 #include "openssl/digest.hpp"
 #include <stack>
 #include <algorithm>
@@ -133,7 +133,7 @@ td::Status ConfigInfo::unpack() {
   }
   global_id_ = root_info.global_id;
   block::ShardId shard_id{root_info.shard_id};
-  block_id.id = ton::BlockId{ton::ShardIdFull(shard_id), (unsigned)root_info.seq_no};
+  block_id.id = ion::BlockId{ion::ShardIdFull(shard_id), (unsigned)root_info.seq_no};
   block_id.root_hash.set_zero();
   block_id.file_hash.set_zero();
   vert_seqno = root_info.vert_seq_no;
@@ -186,7 +186,7 @@ td::Status ConfigInfo::unpack() {
     if (!(cs.advance(1) && tlb::unpack_exact(cs, ext_ref))) {
       return td::Status::Error("cannot unpack last_key_block from masterchain state");
     }
-    last_key_block_.id = ton::BlockId{ton::masterchainId, ton::shardIdAll, ext_ref.seq_no};
+    last_key_block_.id = ion::BlockId{ion::masterchainId, ion::shardIdAll, ext_ref.seq_no};
     last_key_block_.root_hash = ext_ref.root_hash;
     last_key_block_.file_hash = ext_ref.file_hash;
     last_key_block_lt_ = ext_ref.end_lt;
@@ -212,7 +212,7 @@ td::Status ConfigInfo::unpack() {
     zerostate_id_.root_hash.set_zero();
     zerostate_id_.file_hash.set_zero();
   }
-  zerostate_id_.workchain = ton::masterchainId;
+  zerostate_id_.workchain = ion::masterchainId;
   if (mode & needPrevBlocks) {
     prev_blocks_dict_ = std::move(prev_blocks_dict);
   }
@@ -310,9 +310,9 @@ td::Status Config::visit_validator_params() const {
   return td::Status::OK();
 }
 
-ton::ValidatorSessionConfig Config::get_consensus_config() const {
+ion::ValidatorSessionConfig Config::get_consensus_config() const {
   auto cc = get_config_param(29);
-  ton::ValidatorSessionConfig c;
+  ion::ValidatorSessionConfig c;
   auto set_v1 = [&](auto& r) {
     c.catchain_opts.idle_timeout = r.consensus_timeout_ms * 0.001;
     c.catchain_opts.max_deps = r.catchain_max_deps;
@@ -357,7 +357,7 @@ ton::ValidatorSessionConfig Config::get_consensus_config() const {
       set_v1(r1);
     }
   }
-  if (c.proto_version >= ton::ValidatorSessionConfig::BLOCK_HASH_COVERS_DATA_FROM_VERSION) {
+  if (c.proto_version >= ion::ValidatorSessionConfig::BLOCK_HASH_COVERS_DATA_FROM_VERSION) {
     c.catchain_opts.block_hash_covers_data = true;
   }
   return c;
@@ -450,7 +450,7 @@ const vm::AugmentedDictionary& ConfigInfo::get_accounts_dict() const {
   return *accounts_dict;
 }
 
-bool ConfigInfo::get_last_key_block(ton::BlockIdExt& blkid, ton::LogicalTime& blklt, bool strict) const {
+bool ConfigInfo::get_last_key_block(ion::BlockIdExt& blkid, ion::LogicalTime& blklt, bool strict) const {
   if (strict || !is_key_state_) {
     blkid = last_key_block_;
     blklt = last_key_block_lt_;
@@ -471,7 +471,7 @@ td::Result<std::pair<WorkchainSet, std::unique_ptr<vm::Dictionary>>> Config::unp
     WorkchainSet wc_list;
     LOG(DEBUG) << "workchain description dictionary created";
     if (!(wc_dict->check_for_each([&wc_list](Ref<vm::CellSlice> cs_ref, td::ConstBitPtr key, int n) -> bool {
-          ton::WorkchainId wc = ton::WorkchainId(key.get_int(32));
+          ion::WorkchainId wc = ion::WorkchainId(key.get_int(32));
           Ref<WorkchainInfo> wc_info{true};
           return wc_info.unique_write().unpack(wc, cs_ref.write()) && wc_list.emplace(wc, std::move(wc_info)).second;
         }))) {
@@ -551,7 +551,7 @@ td::Result<std::unique_ptr<ValidatorSet>> Config::unpack_validator_set(Ref<vm::C
   return std::move(ptr);
 }
 
-bool Config::set_block_id_ext(const ton::BlockIdExt& block_id_ext) {
+bool Config::set_block_id_ext(const ion::BlockIdExt& block_id_ext) {
   if (block_id.id == block_id_ext.id) {
     block_id = block_id_ext;
     return true;
@@ -560,12 +560,12 @@ bool Config::set_block_id_ext(const ton::BlockIdExt& block_id_ext) {
   }
 }
 
-bool ConfigInfo::set_block_id_ext(const ton::BlockIdExt& block_id_ext) {
+bool ConfigInfo::set_block_id_ext(const ion::BlockIdExt& block_id_ext) {
   if (!Config::set_block_id_ext(block_id_ext)) {
     return false;
   }
   if (!block_id.seqno()) {
-    zerostate_id_.workchain = ton::masterchainId;
+    zerostate_id_.workchain = ion::masterchainId;
     zerostate_id_.root_hash = block_id_ext.root_hash;
     zerostate_id_.file_hash = block_id_ext.file_hash;
   }
@@ -682,7 +682,7 @@ td::Result<GasLimitsPrices> Config::do_get_gas_limits_prices(vm::CellSlice cs, i
   return res;
 }
 
-td::Result<ton::StdSmcAddress> Config::get_dns_root_addr() const {
+td::Result<ion::StdSmcAddress> Config::get_dns_root_addr() const {
   auto cell = get_config_param(4);
   if (cell.is_null()) {
     return td::Status::Error(PSLICE() << "configuration parameter " << 4 << " with dns root address is absent");
@@ -691,7 +691,7 @@ td::Result<ton::StdSmcAddress> Config::get_dns_root_addr() const {
   if (cs.size() != 0x100) {
     return td::Status::Error(PSLICE() << "configuration parameter " << 4 << " with dns root address has wrong size");
   }
-  ton::StdSmcAddress res;
+  ion::StdSmcAddress res;
   CHECK(cs.fetch_bits_to(res));
   return res;
 }
@@ -753,13 +753,13 @@ bool McShardHash::basic_info_equal(const McShardHash& other, bool compare_fees, 
          (!compare_fees || (fees_collected_ == other.fees_collected_ && funds_created_ == other.funds_created_));
 }
 
-void McShardHash::set_fsm(FsmState fsm, ton::UnixTime fsm_utime, ton::UnixTime fsm_interval) {
+void McShardHash::set_fsm(FsmState fsm, ion::UnixTime fsm_utime, ion::UnixTime fsm_interval) {
   fsm_ = fsm;
   fsm_utime_ = fsm_utime;
   fsm_interval_ = fsm_interval;
 }
 
-Ref<McShardHash> McShardHash::unpack(vm::CellSlice& cs, ton::ShardIdFull id) {
+Ref<McShardHash> McShardHash::unpack(vm::CellSlice& cs, ion::ShardIdFull id) {
   int tag = gen::t_ShardDescr.get_tag(cs);
   if (tag < 0) {
     return {};
@@ -769,7 +769,7 @@ Ref<McShardHash> McShardHash::unpack(vm::CellSlice& cs, ton::ShardIdFull id) {
     if (!(fees_collected.unpack(std::move(fees)) && funds_created.unpack(std::move(funds)))) {
       return Ref<McShardHash>{};
     }
-    return td::make_ref<McShardHash>(ton::BlockId{id, (unsigned)descr.seq_no}, descr.start_lt, descr.end_lt,
+    return td::make_ref<McShardHash>(ion::BlockId{id, (unsigned)descr.seq_no}, descr.start_lt, descr.end_lt,
                                      descr.gen_utime, descr.root_hash, descr.file_hash, fees_collected, funds_created,
                                      descr.reg_mc_seqno, descr.min_ref_mc_seqno, descr.next_catchain_seqno,
                                      descr.next_validator_shard, /* descr.nx_cc_updated */ false, descr.before_split,
@@ -858,7 +858,7 @@ bool McShardHash::pack(vm::CellBuilder& cb) const {
          && cb.store_builder_ref_bool(std::move(cb2));  // = ShardDescr;
 }
 
-Ref<McShardHash> McShardHash::from_block(Ref<vm::Cell> block_root, const ton::FileHash& fhash, bool init_fees) {
+Ref<McShardHash> McShardHash::from_block(Ref<vm::Cell> block_root, const ion::FileHash& fhash, bool init_fees) {
   if (block_root.is_null()) {
     return {};
   }
@@ -869,7 +869,7 @@ Ref<McShardHash> McShardHash::from_block(Ref<vm::Cell> block_root, const ton::Fi
         shard.deserialize(info.shard.write()))) {
     return {};
   }
-  ton::RootHash rhash = block_root->get_hash().bits();
+  ion::RootHash rhash = block_root->get_hash().bits();
   CurrencyCollection fees_collected, funds_created;
   if (init_fees) {
     block::ValueFlow flow;
@@ -879,7 +879,7 @@ Ref<McShardHash> McShardHash::from_block(Ref<vm::Cell> block_root, const ton::Fi
     fees_collected = flow.fees_collected;
     funds_created = flow.created;
   }
-  return Ref<McShardHash>(true, ton::BlockId{ton::ShardIdFull(shard), (unsigned)info.seq_no}, info.start_lt,
+  return Ref<McShardHash>(true, ion::BlockId{ion::ShardIdFull(shard), (unsigned)info.seq_no}, info.start_lt,
                           info.end_lt, info.gen_utime, rhash, fhash, fees_collected, funds_created, ~0U,
                           info.min_ref_mc_seqno, info.gen_catchain_seqno, shard.shard_pfx, false, info.before_split,
                           false, info.want_split, info.want_merge);
@@ -903,7 +903,7 @@ McShardDescr& McShardDescr::operator=(const McShardDescr& other) {
 }
 
 Ref<McShardDescr> McShardDescr::from_block(Ref<vm::Cell> block_root, Ref<vm::Cell> state_root,
-                                           const ton::FileHash& fhash, bool init_fees) {
+                                           const ion::FileHash& fhash, bool init_fees) {
   if (block_root.is_null()) {
     return {};
   }
@@ -924,7 +924,7 @@ Ref<McShardDescr> McShardDescr::from_block(Ref<vm::Cell> block_root, Ref<vm::Cel
     LOG(ERROR) << "invalid Merkle update for block state : resulting state hash mismatch";
     return {};
   }
-  ton::RootHash rhash = block_root->get_hash().bits();
+  ion::RootHash rhash = block_root->get_hash().bits();
   CurrencyCollection fees_collected, funds_created;
   if (init_fees) {
     block::ValueFlow flow;
@@ -934,7 +934,7 @@ Ref<McShardDescr> McShardDescr::from_block(Ref<vm::Cell> block_root, Ref<vm::Cel
     fees_collected = flow.fees_collected;
     funds_created = flow.created;
   }
-  auto res = Ref<McShardDescr>(true, ton::BlockId{ton::ShardIdFull(shard), (unsigned)info.seq_no}, info.start_lt,
+  auto res = Ref<McShardDescr>(true, ion::BlockId{ion::ShardIdFull(shard), (unsigned)info.seq_no}, info.start_lt,
                                info.end_lt, info.gen_utime, rhash, fhash, fees_collected, funds_created, ~0U,
                                info.min_ref_mc_seqno, info.gen_catchain_seqno, shard.shard_pfx, false,
                                info.before_split, false, info.want_split, info.want_merge);
@@ -944,7 +944,7 @@ Ref<McShardDescr> McShardDescr::from_block(Ref<vm::Cell> block_root, Ref<vm::Cel
   return res;
 }
 
-Ref<McShardDescr> McShardDescr::from_state(ton::BlockIdExt blkid, Ref<vm::Cell> state_root) {
+Ref<McShardDescr> McShardDescr::from_state(ion::BlockIdExt blkid, Ref<vm::Cell> state_root) {
   if (state_root.is_null()) {
     return {};
   }
@@ -956,7 +956,7 @@ Ref<McShardDescr> McShardDescr::from_state(ton::BlockIdExt blkid, Ref<vm::Cell> 
     LOG(DEBUG) << "cannot create McShardDescr from a shardchain state";
     return {};
   }
-  if (ton::ShardIdFull(shard) != ton::ShardIdFull(blkid) || info.seq_no != blkid.seqno()) {
+  if (ion::ShardIdFull(shard) != ion::ShardIdFull(blkid) || info.seq_no != blkid.seqno()) {
     LOG(DEBUG) << "shard id mismatch, cannot construct McShardDescr";
     return {};
   }
@@ -1022,8 +1022,8 @@ ShardConfig::ShardConfig(const ShardConfig& other)
   init();
 }
 
-bool ShardConfig::get_shard_hash_raw_from(vm::Dictionary& dict, vm::CellSlice& cs, ton::ShardIdFull id,
-                                          ton::ShardIdFull& true_id, bool exact, Ref<vm::Cell>* leaf) {
+bool ShardConfig::get_shard_hash_raw_from(vm::Dictionary& dict, vm::CellSlice& cs, ion::ShardIdFull id,
+                                          ion::ShardIdFull& true_id, bool exact, Ref<vm::Cell>* leaf) {
   if (id.is_masterchain() || !id.is_valid()) {
     return false;
   }
@@ -1042,7 +1042,7 @@ bool ShardConfig::get_shard_hash_raw_from(vm::Dictionary& dict, vm::CellSlice& c
       if (len && exact) {
         return false;
       }
-      true_id = ton::ShardIdFull{id.workchain, (id.shard | m) - (m >> 1)};
+      true_id = ion::ShardIdFull{id.workchain, (id.shard | m) - (m >> 1)};
       if (leaf) {
         *leaf = std::move(root);
       }
@@ -1058,16 +1058,16 @@ bool ShardConfig::get_shard_hash_raw_from(vm::Dictionary& dict, vm::CellSlice& c
   }
 }
 
-bool ShardConfig::get_shard_hash_raw(vm::CellSlice& cs, ton::ShardIdFull id, ton::ShardIdFull& true_id,
+bool ShardConfig::get_shard_hash_raw(vm::CellSlice& cs, ion::ShardIdFull id, ion::ShardIdFull& true_id,
                                      bool exact) const {
   return shard_hashes_dict_ && get_shard_hash_raw_from(*shard_hashes_dict_, cs, id, true_id, exact);
 }
 
-Ref<McShardHash> ShardConfig::get_shard_hash(ton::ShardIdFull id, bool exact) const {
+Ref<McShardHash> ShardConfig::get_shard_hash(ion::ShardIdFull id, bool exact) const {
   if (id.is_masterchain()) {
-    return (!exact || id.shard == ton::shardIdAll) ? get_mc_hash() : Ref<McShardHash>{};
+    return (!exact || id.shard == ion::shardIdAll) ? get_mc_hash() : Ref<McShardHash>{};
   }
-  ton::ShardIdFull true_id;
+  ion::ShardIdFull true_id;
   vm::CellSlice cs;
   if (get_shard_hash_raw(cs, id, true_id, exact)) {
     return McShardHash::unpack(cs, true_id);
@@ -1076,13 +1076,13 @@ Ref<McShardHash> ShardConfig::get_shard_hash(ton::ShardIdFull id, bool exact) co
   }
 }
 
-bool McShardHash::extract_cc_seqno(vm::CellSlice& cs, ton::CatchainSeqno* cc) {
+bool McShardHash::extract_cc_seqno(vm::CellSlice& cs, ion::CatchainSeqno* cc) {
   auto get = [&cs, cc](auto& rec) {
     if (tlb::unpack_exact(cs, rec)) {
       *cc = rec.next_catchain_seqno;
       return true;
     } else {
-      *cc = std::numeric_limits<ton::CatchainSeqno>::max();
+      *cc = std::numeric_limits<ion::CatchainSeqno>::max();
       return false;
     }
   };
@@ -1095,35 +1095,35 @@ bool McShardHash::extract_cc_seqno(vm::CellSlice& cs, ton::CatchainSeqno* cc) {
   }
 }
 
-ton::CatchainSeqno ShardConfig::get_shard_cc_seqno(ton::ShardIdFull shard) const {
+ion::CatchainSeqno ShardConfig::get_shard_cc_seqno(ion::ShardIdFull shard) const {
   if (shard.is_masterchain() || !shard.is_valid()) {
-    return std::numeric_limits<ton::CatchainSeqno>::max();
+    return std::numeric_limits<ion::CatchainSeqno>::max();
   }
-  ton::ShardIdFull true_id;
-  ton::CatchainSeqno cc_seqno, cc_seqno2;
+  ion::ShardIdFull true_id;
+  ion::CatchainSeqno cc_seqno, cc_seqno2;
   vm::CellSlice cs;
   if (!(get_shard_hash_raw(cs, shard - 1, true_id, false) &&
-        (ton::shard_is_ancestor(true_id, shard) || ton::shard_is_parent(shard, true_id)) &&
+        (ion::shard_is_ancestor(true_id, shard) || ion::shard_is_parent(shard, true_id)) &&
         McShardHash::extract_cc_seqno(cs, &cc_seqno))) {
-    return std::numeric_limits<ton::CatchainSeqno>::max();
+    return std::numeric_limits<ion::CatchainSeqno>::max();
   }
-  if (ton::shard_is_ancestor(true_id, shard)) {
+  if (ion::shard_is_ancestor(true_id, shard)) {
     return cc_seqno;
   }
-  if (!(get_shard_hash_raw(cs, shard + 1, true_id, false) && ton::shard_is_parent(shard, true_id) &&
+  if (!(get_shard_hash_raw(cs, shard + 1, true_id, false) && ion::shard_is_parent(shard, true_id) &&
         McShardHash::extract_cc_seqno(cs, &cc_seqno2))) {
-    return std::numeric_limits<ton::CatchainSeqno>::max();
+    return std::numeric_limits<ion::CatchainSeqno>::max();
   }
   return std::max(cc_seqno, cc_seqno2) + 1;
 }
 
-ton::LogicalTime ShardConfig::get_shard_end_lt_ext(ton::AccountIdPrefixFull acc, ton::ShardIdFull& actual_shard) const {
+ion::LogicalTime ShardConfig::get_shard_end_lt_ext(ion::AccountIdPrefixFull acc, ion::ShardIdFull& actual_shard) const {
   if (!acc.is_valid()) {
-    actual_shard.workchain = ton::workchainInvalid;
+    actual_shard.workchain = ion::workchainInvalid;
     return 0;
   }
   if (acc.is_masterchain()) {
-    actual_shard = ton::ShardIdFull(ton::masterchainId);
+    actual_shard = ion::ShardIdFull(ion::masterchainId);
     CHECK(mc_shard_hash_.not_null());
     return mc_shard_hash_->end_lt_;
   }
@@ -1136,17 +1136,17 @@ ton::LogicalTime ShardConfig::get_shard_end_lt_ext(ton::AccountIdPrefixFull acc,
              : 0;
 }
 
-ton::LogicalTime ShardConfig::get_shard_end_lt(ton::AccountIdPrefixFull acc) const {
-  ton::ShardIdFull tmp;
+ion::LogicalTime ShardConfig::get_shard_end_lt(ion::AccountIdPrefixFull acc) const {
+  ion::ShardIdFull tmp;
   return get_shard_end_lt_ext(acc, tmp);
 }
 
-bool ShardConfig::contains(ton::BlockIdExt blkid) const {
+bool ShardConfig::contains(ion::BlockIdExt blkid) const {
   auto entry = get_shard_hash(blkid.shard_full());
   return entry.not_null() && entry->blk_ == blkid;
 }
 
-static int process_workchain_shard_hashes(Ref<vm::Cell>& branch, ton::ShardIdFull shard,
+static int process_workchain_shard_hashes(Ref<vm::Cell>& branch, ion::ShardIdFull shard,
                                           std::function<int(McShardHash&)>& func) {
   auto cs = vm::load_cell_slice(branch);
   int f = (int)cs.fetch_ulong(1);
@@ -1155,11 +1155,11 @@ static int process_workchain_shard_hashes(Ref<vm::Cell>& branch, ton::ShardIdFul
       return -1;
     }
     auto left = cs.prefetch_ref(0), right = cs.prefetch_ref(1);
-    int r = process_workchain_shard_hashes(left, ton::shard_child(shard, true), func);
+    int r = process_workchain_shard_hashes(left, ion::shard_child(shard, true), func);
     if (r < 0) {
       return r;
     }
-    r |= process_workchain_shard_hashes(right, ton::shard_child(shard, false), func);
+    r |= process_workchain_shard_hashes(right, ion::shard_child(shard, false), func);
     if (r <= 0) {
       return r;
     }
@@ -1193,14 +1193,14 @@ bool ShardConfig::process_shard_hashes(std::function<int(McShardHash&)> func) {
       [&ok, &func](vm::CellBuilder& cb, Ref<vm::CellSlice> csr, td::ConstBitPtr key, int n) -> bool {
         Ref<vm::Cell> root;
         ok = ok && (n == 32) && csr->size_ext() == 0x10000 && std::move(csr)->prefetch_ref_to(root) &&
-             process_workchain_shard_hashes(root, ton::ShardIdFull{(int)key.get_int(32)}, func) >= 0 &&
+             process_workchain_shard_hashes(root, ion::ShardIdFull{(int)key.get_int(32)}, func) >= 0 &&
              cb.store_ref_bool(std::move(root));
         return true;
       });
   return ok;
 }
 
-static int process_workchain_sibling_shard_hashes(Ref<vm::Cell>& branch, Ref<vm::Cell> sibling, ton::ShardIdFull shard,
+static int process_workchain_sibling_shard_hashes(Ref<vm::Cell>& branch, Ref<vm::Cell> sibling, ion::ShardIdFull shard,
                                                   std::function<int(McShardHash&, const McShardHash*)>& func) {
   auto cs = vm::load_cell_slice(branch);
   int f = (int)cs.fetch_ulong(1);
@@ -1210,11 +1210,11 @@ static int process_workchain_sibling_shard_hashes(Ref<vm::Cell>& branch, Ref<vm:
     }
     auto left = cs.prefetch_ref(0), right = cs.prefetch_ref(1);
     auto orig_left = left;
-    int r = process_workchain_sibling_shard_hashes(left, right, ton::shard_child(shard, true), func);
+    int r = process_workchain_sibling_shard_hashes(left, right, ion::shard_child(shard, true), func);
     if (r < 0) {
       return r;
     }
-    r |= process_workchain_sibling_shard_hashes(right, std::move(orig_left), ton::shard_child(shard, false), func);
+    r |= process_workchain_sibling_shard_hashes(right, std::move(orig_left), ion::shard_child(shard, false), func);
     if (r <= 0) {
       return r;
     }
@@ -1232,7 +1232,7 @@ static int process_workchain_sibling_shard_hashes(Ref<vm::Cell>& branch, Ref<vm:
     if (sibling.not_null()) {
       auto cs2 = vm::load_cell_slice(sibling);
       if (!cs2.fetch_ulong(1)) {
-        sibling_info = McShardHash::unpack(cs2, ton::shard_sibling(shard));
+        sibling_info = McShardHash::unpack(cs2, ion::shard_sibling(shard));
         if (sibling_info.is_null()) {
           return -1;
         }
@@ -1258,7 +1258,7 @@ bool ShardConfig::process_sibling_shard_hashes(std::function<int(McShardHash&, c
                                        int n) -> bool {
     Ref<vm::Cell> root;
     ok = ok && (n == 32) && csr->size_ext() == 0x10000 && std::move(csr)->prefetch_ref_to(root) &&
-         process_workchain_sibling_shard_hashes(root, Ref<vm::Cell>{}, ton::ShardIdFull{(int)key.get_int(32)}, func) >=
+         process_workchain_sibling_shard_hashes(root, Ref<vm::Cell>{}, ion::ShardIdFull{(int)key.get_int(32)}, func) >=
              0;
     bool f = cb.store_ref_bool(std::move(root));
     ok &= f;
@@ -1267,19 +1267,19 @@ bool ShardConfig::process_sibling_shard_hashes(std::function<int(McShardHash&, c
   return ok;
 }
 
-std::vector<ton::BlockId> ShardConfig::get_shard_hash_ids(
-    const std::function<bool(ton::ShardIdFull, bool)>& filter) const {
+std::vector<ion::BlockId> ShardConfig::get_shard_hash_ids(
+    const std::function<bool(ion::ShardIdFull, bool)>& filter) const {
   if (!shard_hashes_dict_) {
     return {};
   }
-  std::vector<ton::BlockId> res;
+  std::vector<ion::BlockId> res;
   bool mcout = mc_shard_hash_.is_null() || !mc_shard_hash_->seqno();  // include masterchain as a shard if seqno > 0
   bool ok = shard_hashes_dict_->check_for_each(
       [&res, &mcout, mc_shard_hash_ = mc_shard_hash_, &filter](Ref<vm::CellSlice> cs_ref, td::ConstBitPtr key,
                                                                int n) -> bool {
         int workchain = (int)key.get_int(n);
         if (workchain >= 0 && !mcout) {
-          if (filter(ton::ShardIdFull{ton::masterchainId}, true)) {
+          if (filter(ion::ShardIdFull{ion::masterchainId}, true)) {
             res.emplace_back(mc_shard_hash_->blk_.id);
           }
           mcout = true;
@@ -1288,7 +1288,7 @@ std::vector<ton::BlockId> ShardConfig::get_shard_hash_ids(
           return false;
         }
         std::stack<std::pair<Ref<vm::Cell>, unsigned long long>> stack;
-        stack.emplace(cs_ref->prefetch_ref(), ton::shardIdAll);
+        stack.emplace(cs_ref->prefetch_ref(), ion::shardIdAll);
         while (!stack.empty()) {
           vm::CellSlice cs{vm::NoVmOrd(), std::move(stack.top().first)};
           unsigned long long shard = stack.top().second;
@@ -1297,7 +1297,7 @@ std::vector<ton::BlockId> ShardConfig::get_shard_hash_ids(
           if (t < 0) {
             return false;
           }
-          if (!filter(ton::ShardIdFull{workchain, shard}, !t)) {
+          if (!filter(ion::ShardIdFull{workchain, shard}, !t)) {
             continue;
           }
           if (!t) {
@@ -1320,33 +1320,33 @@ std::vector<ton::BlockId> ShardConfig::get_shard_hash_ids(
   if (!ok) {
     return {};
   }
-  if (!mcout && filter(ton::ShardIdFull{ton::masterchainId}, true)) {
+  if (!mcout && filter(ion::ShardIdFull{ion::masterchainId}, true)) {
     res.emplace_back(mc_shard_hash_->blk_.id);
   }
   return res;
 }
 
-std::vector<ton::BlockId> ShardConfig::get_shard_hash_ids(bool skip_mc) const {
+std::vector<ion::BlockId> ShardConfig::get_shard_hash_ids(bool skip_mc) const {
   return get_shard_hash_ids(
-      [skip_mc](ton::ShardIdFull shard, bool) -> bool { return !(skip_mc && shard.is_masterchain()); });
+      [skip_mc](ion::ShardIdFull shard, bool) -> bool { return !(skip_mc && shard.is_masterchain()); });
 }
 
-std::vector<ton::BlockId> ShardConfig::get_intersecting_shard_hash_ids(ton::ShardIdFull myself) const {
+std::vector<ion::BlockId> ShardConfig::get_intersecting_shard_hash_ids(ion::ShardIdFull myself) const {
   return get_shard_hash_ids(
-      [myself](ton::ShardIdFull shard, bool) -> bool { return ton::shard_intersects(myself, shard); });
+      [myself](ion::ShardIdFull shard, bool) -> bool { return ion::shard_intersects(myself, shard); });
 }
 
-std::vector<ton::BlockId> ShardConfig::get_neighbor_shard_hash_ids(ton::ShardIdFull myself) const {
-  return get_shard_hash_ids([myself](ton::ShardIdFull shard, bool) -> bool { return is_neighbor(myself, shard); });
+std::vector<ion::BlockId> ShardConfig::get_neighbor_shard_hash_ids(ion::ShardIdFull myself) const {
+  return get_shard_hash_ids([myself](ion::ShardIdFull shard, bool) -> bool { return is_neighbor(myself, shard); });
 }
 
-std::vector<ton::BlockId> ShardConfig::get_proper_neighbor_shard_hash_ids(ton::ShardIdFull myself) const {
-  return get_shard_hash_ids([myself](ton::ShardIdFull shard, bool leaf) -> bool {
-    return is_neighbor(myself, shard) && !(leaf && ton::shard_intersects(myself, shard));
+std::vector<ion::BlockId> ShardConfig::get_proper_neighbor_shard_hash_ids(ion::ShardIdFull myself) const {
+  return get_shard_hash_ids([myself](ion::ShardIdFull shard, bool leaf) -> bool {
+    return is_neighbor(myself, shard) && !(leaf && ion::shard_intersects(myself, shard));
   });
 }
 
-bool ShardConfig::is_neighbor(ton::ShardIdFull x, ton::ShardIdFull y) {
+bool ShardConfig::is_neighbor(ion::ShardIdFull x, ion::ShardIdFull y) {
   if (x.is_masterchain() || y.is_masterchain()) {
     return true;
   }
@@ -1364,18 +1364,18 @@ bool ShardConfig::is_neighbor(ton::ShardIdFull x, ton::ShardIdFull y) {
   return c1 + c2 == 15;
 }
 
-bool ShardConfig::has_workchain(ton::WorkchainId workchain) const {
+bool ShardConfig::has_workchain(ion::WorkchainId workchain) const {
   return shard_hashes_dict_ && shard_hashes_dict_->key_exists(td::BitArray<32>{workchain});
 }
 
-std::vector<ton::WorkchainId> ShardConfig::get_workchains() const {
+std::vector<ion::WorkchainId> ShardConfig::get_workchains() const {
   if (!shard_hashes_dict_) {
     return {};
   }
-  std::vector<ton::WorkchainId> res;
+  std::vector<ion::WorkchainId> res;
   if (!shard_hashes_dict_->check_for_each([&res](Ref<vm::CellSlice> val, td::ConstBitPtr key, int n) {
         CHECK(n == 32);
-        ton::WorkchainId w = (int)key.get_int(32);
+        ion::WorkchainId w = (int)key.get_int(32);
         res.push_back(w);
         return true;
       })) {
@@ -1384,8 +1384,8 @@ std::vector<ton::WorkchainId> ShardConfig::get_workchains() const {
   return res;
 }
 
-bool ShardConfig::new_workchain(ton::WorkchainId workchain, ton::BlockSeqno reg_mc_seqno,
-                                const ton::RootHash& zerostate_root_hash, const ton::FileHash& zerostate_file_hash) {
+bool ShardConfig::new_workchain(ion::WorkchainId workchain, ion::BlockSeqno reg_mc_seqno,
+                                const ion::RootHash& zerostate_root_hash, const ion::FileHash& zerostate_file_hash) {
   if (!shard_hashes_dict_ || has_workchain(workchain)) {
     return false;
   }
@@ -1411,8 +1411,8 @@ bool ShardConfig::new_workchain(ton::WorkchainId workchain, ton::BlockSeqno reg_
 }
 
 td::Result<bool> ShardConfig::may_update_shard_block_info(Ref<McShardHash> new_info,
-                                                          const std::vector<ton::BlockIdExt>& old_blkids,
-                                                          ton::LogicalTime lt_limit, Ref<McShardHash>* ancestor) const {
+                                                          const std::vector<ion::BlockIdExt>& old_blkids,
+                                                          ion::LogicalTime lt_limit, Ref<McShardHash>* ancestor) const {
   if (!shard_hashes_dict_) {
     return td::Status::Error(-666, "no shard top block dictionary present");
   }
@@ -1423,7 +1423,7 @@ td::Result<bool> ShardConfig::may_update_shard_block_info(Ref<McShardHash> new_i
     return td::Status::Error(-666, "new top shard block description is invalid");
   }
   auto wc = new_info->shard().workchain;
-  if (wc == ton::workchainInvalid || wc == ton::masterchainId) {
+  if (wc == ion::workchainInvalid || wc == ion::masterchainId) {
     return td::Status::Error(-666, "new top shard block description belongs to an invalid workchain");
   }
   if (!has_workchain(wc)) {
@@ -1432,13 +1432,13 @@ td::Result<bool> ShardConfig::may_update_shard_block_info(Ref<McShardHash> new_i
   if (old_blkids.size() != 1 && old_blkids.size() != 2) {
     return td::Status::Error(-666, "must have either one or two start blocks in a top shard block update");
   }
-  bool before_split = ton::shard_is_parent(old_blkids[0].shard_full(), new_info->shard());
+  bool before_split = ion::shard_is_parent(old_blkids[0].shard_full(), new_info->shard());
   bool before_merge = (old_blkids.size() == 2);
   if (before_merge) {
-    if (!ton::shard_is_sibling(old_blkids[0].shard_full(), old_blkids[1].shard_full())) {
+    if (!ion::shard_is_sibling(old_blkids[0].shard_full(), old_blkids[1].shard_full())) {
       return td::Status::Error(-666, "the two start blocks of a top shard block update must be siblings");
     }
-    if (!ton::shard_is_parent(new_info->shard(), old_blkids[0].shard_full())) {
+    if (!ion::shard_is_parent(new_info->shard(), old_blkids[0].shard_full())) {
       return td::Status::Error(
           -666,
           std::string{"the two start blocks of a top shard block update do not merge into expected final shard "} +
@@ -1451,7 +1451,7 @@ td::Result<bool> ShardConfig::may_update_shard_block_info(Ref<McShardHash> new_i
   if (ancestor) {
     ancestor->clear();
   }
-  ton::CatchainSeqno old_cc_seqno = 0;
+  ion::CatchainSeqno old_cc_seqno = 0;
   for (const auto& ob : old_blkids) {
     auto odef = get_shard_hash(ob.shard_full());
     if (odef.is_null() || odef->blk_ != ob) {
@@ -1528,7 +1528,7 @@ td::Result<bool> ShardConfig::may_update_shard_block_info(Ref<McShardHash> new_i
 }
 
 td::Result<bool> ShardConfig::update_shard_block_info(Ref<McShardHash> new_info,
-                                                      const std::vector<ton::BlockIdExt>& old_blkids) {
+                                                      const std::vector<ion::BlockIdExt>& old_blkids) {
   Ref<McShardHash> ancestor;
   auto res = may_update_shard_block_info(new_info, old_blkids, ~0ULL, &ancestor);
   if (res.is_error()) {
@@ -1555,7 +1555,7 @@ td::Result<bool> ShardConfig::update_shard_block_info(Ref<McShardHash> new_info,
 }
 
 td::Result<bool> ShardConfig::update_shard_block_info2(Ref<McShardHash> new_info1, Ref<McShardHash> new_info2,
-                                                       const std::vector<ton::BlockIdExt>& old_blkids) {
+                                                       const std::vector<ion::BlockIdExt>& old_blkids) {
   auto res1 = may_update_shard_block_info(new_info1, old_blkids);
   if (res1.is_error()) {
     return res1;
@@ -1592,7 +1592,7 @@ bool ShardConfig::do_update_shard_info(Ref<McShardHash> new_info) {
 }
 
 bool ShardConfig::do_update_shard_info2(Ref<McShardHash> new_info1, Ref<McShardHash> new_info2) {
-  if (new_info1.is_null() || new_info2.is_null() || !ton::shard_is_sibling(new_info1->shard(), new_info2->shard())) {
+  if (new_info1.is_null() || new_info2.is_null() || !ion::shard_is_sibling(new_info1->shard(), new_info2->shard())) {
     return false;
   }
   if (new_info1->blk_.id.shard > new_info2->blk_.id.shard) {
@@ -1609,14 +1609,14 @@ bool ShardConfig::do_update_shard_info2(Ref<McShardHash> new_info1, Ref<McShardH
          && new_info2->pack(cb1)               //   leaf:ShardDescr
          && cb1.finalize_to(ref)               // ) -> ref
          && cb.store_ref_bool(std::move(ref))  // right:^(BinTree ShardDescr)
-         && cb.finalize_to(ref) && set_shard_info(ton::shard_parent(new_info1->shard()), std::move(ref));
+         && cb.finalize_to(ref) && set_shard_info(ion::shard_parent(new_info1->shard()), std::move(ref));
 }
 
-static bool btree_set(Ref<vm::Cell>& root, ton::ShardId shard, Ref<vm::Cell> value) {
+static bool btree_set(Ref<vm::Cell>& root, ion::ShardId shard, Ref<vm::Cell> value) {
   if (!shard) {
     return false;
   }
-  if (shard == ton::shardIdAll) {
+  if (shard == ion::shardIdAll) {
     root = value;
     return true;
   }
@@ -1635,7 +1635,7 @@ static bool btree_set(Ref<vm::Cell>& root, ton::ShardId shard, Ref<vm::Cell> val
          && cb.finalize_to(root);                // = BinTree ShardDescr
 }
 
-bool ShardConfig::set_shard_info(ton::ShardIdFull shard, Ref<vm::Cell> value) {
+bool ShardConfig::set_shard_info(ion::ShardIdFull shard, Ref<vm::Cell> value) {
   if (!gen::t_BinTree_ShardDescr.validate_ref(1024, value)) {
     LOG(ERROR) << "attempting to store an invalid (BinTree ShardDescr) at shard configuration position "
                << shard.to_str();
@@ -1663,16 +1663,16 @@ bool ShardConfig::set_shard_info(ton::ShardIdFull shard, Ref<vm::Cell> value) {
   return true;
 }
 
-bool Config::is_special_smartcontract(const ton::StdSmcAddress& addr) const {
+bool Config::is_special_smartcontract(const ion::StdSmcAddress& addr) const {
   CHECK(special_smc_dict);
   return special_smc_dict->lookup(addr).not_null() || addr == config_addr;
 }
 
-td::Result<std::vector<ton::StdSmcAddress>> Config::get_special_smartcontracts(bool without_config) const {
+td::Result<std::vector<ion::StdSmcAddress>> Config::get_special_smartcontracts(bool without_config) const {
   if (!special_smc_dict) {
     return td::Status::Error(-666, "configuration loaded without fundamental smart contract list");
   }
-  std::vector<ton::StdSmcAddress> res;
+  std::vector<ion::StdSmcAddress> res;
   if (!special_smc_dict->check_for_each([&res, &without_config, conf_addr = config_addr.bits()](
                                             Ref<vm::CellSlice> cs_ref, td::ConstBitPtr key, int n) {
         if (cs_ref->size_ext() || n != 256) {
@@ -1692,7 +1692,7 @@ td::Result<std::vector<ton::StdSmcAddress>> Config::get_special_smartcontracts(b
   return std::move(res);
 }
 
-td::Result<std::vector<std::pair<ton::StdSmcAddress, int>>> ConfigInfo::get_special_ticktock_smartcontracts(
+td::Result<std::vector<std::pair<ion::StdSmcAddress, int>>> ConfigInfo::get_special_ticktock_smartcontracts(
     int tick_tock) const {
   if (!special_smc_dict) {
     return td::Status::Error(-666, "configuration loaded without fundamental smart contract list");
@@ -1700,7 +1700,7 @@ td::Result<std::vector<std::pair<ton::StdSmcAddress, int>>> ConfigInfo::get_spec
   if (!accounts_dict) {
     return td::Status::Error(-666, "state loaded without accounts information");
   }
-  std::vector<std::pair<ton::StdSmcAddress, int>> res;
+  std::vector<std::pair<ion::StdSmcAddress, int>> res;
   if (!special_smc_dict->check_for_each(
           [this, &res, tick_tock](Ref<vm::CellSlice> cs_ref, td::ConstBitPtr key, int n) -> bool {
             if (cs_ref->size_ext() || n != 256) {
@@ -1744,17 +1744,17 @@ int ConfigInfo::get_smc_tick_tock(td::ConstBitPtr smc_addr) const {
              : -2;
 }
 
-ton::CatchainSeqno ConfigInfo::get_shard_cc_seqno(ton::ShardIdFull shard) const {
+ion::CatchainSeqno ConfigInfo::get_shard_cc_seqno(ion::ShardIdFull shard) const {
   return shard.is_masterchain() ? cc_seqno_ : ShardConfig::get_shard_cc_seqno(shard);
 }
 
-std::vector<ton::ValidatorDescr> Config::compute_validator_set(ton::ShardIdFull shard, const block::ValidatorSet& vset,
-                                                               ton::UnixTime time, ton::CatchainSeqno cc_seqno) const {
+std::vector<ion::ValidatorDescr> Config::compute_validator_set(ion::ShardIdFull shard, const block::ValidatorSet& vset,
+                                                               ion::UnixTime time, ion::CatchainSeqno cc_seqno) const {
   return do_compute_validator_set(get_catchain_validators_config(), shard, vset, cc_seqno);
 }
 
-std::vector<ton::ValidatorDescr> Config::compute_validator_set(ton::ShardIdFull shard, ton::UnixTime time,
-                                                               ton::CatchainSeqno cc_seqno) const {
+std::vector<ion::ValidatorDescr> Config::compute_validator_set(ion::ShardIdFull shard, ion::UnixTime time,
+                                                               ion::CatchainSeqno cc_seqno) const {
   if (!cur_validators_) {
     LOG(DEBUG) << "failed to compute validator set: cur_validators_ is empty";
     return {};
@@ -1763,14 +1763,14 @@ std::vector<ton::ValidatorDescr> Config::compute_validator_set(ton::ShardIdFull 
   }
 }
 
-std::vector<ton::ValidatorDescr> ConfigInfo::compute_validator_set_cc(ton::ShardIdFull shard,
+std::vector<ion::ValidatorDescr> ConfigInfo::compute_validator_set_cc(ion::ShardIdFull shard,
                                                                       const block::ValidatorSet& vset,
-                                                                      ton::UnixTime time,
-                                                                      ton::CatchainSeqno* cc_seqno_delta) const {
+                                                                      ion::UnixTime time,
+                                                                      ion::CatchainSeqno* cc_seqno_delta) const {
   if (cc_seqno_delta && (*cc_seqno_delta & -2)) {
     return {};
   }
-  ton::CatchainSeqno cc_seqno = get_shard_cc_seqno(shard);
+  ion::CatchainSeqno cc_seqno = get_shard_cc_seqno(shard);
   if (cc_seqno == ~0U) {
     return {};
   }
@@ -1780,8 +1780,8 @@ std::vector<ton::ValidatorDescr> ConfigInfo::compute_validator_set_cc(ton::Shard
   return do_compute_validator_set(get_catchain_validators_config(), shard, vset, cc_seqno);
 }
 
-std::vector<ton::ValidatorDescr> ConfigInfo::compute_validator_set_cc(ton::ShardIdFull shard, ton::UnixTime time,
-                                                                      ton::CatchainSeqno* cc_seqno_delta) const {
+std::vector<ion::ValidatorDescr> ConfigInfo::compute_validator_set_cc(ion::ShardIdFull shard, ion::UnixTime time,
+                                                                      ion::CatchainSeqno* cc_seqno_delta) const {
   auto vset = get_cur_validator_set();
   if (!vset) {
     return {};
@@ -1826,8 +1826,8 @@ const ValidatorDescr& ValidatorSet::at_weight(td::uint64 weight_pos) const {
   return *--it;
 }
 
-std::vector<ton::ValidatorDescr> ValidatorSet::export_validator_set() const {
-  std::vector<ton::ValidatorDescr> l;
+std::vector<ion::ValidatorDescr> ValidatorSet::export_validator_set() const {
+  std::vector<ion::ValidatorDescr> l;
   l.reserve(list.size());
   for (const auto& node : list) {
     l.emplace_back(node.pubkey, node.weight, node.adnl_addr);
@@ -1835,8 +1835,8 @@ std::vector<ton::ValidatorDescr> ValidatorSet::export_validator_set() const {
   return l;
 }
 
-std::map<ton::Bits256, int> ValidatorSet::compute_validator_map() const {
-  std::map<ton::Bits256, int> res;
+std::map<ion::Bits256, int> ValidatorSet::compute_validator_map() const {
+  std::map<ion::Bits256, int> res;
   for (int i = 0; i < (int)list.size(); i++) {
     res.emplace(list[i].pubkey.as_bits256(), i);
   }
@@ -1860,11 +1860,11 @@ int ValidatorSet::lookup_public_key(td::ConstBitPtr pubkey) const {
   return -1;
 }
 
-std::vector<ton::ValidatorDescr> Config::do_compute_validator_set(const CatchainValidatorsConfig& ccv_conf,
-                                                                  ton::ShardIdFull shard, const ValidatorSet& vset,
-                                                                  ton::CatchainSeqno cc_seqno) {
+std::vector<ion::ValidatorDescr> Config::do_compute_validator_set(const CatchainValidatorsConfig& ccv_conf,
+                                                                  ion::ShardIdFull shard, const ValidatorSet& vset,
+                                                                  ion::CatchainSeqno cc_seqno) {
   // LOG(DEBUG) << "in Config::do_compute_validator_set() for " << shard.to_str() << " ; cc_seqno=" << cc_seqno;
-  std::vector<ton::ValidatorDescr> nodes;
+  std::vector<ion::ValidatorDescr> nodes;
   bool is_mc = shard.is_masterchain();
   unsigned count = std::min<unsigned>(is_mc ? vset.main : ccv_conf.shard_val_num, vset.total);
   CHECK((unsigned)vset.total == vset.list.size());
@@ -1924,7 +1924,7 @@ std::vector<ton::ValidatorDescr> Config::do_compute_validator_set(const Catchain
   return nodes;
 }
 
-std::vector<ton::ValidatorDescr> Config::compute_total_validator_set(int next) const {
+std::vector<ion::ValidatorDescr> Config::compute_total_validator_set(int next) const {
   auto res = unpack_validator_set(get_config_param(next < 0 ? 32 : (next ? 36 : 34)));
   if (res.is_error()) {
     return {};
@@ -1974,7 +1974,7 @@ td::Result<SizeLimitsConfig> Config::do_get_size_limits_config(td::Ref<vm::CellS
   return limits;
 }
 
-std::unique_ptr<vm::Dictionary> Config::get_suspended_addresses(ton::UnixTime now) const {
+std::unique_ptr<vm::Dictionary> Config::get_suspended_addresses(ion::UnixTime now) const {
   td::Ref<vm::Cell> param = get_config_param(44);
   gen::SuspendedAddressList::Record rec;
   if (param.is_null() || !tlb::unpack_cell(param, rec) || rec.suspended_until <= now) {
@@ -2001,7 +2001,7 @@ BurningConfig Config::get_burning_config() const {
   return c;
 }
 
-td::Ref<vm::Tuple> Config::get_unpacked_config_tuple(ton::UnixTime now) const {
+td::Ref<vm::Tuple> Config::get_unpacked_config_tuple(ion::UnixTime now) const {
   auto get_param = [&](td::int32 idx) -> vm::StackEntry {
     auto cell = get_config_param(idx);
     if (cell.is_null()) {
@@ -2048,22 +2048,22 @@ PrecompiledContractsConfig Config::get_precompiled_contracts_config() const {
   return c;
 }
 
-td::Result<std::pair<ton::UnixTime, ton::UnixTime>> Config::unpack_validator_set_start_stop(Ref<vm::Cell> vset_root) {
+td::Result<std::pair<ion::UnixTime, ion::UnixTime>> Config::unpack_validator_set_start_stop(Ref<vm::Cell> vset_root) {
   if (vset_root.is_null()) {
     return td::Status::Error("validator set absent");
   }
   gen::ValidatorSet::Record_validators_ext rec;
   if (tlb::unpack_cell(vset_root, rec)) {
-    return std::pair<ton::UnixTime, ton::UnixTime>(rec.utime_since, rec.utime_until);
+    return std::pair<ion::UnixTime, ion::UnixTime>(rec.utime_since, rec.utime_until);
   }
   gen::ValidatorSet::Record_validators rec0;
   if (tlb::unpack_cell(std::move(vset_root), rec0)) {
-    return std::pair<ton::UnixTime, ton::UnixTime>(rec0.utime_since, rec0.utime_until);
+    return std::pair<ion::UnixTime, ion::UnixTime>(rec0.utime_since, rec0.utime_until);
   }
   return td::Status::Error("validator set is invalid");
 }
 
-std::pair<ton::UnixTime, ton::UnixTime> Config::get_validator_set_start_stop(int next) const {
+std::pair<ion::UnixTime, ion::UnixTime> Config::get_validator_set_start_stop(int next) const {
   auto res = unpack_validator_set_start_stop(get_config_param(next < 0 ? 32 : (next ? 36 : 34)));
   if (res.is_error()) {
     return {0, 0};
@@ -2072,9 +2072,9 @@ std::pair<ton::UnixTime, ton::UnixTime> Config::get_validator_set_start_stop(int
   }
 }
 
-bool WorkchainInfo::unpack(ton::WorkchainId wc, vm::CellSlice& cs) {
-  workchain = ton::workchainInvalid;
-  if (wc == ton::workchainInvalid) {
+bool WorkchainInfo::unpack(ion::WorkchainId wc, vm::CellSlice& cs) {
+  workchain = ion::workchainInvalid;
+  if (wc == ion::workchainInvalid) {
     return false;
   }
   auto unpack_v1 = [this](auto& info) {
@@ -2136,7 +2136,7 @@ bool WorkchainInfo::unpack(ton::WorkchainId wc, vm::CellSlice& cs) {
   return true;
 }
 
-Ref<WorkchainInfo> Config::get_workchain_info(ton::WorkchainId workchain_id) const {
+Ref<WorkchainInfo> Config::get_workchain_info(ion::WorkchainId workchain_id) const {
   if (!workchains_dict_) {
     return {};
   }
@@ -2148,7 +2148,7 @@ Ref<WorkchainInfo> Config::get_workchain_info(ton::WorkchainId workchain_id) con
   }
 }
 
-bool ConfigInfo::get_old_mc_block_id(ton::BlockSeqno seqno, ton::BlockIdExt& blkid, ton::LogicalTime* end_lt) const {
+bool ConfigInfo::get_old_mc_block_id(ion::BlockSeqno seqno, ion::BlockIdExt& blkid, ion::LogicalTime* end_lt) const {
   if (block_id.is_valid() && seqno == block_id.id.seqno) {
     blkid = block_id;
     if (end_lt) {
@@ -2160,14 +2160,14 @@ bool ConfigInfo::get_old_mc_block_id(ton::BlockSeqno seqno, ton::BlockIdExt& blk
   }
 }
 
-bool ConfigInfo::check_old_mc_block_id(const ton::BlockIdExt& blkid, bool strict) const {
+bool ConfigInfo::check_old_mc_block_id(const ion::BlockIdExt& blkid, bool strict) const {
   return (!strict && blkid.id.seqno == block_id.id.seqno && block_id.is_valid())
              ? blkid == block_id
              : block::check_old_mc_block_id(prev_blocks_dict_.get(), blkid);
 }
 
 // returns block with min block.seqno and req_lt <= block.end_lt
-bool ConfigInfo::get_mc_block_by_lt(ton::LogicalTime req_lt, ton::BlockIdExt& blkid, ton::LogicalTime* end_lt) const {
+bool ConfigInfo::get_mc_block_by_lt(ion::LogicalTime req_lt, ion::BlockIdExt& blkid, ion::LogicalTime* end_lt) const {
   if (req_lt > lt) {
     return false;
   }
@@ -2200,7 +2200,7 @@ bool ConfigInfo::get_mc_block_by_lt(ton::LogicalTime req_lt, ton::BlockIdExt& bl
 }
 
 // returns key block with max block.seqno and block.seqno <= req_seqno
-bool ConfigInfo::get_prev_key_block(ton::BlockSeqno req_seqno, ton::BlockIdExt& blkid, ton::LogicalTime* end_lt) const {
+bool ConfigInfo::get_prev_key_block(ion::BlockSeqno req_seqno, ion::BlockIdExt& blkid, ion::LogicalTime* end_lt) const {
   if (block_id.is_valid() && is_key_state_ && block_id.seqno() <= req_seqno) {
     blkid = block_id;
     if (end_lt) {
@@ -2239,7 +2239,7 @@ bool ConfigInfo::get_prev_key_block(ton::BlockSeqno req_seqno, ton::BlockIdExt& 
 }
 
 // returns key block with min block.seqno and block.seqno >= req_seqno
-bool ConfigInfo::get_next_key_block(ton::BlockSeqno req_seqno, ton::BlockIdExt& blkid, ton::LogicalTime* end_lt) const {
+bool ConfigInfo::get_next_key_block(ion::BlockSeqno req_seqno, ion::BlockIdExt& blkid, ion::LogicalTime* end_lt) const {
   td::BitArray<32> key;
   auto found = prev_blocks_dict_->traverse_extra(
       key.bits(), 32,
@@ -2299,7 +2299,7 @@ td::Result<Ref<vm::Tuple>> ConfigInfo::get_prev_blocks_info() const {
   // [ last_mc_blocks:[BlockId...]
   //   prev_key_block:BlockId
   //   last_mc_blocks_100[BlockId...] ] : PrevBlocksInfo
-  auto block_id_to_tuple = [](const ton::BlockIdExt& block_id) -> vm::Ref<vm::Tuple> {
+  auto block_id_to_tuple = [](const ion::BlockIdExt& block_id) -> vm::Ref<vm::Tuple> {
     td::RefInt256 shard = td::make_refint(block_id.id.shard);
     if (shard->sgn() < 0) {
       shard &= ((td::make_refint(1) << 64) - 1);
@@ -2312,9 +2312,9 @@ td::Result<Ref<vm::Tuple>> ConfigInfo::get_prev_blocks_info() const {
 
   std::vector<vm::StackEntry> last_mc_blocks;
   last_mc_blocks.push_back(block_id_to_tuple(block_id));
-  for (ton::BlockSeqno seqno = block_id.id.seqno; seqno > 0 && last_mc_blocks.size() < 16;) {
+  for (ion::BlockSeqno seqno = block_id.id.seqno; seqno > 0 && last_mc_blocks.size() < 16;) {
     --seqno;
-    ton::BlockIdExt id;
+    ion::BlockIdExt id;
     if (!get_old_mc_block_id(seqno, id)) {
       return td::Status::Error("cannot fetch old mc block");
     }
@@ -2322,8 +2322,8 @@ td::Result<Ref<vm::Tuple>> ConfigInfo::get_prev_blocks_info() const {
   }
   tuple.push_back(td::make_cnt_ref<std::vector<vm::StackEntry>>(std::move(last_mc_blocks)));
 
-  ton::BlockIdExt last_key_block;
-  ton::LogicalTime last_key_block_lt;
+  ion::BlockIdExt last_key_block;
+  ion::LogicalTime last_key_block_lt;
   if (!get_last_key_block(last_key_block, last_key_block_lt)) {
     return td::Status::Error("cannot fetch last key block");
   }
@@ -2331,8 +2331,8 @@ td::Result<Ref<vm::Tuple>> ConfigInfo::get_prev_blocks_info() const {
 
   if (get_global_version() >= 9) {
     std::vector<vm::StackEntry> last_mc_blocks_100;
-    for (ton::BlockSeqno seqno = block_id.id.seqno / 100 * 100; last_mc_blocks_100.size() < 16;) {
-      ton::BlockIdExt id;
+    for (ion::BlockSeqno seqno = block_id.id.seqno / 100 * 100; last_mc_blocks_100.size() < 16;) {
+      ion::BlockIdExt id;
       if (!get_old_mc_block_id(seqno, id)) {
         return td::Status::Error("cannot fetch old mc block");
       }

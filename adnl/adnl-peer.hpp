@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -34,7 +34,7 @@
 
 #include "utils.hpp"
 
-namespace ton {
+namespace ion {
 
 namespace adnl {
 
@@ -90,7 +90,7 @@ class AdnlPeerPairImpl : public AdnlPeerPair {
   void update_peer_id(AdnlNodeIdFull id) override;
 
   void get_conn_ip_str(td::Promise<td::string> promise) override;
-  void get_stats(bool all, td::Promise<tl_object_ptr<ton_api::adnl_stats_peerPair>> promise) override;
+  void get_stats(bool all, td::Promise<tl_object_ptr<ion_api::adnl_stats_peerPair>> promise) override;
 
   void got_data_from_db(td::Result<AdnlDbItem> R);
   void got_data_from_static_nodes(td::Result<AdnlNode> R);
@@ -278,7 +278,7 @@ class AdnlPeerPairImpl : public AdnlPeerPair {
     td::uint64 out_packets = 0, out_bytes = 0, out_packets_channel = 0, out_bytes_channel = 0;
     td::uint64 out_expired_messages = 0, out_expired_bytes = 0;
 
-    tl_object_ptr<ton_api::adnl_stats_packets> tl() const;
+    tl_object_ptr<ion_api::adnl_stats_packets> tl() const;
   } packet_stats_cur_, packet_stats_prev_, packet_stats_total_;
   double last_in_packet_ts_ = 0.0, last_out_packet_ts_ = 0.0;
   double started_ts_ = td::Clocks::system();
@@ -303,7 +303,7 @@ class AdnlPeerImpl : public AdnlPeer {
                         AdnlAddressList addr_list) override;
   void update_dht_node(td::actor::ActorId<dht::Dht> dht_node) override;
   void get_conn_ip_str(AdnlNodeIdShort l_id, td::Promise<td::string> promise) override;
-  void get_stats(bool all, td::Promise<std::vector<tl_object_ptr<ton_api::adnl_stats_peerPair>>> promise) override;
+  void get_stats(bool all, td::Promise<std::vector<tl_object_ptr<ion_api::adnl_stats_peerPair>>> promise) override;
   //void check_signature(td::BufferSlice data, td::BufferSlice signature, td::Promise<td::Unit> promise) override;
 
   AdnlPeerImpl(td::actor::ActorId<AdnlNetworkManager> network_manager, td::actor::ActorId<AdnlPeerTable> peer_table,
@@ -330,36 +330,36 @@ class AdnlPeerImpl : public AdnlPeer {
 
 }  // namespace adnl
 
-}  // namespace ton
+}  // namespace ion
 
 namespace td {
 
-inline td::StringBuilder &operator<<(td::StringBuilder &sb, const ton::adnl::AdnlPeerImpl::PrintId &id) {
+inline td::StringBuilder &operator<<(td::StringBuilder &sb, const ion::adnl::AdnlPeerImpl::PrintId &id) {
   sb << "[peer " << id.peer_id << "]";
   return sb;
 }
 
-inline td::StringBuilder &operator<<(td::StringBuilder &sb, const ton::adnl::AdnlPeerImpl &peer) {
+inline td::StringBuilder &operator<<(td::StringBuilder &sb, const ion::adnl::AdnlPeerImpl &peer) {
   sb << peer.print_id();
   return sb;
 }
 
-inline td::StringBuilder &operator<<(td::StringBuilder &sb, const ton::adnl::AdnlPeerImpl *peer) {
+inline td::StringBuilder &operator<<(td::StringBuilder &sb, const ion::adnl::AdnlPeerImpl *peer) {
   sb << peer->print_id();
   return sb;
 }
 
-inline td::StringBuilder &operator<<(td::StringBuilder &sb, const ton::adnl::AdnlPeerPairImpl::PrintId &id) {
+inline td::StringBuilder &operator<<(td::StringBuilder &sb, const ion::adnl::AdnlPeerPairImpl::PrintId &id) {
   sb << "[peerpair " << id.peer_id << "-" << id.local_id << "]";
   return sb;
 }
 
-inline td::StringBuilder &operator<<(td::StringBuilder &sb, const ton::adnl::AdnlPeerPairImpl &peer) {
+inline td::StringBuilder &operator<<(td::StringBuilder &sb, const ion::adnl::AdnlPeerPairImpl &peer) {
   sb << peer.print_id();
   return sb;
 }
 
-inline td::StringBuilder &operator<<(td::StringBuilder &sb, const ton::adnl::AdnlPeerPairImpl *peer) {
+inline td::StringBuilder &operator<<(td::StringBuilder &sb, const ion::adnl::AdnlPeerPairImpl *peer) {
   sb << peer->print_id();
   return sb;
 }

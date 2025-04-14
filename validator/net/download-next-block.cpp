@@ -1,28 +1,28 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
 #include "download-next-block.hpp"
-#include "ton/ton-tl.hpp"
+#include "ion/ion-tl.hpp"
 #include "adnl/utils.hpp"
 #include "download-block.hpp"
 #include "validator/full-node.h"
 
-namespace ton {
+namespace ion {
 
 namespace validator {
 
@@ -118,29 +118,29 @@ void DownloadNextBlock::got_node(adnl::AdnlNodeIdShort id) {
     }
   });
 
-  auto query = create_serialize_tl_object<ton_api::tonNode_getNextBlockDescription>(create_tl_block_id(prev_->id()));
+  auto query = create_serialize_tl_object<ion_api::tonNode_getNextBlockDescription>(create_tl_block_id(prev_->id()));
   if (client_.empty()) {
     td::actor::send_closure(overlays_, &overlay::Overlays::send_query, download_from_, local_id_, overlay_id_,
                             "get_prepare", std::move(P), td::Timestamp::in(1.0), std::move(query));
   } else {
     td::actor::send_closure(client_, &adnl::AdnlExtClient::send_query, "get_prepare",
-                            create_serialize_tl_object_suffix<ton_api::tonNode_query>(std::move(query)),
+                            create_serialize_tl_object_suffix<ion_api::tonNode_query>(std::move(query)),
                             td::Timestamp::in(1.0), std::move(P));
   }
 }
 
 void DownloadNextBlock::got_next_node(td::BufferSlice data) {
-  auto F = fetch_tl_object<ton_api::tonNode_BlockDescription>(std::move(data), true);
+  auto F = fetch_tl_object<ion_api::tonNode_BlockDescription>(std::move(data), true);
   if (F.is_error()) {
     abort_query(F.move_as_error());
     return;
   }
   auto f = F.move_as_ok();
-  if (f->get_id() == ton_api::tonNode_blockDescriptionEmpty::ID) {
+  if (f->get_id() == ion_api::tonNode_blockDescriptionEmpty::ID) {
     abort_query(td::Status::Error(ErrorCode::notready, "not found"));
     return;
   }
-  auto g = move_tl_object_as<ton_api::tonNode_blockDescription>(std::move(f));
+  auto g = move_tl_object_as<ion_api::tonNode_blockDescription>(std::move(f));
 
   next_block_id_ = create_block_id(g->id_);
   finish_query();
@@ -167,4 +167,4 @@ void DownloadNextBlock::finish_query() {
 
 }  // namespace validator
 
-}  // namespace ton
+}  // namespace ion

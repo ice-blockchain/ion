@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -20,7 +20,7 @@
 
 #include "adnl/adnl-node-id.hpp"
 #include "adnl/adnl.h"
-#include "auto/tl/ton_api.h"
+#include "auto/tl/ion_api.h"
 #include "dht/dht.h"
 
 #include "td/actor/PromiseFuture.h"
@@ -31,7 +31,7 @@
 
 #include <map>
 
-namespace ton {
+namespace ion {
 
 namespace overlay {
 
@@ -150,12 +150,12 @@ class Certificate {
 
   BroadcastCheckResult check(PublicKeyHash node, OverlayIdShort overlay_id, td::int32 unix_time, td::uint32 size,
                              bool is_fec, bool skip_check_signature = false) const;
-  tl_object_ptr<ton_api::overlay_Certificate> tl() const;
+  tl_object_ptr<ion_api::overlay_Certificate> tl() const;
   const PublicKey &issuer() const;
   const PublicKeyHash issuer_hash() const;
 
-  static td::Result<std::shared_ptr<Certificate>> create(tl_object_ptr<ton_api::overlay_Certificate> cert);
-  static tl_object_ptr<ton_api::overlay_Certificate> empty_tl();
+  static td::Result<std::shared_ptr<Certificate>> create(tl_object_ptr<ion_api::overlay_Certificate> cert);
+  static tl_object_ptr<ion_api::overlay_Certificate> empty_tl();
 
  private:
   td::Variant<PublicKey, PublicKeyHash> issued_by_;
@@ -195,7 +195,7 @@ class OverlayMemberCertificate {
     signature_ = other.signature_.clone();
     return *this;
   }
-  explicit OverlayMemberCertificate(const ton_api::overlay_MemberCertificate *cert);
+  explicit OverlayMemberCertificate(const ion_api::overlay_MemberCertificate *cert);
   td::Status check_signature(const adnl::AdnlNodeIdShort &node);
 
   bool is_expired() const {
@@ -206,11 +206,11 @@ class OverlayMemberCertificate {
     return expire_at_ < cur_time - 3;
   }
 
-  tl_object_ptr<ton_api::overlay_MemberCertificate> tl() const {
+  tl_object_ptr<ion_api::overlay_MemberCertificate> tl() const {
     if (empty()) {
-      return create_tl_object<ton_api::overlay_emptyMemberCertificate>();
+      return create_tl_object<ion_api::overlay_emptyMemberCertificate>();
     }
-    return create_tl_object<ton_api::overlay_memberCertificate>(signed_by_.tl(), flags_, slot_, expire_at_,
+    return create_tl_object<ion_api::overlay_memberCertificate>(signed_by_.tl(), flags_, slot_, expire_at_,
                                                                 signature_.clone_as_buffer_slice());
   }
 
@@ -223,7 +223,7 @@ class OverlayMemberCertificate {
   }
 
   td::BufferSlice to_sign_data(const adnl::AdnlNodeIdShort &node) const {
-    return ton::create_serialize_tl_object<ton::ton_api::overlay_memberCertificateId>(node.tl(), flags_, slot_,
+    return ion::create_serialize_tl_object<ion::ion_api::overlay_memberCertificateId>(node.tl(), flags_, slot_,
                                                                                       expire_at_);
   }
 
@@ -373,18 +373,18 @@ class Overlays : public td::actor::Actor {
 
   virtual void get_overlay_random_peers(adnl::AdnlNodeIdShort local_id, OverlayIdShort overlay, td::uint32 max_peers,
                                         td::Promise<std::vector<adnl::AdnlNodeIdShort>> promise) = 0;
-  virtual void get_stats(td::Promise<tl_object_ptr<ton_api::engine_validator_overlaysStats>> promise) = 0;
+  virtual void get_stats(td::Promise<tl_object_ptr<ion_api::engine_validator_overlaysStats>> promise) = 0;
 
   virtual void forget_peer(adnl::AdnlNodeIdShort local_id, OverlayIdShort overlay, adnl::AdnlNodeIdShort peer_id) = 0;
 };
 
 }  // namespace overlay
 
-}  // namespace ton
+}  // namespace ion
 
 namespace td {
 
-inline StringBuilder &operator<<(StringBuilder &stream, const ton::overlay::OverlayIdShort &value) {
+inline StringBuilder &operator<<(StringBuilder &stream, const ion::overlay::OverlayIdShort &value) {
   return stream << value.bits256_value();
 }
 

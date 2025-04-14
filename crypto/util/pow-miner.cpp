@@ -1,18 +1,18 @@
 /* 
-    This file is part of TON Blockchain source code.
+    This file is part of ION Blockchain source code.
 
-    TON Blockchain is free software; you can redistribute it and/or
+    ION Blockchain is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
     as published by the Free Software Foundation; either version 2
     of the License, or (at your option) any later version.
 
-    TON Blockchain is distributed in the hope that it will be useful,
+    ION Blockchain is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with TON Blockchain.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain.  If not, see <http://www.gnu.org/licenses/>.
 
     In addition, as a special exception, the copyright holders give permission 
     to link the code of portions of this program with the OpenSSL library. 
@@ -127,8 +127,8 @@ int found(td::Slice data) {
   return 0;
 }
 
-void miner(const ton::Miner::Options& options) {
-  auto res = ton::Miner::run(options);
+void miner(const ion::Miner::Options& options) {
+  auto res = ion::Miner::run(options);
   if (res) {
     found(res.value());
   }
@@ -141,17 +141,17 @@ class MinerBench : public td::Benchmark {
   }
 
   void run(int n) override {
-    ton::Miner::Options options;
+    ion::Miner::Options options;
     options.my_address.parse_addr("EQDU86V5wyPrLd4nQ0RHPcCLPZq_y1O5wFWyTsMw63vjXTOv");
     std::fill(options.seed.begin(), options.seed.end(), 0xa7);
     std::fill(options.complexity.begin(), options.complexity.end(), 0);
     options.max_iterations = n;
-    CHECK(!ton::Miner::run(options));
+    CHECK(!ion::Miner::run(options));
   }
 };
 
 int main(int argc, char* const argv[]) {
-  ton::Miner::Options options;
+  ion::Miner::Options options;
 
   progname = argv[0];
   int i, threads = 0;

@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -21,7 +21,7 @@
 #include <vector>
 #include <utility>
 
-#include "ton/ton-types.h"
+#include "ion/ion-types.h"
 
 #include "td/actor/actor.h"
 
@@ -33,7 +33,7 @@
 #include "validator/validator.h"
 #include "adnl/adnl-ext-client.h"
 
-namespace ton {
+namespace ion {
 
 namespace validator {
 
@@ -47,8 +47,8 @@ constexpr int VERBOSITY_NAME(FULL_NODE_EXTRA_DEBUG) = verbosity_DEBUG + 1;
 
 struct FullNodeConfig {
   FullNodeConfig() = default;
-  FullNodeConfig(const tl_object_ptr<ton_api::engine_validator_fullNodeConfig>& obj);
-  tl_object_ptr<ton_api::engine_validator_fullNodeConfig> tl() const;
+  FullNodeConfig(const tl_object_ptr<ion_api::engine_validator_fullNodeConfig>& obj);
+  tl_object_ptr<ion_api::engine_validator_fullNodeConfig> tl() const;
   bool operator==(const FullNodeConfig& rhs) const;
   bool operator!=(const FullNodeConfig& rhs) const;
 
@@ -69,7 +69,7 @@ struct CustomOverlayParams {
   std::vector<ShardIdFull> sender_shards_;
 
   bool send_shard(const ShardIdFull& shard) const;
-  static CustomOverlayParams fetch(const ton_api::engine_validator_customOverlay& f);
+  static CustomOverlayParams fetch(const ion_api::engine_validator_customOverlay& f);
 };
 
 class FullNode : public td::actor::Actor {
@@ -85,7 +85,7 @@ class FullNode : public td::actor::Actor {
                                               td::uint32 expiry_at, td::uint32 max_size,
                                               td::Promise<td::BufferSlice> promise) = 0;
   virtual void import_shard_overlay_certificate(ShardIdFull shard_id, PublicKeyHash signed_key,
-                                                std::shared_ptr<ton::overlay::Certificate> cert,
+                                                std::shared_ptr<ion::overlay::Certificate> cert,
                                                 td::Promise<td::Unit> promise) = 0;
 
   virtual void update_adnl_id(adnl::AdnlNodeIdShort adnl_id, td::Promise<td::Unit> promise) = 0;
@@ -113,7 +113,7 @@ class FullNode : public td::actor::Actor {
   enum { broadcast_mode_public = 1, broadcast_mode_private_block = 2, broadcast_mode_custom = 4 };
 
   static td::actor::ActorOwn<FullNode> create(
-      ton::PublicKeyHash local_id, adnl::AdnlNodeIdShort adnl_id, FileHash zero_state_file_hash, FullNodeOptions opts,
+      ion::PublicKeyHash local_id, adnl::AdnlNodeIdShort adnl_id, FileHash zero_state_file_hash, FullNodeOptions opts,
       td::actor::ActorId<keyring::Keyring> keyring, td::actor::ActorId<adnl::Adnl> adnl,
       td::actor::ActorId<rldp::Rldp> rldp, td::actor::ActorId<rldp2::Rldp> rldp2, td::actor::ActorId<dht::Dht> dht,
       td::actor::ActorId<overlay::Overlays> overlays, td::actor::ActorId<ValidatorManagerInterface> validator_manager,
@@ -124,4 +124,4 @@ class FullNode : public td::actor::Actor {
 
 }  // namespace validator
 
-}  // namespace ton
+}  // namespace ion

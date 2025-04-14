@@ -55,7 +55,7 @@ class CmdLineOptions {
         if (this.test_file)  // an option to run (debug) a single test
             return [this.test_file]
 
-        let tests = fs.readdirSync(this.tests_dir).filter(f => f.endsWith('.tolk') || f.endsWith('.ton'))
+        let tests = fs.readdirSync(this.tests_dir).filter(f => f.endsWith('.tolk') || f.endsWith('.ion'))
         tests.sort()
         return tests.map(f => path.join(this.tests_dir, f))
     }

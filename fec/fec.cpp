@@ -1,45 +1,45 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
 #include "fec.h"
 #include "td/utils/overloaded.h"
-#include "auto/tl/ton_api.hpp"
+#include "auto/tl/ion_api.hpp"
 #include "td/utils/misc.h"
 
-namespace ton {
+namespace ion {
 
 namespace fec {
 
-tl_object_ptr<ton_api::fec_Type> FecType::tl() const {
-  tl_object_ptr<ton_api::fec_Type> res;
+tl_object_ptr<ion_api::fec_Type> FecType::tl() const {
+  tl_object_ptr<ion_api::fec_Type> res;
   type_.visit(td::overloaded([&](const Empty &obj) { UNREACHABLE(); },
                              [&](const td::fec::RaptorQEncoder::Parameters &obj) {
-                               res = create_tl_object<ton_api::fec_raptorQ>(static_cast<td::uint32>(obj.data_size),
+                               res = create_tl_object<ion_api::fec_raptorQ>(static_cast<td::uint32>(obj.data_size),
                                                                             static_cast<td::uint32>(obj.symbol_size),
                                                                             static_cast<td::uint32>(obj.symbols_count));
                              },
                              [&](const td::fec::RoundRobinEncoder::Parameters &obj) {
-                               res = create_tl_object<ton_api::fec_roundRobin>(
+                               res = create_tl_object<ion_api::fec_roundRobin>(
                                    static_cast<td::uint32>(obj.data_size), static_cast<td::uint32>(obj.symbol_size),
                                    static_cast<td::uint32>(obj.symbols_count));
                              },
                              [&](const td::fec::OnlineEncoder::Parameters &obj) {
-                               res = create_tl_object<ton_api::fec_online>(static_cast<td::uint32>(obj.data_size),
+                               res = create_tl_object<ion_api::fec_online>(static_cast<td::uint32>(obj.data_size),
                                                                            static_cast<td::uint32>(obj.symbol_size),
                                                                            static_cast<td::uint32>(obj.symbols_count));
                              }));
@@ -98,9 +98,9 @@ td::uint32 FecType::symbol_size() const {
   return res;
 }
 
-td::Result<FecType> FecType::create(tl_object_ptr<ton_api::fec_Type> obj) {
+td::Result<FecType> FecType::create(tl_object_ptr<ion_api::fec_Type> obj) {
   td::int32 data_size_int = 0, symbol_size_int = 0, symbols_count_int = 0;
-  ton_api::downcast_call(*obj, td::overloaded([&](const auto &obj) {
+  ion_api::downcast_call(*obj, td::overloaded([&](const auto &obj) {
     data_size_int = obj.data_size_;
     symbol_size_int = obj.symbol_size_;
     symbols_count_int = obj.symbols_count_;
@@ -119,15 +119,15 @@ td::Result<FecType> FecType::create(tl_object_ptr<ton_api::fec_Type> obj) {
     return td::Status::Error("invalid fec type: wrong symbols_count");
   }
   FecType T;
-  ton_api::downcast_call(*obj,
+  ion_api::downcast_call(*obj,
                          td::overloaded(
-                             [&](const ton_api::fec_raptorQ &obj) {
+                             [&](const ion_api::fec_raptorQ &obj) {
                                T.type_ = td::fec::RaptorQEncoder::Parameters{data_size, symbol_size, symbols_count};
                              },
-                             [&](const ton_api::fec_roundRobin &obj) {
+                             [&](const ion_api::fec_roundRobin &obj) {
                                T.type_ = td::fec::RoundRobinEncoder::Parameters{data_size, symbol_size, symbols_count};
                              },
-                             [&](const ton_api::fec_online &obj) {
+                             [&](const ion_api::fec_online &obj) {
                                T.type_ = td::fec::OnlineEncoder::Parameters{data_size, symbol_size, symbols_count};
                              }));
   return T;
@@ -135,4 +135,4 @@ td::Result<FecType> FecType::create(tl_object_ptr<ton_api::fec_Type> obj) {
 
 }  // namespace fec
 
-}  // namespace ton
+}  // namespace ion

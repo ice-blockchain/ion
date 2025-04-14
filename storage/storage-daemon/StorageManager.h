@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #pragma once
@@ -24,7 +24,7 @@
 #include "storage/db.h"
 #include "SpeedLimiter.h"
 
-namespace ton {
+namespace ion {
 
 class StorageManager : public td::actor::Actor {
  public:
@@ -35,7 +35,7 @@ class StorageManager : public td::actor::Actor {
   };
 
   StorageManager(adnl::AdnlNodeIdShort local_id, std::string db_root, td::unique_ptr<Callback> callback,
-                 bool client_mode, td::actor::ActorId<adnl::Adnl> adnl, td::actor::ActorId<ton_rldp::Rldp> rldp,
+                 bool client_mode, td::actor::ActorId<adnl::Adnl> adnl, td::actor::ActorId<ion_rldp::Rldp> rldp,
                  td::actor::ActorId<overlay::Overlays> overlays);
 
   void start_up() override;
@@ -62,7 +62,7 @@ class StorageManager : public td::actor::Actor {
                  td::Promise<td::Unit> promise);
 
   void wait_for_completion(td::Bits256 hash, td::Promise<td::Unit> promise);
-  void get_peers_info(td::Bits256 hash, td::Promise<tl_object_ptr<ton_api::storage_daemon_peerList>> promise);
+  void get_peers_info(td::Bits256 hash, td::Promise<tl_object_ptr<ion_api::storage_daemon_peerList>> promise);
 
   void get_speed_limits(td::Promise<std::pair<double, double>> promise);  // Download, upload
   void set_download_speed_limit(double max_speed);
@@ -74,7 +74,7 @@ class StorageManager : public td::actor::Actor {
   td::unique_ptr<Callback> callback_;
   bool client_mode_ = false;
   td::actor::ActorId<adnl::Adnl> adnl_;
-  td::actor::ActorId<ton_rldp::Rldp> rldp_;
+  td::actor::ActorId<ion_rldp::Rldp> rldp_;
   td::actor::ActorId<overlay::Overlays> overlays_;
 
   std::shared_ptr<db::DbType> db_;
@@ -114,7 +114,7 @@ class StorageManager : public td::actor::Actor {
   td::unique_ptr<NodeActor::Callback> create_callback(td::Bits256 hash,
                                                       std::shared_ptr<TorrentEntry::ClosingState> closing_state);
 
-  void loaded_config_from_db(tl_object_ptr<ton_api::storage_db_config> config);
+  void loaded_config_from_db(tl_object_ptr<ion_api::storage_db_config> config);
   void load_torrents_from_db(std::vector<td::Bits256> torrents);
   void loaded_torrent_from_db(td::Bits256 hash, td::Result<td::actor::ActorOwn<NodeActor>> R);
   void after_load_torrents_from_db();
@@ -124,4 +124,4 @@ class StorageManager : public td::actor::Actor {
   void on_torrent_closed(Torrent torrent, std::shared_ptr<TorrentEntry::ClosingState> closing_state);
 };
 
-}  // namespace ton
+}  // namespace ion

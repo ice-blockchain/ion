@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -25,14 +25,14 @@
 #include "td/utils/tl_helpers.h"
 
 #include "tl-utils/tl-utils.hpp"
-#include "auto/tl/ton_api.h"
-#include "auto/tl/ton_api.hpp"
+#include "auto/tl/ion_api.h"
+#include "auto/tl/ion_api.hpp"
 
 #include "common/errorcode.h"
 
 #include "td/actor//actor.h"
 
-namespace ton {
+namespace ion {
 namespace rldp2 {
 void RldpConnection::add_limit(td::Timestamp timeout, Limit limit) {
   CHECK(timeout);
@@ -130,7 +130,7 @@ void RldpConnection::send(TransferId transfer_id, td::BufferSlice data, td::Time
 }
 
 void RldpConnection::receive_raw(td::BufferSlice packet) {
-  auto F = ton::fetch_tl_object<ton::ton_api::rldp2_MessagePart>(std::move(packet), true);
+  auto F = ion::fetch_tl_object<ion::ion_api::rldp2_MessagePart>(std::move(packet), true);
   if (F.is_error()) {
     return;
   }
@@ -206,7 +206,7 @@ td::Timestamp RldpConnection::run(const TransferId &transfer_id, InboundTransfer
       inbound.receiver.next_action(td::Timestamp::now())
           .visit(td::overloaded([&](const RldpReceiver::ActionWait &wait) { wakeup_at.relax(wait.wait_till); },
                                 [&](const RldpReceiver::ActionSendAck &send) {
-                                  send_packet(ton::create_serialize_tl_object<ton::ton_api::rldp2_confirm>(
+                                  send_packet(ion::create_serialize_tl_object<ion::ion_api::rldp2_confirm>(
                                       transfer_id, it.first, send.ack.max_seqno, send.ack.received_mask,
                                       send.ack.received_count));
                                   inbound.receiver.on_ack_sent(td::Timestamp::now());
@@ -241,7 +241,7 @@ td::optional<td::Timestamp> RldpConnection::step(const TransferId &transfer_id, 
             part.encoder->prepare_more_symbols();
           }
           auto symbol = part.encoder->gen_symbol(seqno).data;
-          send_packet(ton::create_serialize_tl_object<ton::ton_api::rldp2_messagePart>(
+          send_packet(ion::create_serialize_tl_object<ion::ion_api::rldp2_messagePart>(
               transfer_id, part.fec_type.tl(), it.first, outbound.total_size(), seqno, std::move(symbol)));
           if (!send.is_probe) {
             pacer_.send(1, now);
@@ -265,9 +265,9 @@ td::optional<td::Timestamp> RldpConnection::step(const TransferId &transfer_id, 
   return wakeup_at;
 }
 
-void RldpConnection::receive_raw_obj(ton::ton_api::rldp2_messagePart &part) {
+void RldpConnection::receive_raw_obj(ion::ion_api::rldp2_messagePart &part) {
   if (completed_set_.count(part.transfer_id_) > 0) {
-    send_packet(ton::create_serialize_tl_object<ton::ton_api::rldp2_complete>(part.transfer_id_, part.part_));
+    send_packet(ion::create_serialize_tl_object<ion::ion_api::rldp2_complete>(part.transfer_id_, part.part_));
     return;
   }
 
@@ -275,7 +275,7 @@ void RldpConnection::receive_raw_obj(ton::ton_api::rldp2_messagePart &part) {
   if (r_total_size.is_error()) {
     return;
   }
-  auto r_fec_type = ton::fec::FecType::create(std::move(part.fec_type_));
+  auto r_fec_type = ion::fec::FecType::create(std::move(part.fec_type_));
   if (r_fec_type.is_error()) {
     return;
   }
@@ -313,7 +313,7 @@ void RldpConnection::receive_raw_obj(ton::ton_api::rldp2_messagePart &part) {
     TRY_RESULT(in_part, inbound.get_part(part.part_, r_fec_type.move_as_ok()));
     if (!in_part) {
       if (inbound.is_part_completed(part.part_)) {
-        send_packet(ton::create_serialize_tl_object<ton::ton_api::rldp2_complete>(transfer_id, part.part_));
+        send_packet(ion::create_serialize_tl_object<ion::ion_api::rldp2_complete>(transfer_id, part.part_));
       }
       return {};
     }
@@ -337,7 +337,7 @@ void RldpConnection::receive_raw_obj(ton::ton_api::rldp2_messagePart &part) {
   }
 }
 
-void RldpConnection::receive_raw_obj(ton::ton_api::rldp2_complete &complete) {
+void RldpConnection::receive_raw_obj(ion::ion_api::rldp2_complete &complete) {
   auto transfer_id = complete.transfer_id_;
   auto it = outbound_transfers_.find(transfer_id);
   if (it == outbound_transfers_.end()) {
@@ -357,7 +357,7 @@ void RldpConnection::receive_raw_obj(ton::ton_api::rldp2_complete &complete) {
   }
 }
 
-void RldpConnection::receive_raw_obj(ton::ton_api::rldp2_confirm &confirm) {
+void RldpConnection::receive_raw_obj(ion::ion_api::rldp2_confirm &confirm) {
   auto transfer_id = confirm.transfer_id_;
   auto it = outbound_transfers_.find(transfer_id);
   if (it == outbound_transfers_.end()) {
@@ -378,4 +378,4 @@ void RldpConnection::receive_raw_obj(ton::ton_api::rldp2_confirm &confirm) {
 }
 
 }  // namespace rldp2
-}  // namespace ton
+}  // namespace ion

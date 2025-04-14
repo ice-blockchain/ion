@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -28,7 +28,7 @@
 #include "SmartContract.h"
 #include "SmartContractCode.h"
 
-namespace ton {
+namespace ion {
 using smc::pack_grams;
 using smc::unpack_grams;
 namespace pchan {
@@ -277,10 +277,10 @@ td::Result<PaymentChannel::Info> PaymentChannel::get_info() const {
   res.description = block::gen::t_ChanState.as_string_ref(data_rec.state);
 
   return std::move(res);
-}  // namespace ton
+}  // namespace ion
 
 td::optional<td::int32> PaymentChannel::guess_revision(const vm::Cell::Hash& code_hash) {
-  for (auto i : ton::SmartContractCode::get_revisions(ton::SmartContractCode::PaymentChannel)) {
+  for (auto i : ion::SmartContractCode::get_revisions(ion::SmartContractCode::PaymentChannel)) {
     auto code = SmartContractCode::get_code(SmartContractCode::PaymentChannel, i);
     if (code->get_hash() == code_hash) {
       return i;
@@ -288,4 +288,4 @@ td::optional<td::int32> PaymentChannel::guess_revision(const vm::Cell::Hash& cod
   }
   return {};
 }
-}  // namespace ton
+}  // namespace ion

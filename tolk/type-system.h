@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 */
 #pragma once
 
@@ -109,11 +109,11 @@ public:
 class TypeDataInt final : public TypeData {
   TypeDataInt() : TypeData(1ULL, 0, 1) {}
 
-  static TypePtr singleton;
+  static TypePtr singleion;
   friend void type_system_init();
 
 public:
-  static TypePtr create() { return singleton; }
+  static TypePtr create() { return singleion; }
 
   std::string as_human_readable() const override { return "int"; }
   bool can_rhs_be_assigned(TypePtr rhs) const override;
@@ -127,11 +127,11 @@ public:
 class TypeDataBool final : public TypeData {
   TypeDataBool() : TypeData(2ULL, 0, 1) {}
 
-  static TypePtr singleton;
+  static TypePtr singleion;
   friend void type_system_init();
 
 public:
-  static TypePtr create() { return singleton; }
+  static TypePtr create() { return singleion; }
 
   std::string as_human_readable() const override { return "bool"; }
   bool can_rhs_be_assigned(TypePtr rhs) const override;
@@ -144,11 +144,11 @@ public:
 class TypeDataCell final : public TypeData {
   TypeDataCell() : TypeData(3ULL, 0, 1) {}
 
-  static TypePtr singleton;
+  static TypePtr singleion;
   friend void type_system_init();
 
 public:
-  static TypePtr create() { return singleton; }
+  static TypePtr create() { return singleion; }
 
   std::string as_human_readable() const override { return "cell"; }
   bool can_rhs_be_assigned(TypePtr rhs) const override;
@@ -161,11 +161,11 @@ public:
 class TypeDataSlice final : public TypeData {
   TypeDataSlice() : TypeData(4ULL, 0, 1) {}
 
-  static TypePtr singleton;
+  static TypePtr singleion;
   friend void type_system_init();
 
 public:
-  static TypePtr create() { return singleton; }
+  static TypePtr create() { return singleion; }
 
   std::string as_human_readable() const override { return "slice"; }
   bool can_rhs_be_assigned(TypePtr rhs) const override;
@@ -178,11 +178,11 @@ public:
 class TypeDataBuilder final : public TypeData {
   TypeDataBuilder() : TypeData(5ULL, 0, 1) {}
 
-  static TypePtr singleton;
+  static TypePtr singleion;
   friend void type_system_init();
 
 public:
-  static TypePtr create() { return singleton; }
+  static TypePtr create() { return singleion; }
 
   std::string as_human_readable() const override { return "builder"; }
   bool can_rhs_be_assigned(TypePtr rhs) const override;
@@ -197,11 +197,11 @@ public:
 class TypeDataTuple final : public TypeData {
   TypeDataTuple() : TypeData(6ULL, 0, 1) {}
 
-  static TypePtr singleton;
+  static TypePtr singleion;
   friend void type_system_init();
 
 public:
-  static TypePtr create() { return singleton; }
+  static TypePtr create() { return singleion; }
 
   std::string as_human_readable() const override { return "tuple"; }
   bool can_rhs_be_assigned(TypePtr rhs) const override;
@@ -215,11 +215,11 @@ public:
 class TypeDataContinuation final : public TypeData {
   TypeDataContinuation() : TypeData(7ULL, 0, 1) {}
 
-  static TypePtr singleton;
+  static TypePtr singleion;
   friend void type_system_init();
 
 public:
-  static TypePtr create() { return singleton; }
+  static TypePtr create() { return singleion; }
 
   std::string as_human_readable() const override { return "continuation"; }
   bool can_rhs_be_assigned(TypePtr rhs) const override;
@@ -235,11 +235,11 @@ public:
 class TypeDataNullLiteral final : public TypeData {
   TypeDataNullLiteral() : TypeData(8ULL, 0, 1) {}
 
-  static TypePtr singleton;
+  static TypePtr singleion;
   friend void type_system_init();
 
 public:
-  static TypePtr create() { return singleton; }
+  static TypePtr create() { return singleion; }
 
   std::string as_human_readable() const override { return "null"; }
   bool can_rhs_be_assigned(TypePtr rhs) const override;
@@ -375,11 +375,11 @@ public:
 class TypeDataUnknown final : public TypeData {
   TypeDataUnknown() : TypeData(20ULL, flag_contains_unknown_inside, 1) {}
 
-  static TypePtr singleton;
+  static TypePtr singleion;
   friend void type_system_init();
 
 public:
-  static TypePtr create() { return singleton; }
+  static TypePtr create() { return singleion; }
 
   std::string as_human_readable() const override { return "unknown"; }
   bool can_rhs_be_assigned(TypePtr rhs) const override;
@@ -418,11 +418,11 @@ public:
 class TypeDataNever final : public TypeData {
   TypeDataNever() : TypeData(19ULL, 0, 0) {}
 
-  static TypePtr singleton;
+  static TypePtr singleion;
   friend void type_system_init();
 
 public:
-  static TypePtr create() { return singleton; }
+  static TypePtr create() { return singleion; }
 
   std::string as_human_readable() const override { return "never"; }
   bool can_rhs_be_assigned(TypePtr rhs) const override;
@@ -438,11 +438,11 @@ public:
 class TypeDataVoid final : public TypeData {
   TypeDataVoid() : TypeData(10ULL, 0, 0) {}
 
-  static TypePtr singleton;
+  static TypePtr singleion;
   friend void type_system_init();
 
 public:
-  static TypePtr create() { return singleton; }
+  static TypePtr create() { return singleion; }
 
   std::string as_human_readable() const override { return "void"; }
   bool can_rhs_be_assigned(TypePtr rhs) const override;

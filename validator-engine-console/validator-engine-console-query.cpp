@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain source code.
+    This file is part of ION Blockchain source code.
 
-    TON Blockchain is free software; you can redistribute it and/or
+    ION Blockchain is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
     as published by the Free Software Foundation; either version 2
     of the License, or (at your option) any later version.
 
-    TON Blockchain is distributed in the hope that it will be useful,
+    ION Blockchain is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with TON Blockchain.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain.  If not, see <http://www.gnu.org/licenses/>.
 
     In addition, as a special exception, the copyright holders give permission 
     to link the code of portions of this program with the OpenSSL library. 
@@ -26,15 +26,15 @@
     Copyright 2017-2020 Telegram Systems LLP
 */
 #include "validator-engine-console-query.h"
-#include "auto/tl/ton_api.h"
+#include "auto/tl/ion_api.h"
 #include "td/utils/StringBuilder.h"
 #include "validator-engine-console.h"
 #include "terminal/terminal.h"
 #include "td/utils/filesystem.h"
 #include "overlay/overlays.h"
-#include "ton/ton-tl.hpp"
+#include "ion/ion-tl.hpp"
 #include "td/utils/JsonBuilder.h"
-#include "auto/tl/ton_api_json.h"
+#include "auto/tl/ion_api_json.h"
 #include "keys/encryptor.h"
 #include "td/utils/port/path.h"
 #include "tl/tl_json.h"
@@ -117,13 +117,13 @@ td::Status GetTimeQuery::run() {
 }
 
 td::Status GetTimeQuery::send() {
-  auto b = ton::create_serialize_tl_object<ton::ton_api::engine_validator_getTime>();
+  auto b = ion::create_serialize_tl_object<ion::ion_api::engine_validator_getTime>();
   td::actor::send_closure(console_, &ValidatorEngineConsole::envelope_send_query, std::move(b), create_promise());
   return td::Status::OK();
 }
 
 td::Status GetTimeQuery::receive(td::BufferSlice data) {
-  TRY_RESULT_PREFIX(f, ton::fetch_tl_object<ton::ton_api::engine_validator_time>(std::move(data), true),
+  TRY_RESULT_PREFIX(f, ion::fetch_tl_object<ion::ion_api::engine_validator_time>(std::move(data), true),
                     "received incorrect answer: ");
   td::TerminalIO::out() << "received validator time: time=" << f->time_ << "\n";
   return td::Status::OK();
@@ -169,13 +169,13 @@ td::Status NewKeyQuery::run() {
 }
 
 td::Status NewKeyQuery::send() {
-  auto b = ton::create_serialize_tl_object<ton::ton_api::engine_validator_generateKeyPair>();
+  auto b = ion::create_serialize_tl_object<ion::ion_api::engine_validator_generateKeyPair>();
   td::actor::send_closure(console_, &ValidatorEngineConsole::envelope_send_query, std::move(b), create_promise());
   return td::Status::OK();
 }
 
 td::Status NewKeyQuery::receive(td::BufferSlice data) {
-  TRY_RESULT_PREFIX(f, ton::fetch_tl_object<ton::ton_api::engine_validator_keyHash>(std::move(data), true),
+  TRY_RESULT_PREFIX(f, ion::fetch_tl_object<ion::ion_api::engine_validator_keyHash>(std::move(data), true),
                     "received incorrect answer: ");
   td::TerminalIO::out() << "created new key " << f->key_hash_.to_hex() << "\n";
   return td::Status::OK();
@@ -189,53 +189,53 @@ td::Status ImportPrivateKeyFileQuery::run() {
 
 td::Status ImportPrivateKeyFileQuery::send() {
   TRY_RESULT(data, td::read_file_secure(file_name_));
-  TRY_RESULT(pk, ton::PrivateKey::import(data.as_slice()));
-  auto b = ton::create_serialize_tl_object<ton::ton_api::engine_validator_importPrivateKey>(pk.tl());
+  TRY_RESULT(pk, ion::PrivateKey::import(data.as_slice()));
+  auto b = ion::create_serialize_tl_object<ion::ion_api::engine_validator_importPrivateKey>(pk.tl());
   td::actor::send_closure(console_, &ValidatorEngineConsole::envelope_send_query, std::move(b), create_promise());
   return td::Status::OK();
 }
 
 td::Status ImportPrivateKeyFileQuery::receive(td::BufferSlice data) {
-  TRY_RESULT_PREFIX(f, ton::fetch_tl_object<ton::ton_api::engine_validator_keyHash>(std::move(data), true),
+  TRY_RESULT_PREFIX(f, ion::fetch_tl_object<ion::ion_api::engine_validator_keyHash>(std::move(data), true),
                     "received incorrect answer: ");
   td::TerminalIO::out() << "imported key " << f->key_hash_.to_hex() << "\n";
   return td::Status::OK();
 }
 
 td::Status ExportPublicKeyQuery::run() {
-  TRY_RESULT_ASSIGN(key_hash_, tokenizer_.get_token<ton::PublicKeyHash>());
+  TRY_RESULT_ASSIGN(key_hash_, tokenizer_.get_token<ion::PublicKeyHash>());
   TRY_STATUS(tokenizer_.check_endl());
   return td::Status::OK();
 }
 
 td::Status ExportPublicKeyQuery::send() {
-  auto b = ton::create_serialize_tl_object<ton::ton_api::engine_validator_exportPublicKey>(key_hash_.tl());
+  auto b = ion::create_serialize_tl_object<ion::ion_api::engine_validator_exportPublicKey>(key_hash_.tl());
   td::actor::send_closure(console_, &ValidatorEngineConsole::envelope_send_query, std::move(b), create_promise());
   return td::Status::OK();
 }
 
 td::Status ExportPublicKeyQuery::receive(td::BufferSlice data) {
-  TRY_RESULT_PREFIX(f, ton::fetch_tl_object<ton::ton_api::PublicKey>(data.as_slice(), true),
+  TRY_RESULT_PREFIX(f, ion::fetch_tl_object<ion::ion_api::PublicKey>(data.as_slice(), true),
                     "received incorrect answer: ");
   td::TerminalIO::out() << "got public key: " << td::base64_encode(data.as_slice()) << "\n";
   return td::Status::OK();
 }
 
 td::Status ExportPublicKeyFileQuery::run() {
-  TRY_RESULT_ASSIGN(key_hash_, tokenizer_.get_token<ton::PublicKeyHash>());
+  TRY_RESULT_ASSIGN(key_hash_, tokenizer_.get_token<ion::PublicKeyHash>());
   TRY_RESULT_ASSIGN(file_name_, tokenizer_.get_token<std::string>());
   TRY_STATUS(tokenizer_.check_endl());
   return td::Status::OK();
 }
 
 td::Status ExportPublicKeyFileQuery::send() {
-  auto b = ton::create_serialize_tl_object<ton::ton_api::engine_validator_exportPublicKey>(key_hash_.tl());
+  auto b = ion::create_serialize_tl_object<ion::ion_api::engine_validator_exportPublicKey>(key_hash_.tl());
   td::actor::send_closure(console_, &ValidatorEngineConsole::envelope_send_query, std::move(b), create_promise());
   return td::Status::OK();
 }
 
 td::Status ExportPublicKeyFileQuery::receive(td::BufferSlice data) {
-  TRY_RESULT_PREFIX(f, ton::fetch_tl_object<ton::ton_api::PublicKey>(data.as_slice(), true),
+  TRY_RESULT_PREFIX(f, ion::fetch_tl_object<ion::ion_api::PublicKey>(data.as_slice(), true),
                     "received incorrect answer: ");
   TRY_STATUS(td::write_file(file_name_, data.as_slice()));
   td::TerminalIO::out() << "got public key\n";
@@ -243,27 +243,27 @@ td::Status ExportPublicKeyFileQuery::receive(td::BufferSlice data) {
 }
 
 td::Status SignQuery::run() {
-  TRY_RESULT_ASSIGN(key_hash_, tokenizer_.get_token<ton::PublicKeyHash>());
+  TRY_RESULT_ASSIGN(key_hash_, tokenizer_.get_token<ion::PublicKeyHash>());
   TRY_RESULT_ASSIGN(data_, tokenizer_.get_token<td::BufferSlice>());
   TRY_STATUS(tokenizer_.check_endl());
   return td::Status::OK();
 }
 
 td::Status SignQuery::send() {
-  auto b = ton::create_serialize_tl_object<ton::ton_api::engine_validator_sign>(key_hash_.tl(), std::move(data_));
+  auto b = ion::create_serialize_tl_object<ion::ion_api::engine_validator_sign>(key_hash_.tl(), std::move(data_));
   td::actor::send_closure(console_, &ValidatorEngineConsole::envelope_send_query, std::move(b), create_promise());
   return td::Status::OK();
 }
 
 td::Status SignQuery::receive(td::BufferSlice data) {
-  TRY_RESULT_PREFIX(f, ton::fetch_tl_object<ton::ton_api::engine_validator_signature>(data.as_slice(), true),
+  TRY_RESULT_PREFIX(f, ion::fetch_tl_object<ion::ion_api::engine_validator_signature>(data.as_slice(), true),
                     "received incorrect answer: ");
   td::TerminalIO::out() << "got signature " << td::base64_encode(f->signature_) << "\n";
   return td::Status::OK();
 }
 
 td::Status SignFileQuery::run() {
-  TRY_RESULT_ASSIGN(key_hash_, tokenizer_.get_token<ton::PublicKeyHash>());
+  TRY_RESULT_ASSIGN(key_hash_, tokenizer_.get_token<ion::PublicKeyHash>());
   TRY_RESULT_ASSIGN(in_file_, tokenizer_.get_token<std::string>());
   TRY_RESULT_ASSIGN(out_file_, tokenizer_.get_token<std::string>());
   TRY_STATUS(tokenizer_.check_endl());
@@ -272,13 +272,13 @@ td::Status SignFileQuery::run() {
 
 td::Status SignFileQuery::send() {
   TRY_RESULT(data, td::read_file(in_file_));
-  auto b = ton::create_serialize_tl_object<ton::ton_api::engine_validator_sign>(key_hash_.tl(), std::move(data));
+  auto b = ion::create_serialize_tl_object<ion::ion_api::engine_validator_sign>(key_hash_.tl(), std::move(data));
   td::actor::send_closure(console_, &ValidatorEngineConsole::envelope_send_query, std::move(b), create_promise());
   return td::Status::OK();
 }
 
 td::Status SignFileQuery::receive(td::BufferSlice data) {
-  TRY_RESULT_PREFIX(f, ton::fetch_tl_object<ton::ton_api::engine_validator_signature>(data.as_slice(), true),
+  TRY_RESULT_PREFIX(f, ion::fetch_tl_object<ion::ion_api::engine_validator_signature>(data.as_slice(), true),
                     "received incorrect answer: ");
   TRY_STATUS(td::write_file(out_file_, f->signature_.as_slice()));
   td::TerminalIO::out() << "got signature\n";
@@ -288,19 +288,19 @@ td::Status SignFileQuery::receive(td::BufferSlice data) {
 td::Status ExportAllPrivateKeysQuery::run() {
   TRY_RESULT_ASSIGN(directory_, tokenizer_.get_token<std::string>());
   TRY_STATUS(tokenizer_.check_endl());
-  client_pk_ = ton::privkeys::Ed25519::random();
+  client_pk_ = ion::privkeys::Ed25519::random();
   return td::Status::OK();
 }
 
 td::Status ExportAllPrivateKeysQuery::send() {
-  auto b = ton::create_serialize_tl_object<ton::ton_api::engine_validator_exportAllPrivateKeys>(
+  auto b = ion::create_serialize_tl_object<ion::ion_api::engine_validator_exportAllPrivateKeys>(
       client_pk_.compute_public_key().tl());
   td::actor::send_closure(console_, &ValidatorEngineConsole::envelope_send_query, std::move(b), create_promise());
   return td::Status::OK();
 }
 
 td::Status ExportAllPrivateKeysQuery::receive(td::BufferSlice data) {
-  TRY_RESULT_PREFIX(f, ton::fetch_tl_object<ton::ton_api::engine_validator_exportedPrivateKeys>(data.as_slice(), true),
+  TRY_RESULT_PREFIX(f, ion::fetch_tl_object<ion::ion_api::engine_validator_exportedPrivateKeys>(data.as_slice(), true),
                     "received incorrect answer: ");
   // Private keys are encrypted using client-provided public key to avoid storing them in
   // non-secure buffers (not td::SecureString)
@@ -314,7 +314,7 @@ td::Status ExportAllPrivateKeysQuery::receive(td::BufferSlice data) {
     return td::Status::Error("data is too small");
   }
   slice.remove_suffix(32);
-  std::vector<ton::PrivateKey> private_keys;
+  std::vector<ion::PrivateKey> private_keys;
   while (!slice.empty()) {
     if (slice.size() < 4) {
       return td::Status::Error("unexpected end of data");
@@ -325,7 +325,7 @@ td::Status ExportAllPrivateKeysQuery::receive(td::BufferSlice data) {
       return td::Status::Error("unexpected end of data");
     }
     slice.remove_prefix(4);
-    TRY_RESULT_PREFIX(private_key, ton::PrivateKey::import(slice.substr(0, size)), "cannot parse private key: ");
+    TRY_RESULT_PREFIX(private_key, ion::PrivateKey::import(slice.substr(0, size)), "cannot parse private key: ");
     if (!private_key.exportable()) {
       return td::Status::Error("private key is not exportable");
     }
@@ -335,7 +335,7 @@ td::Status ExportAllPrivateKeysQuery::receive(td::BufferSlice data) {
 
   TRY_STATUS_PREFIX(td::mkpath(directory_ + "/"), "cannot create directory " + directory_ + ": ");
   td::TerminalIO::out() << "exported " << private_keys.size() << " private keys" << "\n";
-  for (const ton::PrivateKey &private_key : private_keys) {
+  for (const ion::PrivateKey &private_key : private_keys) {
     std::string hash_hex = private_key.compute_short_id().bits256_value().to_hex();
     TRY_STATUS_PREFIX(td::write_file(directory_ + "/" + hash_hex, private_key.export_as_slice()),
                       "failed to write file: ");
@@ -346,7 +346,7 @@ td::Status ExportAllPrivateKeysQuery::receive(td::BufferSlice data) {
 }
 
 td::Status AddAdnlAddrQuery::run() {
-  TRY_RESULT_ASSIGN(key_hash_, tokenizer_.get_token<ton::PublicKeyHash>());
+  TRY_RESULT_ASSIGN(key_hash_, tokenizer_.get_token<ion::PublicKeyHash>());
   TRY_RESULT_ASSIGN(category_, tokenizer_.get_token<td::uint32>());
 
   if (category_ > 15) {
@@ -357,39 +357,39 @@ td::Status AddAdnlAddrQuery::run() {
 }
 
 td::Status AddAdnlAddrQuery::send() {
-  auto b = ton::create_serialize_tl_object<ton::ton_api::engine_validator_addAdnlId>(key_hash_.tl(), category_);
+  auto b = ion::create_serialize_tl_object<ion::ion_api::engine_validator_addAdnlId>(key_hash_.tl(), category_);
   td::actor::send_closure(console_, &ValidatorEngineConsole::envelope_send_query, std::move(b), create_promise());
   return td::Status::OK();
 }
 
 td::Status AddAdnlAddrQuery::receive(td::BufferSlice data) {
-  TRY_RESULT_PREFIX(f, ton::fetch_tl_object<ton::ton_api::engine_validator_success>(data.as_slice(), true),
+  TRY_RESULT_PREFIX(f, ion::fetch_tl_object<ion::ion_api::engine_validator_success>(data.as_slice(), true),
                     "received incorrect answer: ");
   td::TerminalIO::out() << "success\n";
   return td::Status::OK();
 }
 
 td::Status AddDhtIdQuery::run() {
-  TRY_RESULT_ASSIGN(key_hash_, tokenizer_.get_token<ton::PublicKeyHash>());
+  TRY_RESULT_ASSIGN(key_hash_, tokenizer_.get_token<ion::PublicKeyHash>());
   TRY_STATUS(tokenizer_.check_endl());
   return td::Status::OK();
 }
 
 td::Status AddDhtIdQuery::send() {
-  auto b = ton::create_serialize_tl_object<ton::ton_api::engine_validator_addDhtId>(key_hash_.tl());
+  auto b = ion::create_serialize_tl_object<ion::ion_api::engine_validator_addDhtId>(key_hash_.tl());
   td::actor::send_closure(console_, &ValidatorEngineConsole::envelope_send_query, std::move(b), create_promise());
   return td::Status::OK();
 }
 
 td::Status AddDhtIdQuery::receive(td::BufferSlice data) {
-  TRY_RESULT_PREFIX(f, ton::fetch_tl_object<ton::ton_api::engine_validator_success>(data.as_slice(), true),
+  TRY_RESULT_PREFIX(f, ion::fetch_tl_object<ion::ion_api::engine_validator_success>(data.as_slice(), true),
                     "received incorrect answer: ");
   td::TerminalIO::out() << "success\n";
   return td::Status::OK();
 }
 
 td::Status AddValidatorPermanentKeyQuery::run() {
-  TRY_RESULT_ASSIGN(key_hash_, tokenizer_.get_token<ton::PublicKeyHash>());
+  TRY_RESULT_ASSIGN(key_hash_, tokenizer_.get_token<ion::PublicKeyHash>());
   TRY_RESULT_ASSIGN(election_date_, tokenizer_.get_token<td::uint32>());
   TRY_RESULT_ASSIGN(expire_at_, tokenizer_.get_token<td::uint32>());
   TRY_STATUS(tokenizer_.check_endl());
@@ -397,77 +397,77 @@ td::Status AddValidatorPermanentKeyQuery::run() {
 }
 
 td::Status AddValidatorPermanentKeyQuery::send() {
-  auto b = ton::create_serialize_tl_object<ton::ton_api::engine_validator_addValidatorPermanentKey>(
+  auto b = ion::create_serialize_tl_object<ion::ion_api::engine_validator_addValidatorPermanentKey>(
       key_hash_.tl(), election_date_, expire_at_);
   td::actor::send_closure(console_, &ValidatorEngineConsole::envelope_send_query, std::move(b), create_promise());
   return td::Status::OK();
 }
 
 td::Status AddValidatorPermanentKeyQuery::receive(td::BufferSlice data) {
-  TRY_RESULT_PREFIX(f, ton::fetch_tl_object<ton::ton_api::engine_validator_success>(data.as_slice(), true),
+  TRY_RESULT_PREFIX(f, ion::fetch_tl_object<ion::ion_api::engine_validator_success>(data.as_slice(), true),
                     "received incorrect answer: ");
   td::TerminalIO::out() << "success\n";
   return td::Status::OK();
 }
 
 td::Status AddValidatorTempKeyQuery::run() {
-  TRY_RESULT_ASSIGN(perm_key_hash_, tokenizer_.get_token<ton::PublicKeyHash>());
-  TRY_RESULT_ASSIGN(key_hash_, tokenizer_.get_token<ton::PublicKeyHash>());
+  TRY_RESULT_ASSIGN(perm_key_hash_, tokenizer_.get_token<ion::PublicKeyHash>());
+  TRY_RESULT_ASSIGN(key_hash_, tokenizer_.get_token<ion::PublicKeyHash>());
   TRY_RESULT_ASSIGN(expire_at_, tokenizer_.get_token<td::uint32>());
   TRY_STATUS(tokenizer_.check_endl());
   return td::Status::OK();
 }
 
 td::Status AddValidatorTempKeyQuery::send() {
-  auto b = ton::create_serialize_tl_object<ton::ton_api::engine_validator_addValidatorTempKey>(
+  auto b = ion::create_serialize_tl_object<ion::ion_api::engine_validator_addValidatorTempKey>(
       perm_key_hash_.tl(), key_hash_.tl(), expire_at_);
   td::actor::send_closure(console_, &ValidatorEngineConsole::envelope_send_query, std::move(b), create_promise());
   return td::Status::OK();
 }
 
 td::Status AddValidatorTempKeyQuery::receive(td::BufferSlice data) {
-  TRY_RESULT_PREFIX(f, ton::fetch_tl_object<ton::ton_api::engine_validator_success>(data.as_slice(), true),
+  TRY_RESULT_PREFIX(f, ion::fetch_tl_object<ion::ion_api::engine_validator_success>(data.as_slice(), true),
                     "received incorrect answer: ");
   td::TerminalIO::out() << "success\n";
   return td::Status::OK();
 }
 
 td::Status ChangeFullNodeAdnlAddrQuery::run() {
-  TRY_RESULT_ASSIGN(key_hash_, tokenizer_.get_token<ton::PublicKeyHash>());
+  TRY_RESULT_ASSIGN(key_hash_, tokenizer_.get_token<ion::PublicKeyHash>());
   TRY_STATUS(tokenizer_.check_endl());
   return td::Status::OK();
 }
 
 td::Status ChangeFullNodeAdnlAddrQuery::send() {
-  auto b = ton::create_serialize_tl_object<ton::ton_api::engine_validator_changeFullNodeAdnlAddress>(key_hash_.tl());
+  auto b = ion::create_serialize_tl_object<ion::ion_api::engine_validator_changeFullNodeAdnlAddress>(key_hash_.tl());
   td::actor::send_closure(console_, &ValidatorEngineConsole::envelope_send_query, std::move(b), create_promise());
   return td::Status::OK();
 }
 
 td::Status ChangeFullNodeAdnlAddrQuery::receive(td::BufferSlice data) {
-  TRY_RESULT_PREFIX(f, ton::fetch_tl_object<ton::ton_api::engine_validator_success>(data.as_slice(), true),
+  TRY_RESULT_PREFIX(f, ion::fetch_tl_object<ion::ion_api::engine_validator_success>(data.as_slice(), true),
                     "received incorrect answer: ");
   td::TerminalIO::out() << "success\n";
   return td::Status::OK();
 }
 
 td::Status AddValidatorAdnlAddrQuery::run() {
-  TRY_RESULT_ASSIGN(perm_key_hash_, tokenizer_.get_token<ton::PublicKeyHash>());
-  TRY_RESULT_ASSIGN(key_hash_, tokenizer_.get_token<ton::PublicKeyHash>());
+  TRY_RESULT_ASSIGN(perm_key_hash_, tokenizer_.get_token<ion::PublicKeyHash>());
+  TRY_RESULT_ASSIGN(key_hash_, tokenizer_.get_token<ion::PublicKeyHash>());
   TRY_RESULT_ASSIGN(expire_at_, tokenizer_.get_token<td::uint32>());
   TRY_STATUS(tokenizer_.check_endl());
   return td::Status::OK();
 }
 
 td::Status AddValidatorAdnlAddrQuery::send() {
-  auto b = ton::create_serialize_tl_object<ton::ton_api::engine_validator_addValidatorAdnlAddress>(
+  auto b = ion::create_serialize_tl_object<ion::ion_api::engine_validator_addValidatorAdnlAddress>(
       perm_key_hash_.tl(), key_hash_.tl(), expire_at_);
   td::actor::send_closure(console_, &ValidatorEngineConsole::envelope_send_query, std::move(b), create_promise());
   return td::Status::OK();
 }
 
 td::Status AddValidatorAdnlAddrQuery::receive(td::BufferSlice data) {
-  TRY_RESULT_PREFIX(f, ton::fetch_tl_object<ton::ton_api::engine_validator_success>(data.as_slice(), true),
+  TRY_RESULT_PREFIX(f, ion::fetch_tl_object<ion::ion_api::engine_validator_success>(data.as_slice(), true),
                     "received incorrect answer: ");
   td::TerminalIO::out() << "success\n";
   return td::Status::OK();
@@ -475,118 +475,118 @@ td::Status AddValidatorAdnlAddrQuery::receive(td::BufferSlice data) {
 
 td::Status AddLiteServerQuery::run() {
   TRY_RESULT_ASSIGN(port_, tokenizer_.get_token<td::uint16>());
-  TRY_RESULT_ASSIGN(key_hash_, tokenizer_.get_token<ton::PublicKeyHash>());
+  TRY_RESULT_ASSIGN(key_hash_, tokenizer_.get_token<ion::PublicKeyHash>());
   TRY_STATUS(tokenizer_.check_endl());
   return td::Status::OK();
 }
 
 td::Status AddLiteServerQuery::send() {
-  auto b = ton::create_serialize_tl_object<ton::ton_api::engine_validator_addLiteserver>(key_hash_.tl(), port_);
+  auto b = ion::create_serialize_tl_object<ion::ion_api::engine_validator_addLiteserver>(key_hash_.tl(), port_);
   td::actor::send_closure(console_, &ValidatorEngineConsole::envelope_send_query, std::move(b), create_promise());
   return td::Status::OK();
 }
 
 td::Status AddLiteServerQuery::receive(td::BufferSlice data) {
-  TRY_RESULT_PREFIX(f, ton::fetch_tl_object<ton::ton_api::engine_validator_success>(data.as_slice(), true),
+  TRY_RESULT_PREFIX(f, ion::fetch_tl_object<ion::ion_api::engine_validator_success>(data.as_slice(), true),
                     "received incorrect answer: ");
   td::TerminalIO::out() << "success\n";
   return td::Status::OK();
 }
 
 td::Status DelAdnlAddrQuery::run() {
-  TRY_RESULT_ASSIGN(key_hash_, tokenizer_.get_token<ton::PublicKeyHash>());
+  TRY_RESULT_ASSIGN(key_hash_, tokenizer_.get_token<ion::PublicKeyHash>());
   TRY_STATUS(tokenizer_.check_endl());
   return td::Status::OK();
 }
 
 td::Status DelAdnlAddrQuery::send() {
-  auto b = ton::create_serialize_tl_object<ton::ton_api::engine_validator_delAdnlId>(key_hash_.tl());
+  auto b = ion::create_serialize_tl_object<ion::ion_api::engine_validator_delAdnlId>(key_hash_.tl());
   td::actor::send_closure(console_, &ValidatorEngineConsole::envelope_send_query, std::move(b), create_promise());
   return td::Status::OK();
 }
 
 td::Status DelAdnlAddrQuery::receive(td::BufferSlice data) {
-  TRY_RESULT_PREFIX(f, ton::fetch_tl_object<ton::ton_api::engine_validator_success>(data.as_slice(), true),
+  TRY_RESULT_PREFIX(f, ion::fetch_tl_object<ion::ion_api::engine_validator_success>(data.as_slice(), true),
                     "received incorrect answer: ");
   td::TerminalIO::out() << "success\n";
   return td::Status::OK();
 }
 
 td::Status DelDhtIdQuery::run() {
-  TRY_RESULT_ASSIGN(key_hash_, tokenizer_.get_token<ton::PublicKeyHash>());
+  TRY_RESULT_ASSIGN(key_hash_, tokenizer_.get_token<ion::PublicKeyHash>());
   TRY_STATUS(tokenizer_.check_endl());
   return td::Status::OK();
 }
 
 td::Status DelDhtIdQuery::send() {
-  auto b = ton::create_serialize_tl_object<ton::ton_api::engine_validator_delDhtId>(key_hash_.tl());
+  auto b = ion::create_serialize_tl_object<ion::ion_api::engine_validator_delDhtId>(key_hash_.tl());
   td::actor::send_closure(console_, &ValidatorEngineConsole::envelope_send_query, std::move(b), create_promise());
   return td::Status::OK();
 }
 
 td::Status DelDhtIdQuery::receive(td::BufferSlice data) {
-  TRY_RESULT_PREFIX(f, ton::fetch_tl_object<ton::ton_api::engine_validator_success>(data.as_slice(), true),
+  TRY_RESULT_PREFIX(f, ion::fetch_tl_object<ion::ion_api::engine_validator_success>(data.as_slice(), true),
                     "received incorrect answer: ");
   td::TerminalIO::out() << "success\n";
   return td::Status::OK();
 }
 
 td::Status DelValidatorPermanentKeyQuery::run() {
-  TRY_RESULT_ASSIGN(key_hash_, tokenizer_.get_token<ton::PublicKeyHash>());
+  TRY_RESULT_ASSIGN(key_hash_, tokenizer_.get_token<ion::PublicKeyHash>());
   TRY_STATUS(tokenizer_.check_endl());
   return td::Status::OK();
 }
 
 td::Status DelValidatorPermanentKeyQuery::send() {
-  auto b = ton::create_serialize_tl_object<ton::ton_api::engine_validator_delValidatorPermanentKey>(key_hash_.tl());
+  auto b = ion::create_serialize_tl_object<ion::ion_api::engine_validator_delValidatorPermanentKey>(key_hash_.tl());
   td::actor::send_closure(console_, &ValidatorEngineConsole::envelope_send_query, std::move(b), create_promise());
   return td::Status::OK();
 }
 
 td::Status DelValidatorPermanentKeyQuery::receive(td::BufferSlice data) {
-  TRY_RESULT_PREFIX(f, ton::fetch_tl_object<ton::ton_api::engine_validator_success>(data.as_slice(), true),
+  TRY_RESULT_PREFIX(f, ion::fetch_tl_object<ion::ion_api::engine_validator_success>(data.as_slice(), true),
                     "received incorrect answer: ");
   td::TerminalIO::out() << "success\n";
   return td::Status::OK();
 }
 
 td::Status DelValidatorTempKeyQuery::run() {
-  TRY_RESULT_ASSIGN(perm_key_hash_, tokenizer_.get_token<ton::PublicKeyHash>());
-  TRY_RESULT_ASSIGN(key_hash_, tokenizer_.get_token<ton::PublicKeyHash>());
+  TRY_RESULT_ASSIGN(perm_key_hash_, tokenizer_.get_token<ion::PublicKeyHash>());
+  TRY_RESULT_ASSIGN(key_hash_, tokenizer_.get_token<ion::PublicKeyHash>());
   TRY_STATUS(tokenizer_.check_endl());
   return td::Status::OK();
 }
 
 td::Status DelValidatorTempKeyQuery::send() {
-  auto b = ton::create_serialize_tl_object<ton::ton_api::engine_validator_delValidatorTempKey>(perm_key_hash_.tl(),
+  auto b = ion::create_serialize_tl_object<ion::ion_api::engine_validator_delValidatorTempKey>(perm_key_hash_.tl(),
                                                                                                key_hash_.tl());
   td::actor::send_closure(console_, &ValidatorEngineConsole::envelope_send_query, std::move(b), create_promise());
   return td::Status::OK();
 }
 
 td::Status DelValidatorTempKeyQuery::receive(td::BufferSlice data) {
-  TRY_RESULT_PREFIX(f, ton::fetch_tl_object<ton::ton_api::engine_validator_success>(data.as_slice(), true),
+  TRY_RESULT_PREFIX(f, ion::fetch_tl_object<ion::ion_api::engine_validator_success>(data.as_slice(), true),
                     "received incorrect answer: ");
   td::TerminalIO::out() << "success\n";
   return td::Status::OK();
 }
 
 td::Status DelValidatorAdnlAddrQuery::run() {
-  TRY_RESULT_ASSIGN(perm_key_hash_, tokenizer_.get_token<ton::PublicKeyHash>());
-  TRY_RESULT_ASSIGN(key_hash_, tokenizer_.get_token<ton::PublicKeyHash>());
+  TRY_RESULT_ASSIGN(perm_key_hash_, tokenizer_.get_token<ion::PublicKeyHash>());
+  TRY_RESULT_ASSIGN(key_hash_, tokenizer_.get_token<ion::PublicKeyHash>());
   TRY_STATUS(tokenizer_.check_endl());
   return td::Status::OK();
 }
 
 td::Status DelValidatorAdnlAddrQuery::send() {
-  auto b = ton::create_serialize_tl_object<ton::ton_api::engine_validator_delValidatorAdnlAddress>(perm_key_hash_.tl(),
+  auto b = ion::create_serialize_tl_object<ion::ion_api::engine_validator_delValidatorAdnlAddress>(perm_key_hash_.tl(),
                                                                                                    key_hash_.tl());
   td::actor::send_closure(console_, &ValidatorEngineConsole::envelope_send_query, std::move(b), create_promise());
   return td::Status::OK();
 }
 
 td::Status DelValidatorAdnlAddrQuery::receive(td::BufferSlice data) {
-  TRY_RESULT_PREFIX(f, ton::fetch_tl_object<ton::ton_api::engine_validator_success>(data.as_slice(), true),
+  TRY_RESULT_PREFIX(f, ion::fetch_tl_object<ion::ion_api::engine_validator_success>(data.as_slice(), true),
                     "received incorrect answer: ");
   td::TerminalIO::out() << "success\n";
   return td::Status::OK();
@@ -598,13 +598,13 @@ td::Status GetConfigQuery::run() {
 }
 
 td::Status GetConfigQuery::send() {
-  auto b = ton::create_serialize_tl_object<ton::ton_api::engine_validator_getConfig>();
+  auto b = ion::create_serialize_tl_object<ion::ion_api::engine_validator_getConfig>();
   td::actor::send_closure(console_, &ValidatorEngineConsole::envelope_send_query, std::move(b), create_promise());
   return td::Status::OK();
 }
 
 td::Status GetConfigQuery::receive(td::BufferSlice data) {
-  TRY_RESULT_PREFIX(f, ton::fetch_tl_object<ton::ton_api::engine_validator_jsonConfig>(data.as_slice(), true),
+  TRY_RESULT_PREFIX(f, ion::fetch_tl_object<ion::ion_api::engine_validator_jsonConfig>(data.as_slice(), true),
                     "received incorrect answer: ");
   td::TerminalIO::out() << "---------\n" << f->data_ << "--------\n";
   return td::Status::OK();
@@ -617,13 +617,13 @@ td::Status SetVerbosityQuery::run() {
 }
 
 td::Status SetVerbosityQuery::send() {
-  auto b = ton::create_serialize_tl_object<ton::ton_api::engine_validator_setVerbosity>(verbosity_);
+  auto b = ion::create_serialize_tl_object<ion::ion_api::engine_validator_setVerbosity>(verbosity_);
   td::actor::send_closure(console_, &ValidatorEngineConsole::envelope_send_query, std::move(b), create_promise());
   return td::Status::OK();
 }
 
 td::Status SetVerbosityQuery::receive(td::BufferSlice data) {
-  TRY_RESULT_PREFIX(f, ton::fetch_tl_object<ton::ton_api::engine_validator_success>(data.as_slice(), true),
+  TRY_RESULT_PREFIX(f, ion::fetch_tl_object<ion::ion_api::engine_validator_success>(data.as_slice(), true),
                     "received incorrect answer: ");
   td::TerminalIO::out() << "success\n";
   return td::Status::OK();
@@ -635,13 +635,13 @@ td::Status GetStatsQuery::run() {
 }
 
 td::Status GetStatsQuery::send() {
-  auto b = ton::create_serialize_tl_object<ton::ton_api::engine_validator_getStats>();
+  auto b = ion::create_serialize_tl_object<ion::ion_api::engine_validator_getStats>();
   td::actor::send_closure(console_, &ValidatorEngineConsole::envelope_send_query, std::move(b), create_promise());
   return td::Status::OK();
 }
 
 td::Status GetStatsQuery::receive(td::BufferSlice data) {
-  TRY_RESULT_PREFIX(f, ton::fetch_tl_object<ton::ton_api::engine_validator_stats>(data.as_slice(), true),
+  TRY_RESULT_PREFIX(f, ion::fetch_tl_object<ion::ion_api::engine_validator_stats>(data.as_slice(), true),
                     "received incorrect answer: ");
 
   for (auto &v : f->stats_) {
@@ -664,14 +664,14 @@ td::Status AddNetworkAddressQuery::run() {
 }
 
 td::Status AddNetworkAddressQuery::send() {
-  auto b = ton::create_serialize_tl_object<ton::ton_api::engine_validator_addListeningPort>(
+  auto b = ion::create_serialize_tl_object<ion::ion_api::engine_validator_addListeningPort>(
       static_cast<td::int32>(addr_.get_ipv4()), addr_.get_port(), std::move(cats_), std::move(prio_cats_));
   td::actor::send_closure(console_, &ValidatorEngineConsole::envelope_send_query, std::move(b), create_promise());
   return td::Status::OK();
 }
 
 td::Status AddNetworkAddressQuery::receive(td::BufferSlice data) {
-  TRY_RESULT_PREFIX(f, ton::fetch_tl_object<ton::ton_api::engine_validator_success>(data.as_slice(), true),
+  TRY_RESULT_PREFIX(f, ion::fetch_tl_object<ion::ion_api::engine_validator_success>(data.as_slice(), true),
                     "received incorrect answer: ");
   td::TerminalIO::out() << "success\n";
   return td::Status::OK();
@@ -689,16 +689,16 @@ td::Status AddNetworkProxyAddressQuery::run() {
 }
 
 td::Status AddNetworkProxyAddressQuery::send() {
-  auto b = ton::create_serialize_tl_object<ton::ton_api::engine_validator_addProxy>(
+  auto b = ion::create_serialize_tl_object<ion::ion_api::engine_validator_addProxy>(
       static_cast<td::int32>(in_addr_.get_ipv4()), in_addr_.get_port(), static_cast<td::int32>(out_addr_.get_ipv4()),
-      out_addr_.get_port(), ton::create_tl_object<ton::ton_api::adnl_proxy_fast>(id_, std::move(shared_secret_)),
+      out_addr_.get_port(), ion::create_tl_object<ion::ion_api::adnl_proxy_fast>(id_, std::move(shared_secret_)),
       std::move(cats_), std::move(prio_cats_));
   td::actor::send_closure(console_, &ValidatorEngineConsole::envelope_send_query, std::move(b), create_promise());
   return td::Status::OK();
 }
 
 td::Status AddNetworkProxyAddressQuery::receive(td::BufferSlice data) {
-  TRY_RESULT_PREFIX(f, ton::fetch_tl_object<ton::ton_api::engine_validator_success>(data.as_slice(), true),
+  TRY_RESULT_PREFIX(f, ion::fetch_tl_object<ion::ion_api::engine_validator_success>(data.as_slice(), true),
                     "received incorrect answer: ");
   td::TerminalIO::out() << "success\n";
   return td::Status::OK();
@@ -715,13 +715,13 @@ td::Status CreateElectionBidQuery::run() {
 
 td::Status CreateElectionBidQuery::send() {
   auto b =
-      ton::create_serialize_tl_object<ton::ton_api::engine_validator_createElectionBid>(date_, elector_addr_, wallet_);
+      ion::create_serialize_tl_object<ion::ion_api::engine_validator_createElectionBid>(date_, elector_addr_, wallet_);
   td::actor::send_closure(console_, &ValidatorEngineConsole::envelope_send_query, std::move(b), create_promise());
   return td::Status::OK();
 }
 
 td::Status CreateElectionBidQuery::receive(td::BufferSlice data) {
-  TRY_RESULT_PREFIX(f, ton::fetch_tl_object<ton::ton_api::engine_validator_electionBid>(data.as_slice(), true),
+  TRY_RESULT_PREFIX(f, ion::fetch_tl_object<ion::ion_api::engine_validator_electionBid>(data.as_slice(), true),
                     "received incorrect answer: ");
   td::TerminalIO::out() << "success: permkey=" << f->perm_key_.to_hex() << " adnl=" << f->adnl_addr_.to_hex() << "\n";
   TRY_STATUS(td::write_file(fname_, f->to_send_payload_.as_slice()));
@@ -736,13 +736,13 @@ td::Status CreateProposalVoteQuery::run() {
 }
 
 td::Status CreateProposalVoteQuery::send() {
-  auto b = ton::create_serialize_tl_object<ton::ton_api::engine_validator_createProposalVote>(td::BufferSlice(data_));
+  auto b = ion::create_serialize_tl_object<ion::ion_api::engine_validator_createProposalVote>(td::BufferSlice(data_));
   td::actor::send_closure(console_, &ValidatorEngineConsole::envelope_send_query, std::move(b), create_promise());
   return td::Status::OK();
 }
 
 td::Status CreateProposalVoteQuery::receive(td::BufferSlice data) {
-  TRY_RESULT_PREFIX(f, ton::fetch_tl_object<ton::ton_api::engine_validator_proposalVote>(data.as_slice(), true),
+  TRY_RESULT_PREFIX(f, ion::fetch_tl_object<ion::ion_api::engine_validator_proposalVote>(data.as_slice(), true),
                     "received incorrect answer: ");
   td::TerminalIO::out() << "success: permkey=" << f->perm_key_.to_hex() << "\n";
   TRY_STATUS(td::write_file(fname_, f->to_send_.as_slice()));
@@ -758,14 +758,14 @@ td::Status CreateComplaintVoteQuery::run() {
 }
 
 td::Status CreateComplaintVoteQuery::send() {
-  auto b = ton::create_serialize_tl_object<ton::ton_api::engine_validator_createComplaintVote>(election_id_,
+  auto b = ion::create_serialize_tl_object<ion::ion_api::engine_validator_createComplaintVote>(election_id_,
                                                                                                td::BufferSlice(data_));
   td::actor::send_closure(console_, &ValidatorEngineConsole::envelope_send_query, std::move(b), create_promise());
   return td::Status::OK();
 }
 
 td::Status CreateComplaintVoteQuery::receive(td::BufferSlice data) {
-  TRY_RESULT_PREFIX(f, ton::fetch_tl_object<ton::ton_api::engine_validator_proposalVote>(data.as_slice(), true),
+  TRY_RESULT_PREFIX(f, ion::fetch_tl_object<ion::ion_api::engine_validator_proposalVote>(data.as_slice(), true),
                     "received incorrect answer: ");
   td::TerminalIO::out() << "success: permkey=" << f->perm_key_.to_hex() << "\n";
   TRY_STATUS(td::write_file(fname_, f->to_send_.as_slice()));
@@ -773,18 +773,18 @@ td::Status CreateComplaintVoteQuery::receive(td::BufferSlice data) {
 }
 
 td::Status CheckDhtServersQuery::run() {
-  TRY_RESULT_ASSIGN(id_, tokenizer_.get_token<ton::PublicKeyHash>());
+  TRY_RESULT_ASSIGN(id_, tokenizer_.get_token<ion::PublicKeyHash>());
   return td::Status::OK();
 }
 
 td::Status CheckDhtServersQuery::send() {
-  auto b = ton::create_serialize_tl_object<ton::ton_api::engine_validator_checkDhtServers>(id_.tl());
+  auto b = ion::create_serialize_tl_object<ion::ion_api::engine_validator_checkDhtServers>(id_.tl());
   td::actor::send_closure(console_, &ValidatorEngineConsole::envelope_send_query, std::move(b), create_promise());
   return td::Status::OK();
 }
 
 td::Status CheckDhtServersQuery::receive(td::BufferSlice data) {
-  TRY_RESULT_PREFIX(f, ton::fetch_tl_object<ton::ton_api::engine_validator_dhtServersStatus>(data.as_slice(), true),
+  TRY_RESULT_PREFIX(f, ion::fetch_tl_object<ion::ion_api::engine_validator_dhtServersStatus>(data.as_slice(), true),
                     "received incorrect answer: ");
   for (auto &s : f->servers_) {
     td::TerminalIO::out() << "id=" << s->id_ << " status=" << (s->status_ ? "SUCCESS" : "FAIL") << "\n";
@@ -797,15 +797,15 @@ td::Status SignCertificateQuery::run() {
   TRY_RESULT_ASSIGN(id_, tokenizer_.get_token<td::Bits256>());
   TRY_RESULT_ASSIGN(expire_at_, tokenizer_.get_token<td::int32>());
   TRY_RESULT_ASSIGN(max_size_, tokenizer_.get_token<td::uint32>());
-  TRY_RESULT_ASSIGN(signer_, tokenizer_.get_token<ton::PublicKeyHash>());
+  TRY_RESULT_ASSIGN(signer_, tokenizer_.get_token<ion::PublicKeyHash>());
   TRY_RESULT_ASSIGN(out_file_, tokenizer_.get_token<std::string>());
   return td::Status::OK();
 }
 
 td::Status SignCertificateQuery::send() {
-  auto cid = ton::create_serialize_tl_object<ton::ton_api::overlay_certificateId>(overlay_, id_, expire_at_, max_size_);
-  auto sign = ton::create_serialize_tl_object<ton::ton_api::engine_validator_sign>(signer_.tl(), std::move(cid));
-  auto pub = ton::create_serialize_tl_object<ton::ton_api::engine_validator_exportPublicKey>(signer_.tl());
+  auto cid = ion::create_serialize_tl_object<ion::ion_api::overlay_certificateId>(overlay_, id_, expire_at_, max_size_);
+  auto sign = ion::create_serialize_tl_object<ion::ion_api::engine_validator_sign>(signer_.tl(), std::move(cid));
+  auto pub = ion::create_serialize_tl_object<ion::ion_api::engine_validator_exportPublicKey>(signer_.tl());
   td::actor::send_closure(console_, &ValidatorEngineConsole::envelope_send_query, std::move(pub),
       td::PromiseCreator::lambda([SelfId = actor_id(this)](td::Result<td::BufferSlice> R) {
         if (R.is_error()) {
@@ -826,7 +826,7 @@ td::Status SignCertificateQuery::send() {
 }
 
 void SignCertificateQuery::receive_pubkey(td::BufferSlice R) {
-  auto f = ton::fetch_tl_object<ton::ton_api::PublicKey>(R.as_slice(), true);
+  auto f = ion::fetch_tl_object<ion::ion_api::PublicKey>(R.as_slice(), true);
   if (f.is_error()) {
     handle_error(f.move_as_error_prefix("Failed to get pubkey: "));
     return;
@@ -844,7 +844,7 @@ td::Status SignCertificateQuery::receive(td::BufferSlice data) {
 }
 
 void SignCertificateQuery::receive_signature(td::BufferSlice R) {
-  auto f = ton::fetch_tl_object<ton::ton_api::engine_validator_signature>(R.as_slice(), true);
+  auto f = ion::fetch_tl_object<ion::ion_api::engine_validator_signature>(R.as_slice(), true);
   if(f.is_error()){
     handle_error(f.move_as_error_prefix("Failed to get signature: "));
     return;
@@ -856,7 +856,7 @@ void SignCertificateQuery::receive_signature(td::BufferSlice R) {
 }
 
 void SignCertificateQuery::save_certificate() {
-  auto c = ton::create_serialize_tl_object<ton::ton_api::overlay_certificate>(
+  auto c = ion::create_serialize_tl_object<ion::ion_api::overlay_certificate>(
         std::move(pubkey_), expire_at_, max_size_, std::move(signature_));
   auto w = td::write_file(out_file_, c.as_slice());
   if(w.is_error()) {
@@ -870,19 +870,19 @@ void SignCertificateQuery::save_certificate() {
 td::Status ImportCertificateQuery::run() {
   TRY_RESULT_ASSIGN(overlay_, tokenizer_.get_token<td::Bits256>());
   TRY_RESULT_ASSIGN(id_, tokenizer_.get_token<td::Bits256>());
-  TRY_RESULT_ASSIGN(kh_, tokenizer_.get_token<ton::PublicKeyHash>());
+  TRY_RESULT_ASSIGN(kh_, tokenizer_.get_token<ion::PublicKeyHash>());
   TRY_RESULT_ASSIGN(in_file_, tokenizer_.get_token<std::string>());
   return td::Status::OK();
 }
 
 td::Status ImportCertificateQuery::send() {
   TRY_RESULT(data, td::read_file(in_file_));
-  TRY_RESULT_PREFIX(cert, ton::fetch_tl_object<ton::ton_api::overlay_Certificate>(data.as_slice(), true),
+  TRY_RESULT_PREFIX(cert, ion::fetch_tl_object<ion::ion_api::overlay_Certificate>(data.as_slice(), true),
                     "incorrect certificate");
-  auto b = ton::create_serialize_tl_object<ton::ton_api::engine_validator_importCertificate>(
+  auto b = ion::create_serialize_tl_object<ion::ion_api::engine_validator_importCertificate>(
                 overlay_,
-                ton::create_tl_object<ton::ton_api::adnl_id_short>(id_),
-                ton::create_tl_object<ton::ton_api::engine_validator_keyHash>(kh_.tl()),
+                ion::create_tl_object<ion::ion_api::adnl_id_short>(id_),
+                ion::create_tl_object<ion::ion_api::engine_validator_keyHash>(kh_.tl()),
                 std::move(cert)
            );
   td::actor::send_closure(console_, &ValidatorEngineConsole::envelope_send_query, std::move(b), create_promise());
@@ -893,13 +893,13 @@ td::Status GetOverlaysStatsQuery::run() {
 }
 
 td::Status GetOverlaysStatsQuery::send() {
-  auto b = ton::create_serialize_tl_object<ton::ton_api::engine_validator_getOverlaysStats>();
+  auto b = ion::create_serialize_tl_object<ion::ion_api::engine_validator_getOverlaysStats>();
   td::actor::send_closure(console_, &ValidatorEngineConsole::envelope_send_query, std::move(b), create_promise());
   return td::Status::OK();
 }
 
 td::Status GetOverlaysStatsQuery::receive(td::BufferSlice data) {
-  TRY_RESULT_PREFIX(f, ton::fetch_tl_object<ton::ton_api::engine_validator_overlaysStats>(data.as_slice(), true),
+  TRY_RESULT_PREFIX(f, ion::fetch_tl_object<ion::ion_api::engine_validator_overlaysStats>(data.as_slice(), true),
                     "received incorrect answer: ");
   for (auto &s : f->overlays_) {
     td::StringBuilder sb;
@@ -907,7 +907,7 @@ td::Status GetOverlaysStatsQuery::receive(td::BufferSlice data) {
     sb << "  nodes:\n";
 
     auto print_traffic = [&](const char *name, const char *indent,
-                             ton::tl_object_ptr<ton::ton_api::engine_validator_overlayStatsTraffic> &t) {
+                             ion::tl_object_ptr<ion::ion_api::engine_validator_overlayStatsTraffic> &t) {
       sb << indent << name << ":\n"
          << indent << " out: " << t->t_out_bytes_ << " bytes/sec, " << t->t_out_pckts_ << " pckts/sec\n"
          << indent << " in: " << t->t_in_bytes_ << " bytes/sec, " << t->t_in_pckts_ << " pckts/sec\n";
@@ -942,13 +942,13 @@ td::Status GetOverlaysStatsJsonQuery::run() {
 }
 
 td::Status GetOverlaysStatsJsonQuery::send() {
-  auto b = ton::create_serialize_tl_object<ton::ton_api::engine_validator_getOverlaysStats>();
+  auto b = ion::create_serialize_tl_object<ion::ion_api::engine_validator_getOverlaysStats>();
   td::actor::send_closure(console_, &ValidatorEngineConsole::envelope_send_query, std::move(b), create_promise());
   return td::Status::OK();
 }
 
 td::Status GetOverlaysStatsJsonQuery::receive(td::BufferSlice data) {
-  TRY_RESULT_PREFIX(f, ton::fetch_tl_object<ton::ton_api::engine_validator_overlaysStats>(data.as_slice(), true),
+  TRY_RESULT_PREFIX(f, ion::fetch_tl_object<ion::ion_api::engine_validator_overlaysStats>(data.as_slice(), true),
                     "received incorrect answer: ");
   std::ofstream sb(file_name_);
 
@@ -966,7 +966,7 @@ td::Status GetOverlaysStatsJsonQuery::receive(td::BufferSlice data) {
     sb << "  \"nodes\": [\n";
 
     auto print_traffic = [&](const char *name,
-                             ton::tl_object_ptr<ton::ton_api::engine_validator_overlayStatsTraffic> &t) {
+                             ion::tl_object_ptr<ion::ion_api::engine_validator_overlayStatsTraffic> &t) {
       sb << "\"" << name << "\": { \"out_bytes_sec\": " << t->t_out_bytes_ << ", \"out_pckts_sec\": " << t->t_out_pckts_
          << ", \"in_bytes_sec\": " << t->t_in_bytes_ << ", \"in_pckts_sec\": " << t->t_in_pckts_ << " }";
     };
@@ -1033,7 +1033,7 @@ td::Status GetOverlaysStatsJsonQuery::receive(td::BufferSlice data) {
 
 
 td::Status ImportCertificateQuery::receive(td::BufferSlice data) {
-  TRY_RESULT_PREFIX(f, ton::fetch_tl_object<ton::ton_api::engine_validator_success>(data.as_slice(), true),
+  TRY_RESULT_PREFIX(f, ion::fetch_tl_object<ion::ion_api::engine_validator_success>(data.as_slice(), true),
                     "received incorrect answer: ");
   td::TerminalIO::out() << "successfully sent certificate to overlay manager\n";
   return td::Status::OK();
@@ -1041,8 +1041,8 @@ td::Status ImportCertificateQuery::receive(td::BufferSlice data) {
 
 
 td::Status SignShardOverlayCertificateQuery::run() {
-  TRY_RESULT_ASSIGN(shard_, tokenizer_.get_token<ton::ShardIdFull>() );
-  TRY_RESULT_ASSIGN(key_, tokenizer_.get_token<ton::PublicKeyHash>());
+  TRY_RESULT_ASSIGN(shard_, tokenizer_.get_token<ion::ShardIdFull>() );
+  TRY_RESULT_ASSIGN(key_, tokenizer_.get_token<ion::PublicKeyHash>());
   TRY_RESULT_ASSIGN(expire_at_, tokenizer_.get_token<td::int32>());
   TRY_RESULT_ASSIGN(max_size_, tokenizer_.get_token<td::uint32>());
   TRY_RESULT_ASSIGN(out_file_, tokenizer_.get_token<std::string>());
@@ -1051,15 +1051,15 @@ td::Status SignShardOverlayCertificateQuery::run() {
 }
 
 td::Status SignShardOverlayCertificateQuery::send() {
-  auto b = ton::create_serialize_tl_object<ton::ton_api::engine_validator_signShardOverlayCertificate>(
-      shard_.workchain, shard_.shard, ton::create_tl_object<ton::ton_api::engine_validator_keyHash>(key_.tl()),
+  auto b = ion::create_serialize_tl_object<ion::ion_api::engine_validator_signShardOverlayCertificate>(
+      shard_.workchain, shard_.shard, ion::create_tl_object<ion::ion_api::engine_validator_keyHash>(key_.tl()),
       expire_at_, max_size_);
   td::actor::send_closure(console_, &ValidatorEngineConsole::envelope_send_query, std::move(b), create_promise());
   return td::Status::OK();
 }
 
 td::Status SignShardOverlayCertificateQuery::receive(td::BufferSlice data) {
-  TRY_RESULT_PREFIX(c, ton::fetch_tl_object<ton::ton_api::overlay_certificate>(data.as_slice(), true),
+  TRY_RESULT_PREFIX(c, ion::fetch_tl_object<ion::ion_api::overlay_certificate>(data.as_slice(), true),
                     "received incorrect cert: ");
   auto w = td::write_file(out_file_, data.as_slice());
   if(w.is_error()) {
@@ -1071,8 +1071,8 @@ td::Status SignShardOverlayCertificateQuery::receive(td::BufferSlice data) {
 }
 
 td::Status ImportShardOverlayCertificateQuery::run() {
-  TRY_RESULT_ASSIGN(shard_, tokenizer_.get_token<ton::ShardIdFull>());
-  TRY_RESULT_ASSIGN(key_, tokenizer_.get_token<ton::PublicKeyHash>());
+  TRY_RESULT_ASSIGN(shard_, tokenizer_.get_token<ion::ShardIdFull>());
+  TRY_RESULT_ASSIGN(key_, tokenizer_.get_token<ion::PublicKeyHash>());
   TRY_RESULT_ASSIGN(in_file_, tokenizer_.get_token<std::string>());
 
   return td::Status::OK();
@@ -1080,17 +1080,17 @@ td::Status ImportShardOverlayCertificateQuery::run() {
 
 td::Status ImportShardOverlayCertificateQuery::send() {
   TRY_RESULT(data, td::read_file(in_file_));
-  TRY_RESULT_PREFIX(cert, ton::fetch_tl_object<ton::ton_api::overlay_Certificate>(data.as_slice(), true),
+  TRY_RESULT_PREFIX(cert, ion::fetch_tl_object<ion::ion_api::overlay_Certificate>(data.as_slice(), true),
                     "incorrect certificate");
-  auto b = ton::create_serialize_tl_object<ton::ton_api::engine_validator_importShardOverlayCertificate>(
-      shard_.workchain, shard_.shard, ton::create_tl_object<ton::ton_api::engine_validator_keyHash>(key_.tl()),
+  auto b = ion::create_serialize_tl_object<ion::ion_api::engine_validator_importShardOverlayCertificate>(
+      shard_.workchain, shard_.shard, ion::create_tl_object<ion::ion_api::engine_validator_keyHash>(key_.tl()),
       std::move(cert));
   td::actor::send_closure(console_, &ValidatorEngineConsole::envelope_send_query, std::move(b), create_promise());
   return td::Status::OK();
 }
 
 td::Status ImportShardOverlayCertificateQuery::receive(td::BufferSlice data) {
-  TRY_RESULT_PREFIX(f, ton::fetch_tl_object<ton::ton_api::engine_validator_success>(data.as_slice(), true),
+  TRY_RESULT_PREFIX(f, ion::fetch_tl_object<ion::ion_api::engine_validator_success>(data.as_slice(), true),
                     "received incorrect answer: ");
   td::TerminalIO::out() << "successfully sent certificate to overlay manager\n";
   return td::Status::OK();
@@ -1103,13 +1103,13 @@ td::Status GetActorStatsQuery::run() {
  return td::Status::OK();
 }
 td::Status GetActorStatsQuery::send() {
-  auto b = ton::create_serialize_tl_object<ton::ton_api::engine_validator_getActorTextStats>();
+  auto b = ion::create_serialize_tl_object<ion::ion_api::engine_validator_getActorTextStats>();
   td::actor::send_closure(console_, &ValidatorEngineConsole::envelope_send_query, std::move(b), create_promise());
   return td::Status::OK();
 }
 
 td::Status GetActorStatsQuery::receive(td::BufferSlice data) {
-  TRY_RESULT_PREFIX(f, ton::fetch_tl_object<ton::ton_api::engine_validator_textStats>(data.as_slice(), true),
+  TRY_RESULT_PREFIX(f, ion::fetch_tl_object<ion::ion_api::engine_validator_textStats>(data.as_slice(), true),
                     "received incorrect answer: ");
   if (file_name_.empty()) {
     td::TerminalIO::out() << f->data_;
@@ -1129,13 +1129,13 @@ td::Status GetPerfTimerStatsJsonQuery::run() {
 }
 
 td::Status GetPerfTimerStatsJsonQuery::send() {
-  auto b = ton::create_serialize_tl_object<ton::ton_api::engine_validator_getPerfTimerStats>("");
+  auto b = ion::create_serialize_tl_object<ion::ion_api::engine_validator_getPerfTimerStats>("");
   td::actor::send_closure(console_, &ValidatorEngineConsole::envelope_send_query, std::move(b), create_promise());
   return td::Status::OK();
 }
 
 td::Status GetPerfTimerStatsJsonQuery::receive(td::BufferSlice data) {
-  TRY_RESULT_PREFIX(f, ton::fetch_tl_object<ton::ton_api::engine_validator_perfTimerStats>(data.as_slice(), true),
+  TRY_RESULT_PREFIX(f, ion::fetch_tl_object<ion::ion_api::engine_validator_perfTimerStats>(data.as_slice(), true),
                     "received incorrect answer: ");
   std::ofstream sb(file_name_);
 
@@ -1173,26 +1173,26 @@ td::Status GetPerfTimerStatsJsonQuery::receive(td::BufferSlice data) {
 }
 
 td::Status GetShardOutQueueSizeQuery::run() {
-  TRY_RESULT(shard, tokenizer_.get_token<ton::ShardIdFull>());
+  TRY_RESULT(shard, tokenizer_.get_token<ion::ShardIdFull>());
   block_id_.workchain = shard.workchain;
   block_id_.shard = shard.shard;
   TRY_RESULT_ASSIGN(block_id_.seqno, tokenizer_.get_token<int>());
   if (!tokenizer_.endl()) {
-    TRY_RESULT_ASSIGN(dest_, tokenizer_.get_token<ton::ShardIdFull>());
+    TRY_RESULT_ASSIGN(dest_, tokenizer_.get_token<ion::ShardIdFull>());
   }
   TRY_STATUS(tokenizer_.check_endl());
   return td::Status::OK();
 }
 
 td::Status GetShardOutQueueSizeQuery::send() {
-  auto b = ton::create_serialize_tl_object<ton::ton_api::engine_validator_getShardOutQueueSize>(
-      dest_.is_valid() ? 1 : 0, ton::create_tl_block_id_simple(block_id_), dest_.workchain, dest_.shard);
+  auto b = ion::create_serialize_tl_object<ion::ion_api::engine_validator_getShardOutQueueSize>(
+      dest_.is_valid() ? 1 : 0, ion::create_tl_block_id_simple(block_id_), dest_.workchain, dest_.shard);
   td::actor::send_closure(console_, &ValidatorEngineConsole::envelope_send_query, std::move(b), create_promise());
   return td::Status::OK();
 }
 
 td::Status GetShardOutQueueSizeQuery::receive(td::BufferSlice data) {
-  TRY_RESULT_PREFIX(f, ton::fetch_tl_object<ton::ton_api::engine_validator_shardOutQueueSize>(data.as_slice(), true),
+  TRY_RESULT_PREFIX(f, ion::fetch_tl_object<ion::ion_api::engine_validator_shardOutQueueSize>(data.as_slice(), true),
                     "received incorrect answer: ");
   td::TerminalIO::out() << "Queue_size: " << f->size_ << "\n";
   return td::Status::OK();
@@ -1208,13 +1208,13 @@ td::Status SetExtMessagesBroadcastDisabledQuery::run() {
 }
 
 td::Status SetExtMessagesBroadcastDisabledQuery::send() {
-  auto b = ton::create_serialize_tl_object<ton::ton_api::engine_validator_setExtMessagesBroadcastDisabled>(value);
+  auto b = ion::create_serialize_tl_object<ion::ion_api::engine_validator_setExtMessagesBroadcastDisabled>(value);
   td::actor::send_closure(console_, &ValidatorEngineConsole::envelope_send_query, std::move(b), create_promise());
   return td::Status::OK();
 }
 
 td::Status SetExtMessagesBroadcastDisabledQuery::receive(td::BufferSlice data) {
-  TRY_RESULT_PREFIX(f, ton::fetch_tl_object<ton::ton_api::engine_validator_success>(data.as_slice(), true),
+  TRY_RESULT_PREFIX(f, ion::fetch_tl_object<ion::ion_api::engine_validator_success>(data.as_slice(), true),
                     "received incorrect answer: ");
   td::TerminalIO::out() << "success\n";
   return td::Status::OK();
@@ -1229,15 +1229,15 @@ td::Status AddCustomOverlayQuery::run() {
 td::Status AddCustomOverlayQuery::send() {
   TRY_RESULT(data, td::read_file(file_name_));
   TRY_RESULT(json, td::json_decode(data.as_slice()));
-  auto overlay = ton::create_tl_object<ton::ton_api::engine_validator_customOverlay>();
-  TRY_STATUS(ton::ton_api::from_json(*overlay, json.get_object()));
-  auto b = ton::create_serialize_tl_object<ton::ton_api::engine_validator_addCustomOverlay>(std::move(overlay));
+  auto overlay = ion::create_tl_object<ion::ion_api::engine_validator_customOverlay>();
+  TRY_STATUS(ion::ion_api::from_json(*overlay, json.get_object()));
+  auto b = ion::create_serialize_tl_object<ion::ion_api::engine_validator_addCustomOverlay>(std::move(overlay));
   td::actor::send_closure(console_, &ValidatorEngineConsole::envelope_send_query, std::move(b), create_promise());
   return td::Status::OK();
 }
 
 td::Status AddCustomOverlayQuery::receive(td::BufferSlice data) {
-  TRY_RESULT_PREFIX(f, ton::fetch_tl_object<ton::ton_api::engine_validator_success>(data.as_slice(), true),
+  TRY_RESULT_PREFIX(f, ion::fetch_tl_object<ion::ion_api::engine_validator_success>(data.as_slice(), true),
                     "received incorrect answer: ");
   td::TerminalIO::out() << "success\n";
   return td::Status::OK();
@@ -1250,13 +1250,13 @@ td::Status DelCustomOverlayQuery::run() {
 }
 
 td::Status DelCustomOverlayQuery::send() {
-  auto b = ton::create_serialize_tl_object<ton::ton_api::engine_validator_delCustomOverlay>(name_);
+  auto b = ion::create_serialize_tl_object<ion::ion_api::engine_validator_delCustomOverlay>(name_);
   td::actor::send_closure(console_, &ValidatorEngineConsole::envelope_send_query, std::move(b), create_promise());
   return td::Status::OK();
 }
 
 td::Status DelCustomOverlayQuery::receive(td::BufferSlice data) {
-  TRY_RESULT_PREFIX(f, ton::fetch_tl_object<ton::ton_api::engine_validator_success>(data.as_slice(), true),
+  TRY_RESULT_PREFIX(f, ion::fetch_tl_object<ion::ion_api::engine_validator_success>(data.as_slice(), true),
                     "received incorrect answer: ");
   td::TerminalIO::out() << "success\n";
   return td::Status::OK();
@@ -1268,13 +1268,13 @@ td::Status ShowCustomOverlaysQuery::run() {
 }
 
 td::Status ShowCustomOverlaysQuery::send() {
-  auto b = ton::create_serialize_tl_object<ton::ton_api::engine_validator_showCustomOverlays>();
+  auto b = ion::create_serialize_tl_object<ion::ion_api::engine_validator_showCustomOverlays>();
   td::actor::send_closure(console_, &ValidatorEngineConsole::envelope_send_query, std::move(b), create_promise());
   return td::Status::OK();
 }
 
 td::Status ShowCustomOverlaysQuery::receive(td::BufferSlice data) {
-  TRY_RESULT_PREFIX(f, ton::fetch_tl_object<ton::ton_api::engine_validator_customOverlaysConfig>(data.as_slice(), true),
+  TRY_RESULT_PREFIX(f, ion::fetch_tl_object<ion::ion_api::engine_validator_customOverlaysConfig>(data.as_slice(), true),
                     "received incorrect answer: ");
   td::TerminalIO::out() << f->overlays_.size() << " custom overlays:\n\n";
   for (const auto &overlay : f->overlays_) {
@@ -1289,7 +1289,7 @@ td::Status ShowCustomOverlaysQuery::receive(td::BufferSlice data) {
     if (!overlay->sender_shards_.empty()) {
       td::TerminalIO::out() << "Sender shards:\n";
       for (const auto &shard : overlay->sender_shards_) {
-        td::TerminalIO::out() << "  " << ton::create_shard_id(shard).to_str() << "\n";
+        td::TerminalIO::out() << "  " << ion::create_shard_id(shard).to_str() << "\n";
       }
     }
     td::TerminalIO::out() << "\n";
@@ -1308,13 +1308,13 @@ td::Status SetStateSerializerEnabledQuery::run() {
 }
 
 td::Status SetStateSerializerEnabledQuery::send() {
-  auto b = ton::create_serialize_tl_object<ton::ton_api::engine_validator_setStateSerializerEnabled>(enabled_);
+  auto b = ion::create_serialize_tl_object<ion::ion_api::engine_validator_setStateSerializerEnabled>(enabled_);
   td::actor::send_closure(console_, &ValidatorEngineConsole::envelope_send_query, std::move(b), create_promise());
   return td::Status::OK();
 }
 
 td::Status SetStateSerializerEnabledQuery::receive(td::BufferSlice data) {
-  TRY_RESULT_PREFIX(f, ton::fetch_tl_object<ton::ton_api::engine_validator_success>(data.as_slice(), true),
+  TRY_RESULT_PREFIX(f, ion::fetch_tl_object<ion::ion_api::engine_validator_success>(data.as_slice(), true),
                     "received incorrect answer: ");
   td::TerminalIO::out() << "success\n";
   return td::Status::OK();
@@ -1329,13 +1329,13 @@ td::Status SetCollatorOptionsJsonQuery::run() {
 td::Status SetCollatorOptionsJsonQuery::send() {
   TRY_RESULT(data, td::read_file(file_name_));
   auto b =
-      ton::create_serialize_tl_object<ton::ton_api::engine_validator_setCollatorOptionsJson>(data.as_slice().str());
+      ion::create_serialize_tl_object<ion::ion_api::engine_validator_setCollatorOptionsJson>(data.as_slice().str());
   td::actor::send_closure(console_, &ValidatorEngineConsole::envelope_send_query, std::move(b), create_promise());
   return td::Status::OK();
 }
 
 td::Status SetCollatorOptionsJsonQuery::receive(td::BufferSlice data) {
-  TRY_RESULT_PREFIX(f, ton::fetch_tl_object<ton::ton_api::engine_validator_success>(data.as_slice(), true),
+  TRY_RESULT_PREFIX(f, ion::fetch_tl_object<ion::ion_api::engine_validator_success>(data.as_slice(), true),
                     "received incorrect answer: ");
   td::TerminalIO::out() << "success\n";
   return td::Status::OK();
@@ -1347,13 +1347,13 @@ td::Status ResetCollatorOptionsQuery::run() {
 }
 
 td::Status ResetCollatorOptionsQuery::send() {
-  auto b = ton::create_serialize_tl_object<ton::ton_api::engine_validator_setCollatorOptionsJson>("{}");
+  auto b = ion::create_serialize_tl_object<ion::ion_api::engine_validator_setCollatorOptionsJson>("{}");
   td::actor::send_closure(console_, &ValidatorEngineConsole::envelope_send_query, std::move(b), create_promise());
   return td::Status::OK();
 }
 
 td::Status ResetCollatorOptionsQuery::receive(td::BufferSlice data) {
-  TRY_RESULT_PREFIX(f, ton::fetch_tl_object<ton::ton_api::engine_validator_success>(data.as_slice(), true),
+  TRY_RESULT_PREFIX(f, ion::fetch_tl_object<ion::ion_api::engine_validator_success>(data.as_slice(), true),
                     "received incorrect answer: ");
   td::TerminalIO::out() << "success\n";
   return td::Status::OK();
@@ -1367,13 +1367,13 @@ td::Status GetCollatorOptionsJsonQuery::run() {
 
 td::Status GetCollatorOptionsJsonQuery::send() {
   auto b =
-      ton::create_serialize_tl_object<ton::ton_api::engine_validator_getCollatorOptionsJson>();
+      ion::create_serialize_tl_object<ion::ion_api::engine_validator_getCollatorOptionsJson>();
   td::actor::send_closure(console_, &ValidatorEngineConsole::envelope_send_query, std::move(b), create_promise());
   return td::Status::OK();
 }
 
 td::Status GetCollatorOptionsJsonQuery::receive(td::BufferSlice data) {
-  TRY_RESULT_PREFIX(f, ton::fetch_tl_object<ton::ton_api::engine_validator_jsonConfig>(data.as_slice(), true),
+  TRY_RESULT_PREFIX(f, ion::fetch_tl_object<ion::ion_api::engine_validator_jsonConfig>(data.as_slice(), true),
                     "received incorrect answer: ");
   TRY_STATUS(td::write_file(file_name_, f->data_));
   td::TerminalIO::out() << "saved config to " << file_name_ << "\n";
@@ -1396,13 +1396,13 @@ td::Status GetAdnlStatsJsonQuery::run() {
 
 td::Status GetAdnlStatsJsonQuery::send() {
   auto b =
-      ton::create_serialize_tl_object<ton::ton_api::engine_validator_getAdnlStats>(all_);
+      ion::create_serialize_tl_object<ion::ion_api::engine_validator_getAdnlStats>(all_);
   td::actor::send_closure(console_, &ValidatorEngineConsole::envelope_send_query, std::move(b), create_promise());
   return td::Status::OK();
 }
 
 td::Status GetAdnlStatsJsonQuery::receive(td::BufferSlice data) {
-  TRY_RESULT_PREFIX(f, ton::fetch_tl_object<ton::ton_api::adnl_stats>(data.as_slice(), true),
+  TRY_RESULT_PREFIX(f, ion::fetch_tl_object<ion::ion_api::adnl_stats>(data.as_slice(), true),
                     "received incorrect answer: ");
   auto s = td::json_encode<std::string>(td::ToJson(*f), true);
   TRY_STATUS(td::write_file(file_name_, s));
@@ -1425,13 +1425,13 @@ td::Status GetAdnlStatsQuery::run() {
 
 td::Status GetAdnlStatsQuery::send() {
   auto b =
-      ton::create_serialize_tl_object<ton::ton_api::engine_validator_getAdnlStats>(all_);
+      ion::create_serialize_tl_object<ion::ion_api::engine_validator_getAdnlStats>(all_);
   td::actor::send_closure(console_, &ValidatorEngineConsole::envelope_send_query, std::move(b), create_promise());
   return td::Status::OK();
 }
 
 td::Status GetAdnlStatsQuery::receive(td::BufferSlice data) {
-  TRY_RESULT_PREFIX(stats, ton::fetch_tl_object<ton::ton_api::adnl_stats>(data.as_slice(), true),
+  TRY_RESULT_PREFIX(stats, ion::fetch_tl_object<ion::ion_api::adnl_stats>(data.as_slice(), true),
                     "received incorrect answer: ");
   td::StringBuilder sb;
   sb << "================================= ADNL STATS =================================\n";
@@ -1446,8 +1446,8 @@ td::Status GetAdnlStatsQuery::receive(td::BufferSlice data) {
     sb << "LOCAL ID " << local_id->short_id_ << "\n";
     if (!local_id->current_decrypt_.empty()) {
       std::sort(local_id->current_decrypt_.begin(), local_id->current_decrypt_.end(),
-                [](const ton::tl_object_ptr<ton::ton_api::adnl_stats_ipPackets> &a,
-                   const ton::tl_object_ptr<ton::ton_api::adnl_stats_ipPackets> &b) {
+                [](const ion::tl_object_ptr<ion::ion_api::adnl_stats_ipPackets> &a,
+                   const ion::tl_object_ptr<ion::ion_api::adnl_stats_ipPackets> &b) {
                   return a->packets_ > b->packets_;
                 });
       td::uint64 total = 0;
@@ -1461,13 +1461,13 @@ td::Status GetAdnlStatsQuery::receive(td::BufferSlice data) {
       sb << "\n";
     }
     auto print_local_id_packets = [&](const std::string &name,
-                                      std::vector<ton::tl_object_ptr<ton::ton_api::adnl_stats_ipPackets>> &vec) {
+                                      std::vector<ion::tl_object_ptr<ion::ion_api::adnl_stats_ipPackets>> &vec) {
       if (vec.empty()) {
         return;
       }
       std::sort(vec.begin(), vec.end(),
-                [](const ton::tl_object_ptr<ton::ton_api::adnl_stats_ipPackets> &a,
-                   const ton::tl_object_ptr<ton::ton_api::adnl_stats_ipPackets> &b) {
+                [](const ion::tl_object_ptr<ion::ion_api::adnl_stats_ipPackets> &a,
+                   const ion::tl_object_ptr<ion::ion_api::adnl_stats_ipPackets> &b) {
                   return a->packets_ > b->packets_;
                 });
       td::uint64 total = 0;
@@ -1492,8 +1492,8 @@ td::Status GetAdnlStatsQuery::receive(td::BufferSlice data) {
     print_local_id_packets("Dropped packets   (total)", local_id->packets_total_->dropped_packets_);
     sb << "  PEERS (" << local_id->peers_.size() << "):\n";
     std::sort(local_id->peers_.begin(), local_id->peers_.end(),
-              [](const ton::tl_object_ptr<ton::ton_api::adnl_stats_peerPair> &a,
-                 const ton::tl_object_ptr<ton::ton_api::adnl_stats_peerPair> &b) {
+              [](const ion::tl_object_ptr<ion::ion_api::adnl_stats_peerPair> &a,
+                 const ion::tl_object_ptr<ion::ion_api::adnl_stats_peerPair> &b) {
                 return a->packets_recent_->in_bytes_ + a->packets_recent_->out_bytes_ >
                        b->packets_recent_->in_bytes_ + b->packets_recent_->out_bytes_;
               });
@@ -1516,7 +1516,7 @@ td::Status GetAdnlStatsQuery::receive(td::BufferSlice data) {
       }
 
       auto print_packets = [&](const std::string &name,
-                               const ton::tl_object_ptr<ton::ton_api::adnl_stats_packets> &obj) {
+                               const ion::tl_object_ptr<ion::ion_api::adnl_stats_packets> &obj) {
         if (obj->in_packets_) {
           sb << "      In  (" << name << "): " << obj->in_packets_ << " packets ("
              << td::format::as_size(obj->in_bytes_) << "), channel: " << obj->in_packets_channel_ << " packets ("
@@ -1560,38 +1560,38 @@ td::Status GetAdnlStatsQuery::receive(td::BufferSlice data) {
 }
 
 td::Status AddShardQuery::run() {
-  TRY_RESULT_ASSIGN(shard_, tokenizer_.get_token<ton::ShardIdFull>());
+  TRY_RESULT_ASSIGN(shard_, tokenizer_.get_token<ion::ShardIdFull>());
   TRY_STATUS(tokenizer_.check_endl());
   return td::Status::OK();
 }
 
 td::Status AddShardQuery::send() {
-  auto b = ton::create_serialize_tl_object<ton::ton_api::engine_validator_addShard>(ton::create_tl_shard_id(shard_));
+  auto b = ion::create_serialize_tl_object<ion::ion_api::engine_validator_addShard>(ion::create_tl_shard_id(shard_));
   td::actor::send_closure(console_, &ValidatorEngineConsole::envelope_send_query, std::move(b), create_promise());
   return td::Status::OK();
 }
 
 td::Status AddShardQuery::receive(td::BufferSlice data) {
-  TRY_RESULT_PREFIX(f, ton::fetch_tl_object<ton::ton_api::engine_validator_success>(data.as_slice(), true),
+  TRY_RESULT_PREFIX(f, ion::fetch_tl_object<ion::ion_api::engine_validator_success>(data.as_slice(), true),
                     "received incorrect answer: ");
   td::TerminalIO::out() << "successfully added shard\n";
   return td::Status::OK();
 }
 
 td::Status DelShardQuery::run() {
-  TRY_RESULT_ASSIGN(shard_, tokenizer_.get_token<ton::ShardIdFull>());
+  TRY_RESULT_ASSIGN(shard_, tokenizer_.get_token<ion::ShardIdFull>());
   TRY_STATUS(tokenizer_.check_endl());
   return td::Status::OK();
 }
 
 td::Status DelShardQuery::send() {
-  auto b = ton::create_serialize_tl_object<ton::ton_api::engine_validator_delShard>(ton::create_tl_shard_id(shard_));
+  auto b = ion::create_serialize_tl_object<ion::ion_api::engine_validator_delShard>(ion::create_tl_shard_id(shard_));
   td::actor::send_closure(console_, &ValidatorEngineConsole::envelope_send_query, std::move(b), create_promise());
   return td::Status::OK();
 }
 
 td::Status DelShardQuery::receive(td::BufferSlice data) {
-  TRY_RESULT_PREFIX(f, ton::fetch_tl_object<ton::ton_api::engine_validator_success>(data.as_slice(), true),
+  TRY_RESULT_PREFIX(f, ion::fetch_tl_object<ion::ion_api::engine_validator_success>(data.as_slice(), true),
                     "received incorrect answer: ");
   td::TerminalIO::out() << "successfully removed shard\n";
   return td::Status::OK();

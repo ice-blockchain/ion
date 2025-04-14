@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -32,7 +32,7 @@
 #include "adnl-ext-client.h"
 #include "adnl-tunnel.h"
 
-namespace ton {
+namespace ion {
 
 namespace adnl {
 
@@ -385,13 +385,13 @@ void AdnlPeerTableImpl::get_conn_ip_str(AdnlNodeIdShort l_id, AdnlNodeIdShort p_
   td::actor::send_closure(it->second, &AdnlPeer::get_conn_ip_str, l_id, std::move(promise));
 }
 
-void AdnlPeerTableImpl::get_stats(bool all, td::Promise<tl_object_ptr<ton_api::adnl_stats>> promise) {
+void AdnlPeerTableImpl::get_stats(bool all, td::Promise<tl_object_ptr<ion_api::adnl_stats>> promise) {
   class Cb : public td::actor::Actor {
    public:
-    explicit Cb(td::Promise<tl_object_ptr<ton_api::adnl_stats>> promise) : promise_(std::move(promise)) {
+    explicit Cb(td::Promise<tl_object_ptr<ion_api::adnl_stats>> promise) : promise_(std::move(promise)) {
     }
 
-    void got_local_id_stats(tl_object_ptr<ton_api::adnl_stats_localId> local_id) {
+    void got_local_id_stats(tl_object_ptr<ion_api::adnl_stats_localId> local_id) {
       auto &local_id_stats = local_id_stats_[local_id->short_id_];
       if (local_id_stats) {
         local_id->peers_ = std::move(local_id_stats->peers_);
@@ -400,11 +400,11 @@ void AdnlPeerTableImpl::get_stats(bool all, td::Promise<tl_object_ptr<ton_api::a
       dec_pending();
     }
 
-    void got_peer_stats(std::vector<tl_object_ptr<ton_api::adnl_stats_peerPair>> peer_pairs) {
+    void got_peer_stats(std::vector<tl_object_ptr<ion_api::adnl_stats_peerPair>> peer_pairs) {
       for (auto &peer_pair : peer_pairs) {
         auto &local_id_stats = local_id_stats_[peer_pair->local_id_];
         if (local_id_stats == nullptr) {
-          local_id_stats = create_tl_object<ton_api::adnl_stats_localId>();
+          local_id_stats = create_tl_object<ion_api::adnl_stats_localId>();
           local_id_stats->short_id_ = peer_pair->local_id_;
         }
         local_id_stats->peers_.push_back(std::move(peer_pair));
@@ -420,7 +420,7 @@ void AdnlPeerTableImpl::get_stats(bool all, td::Promise<tl_object_ptr<ton_api::a
       CHECK(pending_ > 0);
       --pending_;
       if (pending_ == 0) {
-        auto stats = create_tl_object<ton_api::adnl_stats>();
+        auto stats = create_tl_object<ion_api::adnl_stats>();
         stats->timestamp_ = td::Clocks::system();
         for (auto &[id, local_id_stats] : local_id_stats_) {
           stats->local_ids_.push_back(std::move(local_id_stats));
@@ -431,17 +431,17 @@ void AdnlPeerTableImpl::get_stats(bool all, td::Promise<tl_object_ptr<ton_api::a
     }
 
    private:
-    td::Promise<tl_object_ptr<ton_api::adnl_stats>> promise_;
+    td::Promise<tl_object_ptr<ion_api::adnl_stats>> promise_;
     size_t pending_ = 1;
 
-    std::map<td::Bits256, tl_object_ptr<ton_api::adnl_stats_localId>> local_id_stats_;
+    std::map<td::Bits256, tl_object_ptr<ion_api::adnl_stats_localId>> local_id_stats_;
   };
   auto callback = td::actor::create_actor<Cb>("adnlstats", std::move(promise)).release();
 
   for (auto &[id, local_id] : local_ids_) {
     td::actor::send_closure(callback, &Cb::inc_pending);
     td::actor::send_closure(local_id.local_id, &AdnlLocalId::get_stats, all,
-                            [id = id, callback](td::Result<tl_object_ptr<ton_api::adnl_stats_localId>> R) {
+                            [id = id, callback](td::Result<tl_object_ptr<ion_api::adnl_stats_localId>> R) {
                               if (R.is_error()) {
                                 VLOG(ADNL_NOTICE)
                                     << "failed to get stats for local id " << id << " : " << R.move_as_error();
@@ -455,7 +455,7 @@ void AdnlPeerTableImpl::get_stats(bool all, td::Promise<tl_object_ptr<ton_api::a
     td::actor::send_closure(callback, &Cb::inc_pending);
     td::actor::send_closure(
         peer, &AdnlPeer::get_stats, all,
-        [id = id, callback](td::Result<std::vector<tl_object_ptr<ton_api::adnl_stats_peerPair>>> R) {
+        [id = id, callback](td::Result<std::vector<tl_object_ptr<ion_api::adnl_stats_peerPair>>> R) {
           if (R.is_error()) {
             VLOG(ADNL_NOTICE) << "failed to get stats for peer " << id << " : " << R.move_as_error();
             td::actor::send_closure(callback, &Cb::dec_pending);
@@ -469,4 +469,4 @@ void AdnlPeerTableImpl::get_stats(bool all, td::Promise<tl_object_ptr<ton_api::a
 
 }  // namespace adnl
 
-}  // namespace ton
+}  // namespace ion

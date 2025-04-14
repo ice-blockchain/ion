@@ -200,8 +200,8 @@ int get_public_key() method_id {
        total_restricted_value, restricted) = unpack_data();
   (restricted, total_restricted_value) = unlock_grams(restricted, total_restricted_value, time);
   (locked, total_locked_value) = unlock_grams(locked, total_locked_value, time);
-  int ton_balance = get_balance().pair_first();
-  return ( ton_balance,
+  int ion_balance = get_balance().pair_first();
+  return ( ion_balance,
            total_restricted_value,
            total_locked_value );
 }

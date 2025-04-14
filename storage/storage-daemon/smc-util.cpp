@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "smc-util.h"
@@ -20,7 +20,7 @@
 #include "keys/encryptor.h"
 #include "smartcont/provider-code.h"
 
-namespace ton {
+namespace ion {
 
 static void smc_forget(td::actor::ActorId<tonlib::TonlibClientWrapper> client, td::int64 id) {
   auto query = create_tl_object<tonlib_api::smc_forget>(id);
@@ -228,14 +228,14 @@ void FabricContractWrapper::loaded_last_transactions(
 void FabricContractWrapper::run_get_method(
     std::string method, std::vector<tl_object_ptr<tonlib_api::tvm_StackEntry>> args,
     td::Promise<std::vector<tl_object_ptr<tonlib_api::tvm_StackEntry>>> promise) {
-  ton::run_get_method(address_, client_, std::move(method), std::move(args), std::move(promise));
+  ion::run_get_method(address_, client_, std::move(method), std::move(args), std::move(promise));
 }
 
 void FabricContractWrapper::send_internal_message(ContractAddress dest, td::RefInt256 coins, vm::CellSlice body,
                                                   td::Promise<td::Unit> promise) {
   td::Bits256 body_hash = vm::CellBuilder().append_cellslice(body).finalize_novm()->get_hash().bits();
   LOG(DEBUG) << "send_internal_message " << address_.to_string() << " -> " << dest.to_string() << ", " << coins
-             << " nanoTON, body=" << body_hash.to_hex();
+             << " nanoION, body=" << body_hash.to_hex();
   CHECK(coins->sgn() >= 0);
   pending_messages_.push(PendingMessage{dest, std::move(coins), std::move(body), body_hash, std::move(promise)});
   if (!send_message_at_ && !current_ext_message_) {
@@ -488,4 +488,4 @@ void get_storage_contract_data(ContractAddress address, td::actor::ActorId<tonli
       }));
 }
 
-}  // namespace ton
+}  // namespace ion

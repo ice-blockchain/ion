@@ -268,7 +268,7 @@ cell process_ops(cell root, slice ops) inline_ref {
   
   STORED DOMAIN NAME SLICE FORMAT: (#ZeroChars<7b>) (Domain name value)
   #Zeros allows to simultaneously store, for example, com\0 and com\0google\0
-  That will be stored as \1com\0 and \2com\0google\0 (pfx tree has restricitons)
+  That will be stored as \1com\0 and \2com\0google\0 (pfx tree has restriciions)
   This will allow to resolve more specific requests to subdomains, and resort
       to parent domain next resolver lookup if subdomain is not found
   com\0goo\0 lookup will, for example look up \2com\0goo\0 and then

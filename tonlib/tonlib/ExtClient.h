@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -22,7 +22,7 @@
 
 #include "auto/tl/lite_api.h"
 
-#include "ton/ton-types.h"
+#include "ion/ion-types.h"
 
 #include "td/actor/actor.h"
 #include "td/utils/Container.h"
@@ -64,28 +64,28 @@ class ExtClient {
 
   template <class QueryT>
   void send_query(QueryT query, td::Promise<typename QueryT::ReturnType> promise, td::int32 seq_no = -1) {
-    auto raw_query = ton::serialize_tl_object(&query, true);
+    auto raw_query = ion::serialize_tl_object(&query, true);
     td::uint32 tag = td::Random::fast_uint32();
     VLOG(lite_server) << "send query to liteserver: " << tag << " " << to_string(query);
     if (seq_no >= 0) {
-      auto wait = ton::lite_api::liteServer_waitMasterchainSeqno(seq_no, 5000);
+      auto wait = ion::lite_api::liteServer_waitMasterchainSeqno(seq_no, 5000);
       VLOG(lite_server) << " with prefix " << to_string(wait);
-      auto prefix = ton::serialize_tl_object(&wait, true);
+      auto prefix = ion::serialize_tl_object(&wait, true);
       raw_query = td::BufferSlice(PSLICE() << prefix.as_slice() << raw_query.as_slice());
     }
     td::BufferSlice liteserver_query =
-        ton::serialize_tl_object(ton::create_tl_object<ton::lite_api::liteServer_query>(std::move(raw_query)), true);
+        ion::serialize_tl_object(ion::create_tl_object<ion::lite_api::liteServer_query>(std::move(raw_query)), true);
 
     send_raw_query(
         std::move(liteserver_query), [promise = std::move(promise), tag](td::Result<td::BufferSlice> R) mutable {
           auto res = [&]() -> td::Result<typename QueryT::ReturnType> {
             TRY_RESULT_PREFIX(data, std::move(R), TonlibError::LiteServerNetwork());
-            auto r_error = ton::fetch_tl_object<ton::lite_api::liteServer_error>(data.clone(), true);
+            auto r_error = ion::fetch_tl_object<ion::lite_api::liteServer_error>(data.clone(), true);
             if (r_error.is_ok()) {
               auto f = r_error.move_as_ok();
               return TonlibError::LiteServer(f->code_, f->message_);
             }
-            return ton::fetch_result<QueryT>(std::move(data));
+            return ion::fetch_result<QueryT>(std::move(data));
           }
           ();
           VLOG_IF(lite_server, res.is_ok())

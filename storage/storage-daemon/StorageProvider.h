@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #pragma once
@@ -24,7 +24,7 @@
 #include "smc-util.h"
 #include "storage/MicrochunkTree.h"
 
-namespace ton {
+namespace ion {
 
 struct ProviderParams {
   bool accept_new_contracts = false;
@@ -33,8 +33,8 @@ struct ProviderParams {
   td::uint64 minimal_file_size = 0;
   td::uint64 maximal_file_size = 0;
 
-  static td::Result<ProviderParams> create(const tl_object_ptr<ton_api::storage_daemon_provider_params>& obj);
-  tl_object_ptr<ton_api::storage_daemon_provider_params> tl() const;
+  static td::Result<ProviderParams> create(const tl_object_ptr<ion_api::storage_daemon_provider_params>& obj);
+  tl_object_ptr<ion_api::storage_daemon_provider_params> tl() const;
   bool to_builder(vm::CellBuilder& b) const;
 };
 
@@ -44,8 +44,8 @@ class StorageProvider : public td::actor::Actor {
     td::uint32 max_contracts = 1000;
     td::uint64 max_total_size = 128LL << 30;
     Config() = default;
-    explicit Config(const tl_object_ptr<ton_api::storage_daemon_providerConfig>& obj);
-    tl_object_ptr<ton_api::storage_daemon_providerConfig> tl() const;
+    explicit Config(const tl_object_ptr<ion_api::storage_daemon_providerConfig>& obj);
+    tl_object_ptr<ion_api::storage_daemon_providerConfig> tl() const;
   };
 
   StorageProvider(ContractAddress address, std::string db_root,
@@ -60,7 +60,7 @@ class StorageProvider : public td::actor::Actor {
   void set_params(ProviderParams params, td::Promise<td::Unit> promise);
 
   void get_provider_info(bool with_balances, bool with_contracts,
-                         td::Promise<tl_object_ptr<ton_api::storage_daemon_providerInfo>> promise);
+                         td::Promise<tl_object_ptr<ion_api::storage_daemon_providerInfo>> promise);
   void set_provider_config(Config config, td::Promise<td::Unit> promise);
   void withdraw(ContractAddress address, td::Promise<td::Unit> promise);
   void send_coins(ContractAddress dest, td::RefInt256 amount, std::string message, td::Promise<td::Unit> promise);
@@ -126,4 +126,4 @@ class StorageProvider : public td::actor::Actor {
   void sent_next_proof(ContractAddress address);
 };
 
-}  // namespace ton
+}  // namespace ion

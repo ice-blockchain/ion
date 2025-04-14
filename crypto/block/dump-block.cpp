@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain source code.
+    This file is part of ION Blockchain source code.
 
-    TON Blockchain is free software; you can redistribute it and/or
+    ION Blockchain is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
     as published by the Free Software Foundation; either version 2
     of the License, or (at your option) any later version.
 
-    TON Blockchain is distributed in the hope that it will be useful,
+    ION Blockchain is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with TON Blockchain.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain.  If not, see <http://www.gnu.org/licenses/>.
 
     In addition, as a special exception, the copyright holders give permission
     to link the code of portions of this program with the OpenSSL library.
@@ -75,7 +75,7 @@ td::Ref<vm::Cell> load_boc(std::string filename) {
 std::vector<Ref<vm::Cell>> loaded_boc;
 
 void test1() {
-  block::ShardId id{ton::masterchainId}, id2{ton::basechainId, 0x11efULL << 48};
+  block::ShardId id{ion::masterchainId}, id2{ion::basechainId, 0x11efULL << 48};
   std::cout << '[' << id << "][" << id2 << ']' << std::endl;
   vm::CellBuilder cb;
   cb << id << id2;
@@ -223,9 +223,9 @@ td::Status test_vset() {
     return td::Status::Error("cannot unpack ShardConfig");
   }
   std::cerr << "ShardHashes initialized\n";
-  ton::ShardIdFull shard{0, 0x6e80000000000000};
-  ton::CatchainSeqno cc_seqno = std::max(48763, 48763) + 1 + 1;
-  ton::UnixTime now = 1586169666;
+  ion::ShardIdFull shard{0, 0x6e80000000000000};
+  ion::CatchainSeqno cc_seqno = std::max(48763, 48763) + 1 + 1;
+  ion::UnixTime now = 1586169666;
   cc_seqno = shards.get_shard_cc_seqno(shard);
   std::cerr << "shard=" << shard.to_str() << " cc_seqno=" << cc_seqno << " time=" << now << std::endl;
   if (cc_seqno == ~0U) {

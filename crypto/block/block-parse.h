@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -27,7 +27,7 @@
 #include "tl/tlblib.hpp"
 #include "td/utils/bits.h"
 #include "td/utils/StringBuilder.h"
-#include "ton/ton-types.h"
+#include "ion/ion-types.h"
 #include "block-auto.h"
 
 namespace block {
@@ -282,27 +282,27 @@ struct MsgAddressInt final : TLB_Complex {
   int get_tag(const vm::CellSlice& cs) const override {
     return (int)cs.prefetch_ulong(2);
   }
-  static ton::AccountIdPrefixFull get_prefix(vm::CellSlice&& cs);
-  static ton::AccountIdPrefixFull get_prefix(const vm::CellSlice& cs);
-  static ton::AccountIdPrefixFull get_prefix(Ref<vm::CellSlice> cs_ref);
-  static bool get_prefix_to(vm::CellSlice&& cs, ton::AccountIdPrefixFull& pfx) {
+  static ion::AccountIdPrefixFull get_prefix(vm::CellSlice&& cs);
+  static ion::AccountIdPrefixFull get_prefix(const vm::CellSlice& cs);
+  static ion::AccountIdPrefixFull get_prefix(Ref<vm::CellSlice> cs_ref);
+  static bool get_prefix_to(vm::CellSlice&& cs, ion::AccountIdPrefixFull& pfx) {
     return (pfx = get_prefix(std::move(cs))).is_valid();
   }
-  static bool get_prefix_to(const vm::CellSlice& cs, ton::AccountIdPrefixFull& pfx) {
+  static bool get_prefix_to(const vm::CellSlice& cs, ion::AccountIdPrefixFull& pfx) {
     return (pfx = get_prefix(cs)).is_valid();
   }
-  static bool get_prefix_to(Ref<vm::CellSlice> cs_ref, ton::AccountIdPrefixFull& pfx) {
+  static bool get_prefix_to(Ref<vm::CellSlice> cs_ref, ion::AccountIdPrefixFull& pfx) {
     return cs_ref.not_null() && (pfx = get_prefix(std::move(cs_ref))).is_valid();
   }
   bool skip_get_depth(vm::CellSlice& cs, int& depth) const;
-  bool extract_std_address(Ref<vm::CellSlice> cs_ref, ton::WorkchainId& workchain, ton::StdSmcAddress& addr,
+  bool extract_std_address(Ref<vm::CellSlice> cs_ref, ion::WorkchainId& workchain, ion::StdSmcAddress& addr,
                            bool rewrite = true) const;
-  bool extract_std_address(vm::CellSlice& cs, ton::WorkchainId& workchain, ton::StdSmcAddress& addr,
+  bool extract_std_address(vm::CellSlice& cs, ion::WorkchainId& workchain, ion::StdSmcAddress& addr,
                            bool rewrite = true) const;
   bool extract_std_address(Ref<vm::CellSlice> cs_ref, block::StdAddress& addr, bool rewrite = true) const;
   bool extract_std_address(vm::CellSlice& cs, block::StdAddress& addr, bool rewrite = true) const;
-  bool store_std_address(vm::CellBuilder& cb, ton::WorkchainId workchain, const ton::StdSmcAddress& addr) const;
-  Ref<vm::CellSlice> pack_std_address(ton::WorkchainId workchain, const ton::StdSmcAddress& addr) const;
+  bool store_std_address(vm::CellBuilder& cb, ion::WorkchainId workchain, const ion::StdSmcAddress& addr) const;
+  Ref<vm::CellSlice> pack_std_address(ion::WorkchainId workchain, const ion::StdSmcAddress& addr) const;
 
   bool store_std_address(vm::CellBuilder& cb, const block::StdAddress& addr) const;
   Ref<vm::CellSlice> pack_std_address(const block::StdAddress& addr) const;
@@ -470,7 +470,7 @@ struct MsgEnvelope final : TLB_Complex {
     int cur_addr, next_addr;
     td::RefInt256 fwd_fee_remaining;
     Ref<vm::Cell> msg;
-    td::optional<ton::LogicalTime> emitted_lt;
+    td::optional<ion::LogicalTime> emitted_lt;
     td::optional<MsgMetadata> metadata;
   };
   bool unpack(vm::CellSlice& cs, Record& data) const;
@@ -561,8 +561,8 @@ struct ShardAccount final : TLB_Complex {
   struct Record {
     using Type = ShardAccount;
     Ref<vm::Cell> account;
-    ton::LogicalTime last_trans_lt;
-    ton::Bits256 last_trans_hash;
+    ion::LogicalTime last_trans_lt;
+    ion::Bits256 last_trans_hash;
     bool valid{false};
     bool is_zero{false};
     bool reset();
@@ -976,11 +976,11 @@ struct ExtBlkRef final : TLB {
   int get_size(const vm::CellSlice& cs) const override {
     return fixed_size;
   }
-  bool unpack(vm::CellSlice& cs, ton::BlockIdExt& blkid, ton::LogicalTime* end_lt = nullptr) const;
-  bool unpack(Ref<vm::CellSlice> cs_ref, ton::BlockIdExt& blkid, ton::LogicalTime* end_lt = nullptr) const;
-  bool store(vm::CellBuilder& cb, const ton::BlockIdExt& blkid, ton::LogicalTime end_lt) const;
-  Ref<vm::Cell> pack_cell(const ton::BlockIdExt& blkid, ton::LogicalTime end_lt) const;
-  bool pack_to(Ref<vm::Cell>& cell, const ton::BlockIdExt& blkid, ton::LogicalTime end_lt) const;
+  bool unpack(vm::CellSlice& cs, ion::BlockIdExt& blkid, ion::LogicalTime* end_lt = nullptr) const;
+  bool unpack(Ref<vm::CellSlice> cs_ref, ion::BlockIdExt& blkid, ion::LogicalTime* end_lt = nullptr) const;
+  bool store(vm::CellBuilder& cb, const ion::BlockIdExt& blkid, ion::LogicalTime end_lt) const;
+  Ref<vm::Cell> pack_cell(const ion::BlockIdExt& blkid, ion::LogicalTime end_lt) const;
+  bool pack_to(Ref<vm::Cell>& cell, const ion::BlockIdExt& blkid, ion::LogicalTime end_lt) const;
 };
 
 extern const ExtBlkRef t_ExtBlkRef;
@@ -1007,17 +1007,17 @@ struct ShardIdent final : TLB_Complex {
   }
   bool unpack(vm::CellSlice& cs, Record& data) const;
   bool pack(vm::CellBuilder& cb, const Record& data) const;
-  bool unpack(vm::CellSlice& cs, ton::ShardIdFull& data) const;
-  bool pack(vm::CellBuilder& cb, ton::ShardIdFull data) const;
-  bool unpack(vm::CellSlice& cs, ton::WorkchainId& workchain, ton::ShardId& shard) const;
-  bool pack(vm::CellBuilder& cb, ton::WorkchainId workchain, ton::ShardId shard) const;
+  bool unpack(vm::CellSlice& cs, ion::ShardIdFull& data) const;
+  bool pack(vm::CellBuilder& cb, ion::ShardIdFull data) const;
+  bool unpack(vm::CellSlice& cs, ion::WorkchainId& workchain, ion::ShardId& shard) const;
+  bool pack(vm::CellBuilder& cb, ion::WorkchainId workchain, ion::ShardId shard) const;
 };
 
 struct ShardIdent::Record {
   int shard_pfx_bits;
   int workchain_id;
   unsigned long long shard_prefix;
-  Record() : shard_pfx_bits(-1), workchain_id(ton::workchainInvalid), shard_prefix(0) {
+  Record() : shard_pfx_bits(-1), workchain_id(ion::workchainInvalid), shard_prefix(0) {
   }
   Record(int _pfxlen, int _wcid, unsigned long long _pfx)
       : shard_pfx_bits(_pfxlen), workchain_id(_wcid), shard_prefix(_pfx) {
@@ -1041,8 +1041,8 @@ struct BlockIdExt final : TLB_Complex {
     return cs.advance(get_size(cs));
   }
   bool validate_skip(int* ops, vm::CellSlice& cs, bool weak = false) const override;
-  bool unpack(vm::CellSlice& cs, ton::BlockIdExt& data) const;
-  bool pack(vm::CellBuilder& cb, const ton::BlockIdExt& data) const;
+  bool unpack(vm::CellSlice& cs, ion::BlockIdExt& data) const;
+  bool pack(vm::CellBuilder& cb, const ion::BlockIdExt& data) const;
 };
 
 extern const BlockIdExt t_BlockIdExt;

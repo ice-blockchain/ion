@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 
 add_subdirectory(generate)
-set_source_files_properties(${TL_TON_API} PROPERTIES GENERATED TRUE)
+set_source_files_properties(${TL_ION_API} PROPERTIES GENERATED TRUE)
 add_library(tl_api STATIC 
-	${TL_TON_API} 
+	${TL_ION_API} 
 	tl/tl_object_parse.h 
 	tl/tl_object_store.h 
 	tl/TlObject.h)

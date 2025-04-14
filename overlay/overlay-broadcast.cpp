@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -26,7 +26,7 @@
 #include "td/utils/Status.h"
 #include "td/utils/port/Stat.h"
 
-namespace ton {
+namespace ion {
 
 namespace overlay {
 
@@ -49,7 +49,7 @@ td::Status BroadcastSimple::check_source() {
 }
 
 td::BufferSlice BroadcastSimple::to_sign() {
-  return create_serialize_tl_object<ton_api::overlay_broadcast_toSign>(broadcast_hash_, date_);
+  return create_serialize_tl_object<ion_api::overlay_broadcast_toSign>(broadcast_hash_, date_);
 }
 
 td::Status BroadcastSimple::check_signature() {
@@ -87,8 +87,8 @@ void BroadcastSimple::broadcast_checked(td::Result<td::Unit> R) {
   run_continue().ignore();
 }
 
-tl_object_ptr<ton_api::overlay_broadcast> BroadcastSimple::tl() const {
-  return create_tl_object<ton_api::overlay_broadcast>(source_.tl(), cert_ ? cert_->tl() : Certificate::empty_tl(),
+tl_object_ptr<ion_api::overlay_broadcast> BroadcastSimple::tl() const {
+  return create_tl_object<ion_api::overlay_broadcast>(source_.tl(), cert_ ? cert_->tl() : Certificate::empty_tl(),
                                                       flags_, data_.clone(), date_, signature_.clone());
 }
 
@@ -116,7 +116,7 @@ td::Status BroadcastSimple::run() {
 }
 
 td::Status BroadcastSimple::create(OverlayImpl *overlay, adnl::AdnlNodeIdShort src_peer_id,
-                                   tl_object_ptr<ton_api::overlay_broadcast> broadcast) {
+                                   tl_object_ptr<ion_api::overlay_broadcast> broadcast) {
   auto src = PublicKey{broadcast->src_};
   auto data_hash = sha256_bits256(broadcast->data_.as_slice());
   auto broadcast_hash = compute_broadcast_id(src, data_hash, broadcast->flags_);
@@ -163,7 +163,7 @@ td::Status BroadcastSimple::create_new(td::actor::ActorId<OverlayImpl> overlay,
 
 Overlay::BroadcastHash BroadcastSimple::compute_broadcast_id(PublicKeyHash source, Overlay::BroadcastDataHash data_hash,
                                                              td::uint32 flags) {
-  auto obj = create_tl_object<ton_api::overlay_broadcast_id>(
+  auto obj = create_tl_object<ion_api::overlay_broadcast_id>(
       (flags & Overlays::BroadcastFlagAnySender()) ? PublicKeyHash::zero().tl() : source.tl(), data_hash, flags);
   return get_tl_object_sha_bits256(obj);
 }
@@ -187,4 +187,4 @@ void BroadcastSimple::deliver() {
 
 }  // namespace overlay
 
-}  // namespace ton
+}  // namespace ion

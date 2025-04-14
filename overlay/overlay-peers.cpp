@@ -1,24 +1,24 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
 #include "adnl/adnl-node-id.hpp"
 #include "adnl/adnl-node.h"
-#include "auto/tl/ton_api.h"
+#include "auto/tl/ion_api.h"
 #include "overlay.hpp"
 #include "td/utils/Status.h"
 #include "td/utils/Time.h"
@@ -26,7 +26,7 @@
 #include <algorithm>
 #include <vector>
 
-namespace ton {
+namespace ion {
 
 namespace overlay {
 
@@ -151,7 +151,7 @@ td::Status OverlayImpl::validate_peer_certificate(const adnl::AdnlNodeIdShort &n
 }
 
 td::Status OverlayImpl::validate_peer_certificate(const adnl::AdnlNodeIdShort &node,
-                                                  ton_api::overlay_MemberCertificate *cert) {
+                                                  ion_api::overlay_MemberCertificate *cert) {
   OverlayMemberCertificate ncert(cert);
   return validate_peer_certificate(node, ncert);
 }
@@ -229,7 +229,7 @@ void OverlayImpl::add_peers(std::vector<OverlayNode> peers) {
   }
 }
 
-void OverlayImpl::add_peers(const tl_object_ptr<ton_api::overlay_nodes> &nodes) {
+void OverlayImpl::add_peers(const tl_object_ptr<ion_api::overlay_nodes> &nodes) {
   for (auto &n : nodes->nodes_) {
     auto N = OverlayNode::create(n);
     if (N.is_ok()) {
@@ -238,7 +238,7 @@ void OverlayImpl::add_peers(const tl_object_ptr<ton_api::overlay_nodes> &nodes) 
   }
 }
 
-void OverlayImpl::add_peers(const tl_object_ptr<ton_api::overlay_nodesV2> &nodes) {
+void OverlayImpl::add_peers(const tl_object_ptr<ion_api::overlay_nodesV2> &nodes) {
   for (auto &n : nodes->nodes_) {
     auto N = OverlayNode::create(n);
     if (N.is_ok()) {
@@ -268,7 +268,7 @@ void OverlayImpl::receive_random_peers(adnl::AdnlNodeIdShort src, td::Result<td:
     VLOG(OVERLAY_NOTICE) << this << ": failed getRandomPeers query: " << R.move_as_error();
     return;
   }
-  auto R2 = fetch_tl_object<ton_api::overlay_nodes>(R.move_as_ok(), true);
+  auto R2 = fetch_tl_object<ion_api::overlay_nodes>(R.move_as_ok(), true);
   if (R2.is_error()) {
     VLOG(OVERLAY_WARNING) << this << ": dropping incorrect answer to overlay.getRandomPeers query from " << src << ": "
                           << R2.move_as_error();
@@ -285,7 +285,7 @@ void OverlayImpl::receive_random_peers_v2(adnl::AdnlNodeIdShort src, td::Result<
     VLOG(OVERLAY_NOTICE) << this << ": failed getRandomPeersV2 query: " << R.move_as_error();
     return;
   }
-  auto R2 = fetch_tl_object<ton_api::overlay_nodesV2>(R.move_as_ok(), true);
+  auto R2 = fetch_tl_object<ion_api::overlay_nodesV2>(R.move_as_ok(), true);
   if (R2.is_error()) {
     VLOG(OVERLAY_WARNING) << this << ": dropping incorrect answer to overlay.getRandomPeers query from " << src << ": "
                           << R2.move_as_error();
@@ -297,7 +297,7 @@ void OverlayImpl::receive_random_peers_v2(adnl::AdnlNodeIdShort src, td::Result<
 
 void OverlayImpl::send_random_peers_cont(adnl::AdnlNodeIdShort src, OverlayNode node,
                                          td::Promise<td::BufferSlice> promise) {
-  std::vector<tl_object_ptr<ton_api::overlay_node>> vec;
+  std::vector<tl_object_ptr<ion_api::overlay_node>> vec;
   if (announce_self_) {
     vec.emplace_back(node.tl());
   }
@@ -315,7 +315,7 @@ void OverlayImpl::send_random_peers_cont(adnl::AdnlNodeIdShort src, OverlayNode 
   }
 
   if (promise) {
-    auto Q = create_tl_object<ton_api::overlay_nodes>(std::move(vec));
+    auto Q = create_tl_object<ion_api::overlay_nodes>(std::move(vec));
     promise.set_value(serialize_tl_object(Q, true));
   } else {
     auto P =
@@ -323,7 +323,7 @@ void OverlayImpl::send_random_peers_cont(adnl::AdnlNodeIdShort src, OverlayNode 
           td::actor::send_closure(SelfId, &OverlayImpl::receive_random_peers, src, std::move(res));
         });
     auto Q =
-        create_tl_object<ton_api::overlay_getRandomPeers>(create_tl_object<ton_api::overlay_nodes>(std::move(vec)));
+        create_tl_object<ion_api::overlay_getRandomPeers>(create_tl_object<ion_api::overlay_nodes>(std::move(vec)));
     td::actor::send_closure(manager_, &OverlayManager::send_query, src, local_id_, overlay_id_,
                             "overlay getRandomPeers", std::move(P),
                             td::Timestamp::in(5.0 + td::Random::fast(0, 50) * 0.1), serialize_tl_object(Q, true));
@@ -345,7 +345,7 @@ void OverlayImpl::send_random_peers(adnl::AdnlNodeIdShort src, td::Promise<td::B
 
 void OverlayImpl::send_random_peers_v2_cont(adnl::AdnlNodeIdShort src, OverlayNode node,
                                             td::Promise<td::BufferSlice> promise) {
-  std::vector<tl_object_ptr<ton_api::overlay_nodeV2>> vec;
+  std::vector<tl_object_ptr<ion_api::overlay_nodeV2>> vec;
   if (announce_self_) {
     CHECK(is_persistent_node(node.adnl_id_short()) || !node.certificate()->empty());
     vec.emplace_back(node.tl_v2());
@@ -364,7 +364,7 @@ void OverlayImpl::send_random_peers_v2_cont(adnl::AdnlNodeIdShort src, OverlayNo
   }
 
   if (promise) {
-    auto Q = create_tl_object<ton_api::overlay_nodesV2>(std::move(vec));
+    auto Q = create_tl_object<ion_api::overlay_nodesV2>(std::move(vec));
     promise.set_value(serialize_tl_object(Q, true));
   } else {
     auto P =
@@ -372,7 +372,7 @@ void OverlayImpl::send_random_peers_v2_cont(adnl::AdnlNodeIdShort src, OverlayNo
           td::actor::send_closure(SelfId, &OverlayImpl::receive_random_peers_v2, src, std::move(res));
         });
     auto Q =
-        create_tl_object<ton_api::overlay_getRandomPeersV2>(create_tl_object<ton_api::overlay_nodesV2>(std::move(vec)));
+        create_tl_object<ion_api::overlay_getRandomPeersV2>(create_tl_object<ion_api::overlay_nodesV2>(std::move(vec)));
     td::actor::send_closure(manager_, &OverlayManager::send_query, src, local_id_, overlay_id_,
                             "overlay getRandomPeers", std::move(P),
                             td::Timestamp::in(5.0 + td::Random::fast(0, 50) * 0.1), serialize_tl_object(Q, true));
@@ -507,13 +507,13 @@ void OverlayImpl::get_overlay_random_peers(td::uint32 max_peers,
   promise.set_result(std::move(v));
 }
 
-void OverlayImpl::receive_nodes_from_db(tl_object_ptr<ton_api::overlay_nodes> tl_nodes) {
+void OverlayImpl::receive_nodes_from_db(tl_object_ptr<ion_api::overlay_nodes> tl_nodes) {
   if (overlay_type_ != OverlayType::FixedMemberList) {
     add_peers(tl_nodes);
   }
 }
 
-void OverlayImpl::receive_nodes_from_db_v2(tl_object_ptr<ton_api::overlay_nodesV2> tl_nodes) {
+void OverlayImpl::receive_nodes_from_db_v2(tl_object_ptr<ion_api::overlay_nodesV2> tl_nodes) {
   if (overlay_type_ != OverlayType::FixedMemberList) {
     add_peers(tl_nodes);
   }
@@ -528,7 +528,7 @@ bool OverlayImpl::is_persistent_node(const adnl::AdnlNodeIdShort &id) {
 }
 
 bool OverlayImpl::is_valid_peer(const adnl::AdnlNodeIdShort &src,
-                                const ton_api::overlay_MemberCertificate *certificate) {
+                                const ion_api::overlay_MemberCertificate *certificate) {
   if (overlay_type_ == OverlayType::Public) {
     on_ping_result(src, true);
     return true;
@@ -728,4 +728,4 @@ bool OverlayImpl::has_valid_membership_certificate() {
 
 }  // namespace overlay
 
-}  // namespace ton
+}  // namespace ion

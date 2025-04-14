@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -30,7 +30,7 @@
 #include <map>
 #include "common/global-version.h"
 
-namespace ton {
+namespace ion {
 
 namespace validator {
 using td::Ref;
@@ -112,8 +112,8 @@ class ValidateQuery : public td::actor::Actor {
     return SUPPORTED_VERSION;
   }
   static constexpr long long supported_capabilities() {
-    return ton::capCreateStatsEnabled | ton::capBounceMsgBody | ton::capReportVersion | ton::capShortDequeue |
-           ton::capStoreOutMsgQueueSize | ton::capMsgMetadata | ton::capDeferMessages;
+    return ion::capCreateStatsEnabled | ion::capBounceMsgBody | ion::capReportVersion | ion::capShortDequeue |
+           ion::capStoreOutMsgQueueSize | ion::capMsgMetadata | ion::capDeferMessages;
   }
 
  public:
@@ -155,14 +155,14 @@ class ValidateQuery : public td::actor::Actor {
   Ref<vm::Cell> prev_state_root_;
   Ref<vm::Cell> state_root_;
   Ref<vm::Cell> state_update_;
-  ton::Bits256 prev_state_hash_, state_hash_;
+  ion::Bits256 prev_state_hash_, state_hash_;
 
   ErrorCtx error_ctx_;
 
   td::Ref<MasterchainStateQ> mc_state_, latest_mc_state_;
   td::Ref<vm::Cell> mc_state_root_;
   BlockIdExt mc_blkid_, latest_mc_blkid_;
-  ton::BlockSeqno mc_seqno_{0}, latest_mc_seqno_;
+  ion::BlockSeqno mc_seqno_{0}, latest_mc_seqno_;
 
   Ref<vm::Cell> block_root_;
   std::vector<Ref<vm::Cell>> collated_roots_;
@@ -182,17 +182,17 @@ class ValidateQuery : public td::actor::Actor {
   Ref<vm::Cell> old_mparams_;
   bool accept_msgs_{true};
 
-  ton::BlockSeqno min_shard_ref_mc_seqno_{~0U};
-  ton::UnixTime max_shard_utime_{0};
-  ton::LogicalTime max_shard_lt_{0};
+  ion::BlockSeqno min_shard_ref_mc_seqno_{~0U};
+  ion::UnixTime max_shard_utime_{0};
+  ion::LogicalTime max_shard_lt_{0};
 
   int global_id_{0};
-  ton::BlockSeqno vert_seqno_{~0U};
+  ion::BlockSeqno vert_seqno_{~0U};
   bool ihr_enabled_{false};
   bool create_stats_enabled_{false};
-  ton::BlockSeqno prev_key_block_seqno_;
-  ton::BlockIdExt prev_key_block_;
-  ton::LogicalTime prev_key_block_lt_;
+  ion::BlockSeqno prev_key_block_seqno_;
+  ion::BlockIdExt prev_key_block_;
+  ion::LogicalTime prev_key_block_lt_;
   std::unique_ptr<block::BlockLimits> block_limits_;
   std::unique_ptr<block::BlockLimitStatus> block_limit_status_;
   td::uint64 total_gas_used_{0}, total_special_gas_used_{0};
@@ -200,7 +200,7 @@ class ValidateQuery : public td::actor::Actor {
   LogicalTime start_lt_, end_lt_;
   UnixTime prev_now_{~0u}, now_{~0u};
 
-  ton::Bits256 rand_seed_;
+  ion::Bits256 rand_seed_;
   std::vector<block::StoragePrices> storage_prices_;
   block::StoragePhaseConfig storage_phase_cfg_{&storage_prices_};
   block::ComputePhaseConfig compute_phase_cfg_;
@@ -223,8 +223,8 @@ class ValidateQuery : public td::actor::Actor {
   block::CurrencyCollection import_created_, transaction_fees_, total_burned_{0}, fees_burned_{0};
   td::RefInt256 import_fees_;
 
-  ton::LogicalTime proc_lt_{0}, claimed_proc_lt_{0}, min_enq_lt_{~0ULL};
-  ton::Bits256 proc_hash_ = ton::Bits256::zero(), claimed_proc_hash_, min_enq_hash_;
+  ion::LogicalTime proc_lt_{0}, claimed_proc_lt_{0}, min_enq_lt_{~0ULL};
+  ion::Bits256 proc_hash_ = ion::Bits256::zero(), claimed_proc_hash_, min_enq_hash_;
 
   std::vector<std::tuple<Bits256, LogicalTime, LogicalTime>> msg_proc_lt_;
   std::vector<std::tuple<Bits256, LogicalTime, LogicalTime>> msg_emitted_lt_;
@@ -314,7 +314,7 @@ class ValidateQuery : public td::actor::Actor {
   bool register_mc_state(Ref<MasterchainStateQ> other_mc_state);
   bool request_aux_mc_state(BlockSeqno seqno, Ref<MasterchainStateQ>& state);
   Ref<MasterchainStateQ> get_aux_mc_state(BlockSeqno seqno) const;
-  void after_get_aux_shard_state(ton::BlockIdExt blkid, td::Result<Ref<ShardState>> res);
+  void after_get_aux_shard_state(ion::BlockIdExt blkid, td::Result<Ref<ShardState>> res);
 
   bool check_one_shard(const block::McShardHash& info, const block::McShardHash* sibling,
                        const block::WorkchainInfo* wc_info, const block::CatchainValidatorsConfig& ccvc);
@@ -326,7 +326,7 @@ class ValidateQuery : public td::actor::Actor {
   bool prepare_out_msg_queue_size();
   void got_out_queue_size(size_t i, td::Result<td::uint64> res);
 
-  bool fix_one_processed_upto(block::MsgProcessedUpto& proc, ton::ShardIdFull owner, bool allow_cur = false);
+  bool fix_one_processed_upto(block::MsgProcessedUpto& proc, ion::ShardIdFull owner, bool allow_cur = false);
   bool fix_processed_upto(block::MsgProcessedUptoCollection& upto, bool allow_cur = false);
   bool fix_all_processed_upto();
   bool add_trivial_neighbor_after_merge();
@@ -336,12 +336,12 @@ class ValidateQuery : public td::actor::Actor {
   bool compute_minted_amount(block::CurrencyCollection& to_mint);
   bool precheck_one_account_update(td::ConstBitPtr acc_id, Ref<vm::CellSlice> old_value, Ref<vm::CellSlice> new_value);
   bool precheck_account_updates();
-  bool precheck_one_transaction(td::ConstBitPtr acc_id, ton::LogicalTime trans_lt, Ref<vm::CellSlice> trans_csr,
-                                ton::Bits256& prev_trans_hash, ton::LogicalTime& prev_trans_lt,
-                                unsigned& prev_trans_lt_len, ton::Bits256& acc_state_hash);
+  bool precheck_one_transaction(td::ConstBitPtr acc_id, ion::LogicalTime trans_lt, Ref<vm::CellSlice> trans_csr,
+                                ion::Bits256& prev_trans_hash, ion::LogicalTime& prev_trans_lt,
+                                unsigned& prev_trans_lt_len, ion::Bits256& acc_state_hash);
   bool precheck_one_account_block(td::ConstBitPtr acc_id, Ref<vm::CellSlice> acc_blk);
   bool precheck_account_transactions();
-  Ref<vm::Cell> lookup_transaction(const ton::StdSmcAddress& addr, ton::LogicalTime lt) const;
+  Ref<vm::Cell> lookup_transaction(const ion::StdSmcAddress& addr, ion::LogicalTime lt) const;
   bool is_valid_transaction_ref(Ref<vm::Cell> trans_ref) const;
   bool precheck_one_message_queue_update(td::ConstBitPtr out_msg_id, Ref<vm::CellSlice> old_value,
                                          Ref<vm::CellSlice> new_value);
@@ -349,8 +349,8 @@ class ValidateQuery : public td::actor::Actor {
   bool check_account_dispatch_queue_update(td::Bits256 addr, Ref<vm::CellSlice> old_queue_csr,
                                            Ref<vm::CellSlice> new_queue_csr);
   bool unpack_dispatch_queue_update();
-  bool update_max_processed_lt_hash(ton::LogicalTime lt, const ton::Bits256& hash);
-  bool update_min_enqueued_lt_hash(ton::LogicalTime lt, const ton::Bits256& hash);
+  bool update_max_processed_lt_hash(ion::LogicalTime lt, const ion::Bits256& hash);
+  bool update_min_enqueued_lt_hash(ion::LogicalTime lt, const ion::Bits256& hash);
   bool check_imported_message(Ref<vm::Cell> msg_env);
   bool is_special_in_msg(const vm::CellSlice& in_msg) const;
   bool check_in_msg(td::ConstBitPtr key, Ref<vm::CellSlice> in_msg);
@@ -359,7 +359,7 @@ class ValidateQuery : public td::actor::Actor {
   bool check_out_msg_descr();
   bool check_dispatch_queue_update();
   bool check_processed_upto();
-  bool check_neighbor_outbound_message(Ref<vm::CellSlice> enq_msg, ton::LogicalTime lt, td::ConstBitPtr key,
+  bool check_neighbor_outbound_message(Ref<vm::CellSlice> enq_msg, ion::LogicalTime lt, td::ConstBitPtr key,
                                        const block::McShardDescr& src_nb, bool& unprocessed);
   bool check_in_queue();
   bool check_delivered_dequeued();
@@ -379,7 +379,7 @@ class ValidateQuery : public td::actor::Actor {
   bool check_shard_libraries();
   bool check_new_state();
   bool check_config_update(Ref<vm::CellSlice> old_conf_params, Ref<vm::CellSlice> new_conf_params);
-  bool check_one_prev_dict_update(ton::BlockSeqno seqno, Ref<vm::CellSlice> old_val_extra,
+  bool check_one_prev_dict_update(ion::BlockSeqno seqno, Ref<vm::CellSlice> old_val_extra,
                                   Ref<vm::CellSlice> new_val_extra);
   bool check_mc_state_extra();
   bool postcheck_value_flow();
@@ -406,4 +406,4 @@ class ValidateQuery : public td::actor::Actor {
 
 }  // namespace validator
 
-}  // namespace ton
+}  // namespace ion

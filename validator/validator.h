@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -24,7 +24,7 @@
 
 #include "td/actor/actor.h"
 
-#include "ton/ton-types.h"
+#include "ion/ion-types.h"
 
 #include "adnl/adnl.h"
 #include "dht/dht.h"
@@ -39,7 +39,7 @@
 #include "interfaces/out-msg-queue-proof.h"
 #include "interfaces/external-message.h"
 
-namespace ton {
+namespace ion {
 
 namespace validator {
 
@@ -167,7 +167,7 @@ class ValidatorManagerInterface : public td::actor::Actor {
     virtual ~Callback() = default;
 
     virtual void initial_read_complete(BlockHandle top_masterchain_blocks) = 0;
-    virtual void on_new_masterchain_block(td::Ref<ton::validator::MasterchainState> state,
+    virtual void on_new_masterchain_block(td::Ref<ion::validator::MasterchainState> state,
                                           std::set<ShardIdFull> shards_to_monitor) = 0;
 
     virtual void send_ihr_message(AccountIdPrefixFull dst, td::BufferSlice data) = 0;
@@ -195,7 +195,7 @@ class ValidatorManagerInterface : public td::actor::Actor {
                                               td::Promise<std::vector<td::Ref<OutMsgQueueProof>>> promise) = 0;
 
     virtual void new_key_block(BlockHandle handle) = 0;
-    virtual void send_validator_telemetry(PublicKeyHash key, tl_object_ptr<ton_api::validator_telemetry> telemetry) = 0;
+    virtual void send_validator_telemetry(PublicKeyHash key, tl_object_ptr<ion_api::validator_telemetry> telemetry) = 0;
   };
 
   virtual ~ValidatorManagerInterface() = default;
@@ -306,4 +306,4 @@ class ValidatorManagerInterface : public td::actor::Actor {
 
 }  // namespace validator
 
-}  // namespace ton
+}  // namespace ion

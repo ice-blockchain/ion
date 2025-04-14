@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -25,10 +25,10 @@
 #include "td/actor/PromiseFuture.h"
 #include "td/utils/base64.h"
 #include "td/utils/Random.h"
-#include "auto/tl/ton_api.h"
+#include "auto/tl/ion_api.h"
 #include "td/utils/overloaded.h"
 
-namespace ton {
+namespace ion {
 
 namespace adnl {
 
@@ -95,7 +95,7 @@ void AdnlPeerPairImpl::discover() {
     auto pub = AdnlNodeIdFull{k.key().public_key()};
     CHECK(pub.compute_short_id() == peer_id);
 
-    auto addr_list = fetch_tl_object<ton_api::adnl_addressList>(k.value().clone(), true);
+    auto addr_list = fetch_tl_object<ion_api::adnl_addressList>(k.value().clone(), true);
     if (addr_list.is_error()) {
       td::actor::send_closure(SelfId, &AdnlPeerPairImpl::got_data_from_dht,
                               addr_list.move_as_error_prefix("bad dht value: "));
@@ -639,7 +639,7 @@ void AdnlPeerPairImpl::process_message(const adnlmessage::AdnlMessagePart &messa
       }
       huge_message_hash_.set_zero();
       huge_message_offset_ = 0;
-      auto MR = fetch_tl_object<ton_api::adnl_Message>(std::move(huge_message_), true);
+      auto MR = fetch_tl_object<ion_api::adnl_Message>(std::move(huge_message_), true);
       if (MR.is_error()) {
         VLOG(ADNL_WARNING) << this << ": dropping huge message part with bad data";
         return;
@@ -822,7 +822,7 @@ void AdnlPeerPairImpl::get_conn_ip_str(td::Promise<td::string> promise) {
   promise.set_value("undefined");
 }
 
-void AdnlPeerPairImpl::get_stats(bool all, td::Promise<tl_object_ptr<ton_api::adnl_stats_peerPair>> promise) {
+void AdnlPeerPairImpl::get_stats(bool all, td::Promise<tl_object_ptr<ion_api::adnl_stats_peerPair>> promise) {
   if (!all) {
     double threshold = td::Clocks::system() - 600.0;
     if (last_in_packet_ts_ < threshold && last_out_packet_ts_ < threshold) {
@@ -831,12 +831,12 @@ void AdnlPeerPairImpl::get_stats(bool all, td::Promise<tl_object_ptr<ton_api::ad
     }
   }
 
-  auto stats = create_tl_object<ton_api::adnl_stats_peerPair>();
+  auto stats = create_tl_object<ion_api::adnl_stats_peerPair>();
   stats->local_id_ = local_id_.bits256_value();
   stats->peer_id_ = peer_id_short_.bits256_value();
   for (const AdnlAddress &addr : addr_list_.addrs()) {
-    ton_api::downcast_call(*addr->tl(), td::overloaded(
-                                            [&](const ton_api::adnl_address_udp &obj) {
+    ion_api::downcast_call(*addr->tl(), td::overloaded(
+                                            [&](const ion_api::adnl_address_udp &obj) {
                                               stats->ip_str_ = PSTRING() << td::IPAddress::ipv4_to_str(obj.ip_) << ":"
                                                                          << obj.port_;
                                             },
@@ -1015,14 +1015,14 @@ void AdnlPeerImpl::update_addr_list(AdnlNodeIdShort local_id, td::uint32 local_m
   td::actor::send_closure(it->second, &AdnlPeerPair::update_addr_list, std::move(addr_list));
 }
 
-void AdnlPeerImpl::get_stats(bool all, td::Promise<std::vector<tl_object_ptr<ton_api::adnl_stats_peerPair>>> promise) {
+void AdnlPeerImpl::get_stats(bool all, td::Promise<std::vector<tl_object_ptr<ion_api::adnl_stats_peerPair>>> promise) {
   class Cb : public td::actor::Actor {
    public:
-    explicit Cb(td::Promise<std::vector<tl_object_ptr<ton_api::adnl_stats_peerPair>>> promise)
+    explicit Cb(td::Promise<std::vector<tl_object_ptr<ion_api::adnl_stats_peerPair>>> promise)
         : promise_(std::move(promise)) {
     }
 
-    void got_peer_pair_stats(tl_object_ptr<ton_api::adnl_stats_peerPair> peer_pair) {
+    void got_peer_pair_stats(tl_object_ptr<ion_api::adnl_stats_peerPair> peer_pair) {
       if (peer_pair) {
         result_.push_back(std::move(peer_pair));
       }
@@ -1043,9 +1043,9 @@ void AdnlPeerImpl::get_stats(bool all, td::Promise<std::vector<tl_object_ptr<ton
     }
 
    private:
-    td::Promise<std::vector<tl_object_ptr<ton_api::adnl_stats_peerPair>>> promise_;
+    td::Promise<std::vector<tl_object_ptr<ion_api::adnl_stats_peerPair>>> promise_;
     size_t pending_ = 1;
-    std::vector<tl_object_ptr<ton_api::adnl_stats_peerPair>> result_;
+    std::vector<tl_object_ptr<ion_api::adnl_stats_peerPair>> result_;
   };
   auto callback = td::actor::create_actor<Cb>("adnlpeerstats", std::move(promise)).release();
 
@@ -1053,7 +1053,7 @@ void AdnlPeerImpl::get_stats(bool all, td::Promise<std::vector<tl_object_ptr<ton
     td::actor::send_closure(callback, &Cb::inc_pending);
     td::actor::send_closure(peer_pair, &AdnlPeerPair::get_stats, all,
                             [local_id = local_id, peer_id = peer_id_short_,
-                             callback](td::Result<tl_object_ptr<ton_api::adnl_stats_peerPair>> R) {
+                             callback](td::Result<tl_object_ptr<ion_api::adnl_stats_peerPair>> R) {
                               if (R.is_error()) {
                                 VLOG(ADNL_NOTICE) << "failed to get stats for peer pair " << peer_id << "->" << local_id
                                                   << " : " << R.move_as_error();
@@ -1204,12 +1204,12 @@ void AdnlPeerPairImpl::prepare_packet_stats() {
   }
 }
 
-tl_object_ptr<ton_api::adnl_stats_packets> AdnlPeerPairImpl::PacketStats::tl() const {
-  return create_tl_object<ton_api::adnl_stats_packets>(ts_start, ts_end, in_packets, in_bytes, in_packets_channel,
+tl_object_ptr<ion_api::adnl_stats_packets> AdnlPeerPairImpl::PacketStats::tl() const {
+  return create_tl_object<ion_api::adnl_stats_packets>(ts_start, ts_end, in_packets, in_bytes, in_packets_channel,
                                                        in_bytes_channel, out_packets, out_bytes, out_packets_channel,
                                                        out_bytes_channel, out_expired_messages, out_expired_bytes);
 }
 
 }  // namespace adnl
 
-}  // namespace ton
+}  // namespace ion

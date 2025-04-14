@@ -1,31 +1,31 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
 #include "download-block-new.hpp"
-#include "ton/ton-tl.hpp"
+#include "ion/ion-tl.hpp"
 #include "adnl/utils.hpp"
-#include "ton/ton-shard.h"
+#include "ion/ion-shard.h"
 #include "td/utils/overloaded.h"
-#include "ton/ton-io.hpp"
+#include "ion/ion-io.hpp"
 #include "validator/full-node.h"
 #include "full-node-serializer.hpp"
 
-namespace ton {
+namespace ion {
 
 namespace validator {
 
@@ -196,9 +196,9 @@ void DownloadBlockNew::got_node_to_download(adnl::AdnlNodeIdShort node) {
 
   td::BufferSlice q;
   if (block_id_.is_valid()) {
-    q = create_serialize_tl_object<ton_api::tonNode_downloadBlockFull>(create_tl_block_id(block_id_));
+    q = create_serialize_tl_object<ion_api::tonNode_downloadBlockFull>(create_tl_block_id(block_id_));
   } else {
-    q = create_serialize_tl_object<ton_api::tonNode_downloadNextBlockFull>(create_tl_block_id(prev_id_));
+    q = create_serialize_tl_object<ion_api::tonNode_downloadNextBlockFull>(create_tl_block_id(prev_id_));
   }
   if (client_.empty()) {
     td::actor::send_closure(overlays_, &overlay::Overlays::send_query_via, download_from_, local_id_, overlay_id_,
@@ -206,13 +206,13 @@ void DownloadBlockNew::got_node_to_download(adnl::AdnlNodeIdShort node) {
                             FullNode::max_proof_size() + FullNode::max_block_size() + 128, rldp_);
   } else {
     td::actor::send_closure(client_, &adnl::AdnlExtClient::send_query, "get_block_full",
-                            create_serialize_tl_object_suffix<ton_api::tonNode_query>(std::move(q)),
+                            create_serialize_tl_object_suffix<ion_api::tonNode_query>(std::move(q)),
                             td::Timestamp::in(15.0), std::move(P));
   }
 }
 
 void DownloadBlockNew::got_data(td::BufferSlice data) {
-  auto F = fetch_tl_object<ton_api::tonNode_DataFull>(std::move(data), true);
+  auto F = fetch_tl_object<ion_api::tonNode_DataFull>(std::move(data), true);
 
   if (F.is_error()) {
     abort_query(F.move_as_error_prefix("received invalid answer: "));
@@ -220,7 +220,7 @@ void DownloadBlockNew::got_data(td::BufferSlice data) {
   }
 
   auto f = F.move_as_ok();
-  if (f->get_id() == ton_api::tonNode_dataFullEmpty::ID) {
+  if (f->get_id() == ion_api::tonNode_dataFullEmpty::ID) {
     abort_query(td::Status::Error(ErrorCode::notready, "node doesn't have this block"));
     return;
   }
@@ -283,4 +283,4 @@ void DownloadBlockNew::checked_block_proof() {
 
 }  // namespace validator
 
-}  // namespace ton
+}  // namespace ion

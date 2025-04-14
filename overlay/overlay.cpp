@@ -1,22 +1,22 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
-#include "auto/tl/ton_api.h"
+#include "auto/tl/ion_api.h"
 #include "td/utils/Random.h"
 #include "common/delay.h"
 
@@ -24,7 +24,7 @@
 #include "dht/dht.h"
 
 #include "overlay.hpp"
-#include "auto/tl/ton_api.hpp"
+#include "auto/tl/ion_api.hpp"
 
 #include "keys/encryptor.h"
 #include "td/utils/Status.h"
@@ -32,7 +32,7 @@
 #include "td/utils/port/signals.h"
 #include <limits>
 
-namespace ton {
+namespace ion {
 
 namespace overlay {
 
@@ -108,7 +108,7 @@ OverlayImpl::OverlayImpl(td::actor::ActorId<keyring::Keyring> keyring, td::actor
   update_neighbours(nodes_size);
 }
 
-void OverlayImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::overlay_getRandomPeers &query,
+void OverlayImpl::process_query(adnl::AdnlNodeIdShort src, ion_api::overlay_getRandomPeers &query,
                                 td::Promise<td::BufferSlice> promise) {
   if (overlay_type_ != OverlayType::FixedMemberList) {
     VLOG(OVERLAY_DEBUG) << this << ": received " << query.peers_->nodes_.size() << " nodes from " << src
@@ -121,7 +121,7 @@ void OverlayImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::overlay_getR
   }
 }
 
-void OverlayImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::overlay_getRandomPeersV2 &query,
+void OverlayImpl::process_query(adnl::AdnlNodeIdShort src, ion_api::overlay_getRandomPeersV2 &query,
                                 td::Promise<td::BufferSlice> promise) {
   if (overlay_type_ != OverlayType::FixedMemberList) {
     VLOG(OVERLAY_DEBUG) << this << ": received " << query.peers_->nodes_.size() << " nodes from " << src
@@ -134,19 +134,19 @@ void OverlayImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::overlay_getR
   }
 }
 
-void OverlayImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::overlay_getBroadcast &query,
+void OverlayImpl::process_query(adnl::AdnlNodeIdShort src, ion_api::overlay_getBroadcast &query,
                                 td::Promise<td::BufferSlice> promise) {
   auto it = broadcasts_.find(query.hash_);
   if (it == broadcasts_.end()) {
     VLOG(OVERLAY_NOTICE) << this << ": received getBroadcastQuery(" << query.hash_ << ") from " << src
                          << " but broadcast is unknown";
-    promise.set_value(create_serialize_tl_object<ton_api::overlay_broadcastNotFound>());
+    promise.set_value(create_serialize_tl_object<ion_api::overlay_broadcastNotFound>());
     return;
   }
   if (delivered_broadcasts_.find(query.hash_) != delivered_broadcasts_.end()) {
     VLOG(OVERLAY_DEBUG) << this << ": received getBroadcastQuery(" << query.hash_ << ") from " << src
                         << " but broadcast already deleted";
-    promise.set_value(create_serialize_tl_object<ton_api::overlay_broadcastNotFound>());
+    promise.set_value(create_serialize_tl_object<ion_api::overlay_broadcastNotFound>());
     return;
   }
 
@@ -155,18 +155,18 @@ void OverlayImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::overlay_getB
   promise.set_value(it->second->serialize());
 }
 
-void OverlayImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::overlay_getBroadcastList &query,
+void OverlayImpl::process_query(adnl::AdnlNodeIdShort src, ion_api::overlay_getBroadcastList &query,
                                 td::Promise<td::BufferSlice> promise) {
   VLOG(OVERLAY_WARNING) << this << ": DROPPING getBroadcastList query";
   promise.set_error(td::Status::Error(ErrorCode::protoviolation, "dropping get broadcast list query"));
 }
 
-/*void OverlayImpl::process_query(adnl::AdnlNodeIdShort src, adnl::AdnlQueryId query_id, ton_api::overlay_customQuery &query) {
+/*void OverlayImpl::process_query(adnl::AdnlNodeIdShort src, adnl::AdnlQueryId query_id, ion_api::overlay_customQuery &query) {
   callback_->receive_query(src, query_id, id_, std::move(query.data_));
 }
 */
 
-void OverlayImpl::receive_query(adnl::AdnlNodeIdShort src, tl_object_ptr<ton_api::overlay_messageExtra> extra,
+void OverlayImpl::receive_query(adnl::AdnlNodeIdShort src, tl_object_ptr<ion_api::overlay_messageExtra> extra,
                                 td::BufferSlice data, td::Promise<td::BufferSlice> promise) {
   if (!is_valid_peer(src, extra ? extra->certificate_.get() : nullptr)) {
     VLOG(OVERLAY_WARNING) << this << ": received query in private overlay from unknown source " << src;
@@ -174,7 +174,7 @@ void OverlayImpl::receive_query(adnl::AdnlNodeIdShort src, tl_object_ptr<ton_api
     return;
   }
 
-  auto R = fetch_tl_object<ton_api::Function>(data.clone(), true);
+  auto R = fetch_tl_object<ion_api::Function>(data.clone(), true);
 
   if (R.is_error()) {
     // allow custom query to be here
@@ -184,13 +184,13 @@ void OverlayImpl::receive_query(adnl::AdnlNodeIdShort src, tl_object_ptr<ton_api
 
   auto Q = R.move_as_ok();
 
-  VLOG(OVERLAY_EXTRA_DEBUG) << this << "query from " << src << ": " << ton_api::to_string(Q);
+  VLOG(OVERLAY_EXTRA_DEBUG) << this << "query from " << src << ": " << ion_api::to_string(Q);
 
-  ton_api::downcast_call(*Q.get(), [&](auto &object) { this->process_query(src, object, std::move(promise)); });
+  ion_api::downcast_call(*Q.get(), [&](auto &object) { this->process_query(src, object, std::move(promise)); });
 }
 
 td::Status OverlayImpl::process_broadcast(adnl::AdnlNodeIdShort message_from,
-                                          tl_object_ptr<ton_api::overlay_broadcast> bcast) {
+                                          tl_object_ptr<ion_api::overlay_broadcast> bcast) {
   if (peer_list_.local_member_flags_ & OverlayMemberFlags::DoNotReceiveBroadcasts) {
     return td::Status::OK();
   }
@@ -198,7 +198,7 @@ td::Status OverlayImpl::process_broadcast(adnl::AdnlNodeIdShort message_from,
 }
 
 td::Status OverlayImpl::process_broadcast(adnl::AdnlNodeIdShort message_from,
-                                          tl_object_ptr<ton_api::overlay_broadcastFec> b) {
+                                          tl_object_ptr<ion_api::overlay_broadcastFec> b) {
   if (peer_list_.local_member_flags_ & OverlayMemberFlags::DoNotReceiveBroadcasts) {
     return td::Status::OK();
   }
@@ -206,7 +206,7 @@ td::Status OverlayImpl::process_broadcast(adnl::AdnlNodeIdShort message_from,
 }
 
 td::Status OverlayImpl::process_broadcast(adnl::AdnlNodeIdShort message_from,
-                                          tl_object_ptr<ton_api::overlay_broadcastFecShort> b) {
+                                          tl_object_ptr<ion_api::overlay_broadcastFecShort> b) {
   if (peer_list_.local_member_flags_ & OverlayMemberFlags::DoNotReceiveBroadcasts) {
     return td::Status::OK();
   }
@@ -214,13 +214,13 @@ td::Status OverlayImpl::process_broadcast(adnl::AdnlNodeIdShort message_from,
 }
 
 td::Status OverlayImpl::process_broadcast(adnl::AdnlNodeIdShort message_from,
-                                          tl_object_ptr<ton_api::overlay_broadcastNotFound> bcast) {
+                                          tl_object_ptr<ion_api::overlay_broadcastNotFound> bcast) {
   return td::Status::Error(ErrorCode::protoviolation,
                            PSTRING() << "received strange message broadcastNotFound from " << message_from);
 }
 
 td::Status OverlayImpl::process_broadcast(adnl::AdnlNodeIdShort message_from,
-                                          tl_object_ptr<ton_api::overlay_fec_received> msg) {
+                                          tl_object_ptr<ion_api::overlay_fec_received> msg) {
   return td::Status::OK();  // disable this logic for now
   auto it = fec_broadcasts_.find(msg->hash_);
   if (it != fec_broadcasts_.end()) {
@@ -235,7 +235,7 @@ td::Status OverlayImpl::process_broadcast(adnl::AdnlNodeIdShort message_from,
 }
 
 td::Status OverlayImpl::process_broadcast(adnl::AdnlNodeIdShort message_from,
-                                          tl_object_ptr<ton_api::overlay_fec_completed> msg) {
+                                          tl_object_ptr<ion_api::overlay_fec_completed> msg) {
   return td::Status::OK();  // disable this logic for now
   auto it = fec_broadcasts_.find(msg->hash_);
   if (it != fec_broadcasts_.end()) {
@@ -250,27 +250,27 @@ td::Status OverlayImpl::process_broadcast(adnl::AdnlNodeIdShort message_from,
 }
 
 td::Status OverlayImpl::process_broadcast(adnl::AdnlNodeIdShort message_from,
-                                          tl_object_ptr<ton_api::overlay_unicast> msg) {
+                                          tl_object_ptr<ion_api::overlay_unicast> msg) {
   VLOG(OVERLAY_DEBUG) << this << ": received unicast from " << message_from;
   callback_->receive_message(message_from, overlay_id_, std::move(msg->data_));
   return td::Status::OK();
 }
 
-void OverlayImpl::receive_message(adnl::AdnlNodeIdShort src, tl_object_ptr<ton_api::overlay_messageExtra> extra,
+void OverlayImpl::receive_message(adnl::AdnlNodeIdShort src, tl_object_ptr<ion_api::overlay_messageExtra> extra,
                                   td::BufferSlice data) {
   if (!is_valid_peer(src, extra ? extra->certificate_.get() : nullptr)) {
     VLOG(OVERLAY_WARNING) << this << ": received message in private overlay from unknown source " << src;
     return;
   }
 
-  auto X = fetch_tl_object<ton_api::overlay_Broadcast>(data.clone(), true);
+  auto X = fetch_tl_object<ion_api::overlay_Broadcast>(data.clone(), true);
   if (X.is_error()) {
     VLOG(OVERLAY_DEBUG) << this << ": received custom message";
     callback_->receive_message(src, overlay_id_, std::move(data));
     return;
   }
   auto Q = X.move_as_ok();
-  ton_api::downcast_call(*Q.get(), [Self = this, &Q, &src](auto &object) {
+  ion_api::downcast_call(*Q.get(), [Self = this, &Q, &src](auto &object) {
     Self->process_broadcast(src, move_tl_object_as<std::remove_reference_t<decltype(object)>>(Q));
   });
 }
@@ -363,11 +363,11 @@ void OverlayImpl::alarm() {
 
 void OverlayImpl::receive_dht_nodes(dht::DhtValue v) {
   CHECK(overlay_type_ == OverlayType::Public);
-  auto R = fetch_tl_object<ton_api::overlay_nodes>(v.value().clone(), true);
+  auto R = fetch_tl_object<ion_api::overlay_nodes>(v.value().clone(), true);
   if (R.is_ok()) {
     auto r = R.move_as_ok();
     VLOG(OVERLAY_INFO) << this << ": received " << r->nodes_.size() << " nodes from overlay";
-    VLOG(OVERLAY_EXTRA_DEBUG) << this << ": nodes: " << ton_api::to_string(r);
+    VLOG(OVERLAY_EXTRA_DEBUG) << this << ": nodes: " << ion_api::to_string(r);
     std::vector<OverlayNode> nodes;
     for (auto &n : r->nodes_) {
       auto N = OverlayNode::create(n);
@@ -412,7 +412,7 @@ void OverlayImpl::update_dht_nodes(OverlayNode node) {
     return;
   }
 
-  auto nodes = create_tl_object<ton_api::overlay_nodes>(std::vector<tl_object_ptr<ton_api::overlay_node>>());
+  auto nodes = create_tl_object<ion_api::overlay_nodes>(std::vector<tl_object_ptr<ion_api::overlay_node>>());
   nodes->nodes_.emplace_back(node.tl());
 
   dht::DhtKey dht_key{overlay_id_.pubkey_hash(), "nodes", 0};
@@ -698,14 +698,14 @@ void OverlayImpl::broadcast_checked(Overlay::BroadcastHash hash, td::Result<td::
   }
 }
 
-void OverlayImpl::get_stats(td::Promise<tl_object_ptr<ton_api::engine_validator_overlayStats>> promise) {
-  auto res = create_tl_object<ton_api::engine_validator_overlayStats>();
+void OverlayImpl::get_stats(td::Promise<tl_object_ptr<ion_api::engine_validator_overlayStats>> promise) {
+  auto res = create_tl_object<ion_api::engine_validator_overlayStats>();
   res->adnl_id_ = local_id_.bits256_value();
   res->overlay_id_ = overlay_id_.bits256_value();
   res->overlay_id_full_ = id_full_.pubkey().tl();
   res->scope_ = scope_;
   iterate_all_peers([&](const adnl::AdnlNodeIdShort &key, const OverlayPeer &peer) {
-    auto node_obj = create_tl_object<ton_api::engine_validator_overlayStatsNode>();
+    auto node_obj = create_tl_object<ion_api::engine_validator_overlayStatsNode>();
     node_obj->adnl_id_ = key.bits256_value();
     node_obj->traffic_ = peer.traffic.tl();
     node_obj->traffic_responses_ = peer.traffic_responses.tl();
@@ -727,7 +727,7 @@ void OverlayImpl::get_stats(td::Promise<tl_object_ptr<ton_api::engine_validator_
   res->total_traffic_ = total_traffic.tl();
   res->total_traffic_responses_ = total_traffic_responses.tl();
   res->stats_.push_back(
-      create_tl_object<ton_api::engine_validator_oneStat>("neighbours_cnt", PSTRING() << neighbours_cnt()));
+      create_tl_object<ion_api::engine_validator_oneStat>("neighbours_cnt", PSTRING() << neighbours_cnt()));
 
   callback_->get_stats_extra([promise = std::move(promise), res = std::move(res)](td::Result<std::string> R) mutable {
     if (R.is_ok()) {
@@ -763,10 +763,10 @@ void TrafficStats::normalize(double elapsed) {
   in_packets = static_cast<td::uint32>(in_packets / elapsed);
 }
 
-tl_object_ptr<ton_api::engine_validator_overlayStatsTraffic> TrafficStats::tl() const {
-  return create_tl_object<ton_api::engine_validator_overlayStatsTraffic>(out_bytes, in_bytes, out_packets, in_packets);
+tl_object_ptr<ion_api::engine_validator_overlayStatsTraffic> TrafficStats::tl() const {
+  return create_tl_object<ion_api::engine_validator_overlayStatsTraffic>(out_bytes, in_bytes, out_packets, in_packets);
 }
 
 }  // namespace overlay
 
-}  // namespace ton
+}  // namespace ion

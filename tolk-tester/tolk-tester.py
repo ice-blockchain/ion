@@ -54,7 +54,7 @@ class CmdLineOptions:
         if self.test_file is not None:  # an option to run (debug) a single test
             return [self.test_file]
 
-        tests = [f for f in os.listdir(self.tests_dir) if f.endswith(".tolk") or f.endswith(".ton")]
+        tests = [f for f in os.listdir(self.tests_dir) if f.endswith(".tolk") or f.endswith(".ion")]
         tests.sort()
         return [os.path.join(self.tests_dir, f) for f in tests]
 

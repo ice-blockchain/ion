@@ -1,6 +1,6 @@
 #pragma once
 #include "crypto/common/refcnt.hpp"
-#include "ton/ton-types.h"
+#include "ion/ion-types.h"
 #include "crypto/vm/cells.h"
 #include "block/transaction.h"
 #include "block/block-auto.h"
@@ -12,8 +12,8 @@ class TransactionEmulator {
   std::shared_ptr<block::Config> config_;
   vm::Dictionary libraries_;
   int vm_log_verbosity_;
-  ton::UnixTime unixtime_;
-  ton::LogicalTime lt_;
+  ion::UnixTime unixtime_;
+  ion::LogicalTime lt_;
   td::BitArray<256> rand_seed_;
   bool ignore_chksig_;
   bool debug_enabled_;
@@ -60,18 +60,18 @@ public:
     return *config_;
   }
 
-  ton::UnixTime get_unixtime() {
+  ion::UnixTime get_unixtime() {
     return unixtime_;
   }
 
   td::Result<std::unique_ptr<EmulationResult>> emulate_transaction(
-      block::Account&& account, td::Ref<vm::Cell> msg_root, ton::UnixTime utime, ton::LogicalTime lt, int trans_type);
+      block::Account&& account, td::Ref<vm::Cell> msg_root, ion::UnixTime utime, ion::LogicalTime lt, int trans_type);
 
   td::Result<EmulationSuccess> emulate_transaction(block::Account&& account, td::Ref<vm::Cell> original_trans);
   td::Result<EmulationChain> emulate_transactions_chain(block::Account&& account, std::vector<td::Ref<vm::Cell>>&& original_transactions);
 
-  void set_unixtime(ton::UnixTime unixtime);
-  void set_lt(ton::LogicalTime lt);
+  void set_unixtime(ion::UnixTime unixtime);
+  void set_lt(ion::LogicalTime lt);
   void set_rand_seed(td::BitArray<256>& rand_seed);
   void set_ignore_chksig(bool ignore_chksig);
   void set_config(std::shared_ptr<block::Config> config);
@@ -84,7 +84,7 @@ private:
 
   td::Result<std::unique_ptr<block::transaction::Transaction>> create_transaction(
                                                          td::Ref<vm::Cell> msg_root, block::Account* acc,
-                                                         ton::UnixTime utime, ton::LogicalTime lt, int trans_type,
+                                                         ion::UnixTime utime, ion::LogicalTime lt, int trans_type,
                                                          block::StoragePhaseConfig* storage_phase_cfg,
                                                          block::ComputePhaseConfig* compute_phase_cfg,
                                                          block::ActionPhaseConfig* action_phase_cfg);

@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -27,14 +27,14 @@
 
 #include "td/db/RocksDb.h"
 
-#include "auto/tl/ton_api.hpp"
+#include "auto/tl/ion_api.hpp"
 
 #include "dht.h"
 #include "dht-bucket.hpp"
 #include "dht-query.hpp"
 #include "dht-in.hpp"
 
-namespace ton {
+namespace ion {
 
 namespace dht {
 
@@ -80,16 +80,16 @@ td::Result<td::actor::ActorOwn<Dht>> Dht::create_client(adnl::AdnlNodeIdShort id
 }
 
 void DhtMemberImpl::start_up() {
-  std::vector<td::int32> methods = {ton_api::dht_getSignedAddressList::ID,
-                                    ton_api::dht_findNode::ID,
-                                    ton_api::dht_findValue::ID,
-                                    ton_api::dht_store::ID,
-                                    ton_api::dht_ping::ID,
-                                    ton_api::dht_registerReverseConnection::ID,
-                                    ton_api::dht_requestReversePing::ID,
-                                    ton_api::dht_query::ID,
-                                    ton_api::dht_message::ID,
-                                    ton_api::dht_requestReversePingCont::ID};
+  std::vector<td::int32> methods = {ion_api::dht_getSignedAddressList::ID,
+                                    ion_api::dht_findNode::ID,
+                                    ion_api::dht_findValue::ID,
+                                    ion_api::dht_store::ID,
+                                    ion_api::dht_ping::ID,
+                                    ion_api::dht_registerReverseConnection::ID,
+                                    ion_api::dht_requestReversePing::ID,
+                                    ion_api::dht_query::ID,
+                                    ion_api::dht_message::ID,
+                                    ion_api::dht_requestReversePingCont::ID};
 
   for (auto it : methods) {
     td::actor::send_closure(adnl_, &adnl::Adnl::subscribe, id_, adnl::Adnl::int_to_bytestring(it),
@@ -101,12 +101,12 @@ void DhtMemberImpl::start_up() {
     std::shared_ptr<td::KeyValue> kv = std::make_shared<td::RocksDb>(
         td::RocksDb::open(PSTRING() << db_root_ << "/dht-" << td::base64url_encode(id_.as_slice())).move_as_ok());
     for (td::uint32 bit = 0; bit < 256; bit++) {
-      auto key = create_hash_tl_object<ton_api::dht_db_key_bucket>(bit);
+      auto key = create_hash_tl_object<ion_api::dht_db_key_bucket>(bit);
       std::string value;
       auto R = kv->get(key.as_slice(), value);
       R.ensure();
       if (R.move_as_ok() == td::KeyValue::GetStatus::Ok) {
-        auto V = fetch_tl_object<ton_api::dht_db_bucket>(td::BufferSlice{value}, true);
+        auto V = fetch_tl_object<ion_api::dht_db_bucket>(td::BufferSlice{value}, true);
         V.ensure();
         auto nodes = std::move(V.move_as_ok()->nodes_);
         auto s = nodes->nodes_.size();
@@ -124,16 +124,16 @@ void DhtMemberImpl::start_up() {
 }
 
 void DhtMemberImpl::tear_down() {
-  std::vector<td::int32> methods = {ton_api::dht_getSignedAddressList::ID,
-                                    ton_api::dht_findNode::ID,
-                                    ton_api::dht_findValue::ID,
-                                    ton_api::dht_store::ID,
-                                    ton_api::dht_ping::ID,
-                                    ton_api::dht_registerReverseConnection::ID,
-                                    ton_api::dht_requestReversePing::ID,
-                                    ton_api::dht_query::ID,
-                                    ton_api::dht_message::ID,
-                                    ton_api::dht_requestReversePingCont::ID};
+  std::vector<td::int32> methods = {ion_api::dht_getSignedAddressList::ID,
+                                    ion_api::dht_findNode::ID,
+                                    ion_api::dht_findValue::ID,
+                                    ion_api::dht_store::ID,
+                                    ion_api::dht_ping::ID,
+                                    ion_api::dht_registerReverseConnection::ID,
+                                    ion_api::dht_requestReversePing::ID,
+                                    ion_api::dht_query::ID,
+                                    ion_api::dht_message::ID,
+                                    ion_api::dht_requestReversePingCont::ID};
 
   for (auto it : methods) {
     td::actor::send_closure(adnl_, &adnl::Adnl::unsubscribe, id_, adnl::Adnl::int_to_bytestring(it));
@@ -151,8 +151,8 @@ void DhtMemberImpl::save_to_db() {
   auto &B = buckets_[bit];
   auto list = B.export_nodes();
   if (list.size() > 0) {
-    auto key = create_hash_tl_object<ton_api::dht_db_key_bucket>(bit);
-    auto value = create_serialize_tl_object<ton_api::dht_db_bucket>(list.tl());
+    auto key = create_hash_tl_object<ion_api::dht_db_key_bucket>(bit);
+    auto value = create_serialize_tl_object<ion_api::dht_db_bucket>(list.tl());
 
     db_.set(key, std::move(value));
   }
@@ -207,13 +207,13 @@ td::uint32 DhtMemberImpl::distance(DhtKeyId key_id, td::uint32 max_value) {
   return res;
 }
 
-void DhtMemberImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::dht_ping &query,
+void DhtMemberImpl::process_query(adnl::AdnlNodeIdShort src, ion_api::dht_ping &query,
                                   td::Promise<td::BufferSlice> promise) {
   ping_queries_++;
-  promise.set_value(create_serialize_tl_object<ton_api::dht_pong>(query.random_id_));
+  promise.set_value(create_serialize_tl_object<ion_api::dht_pong>(query.random_id_));
 }
 
-void DhtMemberImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::dht_findNode &query,
+void DhtMemberImpl::process_query(adnl::AdnlNodeIdShort src, ion_api::dht_findNode &query,
                                   td::Promise<td::BufferSlice> promise) {
   find_node_queries_++;
   auto k = static_cast<td::uint32>(query.k_);
@@ -224,7 +224,7 @@ void DhtMemberImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::dht_findNo
   promise.set_value(serialize_tl_object(R.tl(), true));
 }
 
-void DhtMemberImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::dht_findValue &query,
+void DhtMemberImpl::process_query(adnl::AdnlNodeIdShort src, ion_api::dht_findValue &query,
                                   td::Promise<td::BufferSlice> promise) {
   find_value_queries_++;
   auto it = values_.find(DhtKeyId{query.key_});
@@ -233,7 +233,7 @@ void DhtMemberImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::dht_findVa
     it = values_.end();
   }
   if (it != values_.end()) {
-    promise.set_value(create_serialize_tl_object<ton_api::dht_valueFound>(it->second.tl()));
+    promise.set_value(create_serialize_tl_object<ion_api::dht_valueFound>(it->second.tl()));
     return;
   }
 
@@ -243,7 +243,7 @@ void DhtMemberImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::dht_findVa
   }
   auto R = get_nearest_nodes(DhtKeyId{query.key_}, k);
 
-  promise.set_value(create_serialize_tl_object<ton_api::dht_valueNotFound>(R.tl()));
+  promise.set_value(create_serialize_tl_object<ion_api::dht_valueNotFound>(R.tl()));
 }
 
 td::Status DhtMemberImpl::store_in(DhtValue value) {
@@ -269,7 +269,7 @@ td::Status DhtMemberImpl::store_in(DhtValue value) {
   return td::Status::OK();
 }
 
-void DhtMemberImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::dht_store &query,
+void DhtMemberImpl::process_query(adnl::AdnlNodeIdShort src, ion_api::dht_store &query,
                                   td::Promise<td::BufferSlice> promise) {
   store_queries_++;
   auto V = DhtValue::create(std::move(query.value_), true);
@@ -282,14 +282,14 @@ void DhtMemberImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::dht_store 
   auto b = store_in(V.move_as_ok());
 
   if (b.is_ok()) {
-    promise.set_value(create_serialize_tl_object<ton_api::dht_stored>());
+    promise.set_value(create_serialize_tl_object<ion_api::dht_stored>());
   } else {
     VLOG(DHT_INFO) << this << ": dropping store() query from " << src << ": " << b.move_as_error();
     promise.set_error(td::Status::Error(ErrorCode::protoviolation, "dropping dht_store() query"));
   }
 }
 
-void DhtMemberImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::dht_getSignedAddressList &query,
+void DhtMemberImpl::process_query(adnl::AdnlNodeIdShort src, ion_api::dht_getSignedAddressList &query,
                                   td::Promise<td::BufferSlice> promise) {
   get_addr_list_queries_++;
 
@@ -312,7 +312,7 @@ static td::BufferSlice register_reverse_connection_to_sign(adnl::AdnlNodeIdShort
   return result;
 }
 
-void DhtMemberImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::dht_registerReverseConnection &query,
+void DhtMemberImpl::process_query(adnl::AdnlNodeIdShort src, ion_api::dht_registerReverseConnection &query,
                                   td::Promise<td::BufferSlice> promise) {
   td::uint32 ttl = query.ttl_, now = (td::uint32)td::Clocks::system();
   if (ttl <= now) {
@@ -325,10 +325,10 @@ void DhtMemberImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::dht_regist
   TRY_STATUS_PROMISE(promise, encryptor->check_signature(to_sign, query.signature_));
   DhtKeyId key_id = get_reverse_connection_key(client_id).compute_key_id();
   reverse_connections_[client_id] = ReverseConnection{src, key_id, td::Timestamp::at_unix(std::min(ttl, now + 300))};
-  promise.set_value(create_serialize_tl_object<ton_api::dht_stored>());
+  promise.set_value(create_serialize_tl_object<ion_api::dht_stored>());
 }
 
-void DhtMemberImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::dht_requestReversePing &query,
+void DhtMemberImpl::process_query(adnl::AdnlNodeIdShort src, ion_api::dht_requestReversePing &query,
                                   td::Promise<td::BufferSlice> promise) {
   adnl::AdnlNodeIdShort client{query.client_};
   auto it = reverse_connections_.find(client);
@@ -341,9 +341,9 @@ void DhtMemberImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::dht_reques
       TRY_STATUS_PROMISE(promise,
                          encryptor->check_signature(serialize_tl_object(query.target_, true), query.signature_));
       td::actor::send_closure(adnl_, &adnl::Adnl::send_message, id_, it->second.dht_node_,
-                              create_serialize_tl_object<ton_api::dht_requestReversePingCont>(
+                              create_serialize_tl_object<ion_api::dht_requestReversePingCont>(
                                   std::move(query.target_), std::move(query.signature_), query.client_));
-      promise.set_result(create_serialize_tl_object<ton_api::dht_reversePingOk>());
+      promise.set_result(create_serialize_tl_object<ion_api::dht_reversePingOk>());
       return;
     }
   }
@@ -352,7 +352,7 @@ void DhtMemberImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::dht_reques
     k = max_k();
   }
   auto R = get_nearest_nodes(get_reverse_connection_key(client).compute_key_id(), k);
-  promise.set_value(create_serialize_tl_object<ton_api::dht_clientNotFound>(R.tl()));
+  promise.set_value(create_serialize_tl_object<ion_api::dht_clientNotFound>(R.tl()));
 }
 
 void DhtMemberImpl::receive_query(adnl::AdnlNodeIdShort src, td::BufferSlice data,
@@ -361,7 +361,7 @@ void DhtMemberImpl::receive_query(adnl::AdnlNodeIdShort src, td::BufferSlice dat
     return;
   }
   {
-    auto R = fetch_tl_prefix<ton_api::dht_query>(data, true);
+    auto R = fetch_tl_prefix<ion_api::dht_query>(data, true);
     if (R.is_ok()) {
       auto N = DhtNode::create(std::move(R.move_as_ok()->node_), network_id_);
       if (N.is_ok()) {
@@ -377,7 +377,7 @@ void DhtMemberImpl::receive_query(adnl::AdnlNodeIdShort src, td::BufferSlice dat
       }
     }
   }
-  auto R = fetch_tl_object<ton_api::Function>(std::move(data), true);
+  auto R = fetch_tl_object<ion_api::Function>(std::move(data), true);
 
   if (R.is_error()) {
     VLOG(DHT_WARNING) << this << ": dropping unknown query to DHT node: " << R.move_as_error();
@@ -390,12 +390,12 @@ void DhtMemberImpl::receive_query(adnl::AdnlNodeIdShort src, td::BufferSlice dat
     VLOG(DHT_DEBUG) << this << ": ping=" << ping_queries_ << " fnode=" << find_node_queries_
                     << " fvalue=" << find_value_queries_ << " store=" << store_queries_
                     << " addrlist=" << get_addr_list_queries_;
-    VLOG(DHT_DEBUG) << this << ": query to DHT from " << src << ": " << ton_api::to_string(Q);
+    VLOG(DHT_DEBUG) << this << ": query to DHT from " << src << ": " << ion_api::to_string(Q);
   }
 
-  VLOG(DHT_EXTRA_DEBUG) << this << ": query to DHT from " << src << ": " << ton_api::to_string(Q);
+  VLOG(DHT_EXTRA_DEBUG) << this << ": query to DHT from " << src << ": " << ion_api::to_string(Q);
 
-  ton_api::downcast_call(*Q, [&](auto &object) { this->process_query(src, object, std::move(promise)); });
+  ion_api::downcast_call(*Q, [&](auto &object) { this->process_query(src, object, std::move(promise)); });
 }
 
 void DhtMemberImpl::add_full_node(DhtKeyId key, DhtNode node, bool set_active) {
@@ -429,7 +429,7 @@ void DhtMemberImpl::receive_ping(DhtKeyId key, DhtNode result) {
 }
 
 void DhtMemberImpl::receive_message(adnl::AdnlNodeIdShort src, td::BufferSlice data) {
-  auto F = fetch_tl_object<ton_api::dht_requestReversePingCont>(data, true);
+  auto F = fetch_tl_object<ion_api::dht_requestReversePingCont>(data, true);
   if (F.is_ok()) {
     auto S = [&]() -> td::Status {
       auto f = F.move_as_ok();
@@ -539,7 +539,7 @@ void DhtMemberImpl::request_reverse_ping_cont(adnl::AdnlNode target, td::BufferS
       reverse_connections_.erase(it);
     } else {
       td::actor::send_closure(adnl_, &adnl::Adnl::send_message, id_, it->second.dht_node_,
-                              create_serialize_tl_object<ton_api::dht_requestReversePingCont>(
+                              create_serialize_tl_object<ion_api::dht_requestReversePingCont>(
                                   target.tl(), std::move(signature), client.bits256_value()));
       promise.set_result(td::Unit());
       return;
@@ -727,18 +727,18 @@ void DhtMemberImpl::get_self_node(td::Promise<DhtNode> promise) {
   td::actor::send_closure(adnl_, &adnl::Adnl::get_self_node, id_, std::move(P));
 }
 
-td::Result<std::shared_ptr<DhtGlobalConfig>> Dht::create_global_config(tl_object_ptr<ton_api::dht_config_Global> conf) {
+td::Result<std::shared_ptr<DhtGlobalConfig>> Dht::create_global_config(tl_object_ptr<ion_api::dht_config_Global> conf) {
   td::uint32 k = 0, a = 0;
   td::int32 network_id = -1;
-  tl_object_ptr<ton_api::dht_nodes> static_nodes;
-  ton_api::downcast_call(*conf, td::overloaded(
-                                    [&](ton_api::dht_config_global &f) {
+  tl_object_ptr<ion_api::dht_nodes> static_nodes;
+  ion_api::downcast_call(*conf, td::overloaded(
+                                    [&](ion_api::dht_config_global &f) {
                                       k = f.k_;
                                       a = f.a_;
                                       network_id = -1;
                                       static_nodes = std::move(f.static_nodes_);
                                     },
-                                    [&](ton_api::dht_config_global_v2 &f) {
+                                    [&](ion_api::dht_config_global_v2 &f) {
                                       k = f.k_;
                                       a = f.a_;
                                       network_id = f.network_id_;
@@ -760,4 +760,4 @@ td::Result<std::shared_ptr<DhtGlobalConfig>> Dht::create_global_config(tl_object
 
 }  // namespace dht
 
-}  // namespace ton
+}  // namespace ion

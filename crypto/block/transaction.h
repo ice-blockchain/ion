@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -26,14 +26,14 @@
 #include <ostream>
 #include "tl/tlblib.hpp"
 #include "td/utils/bits.h"
-#include "ton/ton-types.h"
+#include "ion/ion-types.h"
 #include "block/block.h"
 #include "block/mc-config.h"
 #include "precompiled-smc/PrecompiledSmartContract.h"
 
 namespace block {
 using td::Ref;
-using LtCellRef = std::pair<ton::LogicalTime, Ref<vm::Cell>>;
+using LtCellRef = std::pair<ion::LogicalTime, Ref<vm::Cell>>;
 
 struct Account;
 
@@ -63,13 +63,13 @@ struct LtCellCompare {
 };
 
 struct NewOutMsg {
-  ton::LogicalTime lt;
+  ion::LogicalTime lt;
   Ref<vm::Cell> msg;
   Ref<vm::Cell> trans;
   unsigned msg_idx;
   td::optional<MsgMetadata> metadata;
   td::Ref<vm::Cell> msg_env_from_dispatch_queue;  // Not null if from dispatch queue; in this case lt is emitted_lt
-  NewOutMsg(ton::LogicalTime _lt, Ref<vm::Cell> _msg, Ref<vm::Cell> _trans, unsigned _msg_idx)
+  NewOutMsg(ion::LogicalTime _lt, Ref<vm::Cell> _msg, Ref<vm::Cell> _trans, unsigned _msg_idx)
       : lt(_lt), msg(std::move(_msg)), trans(std::move(_trans)), msg_idx(_msg_idx) {
   }
   bool operator<(const NewOutMsg& other) const& {
@@ -96,7 +96,7 @@ struct StoragePhaseConfig {
 struct StoragePhase {
   td::RefInt256 fees_collected;
   td::RefInt256 fees_due;
-  ton::UnixTime last_paid_updated;
+  ion::UnixTime last_paid_updated;
   bool frozen{false};
   bool deleted{false};
   bool is_special{false};
@@ -150,7 +150,7 @@ struct ComputePhaseConfig {
   }
   bool parse_GasLimitsPrices(Ref<vm::CellSlice> cs, td::RefInt256& freeze_due_limit, td::RefInt256& delete_due_limit);
   bool parse_GasLimitsPrices(Ref<vm::Cell> cell, td::RefInt256& freeze_due_limit, td::RefInt256& delete_due_limit);
-  bool is_address_suspended(ton::WorkchainId wc, td::Bits256 addr) const;
+  bool is_address_suspended(ion::WorkchainId wc, td::Bits256 addr) const;
 
  private:
   bool parse_GasLimitsPrices_internal(Ref<vm::CellSlice> cs, td::RefInt256& freeze_due_limit,
@@ -200,7 +200,7 @@ struct ComputePhase {
   int exit_code;
   int exit_arg;
   int vm_steps;
-  ton::Bits256 vm_init_state_hash, vm_final_state_hash;
+  ion::Bits256 vm_init_state_hash, vm_final_state_hash;
   Ref<vm::Cell> in_msg;
   Ref<vm::Cell> new_data;
   Ref<vm::Cell> actions;
@@ -231,7 +231,7 @@ struct ActionPhase {
   block::CurrencyCollection remaining_balance, reserved_balance;
   std::vector<Ref<vm::Cell>> action_list;  // processed in reverse order
   std::vector<Ref<vm::Cell>> out_msgs;
-  ton::LogicalTime end_lt;
+  ion::LogicalTime end_lt;
   unsigned long long tot_msg_bits{0}, tot_msg_cells{0};
   td::RefInt256 action_fine;
   bool need_bounce_on_fail = false;
@@ -255,18 +255,18 @@ struct Account {
   bool split_depth_set_{false};
   unsigned char split_depth_{0};
   int verbosity{3 * 0};
-  ton::UnixTime now_{0};
-  ton::WorkchainId workchain{ton::workchainInvalid};
+  ion::UnixTime now_{0};
+  ion::WorkchainId workchain{ion::workchainInvalid};
   td::BitArray<32> addr_rewrite;     // rewrite (anycast) data, split_depth bits
-  ton::StdSmcAddress addr;           // rewritten address (by replacing a prefix of `addr_orig` with `addr_rewrite`); it is the key in ShardAccounts
-  ton::StdSmcAddress addr_orig;      // address indicated in smart-contract data (must coincide with hash of StateInit)
+  ion::StdSmcAddress addr;           // rewritten address (by replacing a prefix of `addr_orig` with `addr_rewrite`); it is the key in ShardAccounts
+  ion::StdSmcAddress addr_orig;      // address indicated in smart-contract data (must coincide with hash of StateInit)
   Ref<vm::CellSlice> my_addr;        // address as stored in the smart contract (MsgAddressInt); corresponds to `addr_orig` + anycast info
   Ref<vm::CellSlice> my_addr_exact;  // exact address without anycast info; corresponds to `addr` and has no anycast (rewrite) info
-  ton::LogicalTime last_trans_end_lt_;
-  ton::LogicalTime last_trans_lt_;
-  ton::Bits256 last_trans_hash_;
-  ton::LogicalTime block_lt;
-  ton::UnixTime last_paid;
+  ion::LogicalTime last_trans_end_lt_;
+  ion::LogicalTime last_trans_lt_;
+  ion::Bits256 last_trans_hash_;
+  ion::LogicalTime block_lt;
+  ion::UnixTime last_paid;
   vm::CellStorageStat storage_stat;
   block::CurrencyCollection balance;
   td::RefInt256 due_payment;
@@ -274,33 +274,33 @@ struct Account {
   Ref<vm::Cell> total_state;       // ^Account
   Ref<vm::CellSlice> storage;      // AccountStorage
   Ref<vm::CellSlice> inner_state;  // StateInit
-  ton::Bits256 state_hash;         // hash of StateInit for frozen accounts
+  ion::Bits256 state_hash;         // hash of StateInit for frozen accounts
   Ref<vm::Cell> code, data, library, orig_library;
   std::vector<LtCellRef> transactions;
   Account() = default;
-  Account(ton::WorkchainId wc, td::ConstBitPtr _addr) : workchain(wc), addr(_addr) {
+  Account(ion::WorkchainId wc, td::ConstBitPtr _addr) : workchain(wc), addr(_addr) {
   }
-  Account(ton::WorkchainId wc, td::ConstBitPtr _addr, int depth)
+  Account(ion::WorkchainId wc, td::ConstBitPtr _addr, int depth)
       : split_depth_set_(true), split_depth_((unsigned char)depth), workchain(wc), addr(_addr) {
   }
   block::CurrencyCollection get_balance() const {
     return balance;
   }
-  bool set_address(ton::WorkchainId wc, td::ConstBitPtr new_addr);
-  bool unpack(Ref<vm::CellSlice> account, ton::UnixTime now, bool special);
-  bool init_new(ton::UnixTime now);
+  bool set_address(ion::WorkchainId wc, td::ConstBitPtr new_addr);
+  bool unpack(Ref<vm::CellSlice> account, ion::UnixTime now, bool special);
+  bool init_new(ion::UnixTime now);
   bool deactivate();
   bool recompute_tmp_addr(Ref<vm::CellSlice>& tmp_addr, int split_depth, td::ConstBitPtr orig_addr_rewrite) const;
-  td::RefInt256 compute_storage_fees(ton::UnixTime now, const std::vector<block::StoragePrices>& pricing) const;
+  td::RefInt256 compute_storage_fees(ion::UnixTime now, const std::vector<block::StoragePrices>& pricing) const;
   bool is_masterchain() const {
-    return workchain == ton::masterchainId;
+    return workchain == ion::masterchainId;
   }
-  bool belongs_to_shard(ton::ShardIdFull shard) const;
+  bool belongs_to_shard(ion::ShardIdFull shard) const;
   bool store_acc_status(vm::CellBuilder& cb, int status) const;
   bool store_acc_status(vm::CellBuilder& cb) const {
     return store_acc_status(cb, status);
   }
-  void push_transaction(Ref<vm::Cell> trans_root, ton::LogicalTime trans_lt);
+  void push_transaction(Ref<vm::Cell> trans_root, ion::LogicalTime trans_lt);
   bool libraries_changed() const;
   bool create_account_block(vm::CellBuilder& cb);  // stores an AccountBlock with all transactions
 
@@ -347,20 +347,20 @@ struct Transaction {
   bool new_tick;
   bool new_tock;
   signed char new_split_depth{-1};
-  ton::UnixTime now;
+  ion::UnixTime now;
   int acc_status;
   int verbosity{3 * 0};
   int in_msg_type{0};
   const Account& account;                     // only `commit` method modifies the account
   Ref<vm::CellSlice> my_addr, my_addr_exact;  // almost the same as in account.*
-  ton::LogicalTime start_lt, end_lt;
+  ion::LogicalTime start_lt, end_lt;
   block::CurrencyCollection balance, original_balance;
   block::CurrencyCollection msg_balance_remaining;
   td::RefInt256 due_payment;
   td::RefInt256 in_fwd_fee, msg_fwd_fees;
   block::CurrencyCollection total_fees{0};
   block::CurrencyCollection blackhole_burned{0};
-  ton::UnixTime last_paid;
+  ion::UnixTime last_paid;
   Ref<vm::Cell> root;
   Ref<vm::Cell> new_total_state;
   Ref<vm::CellSlice> new_storage;
@@ -379,7 +379,7 @@ struct Transaction {
   std::unique_ptr<BouncePhase> bounce_phase;
   vm::CellStorageStat new_storage_stat;
   bool gas_limit_overridden{false};
-  Transaction(const Account& _account, int ttype, ton::LogicalTime req_start_lt, ton::UnixTime _now,
+  Transaction(const Account& _account, int ttype, ion::LogicalTime req_start_lt, ion::UnixTime _now,
               Ref<vm::Cell> _inmsg = {});
   bool unpack_input_msg(bool ihr_delivered, const ActionPhaseConfig* cfg);
   bool check_in_msg_state_hash();
@@ -434,13 +434,13 @@ struct FetchConfigParams {
                                         StoragePhaseConfig* storage_phase_cfg, td::BitArray<256>* rand_seed,
                                         ComputePhaseConfig* compute_phase_cfg, ActionPhaseConfig* action_phase_cfg,
                                         SerializeConfig* serialize_cfg, td::RefInt256* masterchain_create_fee,
-                                        td::RefInt256* basechain_create_fee, ton::WorkchainId wc, ton::UnixTime now);
+                                        td::RefInt256* basechain_create_fee, ion::WorkchainId wc, ion::UnixTime now);
   static td::Status fetch_config_params(const block::Config& config, Ref<vm::Tuple> prev_blocks_info,
                                         Ref<vm::Cell>* old_mparams, std::vector<block::StoragePrices>* storage_prices,
                                         StoragePhaseConfig* storage_phase_cfg, td::BitArray<256>* rand_seed,
                                         ComputePhaseConfig* compute_phase_cfg, ActionPhaseConfig* action_phase_cfg,
                                         SerializeConfig* serialize_cfg, td::RefInt256* masterchain_create_fee,
-                                        td::RefInt256* basechain_create_fee, ton::WorkchainId wc, ton::UnixTime now);
+                                        td::RefInt256* basechain_create_fee, ion::WorkchainId wc, ion::UnixTime now);
 };
 
 }  // namespace block

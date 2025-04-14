@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain source code.
+    This file is part of ION Blockchain source code.
 
-    TON Blockchain is free software; you can redistribute it and/or
+    ION Blockchain is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
     as published by the Free Software Foundation; either version 2
     of the License, or (at your option) any later version.
 
-    TON Blockchain is distributed in the hope that it will be useful,
+    ION Blockchain is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with TON Blockchain.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain.  If not, see <http://www.gnu.org/licenses/>.
 
     In addition, as a special exception, the copyright holders give permission 
     to link the code of portions of this program with the OpenSSL library. 
@@ -22,7 +22,7 @@
     but you are not obligated to do so. If you do not wish to do so, delete this 
     exception statement from your version. If you delete this exception statement 
     from all source files in the program, then also delete it here.
-    along with TON Blockchain.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -36,8 +36,8 @@
 #include "tl-utils/tl-utils.hpp"
 #include "tl-utils/lite-utils.hpp"
 
-#include "ton/ton-tl.hpp"
-#include "ton/lite-tl.hpp"
+#include "ion/ion-tl.hpp"
+#include "ion/lite-tl.hpp"
 
 #include "common/errorcode.h"
 #include "block/block-auto.h"
@@ -50,113 +50,113 @@
 #include "vm/vm.h"
 #include "vm/cp0.h"
 
-td::Result<ton::BlockIdExt> parse_block_id(std::map<std::string, std::string> &opts, bool allow_empty) {
+td::Result<ion::BlockIdExt> parse_block_id(std::map<std::string, std::string> &opts, bool allow_empty) {
   if (allow_empty) {
     if (opts.count("workchain") == 0 && opts.count("shard") == 0 && opts.count("seqno") == 0) {
-      return ton::BlockIdExt{};
+      return ion::BlockIdExt{};
     }
   }
   try {
-    ton::BlockIdExt block_id;
+    ion::BlockIdExt block_id;
     auto it = opts.find("workchain");
     if (it == opts.end()) {
-      return td::Status::Error(ton::ErrorCode::protoviolation, "workchain not set");
+      return td::Status::Error(ion::ErrorCode::protoviolation, "workchain not set");
     }
     block_id.id.workchain = std::stoi(it->second);
     it = opts.find("shard");
     if (it == opts.end()) {
-      return td::Status::Error(ton::ErrorCode::protoviolation, "shard not set");
+      return td::Status::Error(ion::ErrorCode::protoviolation, "shard not set");
     }
     block_id.id.shard = std::stoull(it->second, nullptr, 16);
     it = opts.find("seqno");
     if (it == opts.end()) {
-      return td::Status::Error(ton::ErrorCode::protoviolation, "seqno not set");
+      return td::Status::Error(ion::ErrorCode::protoviolation, "seqno not set");
     }
     auto s = std::stoull(it->second);
-    auto seqno = static_cast<ton::BlockSeqno>(s);
+    auto seqno = static_cast<ion::BlockSeqno>(s);
     if (s != seqno) {
-      return td::Status::Error(ton::ErrorCode::protoviolation, "seqno too big");
+      return td::Status::Error(ion::ErrorCode::protoviolation, "seqno too big");
     }
     block_id.id.seqno = seqno;
     it = opts.find("roothash");
     if (it == opts.end()) {
-      return td::Status::Error(ton::ErrorCode::protoviolation, "roothash not set");
+      return td::Status::Error(ion::ErrorCode::protoviolation, "roothash not set");
     }
     if (it->second.length() != 64) {
-      return td::Status::Error(ton::ErrorCode::protoviolation, "roothash bad length");
+      return td::Status::Error(ion::ErrorCode::protoviolation, "roothash bad length");
     }
     auto R = td::hex_decode(td::Slice(it->second));
     if (R.is_error()) {
-      return td::Status::Error(ton::ErrorCode::protoviolation, "roothash bad hex");
+      return td::Status::Error(ion::ErrorCode::protoviolation, "roothash bad hex");
     }
     block_id.root_hash.as_slice().copy_from(td::as_slice(R.move_as_ok()));
     it = opts.find("filehash");
     if (it == opts.end()) {
-      return td::Status::Error(ton::ErrorCode::protoviolation, "filehash not set");
+      return td::Status::Error(ion::ErrorCode::protoviolation, "filehash not set");
     }
     if (it->second.length() != 64) {
-      return td::Status::Error(ton::ErrorCode::protoviolation, "filehash bad length");
+      return td::Status::Error(ion::ErrorCode::protoviolation, "filehash bad length");
     }
     R = td::hex_decode(td::Slice(it->second));
     if (R.is_error()) {
-      return td::Status::Error(ton::ErrorCode::protoviolation, "filehash bad hex");
+      return td::Status::Error(ion::ErrorCode::protoviolation, "filehash bad hex");
     }
     block_id.file_hash.as_slice().copy_from(td::as_slice(R.move_as_ok()));
     return block_id;
   } catch (...) {
-    return td::Status::Error(ton::ErrorCode::protoviolation, "cannot parse int");
+    return td::Status::Error(ion::ErrorCode::protoviolation, "cannot parse int");
   }
 }
 
-td::Result<ton::AccountIdPrefixFull> parse_account_prefix(std::map<std::string, std::string> &opts, bool allow_empty) {
+td::Result<ion::AccountIdPrefixFull> parse_account_prefix(std::map<std::string, std::string> &opts, bool allow_empty) {
   if (allow_empty) {
     if (opts.count("workchain") == 0 && opts.count("shard") == 0 && opts.count("account") == 0) {
-      return ton::AccountIdPrefixFull{ton::masterchainId, 0};
+      return ion::AccountIdPrefixFull{ion::masterchainId, 0};
     }
   }
   try {
-    ton::AccountIdPrefixFull account_id;
+    ion::AccountIdPrefixFull account_id;
     auto it = opts.find("workchain");
     if (it == opts.end()) {
-      return td::Status::Error(ton::ErrorCode::protoviolation, "workchain not set");
+      return td::Status::Error(ion::ErrorCode::protoviolation, "workchain not set");
     }
     account_id.workchain = std::stoi(it->second);
     it = opts.find("shard");
     if (it == opts.end()) {
       it = opts.find("account");
       if (it == opts.end()) {
-        return td::Status::Error(ton::ErrorCode::protoviolation, "shard/account not set");
+        return td::Status::Error(ion::ErrorCode::protoviolation, "shard/account not set");
       }
     }
     account_id.account_id_prefix = std::stoull(it->second, nullptr, 16);
     return account_id;
   } catch (...) {
-    return td::Status::Error(ton::ErrorCode::protoviolation, "cannot parse int");
+    return td::Status::Error(ion::ErrorCode::protoviolation, "cannot parse int");
   }
 }
 
 td::Result<block::StdAddress> parse_account_addr(std::map<std::string, std::string> &opts) {
   auto it = opts.find("account");
   if (it == opts.end()) {
-    return td::Status::Error(ton::ErrorCode::error, "no account id");
+    return td::Status::Error(ion::ErrorCode::error, "no account id");
   }
   std::string acc_string = it->second;
   block::StdAddress a;
   if (a.parse_addr(td::Slice(acc_string))) {
     return a;
   }
-  ton::WorkchainId workchain_id;
+  ion::WorkchainId workchain_id;
   it = opts.find("accountworkchain");
   if (it == opts.end()) {
     it = opts.find("workchain");
     if (it == opts.end()) {
-      return td::Status::Error(ton::ErrorCode::error, "no account workchain id");
+      return td::Status::Error(ion::ErrorCode::error, "no account workchain id");
     }
   }
   try {
     workchain_id = std::stoi(it->second);
   } catch (...) {
-    return td::Status::Error(ton::ErrorCode::error, "bad account workchain id");
+    return td::Status::Error(ion::ErrorCode::error, "bad account workchain id");
   }
   if (acc_string.size() == 64) {
     TRY_RESULT(R, td::hex_decode(acc_string));
@@ -164,7 +164,7 @@ td::Result<block::StdAddress> parse_account_addr(std::map<std::string, std::stri
     a.workchain = workchain_id;
     return a;
   }
-  return td::Status::Error(ton::ErrorCode::error, "bad account id");
+  return td::Status::Error(ion::ErrorCode::error, "bad account id");
 }
 
 void HttpQueryCommon::abort_query(td::Status error) {
@@ -179,7 +179,7 @@ void HttpQueryCommon::abort_query(td::Status error) {
   stop();
 }
 
-HttpQueryBlockData::HttpQueryBlockData(ton::BlockIdExt block_id, std::string prefix,
+HttpQueryBlockData::HttpQueryBlockData(ion::BlockIdExt block_id, std::string prefix,
                                        td::Promise<MHD_Response *> promise)
     : HttpQueryCommon(std::move(prefix), std::move(promise)), block_id_(block_id) {
 }
@@ -211,8 +211,8 @@ void HttpQueryBlockData::finish_query() {
 }
 
 void HttpQueryBlockData::start_up() {
-  auto query = ton::serialize_tl_object(
-      ton::create_tl_object<ton::lite_api::liteServer_getBlock>(ton::create_tl_lite_block_id(block_id_)), true);
+  auto query = ion::serialize_tl_object(
+      ion::create_tl_object<ion::lite_api::liteServer_getBlock>(ion::create_tl_lite_block_id(block_id_)), true);
 
   auto P = td::PromiseCreator::lambda([SelfId = actor_id(this)](td::Result<td::BufferSlice> R) {
     if (R.is_error()) {
@@ -227,7 +227,7 @@ void HttpQueryBlockData::start_up() {
 }
 
 void HttpQueryBlockData::got_block_data(td::BufferSlice data) {
-  auto F = ton::fetch_tl_object<ton::lite_api::liteServer_blockData>(std::move(data), true);
+  auto F = ion::fetch_tl_object<ion::lite_api::liteServer_blockData>(std::move(data), true);
   if (F.is_error()) {
     abort_query(F.move_as_error());
     return;
@@ -236,7 +236,7 @@ void HttpQueryBlockData::got_block_data(td::BufferSlice data) {
   finish_query();
 }
 
-HttpQueryBlockView::HttpQueryBlockView(ton::BlockIdExt block_id, std::string prefix,
+HttpQueryBlockView::HttpQueryBlockView(ion::BlockIdExt block_id, std::string prefix,
                                        td::Promise<MHD_Response *> promise)
     : HttpQueryCommon(std::move(prefix), std::move(promise)), block_id_(block_id) {
 }
@@ -274,8 +274,8 @@ void HttpQueryBlockView::finish_query() {
 }
 
 void HttpQueryBlockView::start_up_query() {
-  auto query = ton::serialize_tl_object(
-      ton::create_tl_object<ton::lite_api::liteServer_getBlock>(ton::create_tl_lite_block_id(block_id_)), true);
+  auto query = ion::serialize_tl_object(
+      ion::create_tl_object<ion::lite_api::liteServer_getBlock>(ion::create_tl_lite_block_id(block_id_)), true);
 
   auto P = td::PromiseCreator::lambda([SelfId = actor_id(this)](td::Result<td::BufferSlice> R) {
     if (R.is_error()) {
@@ -290,7 +290,7 @@ void HttpQueryBlockView::start_up_query() {
 }
 
 void HttpQueryBlockView::got_block_data(td::BufferSlice data) {
-  auto F = ton::fetch_tl_object<ton::lite_api::liteServer_blockData>(std::move(data), true);
+  auto F = ion::fetch_tl_object<ion::lite_api::liteServer_blockData>(std::move(data), true);
   if (F.is_error()) {
     abort_query(F.move_as_error());
   }
@@ -298,7 +298,7 @@ void HttpQueryBlockView::got_block_data(td::BufferSlice data) {
   finish_query();
 }
 
-HttpQueryBlockInfo::HttpQueryBlockInfo(ton::BlockIdExt block_id, std::string prefix,
+HttpQueryBlockInfo::HttpQueryBlockInfo(ion::BlockIdExt block_id, std::string prefix,
                                        td::Promise<MHD_Response *> promise)
     : HttpQueryCommon(std::move(prefix), std::move(promise)), block_id_(block_id) {
 }
@@ -322,8 +322,8 @@ void HttpQueryBlockInfo::start_up_query() {
       td::actor::send_closure(SelfId, &HttpQueryBlockInfo::got_block_header, R.move_as_ok());
     }
   });
-  auto query = ton::serialize_tl_object(
-      ton::create_tl_object<ton::lite_api::liteServer_getBlockHeader>(ton::create_tl_lite_block_id(block_id_), 0),
+  auto query = ion::serialize_tl_object(
+      ion::create_tl_object<ion::lite_api::liteServer_getBlockHeader>(ion::create_tl_lite_block_id(block_id_), 0),
       true);
   td::actor::send_closure(CoreActorInterface::instance_actor_id(), &CoreActorInterface::send_lite_query,
                           std::move(query), std::move(P));
@@ -338,15 +338,15 @@ void HttpQueryBlockInfo::start_up_query() {
         td::actor::send_closure(SelfId, &HttpQueryBlockInfo::got_shard_info, R.move_as_ok());
       }
     });
-    auto query_2 = ton::serialize_tl_object(
-        ton::create_tl_object<ton::lite_api::liteServer_getAllShardsInfo>(ton::create_tl_lite_block_id(block_id_)),
+    auto query_2 = ion::serialize_tl_object(
+        ion::create_tl_object<ion::lite_api::liteServer_getAllShardsInfo>(ion::create_tl_lite_block_id(block_id_)),
         true);
     td::actor::send_closure(CoreActorInterface::instance_actor_id(), &CoreActorInterface::send_lite_query,
                             std::move(query_2), std::move(P_2));
     pending_queries_++;
   }
-  auto query_3 = ton::serialize_tl_object(ton::create_tl_object<ton::lite_api::liteServer_listBlockTransactions>(
-                                              ton::create_tl_lite_block_id(block_id_), 7, 1024, nullptr, false, false),
+  auto query_3 = ion::serialize_tl_object(ion::create_tl_object<ion::lite_api::liteServer_listBlockTransactions>(
+                                              ion::create_tl_lite_block_id(block_id_), 7, 1024, nullptr, false, false),
                                           true);
   auto P_3 = td::PromiseCreator::lambda([SelfId = actor_id(this)](td::Result<td::BufferSlice> R) {
     if (R.is_error()) {
@@ -361,7 +361,7 @@ void HttpQueryBlockInfo::start_up_query() {
 }
 
 void HttpQueryBlockInfo::got_block_header(td::BufferSlice data) {
-  auto F = ton::fetch_tl_object<ton::lite_api::liteServer_blockHeader>(std::move(data), true);
+  auto F = ion::fetch_tl_object<ion::lite_api::liteServer_blockHeader>(std::move(data), true);
   if (F.is_error()) {
     abort_query(F.move_as_error());
     return;
@@ -374,7 +374,7 @@ void HttpQueryBlockInfo::got_block_header(td::BufferSlice data) {
 }
 
 void HttpQueryBlockInfo::got_shard_info(td::BufferSlice data) {
-  auto F = ton::fetch_tl_object<ton::lite_api::liteServer_allShardsInfo>(std::move(data), true);
+  auto F = ion::fetch_tl_object<ion::lite_api::liteServer_allShardsInfo>(std::move(data), true);
   if (F.is_error()) {
     abort_query(F.move_as_error());
     return;
@@ -394,7 +394,7 @@ void HttpQueryBlockInfo::failed_to_get_shard_info(td::Status error) {
 }
 
 void HttpQueryBlockInfo::got_transactions(td::BufferSlice data) {
-  auto F = ton::fetch_tl_object<ton::lite_api::liteServer_blockTransactions>(std::move(data), true);
+  auto F = ion::fetch_tl_object<ion::lite_api::liteServer_blockTransactions>(std::move(data), true);
   if (F.is_error()) {
     abort_query(F.move_as_error());
     return;
@@ -404,15 +404,15 @@ void HttpQueryBlockInfo::got_transactions(td::BufferSlice data) {
 
   for (auto &T : f->ids_) {
     transactions_.emplace_back(block::StdAddress{block_id_.id.workchain, T->account_},
-                               static_cast<ton::LogicalTime>(T->lt_), T->hash_);
+                               static_cast<ion::LogicalTime>(T->lt_), T->hash_);
   }
 
   if (f->incomplete_ && transactions_.size() > 0) {
     const auto &T = *transactions_.rbegin();
-    auto query_3 = ton::serialize_tl_object(
-        ton::create_tl_object<ton::lite_api::liteServer_listBlockTransactions>(
-            ton::create_tl_lite_block_id(block_id_), 7 + 128, 1024,
-            ton::create_tl_object<ton::lite_api::liteServer_transactionId3>(T.addr.addr, T.lt), false, false),
+    auto query_3 = ion::serialize_tl_object(
+        ion::create_tl_object<ion::lite_api::liteServer_listBlockTransactions>(
+            ion::create_tl_lite_block_id(block_id_), 7 + 128, 1024,
+            ion::create_tl_object<ion::lite_api::liteServer_transactionId3>(T.addr.addr, T.lt), false, false),
         true);
     auto P_3 = td::PromiseCreator::lambda([SelfId = actor_id(this)](td::Result<td::BufferSlice> R) {
       if (R.is_error()) {
@@ -471,20 +471,20 @@ void HttpQueryBlockInfo::finish_query() {
   stop();
 }
 
-HttpQueryBlockSearch::HttpQueryBlockSearch(ton::WorkchainId workchain, ton::AccountIdPrefix account,
-                                           ton::BlockSeqno seqno, std::string prefix,
+HttpQueryBlockSearch::HttpQueryBlockSearch(ion::WorkchainId workchain, ion::AccountIdPrefix account,
+                                           ion::BlockSeqno seqno, std::string prefix,
                                            td::Promise<MHD_Response *> promise)
     : HttpQueryCommon(std::move(prefix), std::move(promise))
     , account_prefix_{workchain, account}
     , mode_(1)
     , seqno_(seqno) {
 }
-HttpQueryBlockSearch::HttpQueryBlockSearch(ton::WorkchainId workchain, ton::AccountIdPrefix account,
-                                           ton::LogicalTime lt, std::string prefix, td::Promise<MHD_Response *> promise)
+HttpQueryBlockSearch::HttpQueryBlockSearch(ion::WorkchainId workchain, ion::AccountIdPrefix account,
+                                           ion::LogicalTime lt, std::string prefix, td::Promise<MHD_Response *> promise)
     : HttpQueryCommon(std::move(prefix), std::move(promise)), account_prefix_{workchain, account}, mode_(2), lt_(lt) {
 }
-HttpQueryBlockSearch::HttpQueryBlockSearch(ton::WorkchainId workchain, ton::AccountIdPrefix account, bool dummy,
-                                           ton::UnixTime utime, std::string prefix, td::Promise<MHD_Response *> promise)
+HttpQueryBlockSearch::HttpQueryBlockSearch(ion::WorkchainId workchain, ion::AccountIdPrefix account, bool dummy,
+                                           ion::UnixTime utime, std::string prefix, td::Promise<MHD_Response *> promise)
     : HttpQueryCommon(std::move(prefix), std::move(promise))
     , account_prefix_{workchain, account}
     , mode_(4)
@@ -502,7 +502,7 @@ HttpQueryBlockSearch::HttpQueryBlockSearch(std::map<std::string, std::string> op
     return;
   }
   if (opts.count("seqno") + opts.count("lt") + opts.count("utime") != 1) {
-    error_ = td::Status::Error(ton::ErrorCode::protoviolation, "exactly one of seqno/lt/utime must be set");
+    error_ = td::Status::Error(ion::ErrorCode::protoviolation, "exactly one of seqno/lt/utime must be set");
     return;
   }
   if (opts.count("seqno") == 1) {
@@ -542,9 +542,9 @@ void HttpQueryBlockSearch::start_up_query() {
       td::actor::send_closure(SelfId, &HttpQueryBlockSearch::got_block_header, R.move_as_ok());
     }
   });
-  auto query = ton::serialize_tl_object(ton::create_tl_object<ton::lite_api::liteServer_lookupBlock>(
+  auto query = ion::serialize_tl_object(ion::create_tl_object<ion::lite_api::liteServer_lookupBlock>(
                                             mode_,
-                                            ton::create_tl_lite_block_id_simple(ton::BlockId{
+                                            ion::create_tl_lite_block_id_simple(ion::BlockId{
                                                 account_prefix_.workchain, account_prefix_.account_id_prefix, seqno_}),
                                             lt_, utime_),
                                         true);
@@ -553,14 +553,14 @@ void HttpQueryBlockSearch::start_up_query() {
 }
 
 void HttpQueryBlockSearch::got_block_header(td::BufferSlice data) {
-  auto F = ton::fetch_tl_object<ton::lite_api::liteServer_blockHeader>(std::move(data), true);
+  auto F = ion::fetch_tl_object<ion::lite_api::liteServer_blockHeader>(std::move(data), true);
   if (F.is_error()) {
     abort_query(F.move_as_error());
     return;
   }
   auto f = F.move_as_ok();
   data_ = std::move(f->header_proof_);
-  block_id_ = ton::create_block_id(f->id_);
+  block_id_ = ion::create_block_id(f->id_);
 
   if (block_id_.is_masterchain()) {
     auto P_2 = td::PromiseCreator::lambda([SelfId = actor_id(this)](td::Result<td::BufferSlice> R) {
@@ -571,16 +571,16 @@ void HttpQueryBlockSearch::got_block_header(td::BufferSlice data) {
         td::actor::send_closure(SelfId, &HttpQueryBlockSearch::got_shard_info, R.move_as_ok());
       }
     });
-    auto query_2 = ton::serialize_tl_object(
-        ton::create_tl_object<ton::lite_api::liteServer_getAllShardsInfo>(ton::create_tl_lite_block_id(block_id_)),
+    auto query_2 = ion::serialize_tl_object(
+        ion::create_tl_object<ion::lite_api::liteServer_getAllShardsInfo>(ion::create_tl_lite_block_id(block_id_)),
         true);
     td::actor::send_closure(CoreActorInterface::instance_actor_id(), &CoreActorInterface::send_lite_query,
                             std::move(query_2), std::move(P_2));
     pending_queries_++;
   }
 
-  auto query_3 = ton::serialize_tl_object(ton::create_tl_object<ton::lite_api::liteServer_listBlockTransactions>(
-                                              ton::create_tl_lite_block_id(block_id_), 7, 1024, nullptr, false, false),
+  auto query_3 = ion::serialize_tl_object(ion::create_tl_object<ion::lite_api::liteServer_listBlockTransactions>(
+                                              ion::create_tl_lite_block_id(block_id_), 7, 1024, nullptr, false, false),
                                           true);
   auto P_3 = td::PromiseCreator::lambda([SelfId = actor_id(this)](td::Result<td::BufferSlice> R) {
     if (R.is_error()) {
@@ -595,7 +595,7 @@ void HttpQueryBlockSearch::got_block_header(td::BufferSlice data) {
 }
 
 void HttpQueryBlockSearch::got_shard_info(td::BufferSlice data) {
-  auto F = ton::fetch_tl_object<ton::lite_api::liteServer_allShardsInfo>(std::move(data), true);
+  auto F = ion::fetch_tl_object<ion::lite_api::liteServer_allShardsInfo>(std::move(data), true);
   if (F.is_error()) {
     abort_query(F.move_as_error());
     return;
@@ -615,7 +615,7 @@ void HttpQueryBlockSearch::failed_to_get_shard_info(td::Status error) {
 }
 
 void HttpQueryBlockSearch::got_transactions(td::BufferSlice data) {
-  auto F = ton::fetch_tl_object<ton::lite_api::liteServer_blockTransactions>(std::move(data), true);
+  auto F = ion::fetch_tl_object<ion::lite_api::liteServer_blockTransactions>(std::move(data), true);
   if (F.is_error()) {
     abort_query(F.move_as_error());
     return;
@@ -625,15 +625,15 @@ void HttpQueryBlockSearch::got_transactions(td::BufferSlice data) {
 
   for (auto &T : f->ids_) {
     transactions_.emplace_back(block::StdAddress{block_id_.id.workchain, T->account_},
-                               static_cast<ton::LogicalTime>(T->lt_), T->hash_);
+                               static_cast<ion::LogicalTime>(T->lt_), T->hash_);
   }
 
   if (f->incomplete_ && transactions_.size() > 0) {
     const auto &T = *transactions_.rbegin();
-    auto query_3 = ton::serialize_tl_object(
-        ton::create_tl_object<ton::lite_api::liteServer_listBlockTransactions>(
-            ton::create_tl_lite_block_id(block_id_), 7 + 128, 1024,
-            ton::create_tl_object<ton::lite_api::liteServer_transactionId3>(T.addr.addr, T.lt), false, false),
+    auto query_3 = ion::serialize_tl_object(
+        ion::create_tl_object<ion::lite_api::liteServer_listBlockTransactions>(
+            ion::create_tl_lite_block_id(block_id_), 7 + 128, 1024,
+            ion::create_tl_object<ion::lite_api::liteServer_transactionId3>(T.addr.addr, T.lt), false, false),
         true);
     auto P_3 = td::PromiseCreator::lambda([SelfId = actor_id(this)](td::Result<td::BufferSlice> R) {
       if (R.is_error()) {
@@ -692,7 +692,7 @@ void HttpQueryBlockSearch::finish_query() {
   }
   stop();
 }
-HttpQueryViewAccount::HttpQueryViewAccount(ton::BlockIdExt block_id, block::StdAddress addr, std::string prefix,
+HttpQueryViewAccount::HttpQueryViewAccount(ion::BlockIdExt block_id, block::StdAddress addr, std::string prefix,
                                            td::Promise<MHD_Response *> promise)
     : HttpQueryCommon(std::move(prefix), std::move(promise)), block_id_(block_id), addr_(addr) {
 }
@@ -704,8 +704,8 @@ HttpQueryViewAccount::HttpQueryViewAccount(std::map<std::string, std::string> op
   if (R.is_ok()) {
     block_id_ = R.move_as_ok();
     if (!block_id_.is_valid()) {
-      block_id_.id.workchain = ton::masterchainId;
-      block_id_.id.shard = ton::shardIdAll;
+      block_id_.id.workchain = ion::masterchainId;
+      block_id_.id.shard = ion::shardIdAll;
       block_id_.id.seqno = static_cast<td::uint32>(0xffffffff);
       block_id_.root_hash.set_zero();
       block_id_.file_hash.set_zero();
@@ -731,16 +731,16 @@ void HttpQueryViewAccount::start_up_query() {
       td::actor::send_closure(SelfId, &HttpQueryViewAccount::got_account, R.move_as_ok());
     }
   });
-  auto a = ton::create_tl_object<ton::lite_api::liteServer_accountId>(addr_.workchain, addr_.addr);
-  auto query = ton::serialize_tl_object(ton::create_tl_object<ton::lite_api::liteServer_getAccountState>(
-                                            ton::create_tl_lite_block_id(block_id_), std::move(a)),
+  auto a = ion::create_tl_object<ion::lite_api::liteServer_accountId>(addr_.workchain, addr_.addr);
+  auto query = ion::serialize_tl_object(ion::create_tl_object<ion::lite_api::liteServer_getAccountState>(
+                                            ion::create_tl_lite_block_id(block_id_), std::move(a)),
                                         true);
   td::actor::send_closure(CoreActorInterface::instance_actor_id(), &CoreActorInterface::send_lite_query,
                           std::move(query), std::move(P));
 }
 
 void HttpQueryViewAccount::got_account(td::BufferSlice data) {
-  auto F = ton::fetch_tl_object<ton::lite_api::liteServer_accountState>(std::move(data), true);
+  auto F = ion::fetch_tl_object<ion::lite_api::liteServer_accountState>(std::move(data), true);
   if (F.is_error()) {
     abort_query(F.move_as_error());
     return;
@@ -749,7 +749,7 @@ void HttpQueryViewAccount::got_account(td::BufferSlice data) {
   auto f = F.move_as_ok();
   data_ = std::move(f->state_);
   proof_ = std::move(f->proof_);
-  res_block_id_ = ton::create_block_id(f->shardblk_);
+  res_block_id_ = ion::create_block_id(f->shardblk_);
 
   finish_query();
 }
@@ -780,7 +780,7 @@ void HttpQueryViewAccount::finish_query() {
   stop();
 }
 
-HttpQueryViewTransaction::HttpQueryViewTransaction(block::StdAddress addr, ton::LogicalTime lt, ton::Bits256 hash,
+HttpQueryViewTransaction::HttpQueryViewTransaction(block::StdAddress addr, ion::LogicalTime lt, ion::Bits256 hash,
                                                    std::string prefix, td::Promise<MHD_Response *> promise)
     : HttpQueryCommon(std::move(prefix), std::move(promise)), addr_(addr), lt_(lt), hash_(hash) {
 }
@@ -828,15 +828,15 @@ void HttpQueryViewTransaction::start_up_query() {
       td::actor::send_closure(SelfId, &HttpQueryViewTransaction::got_transaction, R.move_as_ok());
     }
   });
-  auto a = ton::create_tl_object<ton::lite_api::liteServer_accountId>(addr_.workchain, addr_.addr);
-  auto query = ton::serialize_tl_object(
-      ton::create_tl_object<ton::lite_api::liteServer_getTransactions>(1, std::move(a), lt_, hash_), true);
+  auto a = ion::create_tl_object<ion::lite_api::liteServer_accountId>(addr_.workchain, addr_.addr);
+  auto query = ion::serialize_tl_object(
+      ion::create_tl_object<ion::lite_api::liteServer_getTransactions>(1, std::move(a), lt_, hash_), true);
   td::actor::send_closure(CoreActorInterface::instance_actor_id(), &CoreActorInterface::send_lite_query,
                           std::move(query), std::move(P));
 }
 
 void HttpQueryViewTransaction::got_transaction(td::BufferSlice data) {
-  auto F = ton::fetch_tl_object<ton::lite_api::liteServer_transactionList>(std::move(data), true);
+  auto F = ion::fetch_tl_object<ion::lite_api::liteServer_transactionList>(std::move(data), true);
   if (F.is_error()) {
     abort_query(F.move_as_error());
     return;
@@ -848,7 +848,7 @@ void HttpQueryViewTransaction::got_transaction(td::BufferSlice data) {
     abort_query(td::Status::Error("no transactions found"));
     return;
   }
-  res_block_id_ = ton::create_block_id(f->ids_[0]);
+  res_block_id_ = ion::create_block_id(f->ids_[0]);
 
   finish_query();
 }
@@ -879,8 +879,8 @@ void HttpQueryViewTransaction::finish_query() {
   stop();
 }
 
-HttpQueryViewTransaction2::HttpQueryViewTransaction2(ton::BlockIdExt block_id, block::StdAddress addr,
-                                                     ton::LogicalTime lt, std::string prefix,
+HttpQueryViewTransaction2::HttpQueryViewTransaction2(ion::BlockIdExt block_id, block::StdAddress addr,
+                                                     ion::LogicalTime lt, std::string prefix,
                                                      td::Promise<MHD_Response *> promise)
     : HttpQueryCommon(std::move(prefix), std::move(promise)), block_id_(block_id), addr_(addr), lt_(lt) {
 }
@@ -919,16 +919,16 @@ void HttpQueryViewTransaction2::start_up_query() {
       td::actor::send_closure(SelfId, &HttpQueryViewTransaction2::got_transaction, R.move_as_ok());
     }
   });
-  auto a = ton::create_tl_object<ton::lite_api::liteServer_accountId>(addr_.workchain, addr_.addr);
-  auto query = ton::serialize_tl_object(ton::create_tl_object<ton::lite_api::liteServer_getOneTransaction>(
-                                            ton::create_tl_lite_block_id(block_id_), std::move(a), lt_),
+  auto a = ion::create_tl_object<ion::lite_api::liteServer_accountId>(addr_.workchain, addr_.addr);
+  auto query = ion::serialize_tl_object(ion::create_tl_object<ion::lite_api::liteServer_getOneTransaction>(
+                                            ion::create_tl_lite_block_id(block_id_), std::move(a), lt_),
                                         true);
   td::actor::send_closure(CoreActorInterface::instance_actor_id(), &CoreActorInterface::send_lite_query,
                           std::move(query), std::move(P));
 }
 
 void HttpQueryViewTransaction2::got_transaction(td::BufferSlice data) {
-  auto F = ton::fetch_tl_object<ton::lite_api::liteServer_transactionInfo>(std::move(data), true);
+  auto F = ion::fetch_tl_object<ion::lite_api::liteServer_transactionInfo>(std::move(data), true);
   if (F.is_error()) {
     abort_query(F.move_as_error());
     return;
@@ -983,19 +983,19 @@ void HttpQueryViewLastBlock::start_up() {
     }
   });
 
-  auto query = ton::serialize_tl_object(ton::create_tl_object<ton::lite_api::liteServer_getMasterchainInfo>(), true);
+  auto query = ion::serialize_tl_object(ion::create_tl_object<ion::lite_api::liteServer_getMasterchainInfo>(), true);
   td::actor::send_closure(CoreActorInterface::instance_actor_id(), &CoreActorInterface::send_lite_query,
                           std::move(query), std::move(P));
 }
 
 void HttpQueryViewLastBlock::got_result(td::BufferSlice data) {
-  auto F = ton::fetch_tl_object<ton::lite_api::liteServer_masterchainInfo>(std::move(data), true);
+  auto F = ion::fetch_tl_object<ion::lite_api::liteServer_masterchainInfo>(std::move(data), true);
   if (F.is_error()) {
     abort_query(F.move_as_error());
     return;
   }
   auto f = F.move_as_ok();
-  res_block_id_ = ton::create_block_id(f->last_);
+  res_block_id_ = ion::create_block_id(f->last_);
 
   finish_query();
 }
@@ -1007,7 +1007,7 @@ void HttpQueryViewLastBlock::finish_query() {
   stop();
 }
 
-HttpQueryConfig::HttpQueryConfig(std::string prefix, ton::BlockIdExt block_id, std::vector<td::int32> params,
+HttpQueryConfig::HttpQueryConfig(std::string prefix, ion::BlockIdExt block_id, std::vector<td::int32> params,
                                  td::Promise<MHD_Response *> promise)
     : HttpQueryCommon(prefix, std::move(promise)), block_id_(block_id), params_(std::move(params)) {
 }
@@ -1049,20 +1049,20 @@ void HttpQueryConfig::start_up() {
       }
     });
 
-    auto query = ton::serialize_tl_object(ton::create_tl_object<ton::lite_api::liteServer_getMasterchainInfo>(), true);
+    auto query = ion::serialize_tl_object(ion::create_tl_object<ion::lite_api::liteServer_getMasterchainInfo>(), true);
     td::actor::send_closure(CoreActorInterface::instance_actor_id(), &CoreActorInterface::send_lite_query,
                             std::move(query), std::move(P));
   }
 }
 
 void HttpQueryConfig::got_block(td::BufferSlice data) {
-  auto F = ton::fetch_tl_object<ton::lite_api::liteServer_masterchainInfo>(std::move(data), true);
+  auto F = ion::fetch_tl_object<ion::lite_api::liteServer_masterchainInfo>(std::move(data), true);
   if (F.is_error()) {
     abort_query(F.move_as_error());
     return;
   }
   auto f = F.move_as_ok();
-  block_id_ = ton::create_block_id(f->last_);
+  block_id_ = ion::create_block_id(f->last_);
 
   send_main_query();
 }
@@ -1077,18 +1077,18 @@ void HttpQueryConfig::send_main_query() {
   });
   auto query =
       params_.size() > 0
-          ? ton::serialize_tl_object(ton::create_tl_object<ton::lite_api::liteServer_getConfigParams>(
-                                         0, ton::create_tl_lite_block_id(block_id_), std::vector<int>(params_)),
+          ? ion::serialize_tl_object(ion::create_tl_object<ion::lite_api::liteServer_getConfigParams>(
+                                         0, ion::create_tl_lite_block_id(block_id_), std::vector<int>(params_)),
                                      true)
-          : ton::serialize_tl_object(ton::create_tl_object<ton::lite_api::liteServer_getConfigAll>(
-                                         0, ton::create_tl_lite_block_id(block_id_)),
+          : ion::serialize_tl_object(ion::create_tl_object<ion::lite_api::liteServer_getConfigAll>(
+                                         0, ion::create_tl_lite_block_id(block_id_)),
                                      true);
   td::actor::send_closure(CoreActorInterface::instance_actor_id(), &CoreActorInterface::send_lite_query,
                           std::move(query), std::move(P));
 }
 
 void HttpQueryConfig::got_result(td::BufferSlice data) {
-  auto F = ton::fetch_tl_object<ton::lite_api::liteServer_configInfo>(std::move(data), true);
+  auto F = ion::fetch_tl_object<ion::lite_api::liteServer_configInfo>(std::move(data), true);
   if (F.is_error()) {
     abort_query(F.move_as_error());
     return;
@@ -1187,7 +1187,7 @@ void HttpQuerySendForm::finish_query() {
         << "send\" method=\"post\" enctype=\"multipart/form-data\"><div class=\"form-group-row\">"
         << "<label for=\"filedata\">bag of cells</label>"
         << "<input type=\"file\" class=\"form-control-file\" id=\"filedata\" name=\"filedata\">"
-        << "<button type=\"submit\" class=\"btn btn-primary\">send</button>"
+        << "<bution type=\"submit\" class=\"btn btn-primary\">send</bution>"
         << "</div></form></div>";
       return A.finish();
     }();
@@ -1227,13 +1227,13 @@ void HttpQuerySend::start_up() {
     }
   });
   auto query =
-      ton::serialize_tl_object(ton::create_tl_object<ton::lite_api::liteServer_sendMessage>(std::move(data_)), true);
+      ion::serialize_tl_object(ion::create_tl_object<ion::lite_api::liteServer_sendMessage>(std::move(data_)), true);
   td::actor::send_closure(CoreActorInterface::instance_actor_id(), &CoreActorInterface::send_lite_query,
                           std::move(query), std::move(P));
 }
 
 void HttpQuerySend::got_result(td::BufferSlice data) {
-  auto F = ton::fetch_tl_object<ton::lite_api::liteServer_sendMsgStatus>(std::move(data), true);
+  auto F = ion::fetch_tl_object<ion::lite_api::liteServer_sendMsgStatus>(std::move(data), true);
   if (F.is_error()) {
     abort_query(F.move_as_error());
   } else {
@@ -1260,7 +1260,7 @@ void HttpQuerySend::finish_query() {
   stop();
 }
 
-HttpQueryRunMethod::HttpQueryRunMethod(ton::BlockIdExt block_id, block::StdAddress addr, std::string method_name,
+HttpQueryRunMethod::HttpQueryRunMethod(ion::BlockIdExt block_id, block::StdAddress addr, std::string method_name,
                                        std::vector<vm::StackEntry> params, std::string prefix,
                                        td::Promise<MHD_Response *> promise)
     : HttpQueryCommon(std::move(prefix), std::move(promise))
@@ -1277,8 +1277,8 @@ HttpQueryRunMethod::HttpQueryRunMethod(std::map<std::string, std::string> opts, 
   if (R.is_ok()) {
     block_id_ = R.move_as_ok();
     if (!block_id_.is_valid()) {
-      block_id_.id.workchain = ton::masterchainId;
-      block_id_.id.shard = ton::shardIdAll;
+      block_id_.id.workchain = ion::masterchainId;
+      block_id_.id.shard = ion::shardIdAll;
       block_id_.id.seqno = static_cast<td::uint32>(0xffffffff);
       block_id_.root_hash.set_zero();
       block_id_.file_hash.set_zero();
@@ -1321,7 +1321,7 @@ void HttpQueryRunMethod::start_up_query() {
     }
   });
 
-  auto a = ton::create_tl_object<ton::lite_api::liteServer_accountId>(addr_.workchain, addr_.addr);
+  auto a = ion::create_tl_object<ion::lite_api::liteServer_accountId>(addr_.workchain, addr_.addr);
   td::int64 method_id = (td::crc16(td::Slice{method_name_}) & 0xffff) | 0x10000;
 
   // serialize params
@@ -1335,16 +1335,16 @@ void HttpQueryRunMethod::start_up_query() {
     return abort_query(params_serialized.move_as_error_prefix("cannot serialize stack with get-method parameters : "));
   }
 
-  auto query = ton::serialize_tl_object(
-      ton::create_tl_object<ton::lite_api::liteServer_runSmcMethod>(
-          0x17, ton::create_tl_lite_block_id(block_id_), std::move(a), method_id, params_serialized.move_as_ok()),
+  auto query = ion::serialize_tl_object(
+      ion::create_tl_object<ion::lite_api::liteServer_runSmcMethod>(
+          0x17, ion::create_tl_lite_block_id(block_id_), std::move(a), method_id, params_serialized.move_as_ok()),
       true);
   td::actor::send_closure(CoreActorInterface::instance_actor_id(), &CoreActorInterface::send_lite_query,
                           std::move(query), std::move(P));
 }
 
 void HttpQueryRunMethod::got_result(td::BufferSlice data) {
-  auto F = ton::fetch_tl_object<ton::lite_api::liteServer_runMethodResult>(std::move(data), true);
+  auto F = ion::fetch_tl_object<ion::lite_api::liteServer_runMethodResult>(std::move(data), true);
   if (F.is_error()) {
     return abort_query(F.move_as_error());
   }
@@ -1352,7 +1352,7 @@ void HttpQueryRunMethod::got_result(td::BufferSlice data) {
   auto page = [&]() -> std::string {
     HttpAnswer A{"account", prefix_};
     A.set_account_id(addr_);
-    A.set_block_id(ton::create_block_id(f->id_));
+    A.set_block_id(ion::create_block_id(f->id_));
     if (f->exit_code_ != 0) {
       A.abort(PSTRING() << "VM terminated with error code " << f->exit_code_);
       return A.finish();

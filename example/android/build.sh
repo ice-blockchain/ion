@@ -48,8 +48,8 @@ mkdir -p build-$ARCH
 cd build-$ARCH
 
 cmake .. -GNinja \
--DTON_ONLY_TONLIB=ON  \
--DTON_ARCH="" \
+-DION_ONLY_TONLIB=ON  \
+-DION_ARCH="" \
 -DANDROID_ABI=x86 \
 -DANDROID_PLATFORM=android-32 \
 -DANDROID_NDK=${ANDROID_NDK_ROOT} \

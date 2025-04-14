@@ -1,38 +1,38 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "full-node-serializer.hpp"
-#include "ton/ton-tl.hpp"
+#include "ion/ion-tl.hpp"
 #include "tl-utils/common-utils.hpp"
-#include "auto/tl/ton_api.hpp"
+#include "auto/tl/ion_api.hpp"
 #include "tl-utils/tl-utils.hpp"
 #include "vm/boc.h"
 #include "td/utils/lz4.h"
 #include "full-node.h"
 #include "td/utils/overloaded.h"
 
-namespace ton::validator::fullnode {
+namespace ion::validator::fullnode {
 
 td::Result<td::BufferSlice> serialize_block_broadcast(const BlockBroadcast& broadcast, bool compression_enabled) {
-  std::vector<tl_object_ptr<ton_api::tonNode_blockSignature>> sigs;
+  std::vector<tl_object_ptr<ion_api::tonNode_blockSignature>> sigs;
   for (auto& sig : broadcast.signatures) {
-    sigs.emplace_back(create_tl_object<ton_api::tonNode_blockSignature>(sig.node, sig.signature.clone()));
+    sigs.emplace_back(create_tl_object<ion_api::tonNode_blockSignature>(sig.node, sig.signature.clone()));
   }
   if (!compression_enabled) {
-    return create_serialize_tl_object<ton_api::tonNode_blockBroadcast>(
+    return create_serialize_tl_object<ion_api::tonNode_blockBroadcast>(
         create_tl_block_id(broadcast.block_id), broadcast.catchain_seqno, broadcast.validator_set_hash, std::move(sigs),
         broadcast.proof.clone(), broadcast.data.clone());
   }
@@ -41,17 +41,17 @@ td::Result<td::BufferSlice> serialize_block_broadcast(const BlockBroadcast& broa
   TRY_RESULT(data_root, vm::std_boc_deserialize(broadcast.data));
   TRY_RESULT(boc, vm::std_boc_serialize_multi({proof_root, data_root}, 2));
   td::BufferSlice data =
-      create_serialize_tl_object<ton_api::tonNode_blockBroadcastCompressed_data>(std::move(sigs), std::move(boc));
+      create_serialize_tl_object<ion_api::tonNode_blockBroadcastCompressed_data>(std::move(sigs), std::move(boc));
   td::BufferSlice compressed = td::lz4_compress(data);
   VLOG(FULL_NODE_DEBUG) << "Compressing block broadcast: "
                         << broadcast.data.size() + broadcast.proof.size() + broadcast.signatures.size() * 96 << " -> "
                         << compressed.size();
-  return create_serialize_tl_object<ton_api::tonNode_blockBroadcastCompressed>(
+  return create_serialize_tl_object<ion_api::tonNode_blockBroadcastCompressed>(
       create_tl_block_id(broadcast.block_id), broadcast.catchain_seqno, broadcast.validator_set_hash, 0,
       std::move(compressed));
 }
 
-static td::Result<BlockBroadcast> deserialize_block_broadcast(ton_api::tonNode_blockBroadcast& f) {
+static td::Result<BlockBroadcast> deserialize_block_broadcast(ion_api::tonNode_blockBroadcast& f) {
   std::vector<BlockSignature> signatures;
   for (auto& sig : f.signatures_) {
     signatures.emplace_back(BlockSignature{sig->who_, std::move(sig->signature_)});
@@ -64,10 +64,10 @@ static td::Result<BlockBroadcast> deserialize_block_broadcast(ton_api::tonNode_b
                         std::move(f.proof_)};
 }
 
-static td::Result<BlockBroadcast> deserialize_block_broadcast(ton_api::tonNode_blockBroadcastCompressed& f,
+static td::Result<BlockBroadcast> deserialize_block_broadcast(ion_api::tonNode_blockBroadcastCompressed& f,
                                                               int max_decompressed_size) {
   TRY_RESULT(decompressed, td::lz4_decompress(f.compressed_, max_decompressed_size));
-  TRY_RESULT(f2, fetch_tl_object<ton_api::tonNode_blockBroadcastCompressed_data>(decompressed, true));
+  TRY_RESULT(f2, fetch_tl_object<ion_api::tonNode_blockBroadcastCompressed_data>(decompressed, true));
   std::vector<BlockSignature> signatures;
   for (auto& sig : f2->signatures_) {
     signatures.emplace_back(BlockSignature{sig->who_, std::move(sig->signature_)});
@@ -88,12 +88,12 @@ static td::Result<BlockBroadcast> deserialize_block_broadcast(ton_api::tonNode_b
                         std::move(proof)};
 }
 
-td::Result<BlockBroadcast> deserialize_block_broadcast(ton_api::tonNode_Broadcast& obj,
+td::Result<BlockBroadcast> deserialize_block_broadcast(ion_api::tonNode_Broadcast& obj,
                                                        int max_decompressed_data_size) {
   td::Result<BlockBroadcast> B;
-  ton_api::downcast_call(obj,
-                         td::overloaded([&](ton_api::tonNode_blockBroadcast& f) { B = deserialize_block_broadcast(f); },
-                                        [&](ton_api::tonNode_blockBroadcastCompressed& f) {
+  ion_api::downcast_call(obj,
+                         td::overloaded([&](ion_api::tonNode_blockBroadcast& f) { B = deserialize_block_broadcast(f); },
+                                        [&](ion_api::tonNode_blockBroadcastCompressed& f) {
                                           B = deserialize_block_broadcast(f, max_decompressed_data_size);
                                         },
                                         [&](auto&) { B = td::Status::Error("unknown broadcast type"); }));
@@ -103,7 +103,7 @@ td::Result<BlockBroadcast> deserialize_block_broadcast(ton_api::tonNode_Broadcas
 td::Result<td::BufferSlice> serialize_block_full(const BlockIdExt& id, td::Slice proof, td::Slice data,
                                                  bool is_proof_link, bool compression_enabled) {
   if (!compression_enabled) {
-    return create_serialize_tl_object<ton_api::tonNode_dataFull>(create_tl_block_id(id), td::BufferSlice(proof),
+    return create_serialize_tl_object<ion_api::tonNode_dataFull>(create_tl_block_id(id), td::BufferSlice(proof),
                                                                  td::BufferSlice(data), is_proof_link);
   }
   TRY_RESULT(proof_root, vm::std_boc_deserialize(proof));
@@ -111,11 +111,11 @@ td::Result<td::BufferSlice> serialize_block_full(const BlockIdExt& id, td::Slice
   TRY_RESULT(boc, vm::std_boc_serialize_multi({proof_root, data_root}, 2));
   td::BufferSlice compressed = td::lz4_compress(boc);
   VLOG(FULL_NODE_DEBUG) << "Compressing block full: " << data.size() + proof.size() << " -> " << compressed.size();
-  return create_serialize_tl_object<ton_api::tonNode_dataFullCompressed>(create_tl_block_id(id), 0,
+  return create_serialize_tl_object<ion_api::tonNode_dataFullCompressed>(create_tl_block_id(id), 0,
                                                                          std::move(compressed), is_proof_link);
 }
 
-static td::Status deserialize_block_full(ton_api::tonNode_dataFull& f, BlockIdExt& id, td::BufferSlice& proof,
+static td::Status deserialize_block_full(ion_api::tonNode_dataFull& f, BlockIdExt& id, td::BufferSlice& proof,
                                          td::BufferSlice& data, bool& is_proof_link) {
   id = create_block_id(f.id_);
   proof = std::move(f.proof_);
@@ -124,7 +124,7 @@ static td::Status deserialize_block_full(ton_api::tonNode_dataFull& f, BlockIdEx
   return td::Status::OK();
 }
 
-static td::Status deserialize_block_full(ton_api::tonNode_dataFullCompressed& f, BlockIdExt& id, td::BufferSlice& proof,
+static td::Status deserialize_block_full(ion_api::tonNode_dataFullCompressed& f, BlockIdExt& id, td::BufferSlice& proof,
                                          td::BufferSlice& data, bool& is_proof_link, int max_decompressed_size) {
   TRY_RESULT(decompressed, td::lz4_decompress(f.compressed_, max_decompressed_size));
   TRY_RESULT(roots, vm::std_boc_deserialize_multi(decompressed, 2));
@@ -139,13 +139,13 @@ static td::Status deserialize_block_full(ton_api::tonNode_dataFullCompressed& f,
   return td::Status::OK();
 }
 
-td::Status deserialize_block_full(ton_api::tonNode_DataFull& obj, BlockIdExt& id, td::BufferSlice& proof,
+td::Status deserialize_block_full(ion_api::tonNode_DataFull& obj, BlockIdExt& id, td::BufferSlice& proof,
                                   td::BufferSlice& data, bool& is_proof_link, int max_decompressed_data_size) {
   td::Status S;
-  ton_api::downcast_call(
+  ion_api::downcast_call(
       obj, td::overloaded(
-               [&](ton_api::tonNode_dataFull& f) { S = deserialize_block_full(f, id, proof, data, is_proof_link); },
-               [&](ton_api::tonNode_dataFullCompressed& f) {
+               [&](ion_api::tonNode_dataFull& f) { S = deserialize_block_full(f, id, proof, data, is_proof_link); },
+               [&](ion_api::tonNode_dataFullCompressed& f) {
                  S = deserialize_block_full(f, id, proof, data, is_proof_link, max_decompressed_data_size);
                },
                [&](auto&) { S = td::Status::Error("unknown data type"); }));
@@ -156,20 +156,20 @@ td::Result<td::BufferSlice> serialize_block_candidate_broadcast(BlockIdExt block
                                                                 td::uint32 validator_set_hash, td::Slice data,
                                                                 bool compression_enabled) {
   if (!compression_enabled) {
-    return create_serialize_tl_object<ton_api::tonNode_newBlockCandidateBroadcast>(
+    return create_serialize_tl_object<ion_api::tonNode_newBlockCandidateBroadcast>(
         create_tl_block_id(block_id), cc_seqno, validator_set_hash,
-        create_tl_object<ton_api::tonNode_blockSignature>(Bits256::zero(), td::BufferSlice()), td::BufferSlice(data));
+        create_tl_object<ion_api::tonNode_blockSignature>(Bits256::zero(), td::BufferSlice()), td::BufferSlice(data));
   }
   TRY_RESULT(root, vm::std_boc_deserialize(data));
   TRY_RESULT(data_new, vm::std_boc_serialize(root, 2));
   td::BufferSlice compressed = td::lz4_compress(data_new);
   VLOG(FULL_NODE_DEBUG) << "Compressing block candidate broadcast: " << data.size() << " -> " << compressed.size();
-  return create_serialize_tl_object<ton_api::tonNode_newBlockCandidateBroadcastCompressed>(
+  return create_serialize_tl_object<ion_api::tonNode_newBlockCandidateBroadcastCompressed>(
       create_tl_block_id(block_id), cc_seqno, validator_set_hash,
-      create_tl_object<ton_api::tonNode_blockSignature>(Bits256::zero(), td::BufferSlice()), 0, std::move(compressed));
+      create_tl_object<ion_api::tonNode_blockSignature>(Bits256::zero(), td::BufferSlice()), 0, std::move(compressed));
 }
 
-static td::Status deserialize_block_candidate_broadcast(ton_api::tonNode_newBlockCandidateBroadcast& obj,
+static td::Status deserialize_block_candidate_broadcast(ion_api::tonNode_newBlockCandidateBroadcast& obj,
                                                         BlockIdExt& block_id, CatchainSeqno& cc_seqno,
                                                         td::uint32& validator_set_hash, td::BufferSlice& data) {
   block_id = create_block_id(obj.id_);
@@ -179,7 +179,7 @@ static td::Status deserialize_block_candidate_broadcast(ton_api::tonNode_newBloc
   return td::Status::OK();
 }
 
-static td::Status deserialize_block_candidate_broadcast(ton_api::tonNode_newBlockCandidateBroadcastCompressed& obj,
+static td::Status deserialize_block_candidate_broadcast(ion_api::tonNode_newBlockCandidateBroadcastCompressed& obj,
                                                         BlockIdExt& block_id, CatchainSeqno& cc_seqno,
                                                         td::uint32& validator_set_hash, td::BufferSlice& data,
                                                         int max_decompressed_data_size) {
@@ -194,16 +194,16 @@ static td::Status deserialize_block_candidate_broadcast(ton_api::tonNode_newBloc
   return td::Status::OK();
 }
 
-td::Status deserialize_block_candidate_broadcast(ton_api::tonNode_Broadcast& obj, BlockIdExt& block_id,
+td::Status deserialize_block_candidate_broadcast(ion_api::tonNode_Broadcast& obj, BlockIdExt& block_id,
                                                  CatchainSeqno& cc_seqno, td::uint32& validator_set_hash,
                                                  td::BufferSlice& data, int max_decompressed_data_size) {
   td::Status S;
-  ton_api::downcast_call(obj, td::overloaded(
-                                  [&](ton_api::tonNode_newBlockCandidateBroadcast& f) {
+  ion_api::downcast_call(obj, td::overloaded(
+                                  [&](ion_api::tonNode_newBlockCandidateBroadcast& f) {
                                     S = deserialize_block_candidate_broadcast(f, block_id, cc_seqno, validator_set_hash,
                                                                               data);
                                   },
-                                  [&](ton_api::tonNode_newBlockCandidateBroadcastCompressed& f) {
+                                  [&](ion_api::tonNode_newBlockCandidateBroadcastCompressed& f) {
                                     S = deserialize_block_candidate_broadcast(f, block_id, cc_seqno, validator_set_hash,
                                                                               data, max_decompressed_data_size);
                                   },
@@ -211,4 +211,4 @@ td::Status deserialize_block_candidate_broadcast(ton_api::tonNode_Broadcast& obj
   return S;
 }
 
-}  // namespace ton::validator::fullnode
+}  // namespace ion::validator::fullnode

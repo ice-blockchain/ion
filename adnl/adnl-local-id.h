@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -22,7 +22,7 @@
 
 #include "td/actor/actor.h"
 #include "td/utils/BufferedUdp.h"
-#include "auto/tl/ton_api.h"
+#include "auto/tl/ion_api.h"
 #include "keys/encryptor.h"
 #include "adnl-peer-table.h"
 #include "dht/dht.h"
@@ -30,7 +30,7 @@
 #include "adnl-peer-table.h"
 #include "utils.hpp"
 
-namespace ton {
+namespace ion {
 
 namespace adnl {
 
@@ -78,7 +78,7 @@ class AdnlLocalId : public td::actor::Actor {
   void update_packet(AdnlPacket packet, bool update_id, bool sign, td::int32 update_addr_list_if,
                      td::int32 update_priority_addr_list_if, td::Promise<AdnlPacket> promise);
 
-  void get_stats(bool all, td::Promise<tl_object_ptr<ton_api::adnl_stats_localId>> promise);
+  void get_stats(bool all, td::Promise<tl_object_ptr<ion_api::adnl_stats_localId>> promise);
 
   td::uint32 get_mode() {
     return mode_;
@@ -124,7 +124,7 @@ class AdnlLocalId : public td::actor::Actor {
     std::map<td::IPAddress, Counter> decrypted_packets;
     std::map<td::IPAddress, Counter> dropped_packets;
 
-    tl_object_ptr<ton_api::adnl_stats_localIdPackets> tl(bool all = true) const;
+    tl_object_ptr<ion_api::adnl_stats_localIdPackets> tl(bool all = true) const;
   } packet_stats_cur_, packet_stats_prev_, packet_stats_total_;
   void add_decrypted_packet_stats(td::IPAddress addr);
   void add_dropped_packet_stats(td::IPAddress addr);
@@ -150,4 +150,4 @@ inline td::StringBuilder &operator<<(td::StringBuilder &sb, const AdnlLocalId *l
 
 }  // namespace adnl
 
-}  // namespace ton
+}  // namespace ion

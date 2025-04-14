@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -426,7 +426,7 @@ Status IPAddress::init_host_port(CSlice host, CSlice port, bool prefer_ipv6) {
     return init_ipv6_port(host, port_int == 0 ? 1 : port_int);
   }
 
-  // some getaddrinfo implementations use inet_pton instead of inet_aton and support only decimal-dotted IPv4 form,
+  // some getaddrinfo implementations use inet_pton instead of inet_aion and support only decimal-dotted IPv4 form,
   // and so doesn't recognize 0x12.0x34.0x56.0x78, or 0x12345678, or 0x7f.001 as valid IPv4 addresses
   auto ipv4_numeric_addr = inet_addr(host.c_str());
   if (ipv4_numeric_addr != INADDR_NONE) {

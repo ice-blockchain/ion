@@ -1,27 +1,27 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
 #include "fileref.hpp"
-#include "auto/tl/ton_api.hpp"
+#include "auto/tl/ion_api.hpp"
 #include "td/utils/overloaded.h"
 #include "td/utils/misc.h"
 
-namespace ton {
+namespace ion {
 
 namespace validator {
 
@@ -258,33 +258,33 @@ std::string BlockInfoShort::filename_short() const {
 
 }  // namespace fileref
 
-FileReference::FileReference(tl_object_ptr<ton_api::db_filedb_Key> key) {
-  ton_api::downcast_call(
+FileReference::FileReference(tl_object_ptr<ion_api::db_filedb_Key> key) {
+  ion_api::downcast_call(
       *key.get(),
       td::overloaded(
-          [&](const ton_api::db_filedb_key_empty& key) { ref_ = fileref::Empty{}; },
-          [&](const ton_api::db_filedb_key_blockFile& key) { ref_ = fileref::Block{create_block_id(key.block_id_)}; },
-          [&](const ton_api::db_filedb_key_zeroStateFile& key) {
+          [&](const ion_api::db_filedb_key_empty& key) { ref_ = fileref::Empty{}; },
+          [&](const ion_api::db_filedb_key_blockFile& key) { ref_ = fileref::Block{create_block_id(key.block_id_)}; },
+          [&](const ion_api::db_filedb_key_zeroStateFile& key) {
             ref_ = fileref::ZeroState{create_block_id(key.block_id_)};
           },
-          [&](const ton_api::db_filedb_key_persistentStateFile& key) {
+          [&](const ion_api::db_filedb_key_persistentStateFile& key) {
             ref_ = fileref::PersistentState{create_block_id(key.block_id_), create_block_id(key.masterchain_block_id_)};
           },
-          [&](const ton_api::db_filedb_key_proof& key) { ref_ = fileref::Proof{create_block_id(key.block_id_)}; },
-          [&](const ton_api::db_filedb_key_proofLink& key) {
+          [&](const ion_api::db_filedb_key_proof& key) { ref_ = fileref::Proof{create_block_id(key.block_id_)}; },
+          [&](const ion_api::db_filedb_key_proofLink& key) {
             ref_ = fileref::ProofLink{create_block_id(key.block_id_)};
           },
-          [&](const ton_api::db_filedb_key_signatures& key) {
+          [&](const ion_api::db_filedb_key_signatures& key) {
             ref_ = fileref::Signatures{create_block_id(key.block_id_)};
           },
-          [&](const ton_api::db_filedb_key_candidate& key) {
+          [&](const ion_api::db_filedb_key_candidate& key) {
             ref_ = fileref::Candidate{PublicKey{key.id_->source_}, create_block_id(key.id_->id_),
                                       key.id_->collated_data_file_hash_};
           },
-          [&](const ton_api::db_filedb_key_candidateRef& key) {
+          [&](const ion_api::db_filedb_key_candidateRef& key) {
             ref_ = fileref::CandidateRef{create_block_id(key.id_)};
           },
-          [&](const ton_api::db_filedb_key_blockInfo& key) {
+          [&](const ion_api::db_filedb_key_blockInfo& key) {
             ref_ = fileref::BlockInfo{create_block_id(key.block_id_)};
           }));
 }
@@ -511,4 +511,4 @@ td::Result<FileReferenceShort> FileReferenceShort::create(std::string filename) 
 
 }  // namespace validator
 
-}  // namespace ton
+}  // namespace ion

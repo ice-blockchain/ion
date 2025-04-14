@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "common/bitstring.h"
 #include "keys/encryptor.h"
@@ -29,7 +29,7 @@
 #include "td/actor/MultiPromise.h"
 #include "terminal/terminal.h"
 
-#include "auto/tl/ton_api_json.h"
+#include "auto/tl/ion_api_json.h"
 
 #include <iostream>
 #include <cstring>
@@ -39,7 +39,7 @@
 #include "common/refint.h"
 #include "crypto/block/block.h"
 
-namespace ton {
+namespace ion {
 
 bool is_whitespace(char c) {
   return strchr(" \t\n\r", c) != nullptr;
@@ -954,7 +954,7 @@ class StorageDaemonCli : public td::actor::Actor {
       td::TerminalIO::out() << "set-provider-params [--accept x] [--rate x] [--max-span x] [--min-file-size x] "
                                "[--max-file-size x]\tSet parameters of the smart contract\n";
       td::TerminalIO::out() << "\t--accept\tAccept new contracts: 0 (no) or 1 (yes)\n";
-      td::TerminalIO::out() << "\t--rate\tPrice of storage, nanoTON per MB*day\n";
+      td::TerminalIO::out() << "\t--rate\tPrice of storage, nanoION per MB*day\n";
       td::TerminalIO::out() << "\t--max-span\n";
       td::TerminalIO::out() << "\t--min-file-size\tMinimal total size of a bag of files (bytes)\n";
       td::TerminalIO::out() << "\t--max-file-size\tMaximal total size of a bag of files (bytes)\n";
@@ -969,9 +969,9 @@ class StorageDaemonCli : public td::actor::Actor {
       td::TerminalIO::out() << "\t--max-total-size\tMaximal total size storage contracts (in bytes)\n";
       td::TerminalIO::out() << "withdraw <address>\tSend bounty from storage contract <address> to the main contract\n";
       td::TerminalIO::out()
-          << "withdraw-all\tSend bounty from all storage contracts (where at least 1 TON is available) "
+          << "withdraw-all\tSend bounty from all storage contracts (where at least 1 ION is available) "
              "to the main contract\n";
-      td::TerminalIO::out() << "send-coins <address> <amount> [--message msg]\tSend <amount> nanoTON to <address> from "
+      td::TerminalIO::out() << "send-coins <address> <amount> [--message msg]\tSend <amount> nanoION to <address> from "
                                "the main contract\n";
       td::TerminalIO::out()
           << "close-contract <address>\tClose storage contract <address> and delete bag (if possible)\n";
@@ -983,9 +983,9 @@ class StorageDaemonCli : public td::actor::Actor {
   }
 
   td::Status execute_set_verbosity(int level) {
-    auto query = create_tl_object<ton_api::storage_daemon_setVerbosity>(level);
+    auto query = create_tl_object<ion_api::storage_daemon_setVerbosity>(level);
     send_query(std::move(query),
-               [SelfId = actor_id(this)](td::Result<tl_object_ptr<ton_api::storage_daemon_success>> R) {
+               [SelfId = actor_id(this)](td::Result<tl_object_ptr<ion_api::storage_daemon_success>> R) {
                  if (R.is_error()) {
                    return;
                  }
@@ -997,9 +997,9 @@ class StorageDaemonCli : public td::actor::Actor {
 
   td::Status execute_create(std::string path, std::string description, bool upload, bool copy, bool json) {
     TRY_RESULT_PREFIX_ASSIGN(path, td::realpath(path), "Invalid path: ");
-    auto query = create_tl_object<ton_api::storage_daemon_createTorrent>(path, description, upload, copy, 0);
+    auto query = create_tl_object<ion_api::storage_daemon_createTorrent>(path, description, upload, copy, 0);
     send_query(std::move(query),
-               [=, SelfId = actor_id(this)](td::Result<tl_object_ptr<ton_api::storage_daemon_torrentFull>> R) {
+               [=, SelfId = actor_id(this)](td::Result<tl_object_ptr<ion_api::storage_daemon_torrentFull>> R) {
                  if (R.is_error()) {
                    return;
                  }
@@ -1022,17 +1022,17 @@ class StorageDaemonCli : public td::actor::Actor {
       TRY_STATUS_PREFIX(td::mkdir(root_dir), "Failed to create directory: ");
       TRY_RESULT_PREFIX_ASSIGN(root_dir, td::realpath(root_dir), "Invalid path: ");
     }
-    std::vector<tl_object_ptr<ton_api::storage_PriorityAction>> priorities;
+    std::vector<tl_object_ptr<ion_api::storage_PriorityAction>> priorities;
     if (partial) {
-      priorities.push_back(create_tl_object<ton_api::storage_priorityAction_all>(0));
+      priorities.push_back(create_tl_object<ion_api::storage_priorityAction_all>(0));
       for (std::string& f : partial.value()) {
-        priorities.push_back(create_tl_object<ton_api::storage_priorityAction_name>(std::move(f), 1));
+        priorities.push_back(create_tl_object<ion_api::storage_priorityAction_name>(std::move(f), 1));
       }
     }
-    auto query = create_tl_object<ton_api::storage_daemon_addByHash>(hash, std::move(root_dir), !paused, upload,
+    auto query = create_tl_object<ion_api::storage_daemon_addByHash>(hash, std::move(root_dir), !paused, upload,
                                                                      std::move(priorities), 0);
     send_query(std::move(query),
-               [=, SelfId = actor_id(this)](td::Result<tl_object_ptr<ton_api::storage_daemon_torrentFull>> R) {
+               [=, SelfId = actor_id(this)](td::Result<tl_object_ptr<ion_api::storage_daemon_torrentFull>> R) {
                  if (R.is_error()) {
                    return;
                  }
@@ -1056,17 +1056,17 @@ class StorageDaemonCli : public td::actor::Actor {
       TRY_STATUS_PREFIX(td::mkdir(root_dir), "Failed to create directory: ");
       TRY_RESULT_PREFIX_ASSIGN(root_dir, td::realpath(root_dir), "Invalid path: ");
     }
-    std::vector<tl_object_ptr<ton_api::storage_PriorityAction>> priorities;
+    std::vector<tl_object_ptr<ion_api::storage_PriorityAction>> priorities;
     if (partial) {
-      priorities.push_back(create_tl_object<ton_api::storage_priorityAction_all>(0));
+      priorities.push_back(create_tl_object<ion_api::storage_priorityAction_all>(0));
       for (std::string& f : partial.value()) {
-        priorities.push_back(create_tl_object<ton_api::storage_priorityAction_name>(std::move(f), 1));
+        priorities.push_back(create_tl_object<ion_api::storage_priorityAction_name>(std::move(f), 1));
       }
     }
-    auto query = create_tl_object<ton_api::storage_daemon_addByMeta>(std::move(meta), std::move(root_dir), !paused,
+    auto query = create_tl_object<ion_api::storage_daemon_addByMeta>(std::move(meta), std::move(root_dir), !paused,
                                                                      upload, std::move(priorities), 0);
     send_query(std::move(query),
-               [=, SelfId = actor_id(this)](td::Result<tl_object_ptr<ton_api::storage_daemon_torrentFull>> R) {
+               [=, SelfId = actor_id(this)](td::Result<tl_object_ptr<ion_api::storage_daemon_torrentFull>> R) {
                  if (R.is_error()) {
                    return;
                  }
@@ -1083,9 +1083,9 @@ class StorageDaemonCli : public td::actor::Actor {
   }
 
   td::Status execute_list(bool with_hashes, bool json) {
-    auto query = create_tl_object<ton_api::storage_daemon_getTorrents>(0);
+    auto query = create_tl_object<ion_api::storage_daemon_getTorrents>(0);
     send_query(std::move(query),
-               [=, SelfId = actor_id(this)](td::Result<tl_object_ptr<ton_api::storage_daemon_torrentList>> R) {
+               [=, SelfId = actor_id(this)](td::Result<tl_object_ptr<ion_api::storage_daemon_torrentList>> R) {
                  if (R.is_error()) {
                    return;
                  }
@@ -1101,9 +1101,9 @@ class StorageDaemonCli : public td::actor::Actor {
   }
 
   td::Status execute_get(td::Bits256 hash, bool json) {
-    auto query = create_tl_object<ton_api::storage_daemon_getTorrentFull>(hash, 0);
+    auto query = create_tl_object<ion_api::storage_daemon_getTorrentFull>(hash, 0);
     send_query(std::move(query),
-               [=, SelfId = actor_id(this)](td::Result<tl_object_ptr<ton_api::storage_daemon_torrentFull>> R) {
+               [=, SelfId = actor_id(this)](td::Result<tl_object_ptr<ion_api::storage_daemon_torrentFull>> R) {
                  if (R.is_error()) {
                    return;
                  }
@@ -1119,9 +1119,9 @@ class StorageDaemonCli : public td::actor::Actor {
   }
 
   td::Status execute_get_meta(td::Bits256 hash, std::string meta_file) {
-    auto query = create_tl_object<ton_api::storage_daemon_getTorrentMeta>(hash, 0);
+    auto query = create_tl_object<ion_api::storage_daemon_getTorrentMeta>(hash, 0);
     send_query(std::move(query),
-               [SelfId = actor_id(this), meta_file](td::Result<tl_object_ptr<ton_api::storage_daemon_torrentMeta>> R) {
+               [SelfId = actor_id(this), meta_file](td::Result<tl_object_ptr<ion_api::storage_daemon_torrentMeta>> R) {
                  if (R.is_error()) {
                    return;
                  }
@@ -1140,9 +1140,9 @@ class StorageDaemonCli : public td::actor::Actor {
   }
 
   td::Status execute_get_peers(td::Bits256 hash, bool json) {
-    auto query = create_tl_object<ton_api::storage_daemon_getTorrentPeers>(hash, 0);
+    auto query = create_tl_object<ion_api::storage_daemon_getTorrentPeers>(hash, 0);
     send_query(
-        std::move(query), [=, SelfId = actor_id(this)](td::Result<tl_object_ptr<ton_api::storage_daemon_peerList>> R) {
+        std::move(query), [=, SelfId = actor_id(this)](td::Result<tl_object_ptr<ion_api::storage_daemon_peerList>> R) {
           if (R.is_error()) {
             return;
           }
@@ -1182,10 +1182,10 @@ class StorageDaemonCli : public td::actor::Actor {
 
   td::Status execute_get_pieces_info(td::Bits256 hash, bool files, td::uint64 offset,
                                      td::optional<td::uint64> max_pieces, bool json) {
-    auto query = create_tl_object<ton_api::storage_daemon_getTorrentPiecesInfo>(hash, files ? 1 : 0, offset,
+    auto query = create_tl_object<ion_api::storage_daemon_getTorrentPiecesInfo>(hash, files ? 1 : 0, offset,
                                                                                 max_pieces ? max_pieces.value() : -1);
     send_query(std::move(query),
-               [=, SelfId = actor_id(this)](td::Result<tl_object_ptr<ton_api::storage_daemon_torrentPiecesInfo>> R) {
+               [=, SelfId = actor_id(this)](td::Result<tl_object_ptr<ion_api::storage_daemon_torrentPiecesInfo>> R) {
                  if (R.is_error()) {
                    return;
                  }
@@ -1238,9 +1238,9 @@ class StorageDaemonCli : public td::actor::Actor {
   }
 
   td::Status execute_set_active_download(td::Bits256 hash, bool active) {
-    auto query = create_tl_object<ton_api::storage_daemon_setActiveDownload>(hash, active);
+    auto query = create_tl_object<ion_api::storage_daemon_setActiveDownload>(hash, active);
     send_query(std::move(query),
-               [SelfId = actor_id(this)](td::Result<tl_object_ptr<ton_api::storage_daemon_success>> R) {
+               [SelfId = actor_id(this)](td::Result<tl_object_ptr<ion_api::storage_daemon_success>> R) {
                  if (R.is_error()) {
                    return;
                  }
@@ -1251,9 +1251,9 @@ class StorageDaemonCli : public td::actor::Actor {
   }
 
   td::Status execute_set_active_upload(td::Bits256 hash, bool active) {
-    auto query = create_tl_object<ton_api::storage_daemon_setActiveUpload>(hash, active);
+    auto query = create_tl_object<ion_api::storage_daemon_setActiveUpload>(hash, active);
     send_query(std::move(query),
-               [SelfId = actor_id(this)](td::Result<tl_object_ptr<ton_api::storage_daemon_success>> R) {
+               [SelfId = actor_id(this)](td::Result<tl_object_ptr<ion_api::storage_daemon_success>> R) {
                  if (R.is_error()) {
                    return;
                  }
@@ -1264,13 +1264,13 @@ class StorageDaemonCli : public td::actor::Actor {
   }
 
   td::Status execute_set_priority_all(td::Bits256 hash, td::uint8 priority) {
-    auto query = create_tl_object<ton_api::storage_daemon_setFilePriorityAll>(hash, priority);
+    auto query = create_tl_object<ion_api::storage_daemon_setFilePriorityAll>(hash, priority);
     send_query(std::move(query),
-               [SelfId = actor_id(this)](td::Result<tl_object_ptr<ton_api::storage_daemon_SetPriorityStatus>> R) {
+               [SelfId = actor_id(this)](td::Result<tl_object_ptr<ion_api::storage_daemon_SetPriorityStatus>> R) {
                  if (R.is_error()) {
                    return;
                  }
-                 if (R.ok()->get_id() == ton_api::storage_daemon_prioritySet::ID) {
+                 if (R.ok()->get_id() == ion_api::storage_daemon_prioritySet::ID) {
                    td::TerminalIO::out() << "Priority was set\n";
                  } else {
                    td::TerminalIO::out() << "Torrent header is not available, priority will be set later\n";
@@ -1281,13 +1281,13 @@ class StorageDaemonCli : public td::actor::Actor {
   }
 
   td::Status execute_set_priority_idx(td::Bits256 hash, td::uint64 idx, td::uint8 priority) {
-    auto query = create_tl_object<ton_api::storage_daemon_setFilePriorityByIdx>(hash, idx, priority);
+    auto query = create_tl_object<ion_api::storage_daemon_setFilePriorityByIdx>(hash, idx, priority);
     send_query(std::move(query),
-               [SelfId = actor_id(this)](td::Result<tl_object_ptr<ton_api::storage_daemon_SetPriorityStatus>> R) {
+               [SelfId = actor_id(this)](td::Result<tl_object_ptr<ion_api::storage_daemon_SetPriorityStatus>> R) {
                  if (R.is_error()) {
                    return;
                  }
-                 if (R.ok()->get_id() == ton_api::storage_daemon_prioritySet::ID) {
+                 if (R.ok()->get_id() == ion_api::storage_daemon_prioritySet::ID) {
                    td::TerminalIO::out() << "Priority was set\n";
                  } else {
                    td::TerminalIO::out() << "Torrent header is not available, priority will be set later\n";
@@ -1298,13 +1298,13 @@ class StorageDaemonCli : public td::actor::Actor {
   }
 
   td::Status execute_set_priority_name(td::Bits256 hash, std::string name, td::uint8 priority) {
-    auto query = create_tl_object<ton_api::storage_daemon_setFilePriorityByName>(hash, std::move(name), priority);
+    auto query = create_tl_object<ion_api::storage_daemon_setFilePriorityByName>(hash, std::move(name), priority);
     send_query(std::move(query),
-               [SelfId = actor_id(this)](td::Result<tl_object_ptr<ton_api::storage_daemon_SetPriorityStatus>> R) {
+               [SelfId = actor_id(this)](td::Result<tl_object_ptr<ion_api::storage_daemon_SetPriorityStatus>> R) {
                  if (R.is_error()) {
                    return;
                  }
-                 if (R.ok()->get_id() == ton_api::storage_daemon_prioritySet::ID) {
+                 if (R.ok()->get_id() == ion_api::storage_daemon_prioritySet::ID) {
                    td::TerminalIO::out() << "Priority was set\n";
                  } else {
                    td::TerminalIO::out() << "Torrent header is not available, priority will be set later\n";
@@ -1315,9 +1315,9 @@ class StorageDaemonCli : public td::actor::Actor {
   }
 
   td::Status execute_remove(td::Bits256 hash, bool remove_files) {
-    auto query = create_tl_object<ton_api::storage_daemon_removeTorrent>(hash, remove_files);
+    auto query = create_tl_object<ion_api::storage_daemon_removeTorrent>(hash, remove_files);
     send_query(std::move(query),
-               [SelfId = actor_id(this), hash](td::Result<tl_object_ptr<ton_api::storage_daemon_success>> R) {
+               [SelfId = actor_id(this), hash](td::Result<tl_object_ptr<ion_api::storage_daemon_success>> R) {
                  if (R.is_error()) {
                    return;
                  }
@@ -1339,9 +1339,9 @@ class StorageDaemonCli : public td::actor::Actor {
     if (!path.empty()) {
       TRY_RESULT_PREFIX_ASSIGN(path, td::realpath(path), "Invalid path: ");
     }
-    auto query = create_tl_object<ton_api::storage_daemon_loadFrom>(hash, std::move(meta_data), std::move(path), 0);
+    auto query = create_tl_object<ion_api::storage_daemon_loadFrom>(hash, std::move(meta_data), std::move(path), 0);
     send_query(std::move(query),
-               [SelfId = actor_id(this)](td::Result<tl_object_ptr<ton_api::storage_daemon_torrent>> R) {
+               [SelfId = actor_id(this)](td::Result<tl_object_ptr<ion_api::storage_daemon_torrent>> R) {
                  if (R.is_error()) {
                    return;
                  }
@@ -1367,9 +1367,9 @@ class StorageDaemonCli : public td::actor::Actor {
   }
 
   td::Status execute_get_speed_limits(bool json) {
-    auto query = create_tl_object<ton_api::storage_daemon_getSpeedLimits>(0);
+    auto query = create_tl_object<ion_api::storage_daemon_getSpeedLimits>(0);
     send_query(std::move(query), [=, SelfId = actor_id(this)](
-                                     td::Result<tl_object_ptr<ton_api::storage_daemon_speedLimits>> R) {
+                                     td::Result<tl_object_ptr<ion_api::storage_daemon_speedLimits>> R) {
       if (R.is_error()) {
         return;
       }
@@ -1398,7 +1398,7 @@ class StorageDaemonCli : public td::actor::Actor {
     if (!download && !upload) {
       return td::Status::Error("No parameters are set");
     }
-    auto query = create_tl_object<ton_api::storage_daemon_setSpeedLimits>();
+    auto query = create_tl_object<ion_api::storage_daemon_setSpeedLimits>();
     query->flags_ = 0;
     if (download) {
       query->flags_ |= 1;
@@ -1409,7 +1409,7 @@ class StorageDaemonCli : public td::actor::Actor {
       query->upload_ = upload.value();
     }
     send_query(std::move(query),
-               [SelfId = actor_id(this)](td::Result<tl_object_ptr<ton_api::storage_daemon_success>> R) {
+               [SelfId = actor_id(this)](td::Result<tl_object_ptr<ion_api::storage_daemon_success>> R) {
                  if (R.is_error()) {
                    return;
                  }
@@ -1422,21 +1422,21 @@ class StorageDaemonCli : public td::actor::Actor {
   td::Status execute_new_contract_message(td::Bits256 hash, std::string file, td::uint64 query_id,
                                           td::optional<std::string> provider_address, td::optional<std::string> rate,
                                           td::optional<td::uint32> max_span) {
-    tl_object_ptr<ton_api::storage_daemon_NewContractParams> params;
+    tl_object_ptr<ion_api::storage_daemon_NewContractParams> params;
     if (provider_address) {
       if (rate || max_span) {
         return td::Status::Error("Incompatible flags");
       }
-      params = create_tl_object<ton_api::storage_daemon_newContractParamsAuto>(provider_address.unwrap());
+      params = create_tl_object<ion_api::storage_daemon_newContractParamsAuto>(provider_address.unwrap());
     } else {
       if (!rate || !max_span) {
         return td::Status::Error("No flags are set");
       }
-      params = create_tl_object<ton_api::storage_daemon_newContractParams>(rate.unwrap(), max_span.unwrap());
+      params = create_tl_object<ion_api::storage_daemon_newContractParams>(rate.unwrap(), max_span.unwrap());
     }
-    auto query = create_tl_object<ton_api::storage_daemon_getNewContractMessage>(hash, query_id, std::move(params));
+    auto query = create_tl_object<ion_api::storage_daemon_getNewContractMessage>(hash, query_id, std::move(params));
     send_query(std::move(query), [SelfId = actor_id(this),
-                                  file](td::Result<tl_object_ptr<ton_api::storage_daemon_newContractMessage>> R) {
+                                  file](td::Result<tl_object_ptr<ion_api::storage_daemon_newContractMessage>> R) {
       if (R.is_error()) {
         return;
       }
@@ -1448,7 +1448,7 @@ class StorageDaemonCli : public td::actor::Actor {
         return;
       }
       td::TerminalIO::out() << "Saved message body to file\n";
-      td::TerminalIO::out() << "Rate (nanoTON per mb*day): " << obj->rate_ << "\n";
+      td::TerminalIO::out() << "Rate (nanoION per mb*day): " << obj->rate_ << "\n";
       td::TerminalIO::out() << "Max span: " << obj->max_span_ << "\n";
       td::actor::send_closure(SelfId, &StorageDaemonCli::command_finished, td::Status::OK());
     });
@@ -1457,10 +1457,10 @@ class StorageDaemonCli : public td::actor::Actor {
 
   td::Status execute_import_pk(std::string file) {
     TRY_RESULT(data, td::read_file_secure(file));
-    TRY_RESULT(pk, ton::PrivateKey::import(data.as_slice()));
-    auto query = create_tl_object<ton_api::storage_daemon_importPrivateKey>(pk.tl());
+    TRY_RESULT(pk, ion::PrivateKey::import(data.as_slice()));
+    auto query = create_tl_object<ion_api::storage_daemon_importPrivateKey>(pk.tl());
     send_query(
-        std::move(query), [SelfId = actor_id(this)](td::Result<tl_object_ptr<ton_api::storage_daemon_keyHash>> R) {
+        std::move(query), [SelfId = actor_id(this)](td::Result<tl_object_ptr<ion_api::storage_daemon_keyHash>> R) {
           if (R.is_error()) {
             return;
           }
@@ -1471,9 +1471,9 @@ class StorageDaemonCli : public td::actor::Actor {
   }
 
   td::Status execute_deploy_provider() {
-    auto query = create_tl_object<ton_api::storage_daemon_deployProvider>();
+    auto query = create_tl_object<ion_api::storage_daemon_deployProvider>();
     send_query(std::move(query),
-               [SelfId = actor_id(this)](td::Result<tl_object_ptr<ton_api::storage_daemon_providerAddress>> R) {
+               [SelfId = actor_id(this)](td::Result<tl_object_ptr<ion_api::storage_daemon_providerAddress>> R) {
                  if (R.is_error()) {
                    return;
                  }
@@ -1484,16 +1484,16 @@ class StorageDaemonCli : public td::actor::Actor {
                  td::TerminalIO::out() << "Address: " << obj->address_ << "\n";
                  td::TerminalIO::out() << "Non-bounceable address: " << std_address.rserialize() << "\n";
                  td::TerminalIO::out()
-                     << "Send a non-bounceable message with 1 TON to this address to initialize smart contract.\n";
+                     << "Send a non-bounceable message with 1 ION to this address to initialize smart contract.\n";
                  td::actor::send_closure(SelfId, &StorageDaemonCli::command_finished, td::Status::OK());
                });
     return td::Status::OK();
   }
 
   td::Status execute_init_provider(std::string address) {
-    auto query = create_tl_object<ton_api::storage_daemon_initProvider>(std::move(address));
+    auto query = create_tl_object<ion_api::storage_daemon_initProvider>(std::move(address));
     send_query(std::move(query),
-               [SelfId = actor_id(this)](td::Result<tl_object_ptr<ton_api::storage_daemon_success>> R) {
+               [SelfId = actor_id(this)](td::Result<tl_object_ptr<ion_api::storage_daemon_success>> R) {
                  if (R.is_error()) {
                    return;
                  }
@@ -1504,9 +1504,9 @@ class StorageDaemonCli : public td::actor::Actor {
   }
 
   td::Status execute_remove_storage_provider() {
-    auto query = create_tl_object<ton_api::storage_daemon_removeStorageProvider>();
+    auto query = create_tl_object<ion_api::storage_daemon_removeStorageProvider>();
     send_query(std::move(query),
-               [SelfId = actor_id(this)](td::Result<tl_object_ptr<ton_api::storage_daemon_success>> R) {
+               [SelfId = actor_id(this)](td::Result<tl_object_ptr<ion_api::storage_daemon_success>> R) {
                  if (R.is_error()) {
                    return;
                  }
@@ -1517,9 +1517,9 @@ class StorageDaemonCli : public td::actor::Actor {
   }
 
   td::Status execute_get_provider_params(std::string address, bool json) {
-    auto query = create_tl_object<ton_api::storage_daemon_getProviderParams>(address);
+    auto query = create_tl_object<ion_api::storage_daemon_getProviderParams>(address);
     send_query(std::move(query), [=, SelfId = actor_id(this)](
-                                     td::Result<tl_object_ptr<ton_api::storage_daemon_provider_params>> R) {
+                                     td::Result<tl_object_ptr<ion_api::storage_daemon_provider_params>> R) {
       if (R.is_error()) {
         return;
       }
@@ -1531,7 +1531,7 @@ class StorageDaemonCli : public td::actor::Actor {
       auto params = R.move_as_ok();
       td::TerminalIO::out() << "Storage provider parameters:\n";
       td::TerminalIO::out() << "Accept new contracts: " << params->accept_new_contracts_ << "\n";
-      td::TerminalIO::out() << "Rate (nanoTON per day*MB): " << params->rate_per_mb_day_ << "\n";
+      td::TerminalIO::out() << "Rate (nanoION per day*MB): " << params->rate_per_mb_day_ << "\n";
       td::TerminalIO::out() << "Max span: " << (td::uint32)params->max_span_ << "\n";
       auto min_size = (td::uint64)params->minimal_file_size_, max_size = (td::uint64)params->maximal_file_size_;
       td::TerminalIO::out() << "Min file size: " << td::format::as_size(min_size) << " (" << min_size << ")\n";
@@ -1542,9 +1542,9 @@ class StorageDaemonCli : public td::actor::Actor {
   }
 
   td::Status execute_set_provider_params(OptionalProviderParams new_params) {
-    auto query_get = create_tl_object<ton_api::storage_daemon_getProviderParams>();
+    auto query_get = create_tl_object<ion_api::storage_daemon_getProviderParams>();
     send_query(std::move(query_get), [SelfId = actor_id(this), new_params = std::move(new_params)](
-                                         td::Result<tl_object_ptr<ton_api::storage_daemon_provider_params>> R) mutable {
+                                         td::Result<tl_object_ptr<ion_api::storage_daemon_provider_params>> R) mutable {
       if (R.is_error()) {
         return;
       }
@@ -1554,7 +1554,7 @@ class StorageDaemonCli : public td::actor::Actor {
     return td::Status::OK();
   }
 
-  void execute_set_provider_params_cont(tl_object_ptr<ton_api::storage_daemon_provider_params> params,
+  void execute_set_provider_params_cont(tl_object_ptr<ion_api::storage_daemon_provider_params> params,
                                         OptionalProviderParams new_params) {
     if (new_params.accept_new_contracts) {
       params->accept_new_contracts_ = new_params.accept_new_contracts.unwrap();
@@ -1572,9 +1572,9 @@ class StorageDaemonCli : public td::actor::Actor {
       params->maximal_file_size_ = new_params.maximal_file_size.unwrap();
     }
     td::TerminalIO::out() << "Sending external message to update provider parameters...\n";
-    auto query_set = create_tl_object<ton_api::storage_daemon_setProviderParams>(std::move(params));
+    auto query_set = create_tl_object<ion_api::storage_daemon_setProviderParams>(std::move(params));
     send_query(std::move(query_set),
-               [SelfId = actor_id(this)](td::Result<tl_object_ptr<ton_api::storage_daemon_success>> R) mutable {
+               [SelfId = actor_id(this)](td::Result<tl_object_ptr<ion_api::storage_daemon_success>> R) mutable {
                  if (R.is_error()) {
                    return;
                  }
@@ -1584,9 +1584,9 @@ class StorageDaemonCli : public td::actor::Actor {
   }
 
   td::Status execute_get_provider_info(bool with_balances, bool with_contracts, bool json) {
-    auto query = create_tl_object<ton_api::storage_daemon_getProviderInfo>(with_balances, with_contracts);
+    auto query = create_tl_object<ion_api::storage_daemon_getProviderInfo>(with_balances, with_contracts);
     send_query(std::move(query),
-               [=, SelfId = actor_id(this)](td::Result<tl_object_ptr<ton_api::storage_daemon_providerInfo>> R) {
+               [=, SelfId = actor_id(this)](td::Result<tl_object_ptr<ion_api::storage_daemon_providerInfo>> R) {
                  if (R.is_error()) {
                    return;
                  }
@@ -1602,7 +1602,7 @@ class StorageDaemonCli : public td::actor::Actor {
                  td::TerminalIO::out() << "Total size: " << size_to_str(info->contracts_total_size_) << " / "
                                        << size_to_str(info->config_->max_total_size_) << "\n";
                  if (with_balances) {
-                   td::TerminalIO::out() << "Main contract balance: " << coins_to_str(info->balance_) << " TON\n";
+                   td::TerminalIO::out() << "Main contract balance: " << coins_to_str(info->balance_) << " ION\n";
                  }
                  if (with_contracts) {
                    td::TerminalIO::out() << "Storage contracts: " << info->contracts_.size() << "\n";
@@ -1648,9 +1648,9 @@ class StorageDaemonCli : public td::actor::Actor {
   }
 
   td::Status execute_set_provider_config(OptionalProviderConfig new_config) {
-    auto query_get = create_tl_object<ton_api::storage_daemon_getProviderInfo>(false, false);
+    auto query_get = create_tl_object<ion_api::storage_daemon_getProviderInfo>(false, false);
     send_query(std::move(query_get), [SelfId = actor_id(this), new_config = std::move(new_config)](
-                                         td::Result<tl_object_ptr<ton_api::storage_daemon_providerInfo>> R) mutable {
+                                         td::Result<tl_object_ptr<ion_api::storage_daemon_providerInfo>> R) mutable {
       if (R.is_error()) {
         return;
       }
@@ -1661,7 +1661,7 @@ class StorageDaemonCli : public td::actor::Actor {
     return td::Status::OK();
   }
 
-  void execute_set_provider_config_cont(tl_object_ptr<ton_api::storage_daemon_providerConfig> config,
+  void execute_set_provider_config_cont(tl_object_ptr<ion_api::storage_daemon_providerConfig> config,
                                         OptionalProviderConfig new_config) {
     if (new_config.max_contracts) {
       config->max_contracts_ = new_config.max_contracts.unwrap();
@@ -1669,9 +1669,9 @@ class StorageDaemonCli : public td::actor::Actor {
     if (new_config.max_total_size) {
       config->max_total_size_ = new_config.max_total_size.unwrap();
     }
-    auto query_set = create_tl_object<ton_api::storage_daemon_setProviderConfig>(std::move(config));
+    auto query_set = create_tl_object<ion_api::storage_daemon_setProviderConfig>(std::move(config));
     send_query(std::move(query_set),
-               [SelfId = actor_id(this)](td::Result<tl_object_ptr<ton_api::storage_daemon_success>> R) mutable {
+               [SelfId = actor_id(this)](td::Result<tl_object_ptr<ion_api::storage_daemon_success>> R) mutable {
                  if (R.is_error()) {
                    return;
                  }
@@ -1681,10 +1681,10 @@ class StorageDaemonCli : public td::actor::Actor {
   }
 
   td::Status execute_withdraw(std::string address) {
-    auto query = create_tl_object<ton_api::storage_daemon_withdraw>(std::move(address));
+    auto query = create_tl_object<ion_api::storage_daemon_withdraw>(std::move(address));
     td::TerminalIO::out() << "Sending external message...\n";
     send_query(std::move(query),
-               [SelfId = actor_id(this)](td::Result<tl_object_ptr<ton_api::storage_daemon_success>> R) {
+               [SelfId = actor_id(this)](td::Result<tl_object_ptr<ion_api::storage_daemon_success>> R) {
                  if (R.is_error()) {
                    return;
                  }
@@ -1695,9 +1695,9 @@ class StorageDaemonCli : public td::actor::Actor {
   }
 
   td::Status execute_withdraw_all() {
-    auto query = create_tl_object<ton_api::storage_daemon_getProviderInfo>(true, true);
+    auto query = create_tl_object<ion_api::storage_daemon_getProviderInfo>(true, true);
     send_query(std::move(query),
-               [=, SelfId = actor_id(this)](td::Result<tl_object_ptr<ton_api::storage_daemon_providerInfo>> R) {
+               [=, SelfId = actor_id(this)](td::Result<tl_object_ptr<ion_api::storage_daemon_providerInfo>> R) {
                  if (R.is_error()) {
                    return;
                  }
@@ -1713,7 +1713,7 @@ class StorageDaemonCli : public td::actor::Actor {
                      continue;
                    }
                    td::TerminalIO::out() << "Withdrawing from " << contract->address_ << " (" << coins_to_str(remaining)
-                                         << " TON)\n";
+                                         << " ION)\n";
                    addresses.push_back(contract->address_);
                  }
                  if (addresses.empty()) {
@@ -1738,18 +1738,18 @@ class StorageDaemonCli : public td::actor::Actor {
       td::actor::send_closure(SelfId, &StorageDaemonCli::command_finished, td::Status::OK());
     });
     for (auto& address : addresses) {
-      auto query = create_tl_object<ton_api::storage_daemon_withdraw>(std::move(address));
+      auto query = create_tl_object<ion_api::storage_daemon_withdraw>(std::move(address));
       send_query(std::move(query),
-                 ig.get_promise().wrap([](tl_object_ptr<ton_api::storage_daemon_success>) { return td::Unit(); }));
+                 ig.get_promise().wrap([](tl_object_ptr<ion_api::storage_daemon_success>) { return td::Unit(); }));
     }
   }
 
   td::Status execute_send_coins(std::string address, std::string amount, std::string message) {
     auto query =
-        create_tl_object<ton_api::storage_daemon_sendCoins>(std::move(address), std::move(amount), std::move(message));
+        create_tl_object<ion_api::storage_daemon_sendCoins>(std::move(address), std::move(amount), std::move(message));
     td::TerminalIO::out() << "Sending external messages...\n";
     send_query(std::move(query),
-               [SelfId = actor_id(this)](td::Result<tl_object_ptr<ton_api::storage_daemon_success>> R) {
+               [SelfId = actor_id(this)](td::Result<tl_object_ptr<ion_api::storage_daemon_success>> R) {
                  if (R.is_error()) {
                    return;
                  }
@@ -1760,9 +1760,9 @@ class StorageDaemonCli : public td::actor::Actor {
   }
 
   td::Status execute_close_contract(std::string address) {
-    auto query = create_tl_object<ton_api::storage_daemon_closeStorageContract>(std::move(address));
+    auto query = create_tl_object<ion_api::storage_daemon_closeStorageContract>(std::move(address));
     send_query(std::move(query),
-               [SelfId = actor_id(this)](td::Result<tl_object_ptr<ton_api::storage_daemon_success>> R) {
+               [SelfId = actor_id(this)](td::Result<tl_object_ptr<ion_api::storage_daemon_success>> R) {
                  if (R.is_error()) {
                    return;
                  }
@@ -1788,7 +1788,7 @@ class StorageDaemonCli : public td::actor::Actor {
             td::BufferSlice data = R.move_as_ok();
             result = fetch_tl_object<typename T::ReturnType::element_type>(data, true);
             if (result.is_error()) {
-              auto R3 = fetch_tl_object<ton_api::storage_daemon_queryError>(data, true);
+              auto R3 = fetch_tl_object<ion_api::storage_daemon_queryError>(data, true);
               if (R3.is_ok()) {
                 result = td::Status::Error("Query error: " + R3.ok()->message_);
               }
@@ -1864,7 +1864,7 @@ class StorageDaemonCli : public td::actor::Actor {
     }
   }
 
-  void print_torrent_full(tl_object_ptr<ton_api::storage_daemon_torrentFull> ptr) {
+  void print_torrent_full(tl_object_ptr<ion_api::storage_daemon_torrentFull> ptr) {
     auto& obj = *ptr;
     add_id(obj.torrent_->hash_);
     td::TerminalIO::out() << "BagID = " << obj.torrent_->hash_.to_hex() << "\n";
@@ -1930,7 +1930,7 @@ class StorageDaemonCli : public td::actor::Actor {
     }
   }
 
-  void print_torrent_list(tl_object_ptr<ton_api::storage_daemon_torrentList> ptr, bool with_hashes) {
+  void print_torrent_list(tl_object_ptr<ion_api::storage_daemon_torrentList> ptr, bool with_hashes) {
     auto& obj = *ptr;
     std::vector<td::Bits256> hashes;
     for (const auto& torrent : obj.torrents_) {
@@ -1938,8 +1938,8 @@ class StorageDaemonCli : public td::actor::Actor {
     }
     update_ids(std::move(hashes));
     std::sort(obj.torrents_.begin(), obj.torrents_.end(),
-              [&](const tl_object_ptr<ton_api::storage_daemon_torrent>& a,
-                  const tl_object_ptr<ton_api::storage_daemon_torrent>& b) {
+              [&](const tl_object_ptr<ion_api::storage_daemon_torrent>& a,
+                  const tl_object_ptr<ion_api::storage_daemon_torrent>& b) {
                 return hash_to_id_[a->hash_] < hash_to_id_[b->hash_];
               });
     td::TerminalIO::out() << obj.torrents_.size() << " bags\n";
@@ -1995,14 +1995,14 @@ class StorageDaemonCli : public td::actor::Actor {
   }
 };
 
-}  // namespace ton
+}  // namespace ion
 
 int main(int argc, char* argv[]) {
   SET_VERBOSITY_LEVEL(verbosity_INFO);
   td::set_default_failure_signal_handler();
   td::IPAddress ip_addr;
-  ton::PrivateKey client_private_key;
-  ton::PublicKey server_public_key;
+  ion::PrivateKey client_private_key;
+  ion::PublicKey server_public_key;
   std::vector<std::string> commands;
   td::OptionParser p;
   p.set_description("command-line interface for storage-daemon");
@@ -2027,12 +2027,12 @@ int main(int argc, char* argv[]) {
   p.add_option('c', "cmd", "execute command", [&](td::Slice arg) { commands.push_back(arg.str()); });
   p.add_checked_option('k', "key", "private key", [&](td::Slice arg) {
     TRY_RESULT_PREFIX(data, td::read_file(arg.str()), "failed to read: ");
-    TRY_RESULT_ASSIGN(client_private_key, ton::PrivateKey::import(data));
+    TRY_RESULT_ASSIGN(client_private_key, ion::PrivateKey::import(data));
     return td::Status::OK();
   });
   p.add_checked_option('p', "pub", "server public key", [&](td::Slice arg) {
     TRY_RESULT_PREFIX(data, td::read_file(arg.str()), "failed to read: ");
-    TRY_RESULT_ASSIGN(server_public_key, ton::PublicKey::import(data));
+    TRY_RESULT_ASSIGN(server_public_key, ion::PublicKey::import(data));
     return td::Status::OK();
   });
 
@@ -2046,7 +2046,7 @@ int main(int argc, char* argv[]) {
 
   td::actor::Scheduler scheduler({0});
   scheduler.run_in_context([&] {
-    td::actor::create_actor<ton::StorageDaemonCli>("console", ip_addr, client_private_key, server_public_key,
+    td::actor::create_actor<ion::StorageDaemonCli>("console", ip_addr, client_private_key, server_public_key,
                                                    std::move(commands))
         .release();
   });

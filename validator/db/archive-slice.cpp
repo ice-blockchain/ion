@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2019-2020 Telegram Systems LLP
 */
@@ -26,7 +26,7 @@
 #include "files-async.hpp"
 #include "db-utils.h"
 
-namespace ton {
+namespace ion {
 
 namespace validator {
 
@@ -57,11 +57,11 @@ class PackageStatistics {
     ss.setf(std::ios::fixed);
     ss.precision(6);
 
-    ss << "ton.pack.open COUNT : " << open_count.exchange(0, std::memory_order_relaxed) << "\n";
-    ss << "ton.pack.close COUNT : " << close_count.exchange(0, std::memory_order_relaxed) << "\n";
+    ss << "ion.pack.open COUNT : " << open_count.exchange(0, std::memory_order_relaxed) << "\n";
+    ss << "ion.pack.close COUNT : " << close_count.exchange(0, std::memory_order_relaxed) << "\n";
 
-    ss << "ton.pack.read.bytes COUNT : " << read_bytes.exchange(0, std::memory_order_relaxed) << "\n";
-    ss << "ton.pack.write.bytes COUNT : " << write_bytes.exchange(0, std::memory_order_relaxed) << "\n";
+    ss << "ion.pack.read.bytes COUNT : " << read_bytes.exchange(0, std::memory_order_relaxed) << "\n";
+    ss << "ion.pack.write.bytes COUNT : " << write_bytes.exchange(0, std::memory_order_relaxed) << "\n";
 
     PercentileStats temp_read_time;
     {
@@ -69,7 +69,7 @@ class PackageStatistics {
       temp_read_time = std::move(read_time);
       read_time.clear();
     }
-    ss << "ton.pack.read.micros " << temp_read_time.to_string() << "\n";
+    ss << "ion.pack.read.micros " << temp_read_time.to_string() << "\n";
 
     PercentileStats temp_write_time;
     {
@@ -77,7 +77,7 @@ class PackageStatistics {
       temp_write_time = std::move(write_time);
       write_time.clear();
     }
-    ss << "ton.pack.write.micros " << temp_write_time.to_string() << "\n";
+    ss << "ion.pack.write.micros " << temp_write_time.to_string() << "\n";
 
     return ss.str();
   }
@@ -187,14 +187,14 @@ void ArchiveSlice::add_handle(BlockHandle handle, td::Promise<td::Unit> promise)
   std::string value;
   auto R = kv_->get(key.as_slice(), value);
   R.ensure();
-  tl_object_ptr<ton_api::db_lt_desc_value> v;
+  tl_object_ptr<ion_api::db_lt_desc_value> v;
   bool add_shard = false;
   if (R.move_as_ok() == td::KeyValue::GetStatus::Ok) {
-    auto F = fetch_tl_object<ton_api::db_lt_desc_value>(td::BufferSlice{value}, true);
+    auto F = fetch_tl_object<ion_api::db_lt_desc_value>(td::BufferSlice{value}, true);
     F.ensure();
     v = F.move_as_ok();
   } else {
-    v = create_tl_object<ton_api::db_lt_desc_value>(1, 1, 0, 0, 0);
+    v = create_tl_object<ion_api::db_lt_desc_value>(1, 1, 0, 0, 0);
     add_shard = true;
   }
   if (handle->id().seqno() <= static_cast<td::uint32>(v->last_seqno_) ||
@@ -203,10 +203,10 @@ void ArchiveSlice::add_handle(BlockHandle handle, td::Promise<td::Unit> promise)
     update_handle(std::move(handle), std::move(promise));
     return;
   }
-  auto db_value = create_serialize_tl_object<ton_api::db_lt_el_value>(create_tl_block_id(handle->id()),
+  auto db_value = create_serialize_tl_object<ion_api::db_lt_el_value>(create_tl_block_id(handle->id()),
                                                                       handle->logical_time(), handle->unix_time());
   auto db_key = get_db_key_lt_el(handle->id().shard_full(), v->last_idx_++);
-  auto status_key = create_serialize_tl_object<ton_api::db_lt_status_key>();
+  auto status_key = create_serialize_tl_object<ion_api::db_lt_status_key>();
   v->last_seqno_ = handle->id().seqno();
   v->last_lt_ = handle->logical_time();
   v->last_ts_ = handle->unix_time();
@@ -218,7 +218,7 @@ void ArchiveSlice::add_handle(BlockHandle handle, td::Promise<td::Unit> promise)
     if (G.move_as_ok() == td::KeyValue::GetStatus::NotFound) {
       idx = 0;
     } else {
-      auto F = fetch_tl_object<ton_api::db_lt_status_value>(value, true);
+      auto F = fetch_tl_object<ion_api::db_lt_status_value>(value, true);
       F.ensure();
       auto f = F.move_as_ok();
       idx = f->total_shards_;
@@ -231,10 +231,10 @@ void ArchiveSlice::add_handle(BlockHandle handle, td::Promise<td::Unit> promise)
   kv_->set(key, serialize_tl_object(v, true)).ensure();
   kv_->set(db_key, db_value.as_slice()).ensure();
   if (add_shard) {
-    auto shard_key = create_serialize_tl_object<ton_api::db_lt_shard_key>(idx);
+    auto shard_key = create_serialize_tl_object<ion_api::db_lt_shard_key>(idx);
     auto shard_value =
-        create_serialize_tl_object<ton_api::db_lt_shard_value>(handle->id().id.workchain, handle->id().id.shard);
-    kv_->set(status_key.as_slice(), create_serialize_tl_object<ton_api::db_lt_status_value>(idx + 1)).ensure();
+        create_serialize_tl_object<ion_api::db_lt_shard_value>(handle->id().id.workchain, handle->id().id.shard);
+    kv_->set(status_key.as_slice(), create_serialize_tl_object<ion_api::db_lt_status_value>(idx + 1)).ensure();
     kv_->set(shard_key.as_slice(), shard_value.as_slice()).ensure();
   }
   kv_->set(get_db_key_block_info(handle->id()), handle->serialize().as_slice()).ensure();
@@ -407,8 +407,8 @@ void ArchiveSlice::get_file(ConstBlockHandle handle, FileReference ref_id, td::P
 }
 
 void ArchiveSlice::get_block_common(AccountIdPrefixFull account_id,
-                                    std::function<td::int32(ton_api::db_lt_desc_value &)> compare_desc,
-                                    std::function<td::int32(ton_api::db_lt_el_value &)> compare, bool exact,
+                                    std::function<td::int32(ion_api::db_lt_desc_value &)> compare_desc,
+                                    std::function<td::int32(ion_api::db_lt_el_value &)> compare, bool exact,
                                     td::Promise<ConstBlockHandle> promise) {
   if (destroyed_) {
     promise.set_error(td::Status::Error(ErrorCode::notready, "package already gc'd"));
@@ -432,7 +432,7 @@ void ArchiveSlice::get_block_common(AccountIdPrefixFull account_id,
       }
     }
     f = true;
-    auto G = fetch_tl_object<ton_api::db_lt_desc_value>(value, true);
+    auto G = fetch_tl_object<ion_api::db_lt_desc_value>(value, true);
     G.ensure();
     auto g = G.move_as_ok();
     if (compare_desc(*g) > 0) {
@@ -448,7 +448,7 @@ void ArchiveSlice::get_block_common(AccountIdPrefixFull account_id,
       F = kv_->get(db_key, value);
       F.ensure();
       CHECK(F.move_as_ok() == td::KeyValue::GetStatus::Ok);
-      auto E = fetch_tl_object<ton_api::db_lt_el_value>(td::BufferSlice{value}, true);
+      auto E = fetch_tl_object<ion_api::db_lt_el_value>(td::BufferSlice{value}, true);
       E.ensure();
       auto e = E.move_as_ok();
       int cmp_val = compare(*e);
@@ -494,10 +494,10 @@ void ArchiveSlice::get_block_by_lt(AccountIdPrefixFull account_id, LogicalTime l
                                    td::Promise<ConstBlockHandle> promise) {
   return get_block_common(
       account_id,
-      [lt](ton_api::db_lt_desc_value &w) {
+      [lt](ion_api::db_lt_desc_value &w) {
         return lt > static_cast<LogicalTime>(w.last_lt_) ? 1 : lt == static_cast<LogicalTime>(w.last_lt_) ? 0 : -1;
       },
-      [lt](ton_api::db_lt_el_value &w) {
+      [lt](ion_api::db_lt_el_value &w) {
         return lt > static_cast<LogicalTime>(w.lt_) ? 1 : lt == static_cast<LogicalTime>(w.lt_) ? 0 : -1;
       },
       false, std::move(promise));
@@ -507,12 +507,12 @@ void ArchiveSlice::get_block_by_seqno(AccountIdPrefixFull account_id, BlockSeqno
                                       td::Promise<ConstBlockHandle> promise) {
   return get_block_common(
       account_id,
-      [seqno](ton_api::db_lt_desc_value &w) {
+      [seqno](ion_api::db_lt_desc_value &w) {
         return seqno > static_cast<BlockSeqno>(w.last_seqno_)
                    ? 1
                    : seqno == static_cast<BlockSeqno>(w.last_seqno_) ? 0 : -1;
       },
-      [seqno](ton_api::db_lt_el_value &w) {
+      [seqno](ion_api::db_lt_el_value &w) {
         return seqno > static_cast<BlockSeqno>(w.id_->seqno_)
                    ? 1
                    : seqno == static_cast<BlockSeqno>(w.id_->seqno_) ? 0 : -1;
@@ -524,25 +524,25 @@ void ArchiveSlice::get_block_by_unix_time(AccountIdPrefixFull account_id, UnixTi
                                           td::Promise<ConstBlockHandle> promise) {
   return get_block_common(
       account_id,
-      [ts](ton_api::db_lt_desc_value &w) {
+      [ts](ion_api::db_lt_desc_value &w) {
         return ts > static_cast<UnixTime>(w.last_ts_) ? 1 : ts == static_cast<UnixTime>(w.last_ts_) ? 0 : -1;
       },
-      [ts](ton_api::db_lt_el_value &w) {
+      [ts](ion_api::db_lt_el_value &w) {
         return ts > static_cast<UnixTime>(w.ts_) ? 1 : ts == static_cast<UnixTime>(w.ts_) ? 0 : -1;
       },
       false, std::move(promise));
 }
 
 td::BufferSlice ArchiveSlice::get_db_key_lt_desc(ShardIdFull shard) {
-  return create_serialize_tl_object<ton_api::db_lt_desc_key>(shard.workchain, shard.shard);
+  return create_serialize_tl_object<ion_api::db_lt_desc_key>(shard.workchain, shard.shard);
 }
 
 td::BufferSlice ArchiveSlice::get_db_key_lt_el(ShardIdFull shard, td::uint32 idx) {
-  return create_serialize_tl_object<ton_api::db_lt_el_key>(shard.workchain, shard.shard, idx);
+  return create_serialize_tl_object<ion_api::db_lt_el_key>(shard.workchain, shard.shard, idx);
 }
 
 td::BufferSlice ArchiveSlice::get_db_key_block_info(BlockIdExt block_id) {
-  return create_serialize_tl_object<ton_api::db_blockdb_key_value>(create_tl_block_id(block_id));
+  return create_serialize_tl_object<ion_api::db_blockdb_key_value>(create_tl_block_id(block_id));
 }
 
 void ArchiveSlice::get_slice(td::uint64 archive_id, td::uint64 offset, td::uint32 limit,
@@ -783,7 +783,7 @@ td::Result<ArchiveSlice::PackageInfo *> ArchiveSlice::choose_package(BlockSeqno 
     shard_prefix = ShardIdFull{masterchainId};
   } else if (!shard_prefix.is_masterchain()) {
     shard_prefix.shard |= 1;  // In case length is < split depth
-    shard_prefix = ton::shard_prefix(shard_prefix, shard_split_depth_);
+    shard_prefix = ion::shard_prefix(shard_prefix, shard_split_depth_);
   }
   auto it = id_to_package_.find({masterchain_seqno, shard_prefix});
   if (it == id_to_package_.end()) {
@@ -877,7 +877,7 @@ BlockSeqno ArchiveSlice::max_masterchain_seqno() {
   if (F.move_as_ok() == td::KeyValue::GetStatus::NotFound) {
     return 0;
   }
-  auto G = fetch_tl_object<ton_api::db_lt_desc_value>(value, true);
+  auto G = fetch_tl_object<ion_api::db_lt_desc_value>(value, true);
   G.ensure();
   auto g = G.move_as_ok();
   if (g->first_idx_ == g->last_idx_) {
@@ -888,7 +888,7 @@ BlockSeqno ArchiveSlice::max_masterchain_seqno() {
   F = kv_->get(db_key, value);
   F.ensure();
   CHECK(F.move_as_ok() == td::KeyValue::GetStatus::Ok);
-  auto E = fetch_tl_object<ton_api::db_lt_el_value>(td::BufferSlice{value}, true);
+  auto E = fetch_tl_object<ion_api::db_lt_el_value>(td::BufferSlice{value}, true);
   E.ensure();
   auto e = E.move_as_ok();
   return e->id_->seqno_;
@@ -968,7 +968,7 @@ void ArchiveSlice::truncate_shard(BlockSeqno masterchain_seqno, ShardIdFull shar
   if (F.move_as_ok() == td::KeyValue::GetStatus::NotFound) {
     return;
   }
-  auto G = fetch_tl_object<ton_api::db_lt_desc_value>(value, true);
+  auto G = fetch_tl_object<ion_api::db_lt_desc_value>(value, true);
   G.ensure();
   auto g = G.move_as_ok();
   if (g->first_idx_ == g->last_idx_) {
@@ -981,7 +981,7 @@ void ArchiveSlice::truncate_shard(BlockSeqno masterchain_seqno, ShardIdFull shar
     F = kv_->get(db_key, value);
     F.ensure();
     CHECK(F.move_as_ok() == td::KeyValue::GetStatus::Ok);
-    auto E = fetch_tl_object<ton_api::db_lt_el_value>(value, true);
+    auto E = fetch_tl_object<ion_api::db_lt_el_value>(value, true);
     E.ensure();
     auto e = E.move_as_ok();
 
@@ -1014,22 +1014,22 @@ void ArchiveSlice::truncate(BlockSeqno masterchain_seqno, ConstBlockHandle, td::
   std::map<ShardIdFull, std::shared_ptr<Package>> new_packages;
 
   std::string value;
-  auto status_key = create_serialize_tl_object<ton_api::db_lt_status_key>();
+  auto status_key = create_serialize_tl_object<ion_api::db_lt_status_key>();
   auto R = kv_->get(status_key, value);
   R.ensure();
 
-  auto F = fetch_tl_object<ton_api::db_lt_status_value>(value, true);
+  auto F = fetch_tl_object<ion_api::db_lt_status_value>(value, true);
   F.ensure();
   auto f = F.move_as_ok();
 
   kv_->begin_transaction().ensure();
   for (int i = 0; i < f->total_shards_; i++) {
-    auto shard_key = create_serialize_tl_object<ton_api::db_lt_shard_key>(i);
+    auto shard_key = create_serialize_tl_object<ion_api::db_lt_shard_key>(i);
     R = kv_->get(shard_key, value);
     R.ensure();
     CHECK(R.move_as_ok() == td::KeyValue::GetStatus::Ok);
 
-    auto G = fetch_tl_object<ton_api::db_lt_shard_value>(value, true);
+    auto G = fetch_tl_object<ion_api::db_lt_shard_value>(value, true);
     G.ensure();
     auto g = G.move_as_ok();
     ShardIdFull shard{g->workchain_, static_cast<td::uint64>(g->shard_)};
@@ -1157,4 +1157,4 @@ void ArchiveLru::enforce_limit() {
 
 }  // namespace validator
 
-}  // namespace ton
+}  // namespace ion

@@ -1,0 +1,30 @@
+cell pack_jetion_wallet_data(int balance, slice owner_address, slice jetion_master_address, cell jetion_wallet_code) inline {
+   return  begin_cell()
+            .store_coins(balance)
+            .store_slice(owner_address)
+            .store_slice(jetion_master_address)
+            .store_ref(jetion_wallet_code)
+           .end_cell();
+}
+
+cell calculate_jetion_wallet_state_init(slice owner_address, slice jetion_master_address, cell jetion_wallet_code) inline {
+  return begin_cell()
+          .store_uint(0, 2)
+          .store_dict(jetion_wallet_code)
+          .store_dict(pack_jetion_wallet_data(0, owner_address, jetion_master_address, jetion_wallet_code))
+          .store_uint(0, 1)
+         .end_cell();
+}
+
+slice calculate_jetion_wallet_address(cell state_init) inline {
+  return begin_cell().store_uint(4, 3)
+                     .store_int(workchain(), 8)
+                     .store_uint(cell_hash(state_init), 256)
+                     .end_cell()
+                     .begin_parse();
+}
+
+slice calculate_user_jetion_wallet_address(slice owner_address, slice jetion_master_address, cell jetion_wallet_code) inline {
+  return calculate_jetion_wallet_address(calculate_jetion_wallet_state_init(owner_address, jetion_master_address, jetion_wallet_code));
+}
+

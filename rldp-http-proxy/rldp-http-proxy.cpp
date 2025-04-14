@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain source code.
+    This file is part of ION Blockchain source code.
 
-    TON Blockchain is free software; you can redistribute it and/or
+    ION Blockchain is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
     as published by the Free Software Foundation; either version 2
     of the License, or (at your option) any later version.
 
-    TON Blockchain is distributed in the hope that it will be useful,
+    ION Blockchain is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with TON Blockchain.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain.  If not, see <http://www.gnu.org/licenses/>.
 
     In addition, as a special exception, the copyright holders give permission
     to link the code of portions of this program with the OpenSSL library.
@@ -34,7 +34,7 @@
 #include "td/utils/Random.h"
 #include "td/utils/filesystem.h"
 
-#include "auto/tl/ton_api_json.h"
+#include "auto/tl/ion_api_json.h"
 #include "auto/tl/tonlib_api.hpp"
 
 #include "td/actor/MultiPromise.h"
@@ -65,33 +65,33 @@
 
 class RldpHttpProxy;
 
-class RldpDispatcher : public ton::adnl::AdnlSenderInterface {
+class RldpDispatcher : public ion::adnl::AdnlSenderInterface {
  public:
-  RldpDispatcher(td::actor::ActorId<ton::rldp::Rldp> rldp, td::actor::ActorId<ton::rldp2::Rldp> rldp2)
+  RldpDispatcher(td::actor::ActorId<ion::rldp::Rldp> rldp, td::actor::ActorId<ion::rldp2::Rldp> rldp2)
       : rldp_(std::move(rldp)), rldp2_(std::move(rldp2)) {
   }
 
-  void send_message(ton::adnl::AdnlNodeIdShort src, ton::adnl::AdnlNodeIdShort dst, td::BufferSlice data) override {
-    td::actor::send_closure(dispatch(dst), &ton::adnl::AdnlSenderInterface::send_message, src, dst, std::move(data));
+  void send_message(ion::adnl::AdnlNodeIdShort src, ion::adnl::AdnlNodeIdShort dst, td::BufferSlice data) override {
+    td::actor::send_closure(dispatch(dst), &ion::adnl::AdnlSenderInterface::send_message, src, dst, std::move(data));
   }
 
-  void send_query(ton::adnl::AdnlNodeIdShort src, ton::adnl::AdnlNodeIdShort dst, std::string name,
+  void send_query(ion::adnl::AdnlNodeIdShort src, ion::adnl::AdnlNodeIdShort dst, std::string name,
                   td::Promise<td::BufferSlice> promise, td::Timestamp timeout, td::BufferSlice data) override {
-    td::actor::send_closure(dispatch(dst), &ton::adnl::AdnlSenderInterface::send_query, src, dst, std::move(name),
+    td::actor::send_closure(dispatch(dst), &ion::adnl::AdnlSenderInterface::send_query, src, dst, std::move(name),
                             std::move(promise), timeout, std::move(data));
   }
-  void send_query_ex(ton::adnl::AdnlNodeIdShort src, ton::adnl::AdnlNodeIdShort dst, std::string name,
+  void send_query_ex(ion::adnl::AdnlNodeIdShort src, ion::adnl::AdnlNodeIdShort dst, std::string name,
                      td::Promise<td::BufferSlice> promise, td::Timestamp timeout, td::BufferSlice data,
                      td::uint64 max_answer_size) override {
-    td::actor::send_closure(dispatch(dst), &ton::adnl::AdnlSenderInterface::send_query_ex, src, dst, std::move(name),
+    td::actor::send_closure(dispatch(dst), &ion::adnl::AdnlSenderInterface::send_query_ex, src, dst, std::move(name),
                             std::move(promise), timeout, std::move(data), max_answer_size);
   }
-  void get_conn_ip_str(ton::adnl::AdnlNodeIdShort l_id, ton::adnl::AdnlNodeIdShort p_id,
+  void get_conn_ip_str(ion::adnl::AdnlNodeIdShort l_id, ion::adnl::AdnlNodeIdShort p_id,
                        td::Promise<td::string> promise) override {
-    td::actor::send_closure(rldp_, &ton::adnl::AdnlSenderInterface::get_conn_ip_str, l_id, p_id, std::move(promise));
+    td::actor::send_closure(rldp_, &ion::adnl::AdnlSenderInterface::get_conn_ip_str, l_id, p_id, std::move(promise));
   }
 
-  void set_supports_rldp2(ton::adnl::AdnlNodeIdShort dst, bool supports) {
+  void set_supports_rldp2(ion::adnl::AdnlNodeIdShort dst, bool supports) {
     if (supports) {
       supports_rldp2_.insert(dst);
     } else {
@@ -100,11 +100,11 @@ class RldpDispatcher : public ton::adnl::AdnlSenderInterface {
   }
 
  private:
-  td::actor::ActorId<ton::rldp::Rldp> rldp_;
-  td::actor::ActorId<ton::rldp2::Rldp> rldp2_;
-  std::set<ton::adnl::AdnlNodeIdShort> supports_rldp2_;
+  td::actor::ActorId<ion::rldp::Rldp> rldp_;
+  td::actor::ActorId<ion::rldp2::Rldp> rldp2_;
+  std::set<ion::adnl::AdnlNodeIdShort> supports_rldp2_;
 
-  td::actor::ActorId<ton::adnl::AdnlSenderInterface> dispatch(ton::adnl::AdnlNodeIdShort dst) const {
+  td::actor::ActorId<ion::adnl::AdnlSenderInterface> dispatch(ion::adnl::AdnlNodeIdShort dst) const {
     if (supports_rldp2_.count(dst)) {
       return rldp2_;
     }
@@ -115,15 +115,15 @@ class RldpDispatcher : public ton::adnl::AdnlSenderInterface {
 class HttpRemote : public td::actor::Actor {
  public:
   struct Query {
-    std::unique_ptr<ton::http::HttpRequest> request;
-    std::shared_ptr<ton::http::HttpPayload> payload;
+    std::unique_ptr<ion::http::HttpRequest> request;
+    std::shared_ptr<ion::http::HttpPayload> payload;
     td::Timestamp timeout;
-    td::Promise<std::pair<std::unique_ptr<ton::http::HttpResponse>, std::shared_ptr<ton::http::HttpPayload>>> promise;
+    td::Promise<std::pair<std::unique_ptr<ion::http::HttpResponse>, std::shared_ptr<ion::http::HttpPayload>>> promise;
   };
   HttpRemote(td::IPAddress addr) : addr_(addr) {
   }
   void start_up() override {
-    class Cb : public ton::http::HttpClient::Callback {
+    class Cb : public ion::http::HttpClient::Callback {
      public:
       Cb(td::actor::ActorId<HttpRemote> id) : id_(id) {
       }
@@ -137,49 +137,49 @@ class HttpRemote : public td::actor::Actor {
      private:
       td::actor::ActorId<HttpRemote> id_;
     };
-    client_ = ton::http::HttpClient::create_multi("", addr_, 1000, 100, std::make_shared<Cb>(actor_id(this)));
+    client_ = ion::http::HttpClient::create_multi("", addr_, 1000, 100, std::make_shared<Cb>(actor_id(this)));
   }
   void set_ready(bool ready) {
     ready_ = ready;
   }
   void receive_request(
-      std::unique_ptr<ton::http::HttpRequest> request, std::shared_ptr<ton::http::HttpPayload> payload,
-      td::Promise<std::pair<std::unique_ptr<ton::http::HttpResponse>, std::shared_ptr<ton::http::HttpPayload>>>
+      std::unique_ptr<ion::http::HttpRequest> request, std::shared_ptr<ion::http::HttpPayload> payload,
+      td::Promise<std::pair<std::unique_ptr<ion::http::HttpResponse>, std::shared_ptr<ion::http::HttpPayload>>>
           promise) {
     if (ready_) {
       bool keep = request->keep_alive();
       auto P = td::PromiseCreator::lambda(
           [promise = std::move(promise), keep](
-              td::Result<std::pair<std::unique_ptr<ton::http::HttpResponse>, std::shared_ptr<ton::http::HttpPayload>>>
+              td::Result<std::pair<std::unique_ptr<ion::http::HttpResponse>, std::shared_ptr<ion::http::HttpPayload>>>
                   R) mutable {
             if (R.is_error()) {
               promise.set_error(R.move_as_error());
             } else {
               auto v = R.move_as_ok();
               v.first->set_keep_alive(keep);
-              if (v.second->payload_type() != ton::http::HttpPayload::PayloadType::pt_empty &&
+              if (v.second->payload_type() != ion::http::HttpPayload::PayloadType::pt_empty &&
                   !v.first->found_content_length() && !v.first->found_transfer_encoding()) {
-                v.first->add_header(ton::http::HttpHeader{"Transfer-Encoding", "Chunked"});
+                v.first->add_header(ion::http::HttpHeader{"Transfer-Encoding", "Chunked"});
               }
               promise.set_value(std::move(v));
             }
           });
-      td::actor::send_closure(client_, &ton::http::HttpClient::send_request, std::move(request), std::move(payload),
+      td::actor::send_closure(client_, &ion::http::HttpClient::send_request, std::move(request), std::move(payload),
                               td::Timestamp::never(), std::move(P));
     } else {
-      ton::http::answer_error(ton::http::HttpStatusCode::status_bad_request, "", std::move(promise));
+      ion::http::answer_error(ion::http::HttpStatusCode::status_bad_request, "", std::move(promise));
     }
   }
 
  private:
   td::IPAddress addr_;
   bool ready_ = true;
-  td::actor::ActorOwn<ton::http::HttpClient> client_;
+  td::actor::ActorOwn<ion::http::HttpClient> client_;
 };
 
 td::BufferSlice create_error_response(const std::string &proto_version, int code, const std::string &reason) {
-  return ton::create_serialize_tl_object<ton::ton_api::http_response>(
-      proto_version, code, reason, std::vector<ton::tl_object_ptr<ton::ton_api::http_header>>(), true);
+  return ion::create_serialize_tl_object<ion::ion_api::http_response>(
+      proto_version, code, reason, std::vector<ion::tl_object_ptr<ion::ion_api::http_header>>(), true);
 }
 
 const std::string PROXY_SITE_VERISON_HEADER_NAME = "Ton-Proxy-Site-Version";
@@ -195,10 +195,10 @@ using RegisteredPayloadSenderGuard =
 
 class HttpRldpPayloadReceiver : public td::actor::Actor {
  public:
-  HttpRldpPayloadReceiver(std::shared_ptr<ton::http::HttpPayload> payload, td::Bits256 transfer_id,
-                          ton::adnl::AdnlNodeIdShort src, ton::adnl::AdnlNodeIdShort local_id,
-                          td::actor::ActorId<ton::adnl::Adnl> adnl,
-                          td::actor::ActorId<ton::adnl::AdnlSenderInterface> rldp, bool is_tunnel = false)
+  HttpRldpPayloadReceiver(std::shared_ptr<ion::http::HttpPayload> payload, td::Bits256 transfer_id,
+                          ion::adnl::AdnlNodeIdShort src, ion::adnl::AdnlNodeIdShort local_id,
+                          td::actor::ActorId<ion::adnl::Adnl> adnl,
+                          td::actor::ActorId<ion::adnl::AdnlSenderInterface> rldp, bool is_tunnel = false)
       : payload_(std::move(payload))
       , id_(transfer_id)
       , src_(src)
@@ -209,7 +209,7 @@ class HttpRldpPayloadReceiver : public td::actor::Actor {
   }
 
   void start_up() override {
-    class Cb : public ton::http::HttpPayload::Callback {
+    class Cb : public ion::http::HttpPayload::Callback {
      public:
       Cb(td::actor::ActorId<HttpRldpPayloadReceiver> id) : self_id_(id) {
       }
@@ -252,16 +252,16 @@ class HttpRldpPayloadReceiver : public td::actor::Actor {
       }
     });
 
-    auto f = ton::create_serialize_tl_object<ton::ton_api::http_getNextPayloadPart>(
+    auto f = ion::create_serialize_tl_object<ion::ion_api::http_getNextPayloadPart>(
         id_, seqno_++, static_cast<td::int32>(chunk_size()));
     auto timeout = td::Timestamp::in(is_tunnel_ ? 60.0 : 15.0);
-    td::actor::send_closure(rldp_, &ton::adnl::AdnlSenderInterface::send_query_ex, local_id_, src_, "payload part",
+    td::actor::send_closure(rldp_, &ion::adnl::AdnlSenderInterface::send_query_ex, local_id_, src_, "payload part",
                             std::move(P), timeout, std::move(f), 2 * chunk_size() + 1024);
   }
 
   void add_data(td::BufferSlice data) {
     LOG(INFO) << "HttpPayloadReceiver: received answer (size " << data.size() << ")";
-    auto F = ton::fetch_tl_object<ton::ton_api::http_payloadPart>(data, true);
+    auto F = ion::fetch_tl_object<ion::ion_api::http_payloadPart>(data, true);
     if (F.is_error()) {
       abort_query(F.move_as_error());
       return;
@@ -273,7 +273,7 @@ class HttpRldpPayloadReceiver : public td::actor::Actor {
       payload_->add_chunk(std::move(f->data_));
     }
     for (auto &x : f->trailer_) {
-      ton::http::HttpHeader h{x->name_, x->value_};
+      ion::http::HttpHeader h{x->name_, x->value_};
       auto S = h.basic_check();
       if (S.is_error()) {
         abort_query(S.move_as_error());
@@ -309,14 +309,14 @@ class HttpRldpPayloadReceiver : public td::actor::Actor {
     return (1 << 21) - (1 << 11);
   }
 
-  std::shared_ptr<ton::http::HttpPayload> payload_;
+  std::shared_ptr<ion::http::HttpPayload> payload_;
 
   td::Bits256 id_;
 
-  ton::adnl::AdnlNodeIdShort src_;
-  ton::adnl::AdnlNodeIdShort local_id_;
-  td::actor::ActorId<ton::adnl::Adnl> adnl_;
-  td::actor::ActorId<ton::adnl::AdnlSenderInterface> rldp_;
+  ion::adnl::AdnlNodeIdShort src_;
+  ion::adnl::AdnlNodeIdShort local_id_;
+  td::actor::ActorId<ion::adnl::Adnl> adnl_;
+  td::actor::ActorId<ion::adnl::AdnlSenderInterface> rldp_;
 
   bool sent_ = false;
   td::int32 seqno_ = 0;
@@ -325,9 +325,9 @@ class HttpRldpPayloadReceiver : public td::actor::Actor {
 
 class HttpRldpPayloadSender : public td::actor::Actor {
  public:
-  HttpRldpPayloadSender(std::shared_ptr<ton::http::HttpPayload> payload, td::Bits256 transfer_id,
-                        ton::adnl::AdnlNodeIdShort local_id, td::actor::ActorId<ton::adnl::Adnl> adnl,
-                        td::actor::ActorId<ton::adnl::AdnlSenderInterface> rldp,
+  HttpRldpPayloadSender(std::shared_ptr<ion::http::HttpPayload> payload, td::Bits256 transfer_id,
+                        ion::adnl::AdnlNodeIdShort local_id, td::actor::ActorId<ion::adnl::Adnl> adnl,
+                        td::actor::ActorId<ion::adnl::AdnlSenderInterface> rldp,
                         td::actor::ActorId<RldpHttpProxy> proxy, bool is_tunnel = false)
       : payload_(std::move(payload))
       , id_(transfer_id)
@@ -343,7 +343,7 @@ class HttpRldpPayloadSender : public td::actor::Actor {
     auto S = td::MutableSlice{x};
     CHECK(S.size() == 36);
 
-    auto id = ton::ton_api::http_getNextPayloadPart::ID;
+    auto id = ion::ion_api::http_getNextPayloadPart::ID;
     S.copy_from(td::Slice(reinterpret_cast<const td::uint8 *>(&id), 4));
     S.remove_prefix(4);
     S.copy_from(id_.as_slice());
@@ -366,7 +366,7 @@ class HttpRldpPayloadSender : public td::actor::Actor {
     if (payload_->is_error()) {
       return;
     }
-    if (payload_->parse_completed() || payload_->ready_bytes() >= ton::http::HttpRequest::low_watermark()) {
+    if (payload_->parse_completed() || payload_->ready_bytes() >= ion::http::HttpRequest::low_watermark()) {
       answer_query();
     } else if (!is_tunnel_ || payload_->ready_bytes() == 0) {
       return;
@@ -374,7 +374,7 @@ class HttpRldpPayloadSender : public td::actor::Actor {
       answer_query();
     } else if (!active_timer_) {
       active_timer_ = true;
-      ton::delay_action(
+      ion::delay_action(
           [SelfId = actor_id(this)]() {
             td::actor::send_closure(SelfId, &HttpRldpPayloadSender::try_answer_query, true);
           },
@@ -382,7 +382,7 @@ class HttpRldpPayloadSender : public td::actor::Actor {
     }
   }
 
-  void send_data(ton::tl_object_ptr<ton::ton_api::http_getNextPayloadPart> query,
+  void send_data(ion::tl_object_ptr<ion::ion_api::http_getNextPayloadPart> query,
                  td::Promise<td::BufferSlice> promise) {
     CHECK(query->id_ == id_);
     if (query->seqno_ != seqno_) {
@@ -410,7 +410,7 @@ class HttpRldpPayloadSender : public td::actor::Actor {
     try_answer_query(false);
   }
 
-  void receive_query(ton::tl_object_ptr<ton::ton_api::http_getNextPayloadPart> f,
+  void receive_query(ion::tl_object_ptr<ion::ion_api::http_getNextPayloadPart> f,
                      td::Promise<td::BufferSlice> promise) {
     send_data(std::move(f), std::move(promise));
   }
@@ -429,7 +429,7 @@ class HttpRldpPayloadSender : public td::actor::Actor {
   }
 
   void answer_query() {
-    cur_query_promise_.set_value(ton::serialize_tl_object(payload_->store_tl(cur_query_size_), true));
+    cur_query_promise_.set_value(ion::serialize_tl_object(payload_->store_tl(cur_query_size_), true));
     if (payload_->written()) {
       LOG(INFO) << "sent HTTP payload";
       stop();
@@ -449,16 +449,16 @@ class HttpRldpPayloadSender : public td::actor::Actor {
     return (1 << 21) - (1 << 11);
   }
 
-  std::shared_ptr<ton::http::HttpPayload> payload_;
+  std::shared_ptr<ion::http::HttpPayload> payload_;
 
   td::Bits256 id_;
   RegisteredPayloadSenderGuard guard_;
 
   td::int32 seqno_ = 0;
 
-  ton::adnl::AdnlNodeIdShort local_id_;
-  td::actor::ActorId<ton::adnl::Adnl> adnl_;
-  td::actor::ActorId<ton::adnl::AdnlSenderInterface> rldp_;
+  ion::adnl::AdnlNodeIdShort local_id_;
+  td::actor::ActorId<ion::adnl::Adnl> adnl_;
+  td::actor::ActorId<ion::adnl::AdnlSenderInterface> rldp_;
   td::actor::ActorId<RldpHttpProxy> proxy_;
 
   size_t cur_query_size_;
@@ -471,12 +471,12 @@ class RldpHttpProxy;
 class TcpToRldpRequestSender : public td::actor::Actor {
  public:
   TcpToRldpRequestSender(
-      ton::adnl::AdnlNodeIdShort local_id, std::string host, std::unique_ptr<ton::http::HttpRequest> request,
-      std::shared_ptr<ton::http::HttpPayload> request_payload,
-      td::Promise<std::pair<std::unique_ptr<ton::http::HttpResponse>, std::shared_ptr<ton::http::HttpPayload>>> promise,
-      td::actor::ActorId<ton::adnl::Adnl> adnl, td::actor::ActorId<ton::dht::Dht> dht,
-      td::actor::ActorId<ton::adnl::AdnlSenderInterface> rldp, td::actor::ActorId<RldpHttpProxy> proxy,
-      td::actor::ActorId<DNSResolver> dns_resolver, ton::adnl::AdnlNodeIdShort storage_gateway)
+      ion::adnl::AdnlNodeIdShort local_id, std::string host, std::unique_ptr<ion::http::HttpRequest> request,
+      std::shared_ptr<ion::http::HttpPayload> request_payload,
+      td::Promise<std::pair<std::unique_ptr<ion::http::HttpResponse>, std::shared_ptr<ion::http::HttpPayload>>> promise,
+      td::actor::ActorId<ion::adnl::Adnl> adnl, td::actor::ActorId<ion::dht::Dht> dht,
+      td::actor::ActorId<ion::adnl::AdnlSenderInterface> rldp, td::actor::ActorId<RldpHttpProxy> proxy,
+      td::actor::ActorId<DNSResolver> dns_resolver, ion::adnl::AdnlNodeIdShort storage_gateway)
       : local_id_(local_id)
       , host_(std::move(host))
       , request_(std::move(request))
@@ -497,16 +497,16 @@ class TcpToRldpRequestSender : public td::actor::Actor {
   }
 
   void resolve(std::string host);
-  void resolved(ton::adnl::AdnlNodeIdShort id);
+  void resolved(ion::adnl::AdnlNodeIdShort id);
 
   void got_result(td::BufferSlice data) {
-    auto F = ton::fetch_tl_object<ton::ton_api::http_response>(data, true);
+    auto F = ion::fetch_tl_object<ion::ion_api::http_response>(data, true);
     if (F.is_error()) {
       abort_query(F.move_as_error());
       return;
     }
     auto f = F.move_as_ok();
-    auto R = ton::http::HttpResponse::create(f->http_version_, f->status_code_, f->reason_, f->no_payload_, true,
+    auto R = ion::http::HttpResponse::create(f->http_version_, f->status_code_, f->reason_, f->no_payload_, true,
                                              is_tunnel() && f->status_code_ == 200);
     if (R.is_error()) {
       abort_query(R.move_as_error());
@@ -514,7 +514,7 @@ class TcpToRldpRequestSender : public td::actor::Actor {
     }
     response_ = R.move_as_ok();
     for (auto &e : f->headers_) {
-      ton::http::HttpHeader h{e->name_, e->value_};
+      ion::http::HttpHeader h{e->name_, e->value_};
       auto S = h.basic_check();
       if (S.is_error()) {
         abort_query(S.move_as_error());
@@ -567,33 +567,33 @@ class TcpToRldpRequestSender : public td::actor::Actor {
 
   td::Bits256 id_;
 
-  ton::adnl::AdnlNodeIdShort local_id_;
+  ion::adnl::AdnlNodeIdShort local_id_;
   std::string host_;
-  ton::adnl::AdnlNodeIdShort dst_;
+  ion::adnl::AdnlNodeIdShort dst_;
 
-  std::unique_ptr<ton::http::HttpRequest> request_;
-  std::shared_ptr<ton::http::HttpPayload> request_payload_;
-  ton::tl_object_ptr<ton::ton_api::http_request> request_tl_;
+  std::unique_ptr<ion::http::HttpRequest> request_;
+  std::shared_ptr<ion::http::HttpPayload> request_payload_;
+  ion::tl_object_ptr<ion::ion_api::http_request> request_tl_;
 
-  td::Promise<std::pair<std::unique_ptr<ton::http::HttpResponse>, std::shared_ptr<ton::http::HttpPayload>>> promise_;
+  td::Promise<std::pair<std::unique_ptr<ion::http::HttpResponse>, std::shared_ptr<ion::http::HttpPayload>>> promise_;
 
-  td::actor::ActorId<ton::adnl::Adnl> adnl_;
-  td::actor::ActorId<ton::dht::Dht> dht_;
-  td::actor::ActorId<ton::adnl::AdnlSenderInterface> rldp_;
+  td::actor::ActorId<ion::adnl::Adnl> adnl_;
+  td::actor::ActorId<ion::dht::Dht> dht_;
+  td::actor::ActorId<ion::adnl::AdnlSenderInterface> rldp_;
   td::actor::ActorId<RldpHttpProxy> proxy_;
   td::actor::ActorId<DNSResolver> dns_resolver_;
-  ton::adnl::AdnlNodeIdShort storage_gateway_ = ton::adnl::AdnlNodeIdShort::zero();
+  ion::adnl::AdnlNodeIdShort storage_gateway_ = ion::adnl::AdnlNodeIdShort::zero();
 
   bool dns_resolve_sent_ = false;
 
-  std::unique_ptr<ton::http::HttpResponse> response_;
-  std::shared_ptr<ton::http::HttpPayload> response_payload_;
+  std::unique_ptr<ion::http::HttpResponse> response_;
+  std::shared_ptr<ion::http::HttpPayload> response_payload_;
 };
 
 class RldpTcpTunnel : public td::actor::Actor, private td::ObserverBase {
  public:
-  RldpTcpTunnel(td::Bits256 transfer_id, ton::adnl::AdnlNodeIdShort src, ton::adnl::AdnlNodeIdShort local_id,
-                td::actor::ActorId<ton::adnl::Adnl> adnl, td::actor::ActorId<ton::adnl::AdnlSenderInterface> rldp,
+  RldpTcpTunnel(td::Bits256 transfer_id, ion::adnl::AdnlNodeIdShort src, ion::adnl::AdnlNodeIdShort local_id,
+                td::actor::ActorId<ion::adnl::Adnl> adnl, td::actor::ActorId<ion::adnl::AdnlSenderInterface> rldp,
                 td::actor::ActorId<RldpHttpProxy> proxy, td::SocketFd fd)
       : id_(transfer_id)
       , src_(src)
@@ -628,13 +628,13 @@ class RldpTcpTunnel : public td::actor::Actor, private td::ObserverBase {
       td::actor::send_closure(SelfId, &RldpTcpTunnel::got_data_from_rldp, std::move(R));
     });
 
-    auto f = ton::create_serialize_tl_object<ton::ton_api::http_getNextPayloadPart>(id_, out_seqno_++,
+    auto f = ion::create_serialize_tl_object<ion::ion_api::http_getNextPayloadPart>(id_, out_seqno_++,
                                                                                     (1 << 21) - (1 << 11));
-    td::actor::send_closure(rldp_, &ton::adnl::AdnlSenderInterface::send_query_ex, local_id_, src_, "payload part",
+    td::actor::send_closure(rldp_, &ion::adnl::AdnlSenderInterface::send_query_ex, local_id_, src_, "payload part",
                             std::move(P), td::Timestamp::in(60.0), std::move(f), (1 << 21) + 1024);
   }
 
-  void receive_query(ton::tl_object_ptr<ton::ton_api::http_getNextPayloadPart> f,
+  void receive_query(ion::tl_object_ptr<ion::ion_api::http_getNextPayloadPart> f,
                      td::Promise<td::BufferSlice> promise) {
     if (cur_promise_) {
       LOG(INFO) << "failed to process query: previous query is active";
@@ -661,7 +661,7 @@ class RldpTcpTunnel : public td::actor::Actor, private td::ObserverBase {
     td::BufferSlice data = R.move_as_ok();
     LOG(INFO) << "RldpTcpTunnel: received data from rldp: size=" << data.size();
     sent_request_ = false;
-    auto F = ton::fetch_tl_object<ton::ton_api::http_payloadPart>(data, true);
+    auto F = ion::fetch_tl_object<ion::ion_api::http_payloadPart>(data, true);
     if (F.is_error()) {
       abort(F.move_as_error());
       return;
@@ -700,10 +700,10 @@ class RldpTcpTunnel : public td::actor::Actor, private td::ObserverBase {
     }
     auto &input = fd_.input_buffer();
     if (cur_promise_ && (!input.empty() || close_ || allow_empty)) {
-      if (!from_timer && !close_ && !allow_empty && input.size() < ton::http::HttpRequest::low_watermark()) {
+      if (!from_timer && !close_ && !allow_empty && input.size() < ion::http::HttpRequest::low_watermark()) {
         if (!active_timer_) {
           active_timer_ = true;
-          ton::delay_action(
+          ion::delay_action(
               [SelfId = actor_id(this)]() {
                 td::actor::send_closure(SelfId, &RldpTcpTunnel::answer_query, false, true);
               },
@@ -715,8 +715,8 @@ class RldpTcpTunnel : public td::actor::Actor, private td::ObserverBase {
       td::BufferSlice data(s);
       LOG(INFO) << "RldpTcpTunnel: sending data to rldp: size=" << data.size();
       input.advance(s, td::as_mutable_slice(data));
-      cur_promise_.set_result(ton::create_serialize_tl_object<ton::ton_api::http_payloadPart>(
-          std::move(data), std::vector<ton::tl_object_ptr<ton::ton_api::http_header>>(), close_));
+      cur_promise_.set_result(ion::create_serialize_tl_object<ion::ion_api::http_payloadPart>(
+          std::move(data), std::vector<ion::tl_object_ptr<ion::ion_api::http_header>>(), close_));
       ++cur_seqno_;
       cur_promise_.reset();
       alarm_timestamp() = td::Timestamp::never();
@@ -745,7 +745,7 @@ class RldpTcpTunnel : public td::actor::Actor, private td::ObserverBase {
     auto S = td::MutableSlice{x};
     CHECK(S.size() == 36);
 
-    auto id = ton::ton_api::http_getNextPayloadPart::ID;
+    auto id = ion::ion_api::http_getNextPayloadPart::ID;
     S.copy_from(td::Slice(reinterpret_cast<const td::uint8 *>(&id), 4));
     S.remove_prefix(4);
     S.copy_from(id_.as_slice());
@@ -755,10 +755,10 @@ class RldpTcpTunnel : public td::actor::Actor, private td::ObserverBase {
   td::Bits256 id_;
   RegisteredPayloadSenderGuard guard_;
 
-  ton::adnl::AdnlNodeIdShort src_;
-  ton::adnl::AdnlNodeIdShort local_id_;
-  td::actor::ActorId<ton::adnl::Adnl> adnl_;
-  td::actor::ActorId<ton::adnl::AdnlSenderInterface> rldp_;
+  ion::adnl::AdnlNodeIdShort src_;
+  ion::adnl::AdnlNodeIdShort local_id_;
+  td::actor::ActorId<ion::adnl::Adnl> adnl_;
+  td::actor::ActorId<ion::adnl::AdnlSenderInterface> rldp_;
   td::actor::ActorId<RldpHttpProxy> proxy_;
 
   td::BufferedFd<td::SocketFd> fd_;
@@ -774,11 +774,11 @@ class RldpTcpTunnel : public td::actor::Actor, private td::ObserverBase {
 
 class RldpToTcpRequestSender : public td::actor::Actor {
  public:
-  RldpToTcpRequestSender(td::Bits256 id, ton::adnl::AdnlNodeIdShort local_id, ton::adnl::AdnlNodeIdShort dst,
-                         std::unique_ptr<ton::http::HttpRequest> request,
-                         std::shared_ptr<ton::http::HttpPayload> request_payload, td::Promise<td::BufferSlice> promise,
-                         td::actor::ActorId<ton::adnl::Adnl> adnl,
-                         td::actor::ActorId<ton::adnl::AdnlSenderInterface> rldp,
+  RldpToTcpRequestSender(td::Bits256 id, ion::adnl::AdnlNodeIdShort local_id, ion::adnl::AdnlNodeIdShort dst,
+                         std::unique_ptr<ion::http::HttpRequest> request,
+                         std::shared_ptr<ion::http::HttpPayload> request_payload, td::Promise<td::BufferSlice> promise,
+                         td::actor::ActorId<ion::adnl::Adnl> adnl,
+                         td::actor::ActorId<ion::adnl::AdnlSenderInterface> rldp,
                          td::actor::ActorId<RldpHttpProxy> proxy, td::actor::ActorId<HttpRemote> remote)
       : id_(id)
       , local_id_(local_id)
@@ -795,7 +795,7 @@ class RldpToTcpRequestSender : public td::actor::Actor {
   void start_up() override {
     auto P = td::PromiseCreator::lambda(
         [SelfId = actor_id(this)](
-            td::Result<std::pair<std::unique_ptr<ton::http::HttpResponse>, std::shared_ptr<ton::http::HttpPayload>>>
+            td::Result<std::pair<std::unique_ptr<ion::http::HttpResponse>, std::shared_ptr<ion::http::HttpPayload>>>
                 R) {
           if (R.is_error()) {
             td::actor::send_closure(SelfId, &RldpToTcpRequestSender::abort_query, R.move_as_error());
@@ -809,12 +809,12 @@ class RldpToTcpRequestSender : public td::actor::Actor {
         .release();
   }
 
-  void got_result(std::pair<std::unique_ptr<ton::http::HttpResponse>, std::shared_ptr<ton::http::HttpPayload>> R) {
+  void got_result(std::pair<std::unique_ptr<ion::http::HttpResponse>, std::shared_ptr<ion::http::HttpPayload>> R) {
     td::actor::create_actor<HttpRldpPayloadSender>("HttpPayloadSender(R)", std::move(R.second), id_, local_id_, adnl_,
                                                    rldp_, proxy_)
         .release();
     R.first->add_header({PROXY_SITE_VERISON_HEADER_NAME, PROXY_VERSION_HEADER});
-    auto f = ton::serialize_tl_object(R.first->store_tl(), true);
+    auto f = ion::serialize_tl_object(R.first->store_tl(), true);
     promise_.set_value(std::move(f));
     stop();
   }
@@ -828,17 +828,17 @@ class RldpToTcpRequestSender : public td::actor::Actor {
  protected:
   td::Bits256 id_;
 
-  ton::adnl::AdnlNodeIdShort local_id_;
-  ton::adnl::AdnlNodeIdShort dst_;
+  ion::adnl::AdnlNodeIdShort local_id_;
+  ion::adnl::AdnlNodeIdShort dst_;
 
-  std::unique_ptr<ton::http::HttpRequest> request_;
-  std::shared_ptr<ton::http::HttpPayload> request_payload_;
+  std::unique_ptr<ion::http::HttpRequest> request_;
+  std::shared_ptr<ion::http::HttpPayload> request_payload_;
   std::string proto_version_;
 
   td::Promise<td::BufferSlice> promise_;
 
-  td::actor::ActorId<ton::adnl::Adnl> adnl_;
-  td::actor::ActorId<ton::adnl::AdnlSenderInterface> rldp_;
+  td::actor::ActorId<ion::adnl::Adnl> adnl_;
+  td::actor::ActorId<ion::adnl::AdnlSenderInterface> rldp_;
   td::actor::ActorId<RldpHttpProxy> proxy_;
 
   td::actor::ActorId<HttpRemote> remote_;
@@ -877,14 +877,14 @@ class RldpHttpProxy : public td::actor::Actor {
     TRY_RESULT_PREFIX(conf_data, td::read_file(global_config_), "failed to read: ");
     TRY_RESULT_PREFIX(conf_json, td::json_decode(conf_data.as_slice()), "failed to parse json: ");
 
-    ton::ton_api::config_global conf;
-    TRY_STATUS_PREFIX(ton::ton_api::from_json(conf, conf_json.get_object()), "json does not fit TL scheme: ");
+    ion::ion_api::config_global conf;
+    TRY_STATUS_PREFIX(ion::ion_api::from_json(conf, conf_json.get_object()), "json does not fit TL scheme: ");
 
     if (!conf.dht_) {
-      return td::Status::Error(ton::ErrorCode::error, "does not contain [dht] section");
+      return td::Status::Error(ion::ErrorCode::error, "does not contain [dht] section");
     }
 
-    TRY_RESULT_PREFIX(dht, ton::dht::Dht::create_global_config(std::move(conf.dht_)), "bad [dht] section: ");
+    TRY_RESULT_PREFIX(dht, ion::dht::Dht::create_global_config(std::move(conf.dht_)), "bad [dht] section: ");
     dht_config_ = std::move(dht);
 
     return td::Status::OK();
@@ -894,18 +894,18 @@ class RldpHttpProxy : public td::actor::Actor {
     for (auto &serv : hosts_) {
       if (serv.first != "*") {
         for (auto &serv_id : server_ids_) {
-          ton::PublicKey key = ton::pubkeys::Unenc{"http." + serv.first};
-          ton::dht::DhtKey dht_key{key.compute_short_id(), "http." + serv.first, 0};
-          auto dht_update_rule = ton::dht::DhtUpdateRuleAnybody::create().move_as_ok();
-          ton::dht::DhtKeyDescription dht_key_description{std::move(dht_key), key, std::move(dht_update_rule),
+          ion::PublicKey key = ion::pubkeys::Unenc{"http." + serv.first};
+          ion::dht::DhtKey dht_key{key.compute_short_id(), "http." + serv.first, 0};
+          auto dht_update_rule = ion::dht::DhtUpdateRuleAnybody::create().move_as_ok();
+          ion::dht::DhtKeyDescription dht_key_description{std::move(dht_key), key, std::move(dht_update_rule),
                                                           td::BufferSlice()};
           dht_key_description.check().ensure();
 
           auto ttl = static_cast<td::uint32>(td::Clocks::system() + 3600);
-          ton::dht::DhtValue dht_value{std::move(dht_key_description), td::BufferSlice{serv_id.as_slice()}, ttl,
+          ion::dht::DhtValue dht_value{std::move(dht_key_description), td::BufferSlice{serv_id.as_slice()}, ttl,
                                        td::BufferSlice("")};
 
-          td::actor::send_closure(dht_, &ton::dht::Dht::set_value, std::move(dht_value), [](td::Unit) {});
+          td::actor::send_closure(dht_, &ion::dht::Dht::set_value, std::move(dht_value), [](td::Unit) {});
         }
       }
     }
@@ -916,7 +916,7 @@ class RldpHttpProxy : public td::actor::Actor {
     store_dht();
   }
 
-  void got_full_id(ton::adnl::AdnlNodeIdShort short_id, ton::adnl::AdnlNodeIdFull full_id) {
+  void got_full_id(ion::adnl::AdnlNodeIdShort short_id, ion::adnl::AdnlNodeIdFull full_id) {
     server_ids_full_[short_id] = full_id;
   }
 
@@ -927,7 +927,7 @@ class RldpHttpProxy : public td::actor::Actor {
       LOG(ERROR) << "DB root is required for server proxy";
       std::_Exit(2);
     }
-    keyring_ = ton::keyring::Keyring::create(is_client_ ? std::string("") : (db_root_ + "/keyring"));
+    keyring_ = ion::keyring::Keyring::create(is_client_ ? std::string("") : (db_root_ + "/keyring"));
     {
       auto S = load_global_config();
       if (S.is_error()) {
@@ -948,21 +948,21 @@ class RldpHttpProxy : public td::actor::Actor {
     ig.add_promise(std::move(P));
     for (auto &x : server_ids_) {
       auto Q = td::PromiseCreator::lambda([promise = ig.get_promise(), SelfId = actor_id(this),
-                                           x](td::Result<ton::PublicKey> R) mutable {
+                                           x](td::Result<ion::PublicKey> R) mutable {
         if (R.is_error()) {
           promise.set_error(R.move_as_error());
         } else {
-          td::actor::send_closure(SelfId, &RldpHttpProxy::got_full_id, x, ton::adnl::AdnlNodeIdFull{R.move_as_ok()});
+          td::actor::send_closure(SelfId, &RldpHttpProxy::got_full_id, x, ion::adnl::AdnlNodeIdFull{R.move_as_ok()});
           promise.set_value(td::Unit());
         }
       });
-      td::actor::send_closure(keyring_, &ton::keyring::Keyring::get_public_key, x.pubkey_hash(), std::move(Q));
+      td::actor::send_closure(keyring_, &ion::keyring::Keyring::get_public_key, x.pubkey_hash(), std::move(Q));
     }
 
     auto conf_dataR = td::read_file(global_config_);
     conf_dataR.ensure();
 
-    ton::tl_object_ptr<tonlib_api::KeyStoreType> key_store;
+    ion::tl_object_ptr<tonlib_api::KeyStoreType> key_store;
     if (db_root_.empty()) {
       key_store = tonlib_api::make_object<tonlib_api::keyStoreTypeInMemory>();
     } else {
@@ -987,35 +987,35 @@ class RldpHttpProxy : public td::actor::Actor {
     }
     {
       adnl_network_manager_ =
-          ton::adnl::AdnlNetworkManager::create(is_client_ ? client_port_ : static_cast<td::uint16>(addr_.get_port()));
-      adnl_ = ton::adnl::Adnl::create(is_client_ ? std::string("") : (db_root_), keyring_.get());
-      td::actor::send_closure(adnl_, &ton::adnl::Adnl::register_network_manager, adnl_network_manager_.get());
-      ton::adnl::AdnlCategoryMask cat_mask;
+          ion::adnl::AdnlNetworkManager::create(is_client_ ? client_port_ : static_cast<td::uint16>(addr_.get_port()));
+      adnl_ = ion::adnl::Adnl::create(is_client_ ? std::string("") : (db_root_), keyring_.get());
+      td::actor::send_closure(adnl_, &ion::adnl::Adnl::register_network_manager, adnl_network_manager_.get());
+      ion::adnl::AdnlCategoryMask cat_mask;
       cat_mask[0] = true;
       if (is_client_) {
         td::IPAddress addr;
         addr.init_host_port("127.0.0.1", client_port_).ensure();
-        td::actor::send_closure(adnl_network_manager_, &ton::adnl::AdnlNetworkManager::add_self_addr, addr,
+        td::actor::send_closure(adnl_network_manager_, &ion::adnl::AdnlNetworkManager::add_self_addr, addr,
                                 std::move(cat_mask), 0);
       } else {
-        td::actor::send_closure(adnl_network_manager_, &ton::adnl::AdnlNetworkManager::add_self_addr, addr_,
+        td::actor::send_closure(adnl_network_manager_, &ion::adnl::AdnlNetworkManager::add_self_addr, addr_,
                                 std::move(cat_mask), 0);
       }
 
-      ton::adnl::AdnlAddressList addr_list;
+      ion::adnl::AdnlAddressList addr_list;
       if (!is_client_) {
-        ton::adnl::AdnlAddress x = ton::adnl::AdnlAddressImpl::create(
-            ton::create_tl_object<ton::ton_api::adnl_address_udp>(addr_.get_ipv4(), addr_.get_port()));
+        ion::adnl::AdnlAddress x = ion::adnl::AdnlAddressImpl::create(
+            ion::create_tl_object<ion::ion_api::adnl_address_udp>(addr_.get_ipv4(), addr_.get_port()));
         addr_list.add_addr(std::move(x));
       }
       addr_list.set_version(static_cast<td::int32>(td::Clocks::system()));
-      addr_list.set_reinit_date(ton::adnl::Adnl::adnl_start_time());
+      addr_list.set_reinit_date(ion::adnl::Adnl::adnl_start_time());
       {
-        auto pk = ton::PrivateKey{ton::privkeys::Ed25519::random()};
+        auto pk = ion::PrivateKey{ion::privkeys::Ed25519::random()};
         auto pub = pk.compute_public_key();
-        td::actor::send_closure(keyring_, &ton::keyring::Keyring::add_key, std::move(pk), true, [](td::Unit) {});
-        local_id_ = ton::adnl::AdnlNodeIdShort{pub.compute_short_id()};
-        td::actor::send_closure(adnl_, &ton::adnl::Adnl::add_id, ton::adnl::AdnlNodeIdFull{pub}, addr_list,
+        td::actor::send_closure(keyring_, &ion::keyring::Keyring::add_key, std::move(pk), true, [](td::Unit) {});
+        local_id_ = ion::adnl::AdnlNodeIdShort{pub.compute_short_id()};
+        td::actor::send_closure(adnl_, &ion::adnl::Adnl::add_id, ion::adnl::AdnlNodeIdFull{pub}, addr_list,
                                 static_cast<td::uint8>(0));
 
         if (server_ids_.size() == 0 && !is_client_) {
@@ -1023,32 +1023,32 @@ class RldpHttpProxy : public td::actor::Actor {
         }
       }
       {
-        auto pk = ton::PrivateKey{ton::privkeys::Ed25519::random()};
+        auto pk = ion::PrivateKey{ion::privkeys::Ed25519::random()};
         auto pub = pk.compute_public_key();
-        td::actor::send_closure(keyring_, &ton::keyring::Keyring::add_key, std::move(pk), true, [](td::Unit) {});
-        dht_id_ = ton::adnl::AdnlNodeIdShort{pub.compute_short_id()};
-        td::actor::send_closure(adnl_, &ton::adnl::Adnl::add_id, ton::adnl::AdnlNodeIdFull{pub}, addr_list,
+        td::actor::send_closure(keyring_, &ion::keyring::Keyring::add_key, std::move(pk), true, [](td::Unit) {});
+        dht_id_ = ion::adnl::AdnlNodeIdShort{pub.compute_short_id()};
+        td::actor::send_closure(adnl_, &ion::adnl::Adnl::add_id, ion::adnl::AdnlNodeIdFull{pub}, addr_list,
                                 static_cast<td::uint8>(0));
       }
       for (auto &serv_id : server_ids_) {
-        td::actor::send_closure(adnl_, &ton::adnl::Adnl::add_id, server_ids_full_[serv_id], addr_list,
+        td::actor::send_closure(adnl_, &ion::adnl::Adnl::add_id, server_ids_full_[serv_id], addr_list,
                                 static_cast<td::uint8>(0));
       }
     }
     {
-      auto D = ton::dht::Dht::create_client(dht_id_, "", dht_config_, keyring_.get(), adnl_.get());
+      auto D = ion::dht::Dht::create_client(dht_id_, "", dht_config_, keyring_.get(), adnl_.get());
       D.ensure();
       dht_ = D.move_as_ok();
-      td::actor::send_closure(adnl_, &ton::adnl::Adnl::register_dht_node, dht_.get());
+      td::actor::send_closure(adnl_, &ion::adnl::Adnl::register_dht_node, dht_.get());
     }
     if (port_) {
-      class Cb : public ton::http::HttpServer::Callback {
+      class Cb : public ion::http::HttpServer::Callback {
        public:
         Cb(td::actor::ActorId<RldpHttpProxy> proxy) : proxy_(proxy) {
         }
         void receive_request(
-            std::unique_ptr<ton::http::HttpRequest> request, std::shared_ptr<ton::http::HttpPayload> payload,
-            td::Promise<std::pair<std::unique_ptr<ton::http::HttpResponse>, std::shared_ptr<ton::http::HttpPayload>>>
+            std::unique_ptr<ion::http::HttpRequest> request, std::shared_ptr<ion::http::HttpPayload> payload,
+            td::Promise<std::pair<std::unique_ptr<ion::http::HttpResponse>, std::shared_ptr<ion::http::HttpPayload>>>
                 promise) override {
           td::actor::send_closure(proxy_, &RldpHttpProxy::receive_http_request, std::move(request), std::move(payload),
                                   std::move(promise));
@@ -1058,17 +1058,17 @@ class RldpHttpProxy : public td::actor::Actor {
         td::actor::ActorId<RldpHttpProxy> proxy_;
       };
 
-      server_ = ton::http::HttpServer::create(port_, std::make_shared<Cb>(actor_id(this)));
+      server_ = ion::http::HttpServer::create(port_, std::make_shared<Cb>(actor_id(this)));
     }
 
-    class AdnlPayloadCb : public ton::adnl::Adnl::Callback {
+    class AdnlPayloadCb : public ion::adnl::Adnl::Callback {
      public:
       AdnlPayloadCb(td::actor::ActorId<RldpHttpProxy> id) : self_id_(id) {
       }
-      void receive_message(ton::adnl::AdnlNodeIdShort src, ton::adnl::AdnlNodeIdShort dst,
+      void receive_message(ion::adnl::AdnlNodeIdShort src, ion::adnl::AdnlNodeIdShort dst,
                            td::BufferSlice data) override {
       }
-      void receive_query(ton::adnl::AdnlNodeIdShort src, ton::adnl::AdnlNodeIdShort dst, td::BufferSlice data,
+      void receive_query(ion::adnl::AdnlNodeIdShort src, ion::adnl::AdnlNodeIdShort dst, td::BufferSlice data,
                          td::Promise<td::BufferSlice> promise) override {
         td::actor::send_closure(self_id_, &RldpHttpProxy::receive_payload_part_request, std::move(data),
                                 std::move(promise));
@@ -1077,31 +1077,31 @@ class RldpHttpProxy : public td::actor::Actor {
      private:
       td::actor::ActorId<RldpHttpProxy> self_id_;
     };
-    class AdnlCapabilitiesCb : public ton::adnl::Adnl::Callback {
+    class AdnlCapabilitiesCb : public ion::adnl::Adnl::Callback {
      public:
       AdnlCapabilitiesCb(td::actor::ActorId<RldpHttpProxy> id) : self_id_(id) {
       }
-      void receive_message(ton::adnl::AdnlNodeIdShort src, ton::adnl::AdnlNodeIdShort dst,
+      void receive_message(ion::adnl::AdnlNodeIdShort src, ion::adnl::AdnlNodeIdShort dst,
                            td::BufferSlice data) override {
       }
-      void receive_query(ton::adnl::AdnlNodeIdShort src, ton::adnl::AdnlNodeIdShort dst, td::BufferSlice data,
+      void receive_query(ion::adnl::AdnlNodeIdShort src, ion::adnl::AdnlNodeIdShort dst, td::BufferSlice data,
                          td::Promise<td::BufferSlice> promise) override {
-        TRY_RESULT_PROMISE(promise, query, ton::fetch_tl_object<ton::ton_api::http_proxy_getCapabilities>(data, true));
-        promise.set_result(ton::create_serialize_tl_object<ton::ton_api::http_proxy_capabilities>(CAPABILITIES));
+        TRY_RESULT_PROMISE(promise, query, ion::fetch_tl_object<ion::ion_api::http_proxy_getCapabilities>(data, true));
+        promise.set_result(ion::create_serialize_tl_object<ion::ion_api::http_proxy_capabilities>(CAPABILITIES));
         td::actor::send_closure(self_id_, &RldpHttpProxy::update_peer_capabilities, src, query->capabilities_);
       }
 
      private:
       td::actor::ActorId<RldpHttpProxy> self_id_;
     };
-    class AdnlServerCb : public ton::adnl::Adnl::Callback {
+    class AdnlServerCb : public ion::adnl::Adnl::Callback {
      public:
       AdnlServerCb(td::actor::ActorId<RldpHttpProxy> id) : self_id_(id) {
       }
-      void receive_message(ton::adnl::AdnlNodeIdShort src, ton::adnl::AdnlNodeIdShort dst,
+      void receive_message(ion::adnl::AdnlNodeIdShort src, ion::adnl::AdnlNodeIdShort dst,
                            td::BufferSlice data) override {
       }
-      void receive_query(ton::adnl::AdnlNodeIdShort src, ton::adnl::AdnlNodeIdShort dst, td::BufferSlice data,
+      void receive_query(ion::adnl::AdnlNodeIdShort src, ion::adnl::AdnlNodeIdShort dst, td::BufferSlice data,
                          td::Promise<td::BufferSlice> promise) override {
         td::actor::send_closure(self_id_, &RldpHttpProxy::receive_rldp_request, src, dst, std::move(data),
                                 std::move(promise));
@@ -1111,37 +1111,37 @@ class RldpHttpProxy : public td::actor::Actor {
       td::actor::ActorId<RldpHttpProxy> self_id_;
     };
     for (auto &serv_id : server_ids_) {
-      td::actor::send_closure(adnl_, &ton::adnl::Adnl::subscribe, serv_id,
-                              ton::adnl::Adnl::int_to_bytestring(ton::ton_api::http_request::ID),
+      td::actor::send_closure(adnl_, &ion::adnl::Adnl::subscribe, serv_id,
+                              ion::adnl::Adnl::int_to_bytestring(ion::ion_api::http_request::ID),
                               std::make_unique<AdnlServerCb>(actor_id(this)));
       if (local_id_ != serv_id) {
-        td::actor::send_closure(adnl_, &ton::adnl::Adnl::subscribe, serv_id,
-                                ton::adnl::Adnl::int_to_bytestring(ton::ton_api::http_getNextPayloadPart::ID),
+        td::actor::send_closure(adnl_, &ion::adnl::Adnl::subscribe, serv_id,
+                                ion::adnl::Adnl::int_to_bytestring(ion::ion_api::http_getNextPayloadPart::ID),
                                 std::make_unique<AdnlPayloadCb>(actor_id(this)));
-        td::actor::send_closure(adnl_, &ton::adnl::Adnl::subscribe, serv_id,
-                                ton::adnl::Adnl::int_to_bytestring(ton::ton_api::http_proxy_getCapabilities::ID),
+        td::actor::send_closure(adnl_, &ion::adnl::Adnl::subscribe, serv_id,
+                                ion::adnl::Adnl::int_to_bytestring(ion::ion_api::http_proxy_getCapabilities::ID),
                                 std::make_unique<AdnlCapabilitiesCb>(actor_id(this)));
       }
     }
-    td::actor::send_closure(adnl_, &ton::adnl::Adnl::subscribe, local_id_,
-                            ton::adnl::Adnl::int_to_bytestring(ton::ton_api::http_getNextPayloadPart::ID),
+    td::actor::send_closure(adnl_, &ion::adnl::Adnl::subscribe, local_id_,
+                            ion::adnl::Adnl::int_to_bytestring(ion::ion_api::http_getNextPayloadPart::ID),
                             std::make_unique<AdnlPayloadCb>(actor_id(this)));
-    td::actor::send_closure(adnl_, &ton::adnl::Adnl::subscribe, local_id_,
-                            ton::adnl::Adnl::int_to_bytestring(ton::ton_api::http_proxy_getCapabilities::ID),
+    td::actor::send_closure(adnl_, &ion::adnl::Adnl::subscribe, local_id_,
+                            ion::adnl::Adnl::int_to_bytestring(ion::ion_api::http_proxy_getCapabilities::ID),
                             std::make_unique<AdnlCapabilitiesCb>(actor_id(this)));
 
-    rldp_ = ton::rldp::Rldp::create(adnl_.get());
-    td::actor::send_closure(rldp_, &ton::rldp::Rldp::set_default_mtu, 16 << 10);
-    td::actor::send_closure(rldp_, &ton::rldp::Rldp::add_id, local_id_);
+    rldp_ = ion::rldp::Rldp::create(adnl_.get());
+    td::actor::send_closure(rldp_, &ion::rldp::Rldp::set_default_mtu, 16 << 10);
+    td::actor::send_closure(rldp_, &ion::rldp::Rldp::add_id, local_id_);
     for (auto &serv_id : server_ids_) {
-      td::actor::send_closure(rldp_, &ton::rldp::Rldp::add_id, serv_id);
+      td::actor::send_closure(rldp_, &ion::rldp::Rldp::add_id, serv_id);
     }
 
-    rldp2_ = ton::rldp2::Rldp::create(adnl_.get());
-    td::actor::send_closure(rldp2_, &ton::rldp2::Rldp::set_default_mtu, 16 << 10);
-    td::actor::send_closure(rldp2_, &ton::rldp2::Rldp::add_id, local_id_);
+    rldp2_ = ion::rldp2::Rldp::create(adnl_.get());
+    td::actor::send_closure(rldp2_, &ion::rldp2::Rldp::set_default_mtu, 16 << 10);
+    td::actor::send_closure(rldp2_, &ion::rldp2::Rldp::add_id, local_id_);
     for (auto &serv_id : server_ids_) {
-      td::actor::send_closure(rldp2_, &ton::rldp2::Rldp::add_id, serv_id);
+      td::actor::send_closure(rldp2_, &ion::rldp2::Rldp::add_id, serv_id);
     }
 
     rldp_dispatcher_ = td::actor::create_actor<RldpDispatcher>("RldpDispatcher", rldp_.get(), rldp2_.get());
@@ -1150,8 +1150,8 @@ class RldpHttpProxy : public td::actor::Actor {
   }
 
   void receive_http_request(
-      std::unique_ptr<ton::http::HttpRequest> request, std::shared_ptr<ton::http::HttpPayload> payload,
-      td::Promise<std::pair<std::unique_ptr<ton::http::HttpResponse>, std::shared_ptr<ton::http::HttpPayload>>>
+      std::unique_ptr<ion::http::HttpRequest> request, std::shared_ptr<ion::http::HttpPayload> payload,
+      td::Promise<std::pair<std::unique_ptr<ion::http::HttpResponse>, std::shared_ptr<ion::http::HttpPayload>>>
           promise) {
     auto host = request->host();
     if (host.size() == 0) {
@@ -1184,13 +1184,13 @@ class RldpHttpProxy : public td::actor::Actor {
     }
     std::transform(host.begin(), host.end(), host.begin(), [](unsigned char c) { return std::tolower(c); });
     bool allow = proxy_all_;
-    for (const char *suffix : {".adnl", ".ton", ".bag"}) {
+    for (const char *suffix : {".adnl", ".ion", ".bag"}) {
       if (td::ends_with(host, td::Slice(suffix))) {
         allow = true;
       }
     }
     if (!allow) {
-      promise.set_error(td::Status::Error(ton::ErrorCode::error, "bad server name"));
+      promise.set_error(td::Status::Error(ion::ErrorCode::error, "bad server name"));
       return;
     }
 
@@ -1200,16 +1200,16 @@ class RldpHttpProxy : public td::actor::Actor {
         .release();
   }
 
-  void receive_rldp_request(ton::adnl::AdnlNodeIdShort src, ton::adnl::AdnlNodeIdShort dst, td::BufferSlice data,
+  void receive_rldp_request(ion::adnl::AdnlNodeIdShort src, ion::adnl::AdnlNodeIdShort dst, td::BufferSlice data,
                             td::Promise<td::BufferSlice> promise) {
     LOG(INFO) << "got HTTP request over rldp from " << src;
-    TRY_RESULT_PROMISE(promise, f, ton::fetch_tl_object<ton::ton_api::http_request>(data, true));
+    TRY_RESULT_PROMISE(promise, f, ion::fetch_tl_object<ion::ion_api::http_request>(data, true));
     ask_peer_capabilities(src);
-    std::unique_ptr<ton::http::HttpRequest> request;
+    std::unique_ptr<ion::http::HttpRequest> request;
     auto S = [&]() {
-      TRY_RESULT_ASSIGN(request, ton::http::HttpRequest::create(f->method_, f->url_, f->http_version_));
+      TRY_RESULT_ASSIGN(request, ion::http::HttpRequest::create(f->method_, f->url_, f->http_version_));
       for (auto &x : f->headers_) {
-        ton::http::HttpHeader h{x->name_, x->value_};
+        ion::http::HttpHeader h{x->name_, x->value_};
         TRY_STATUS(h.basic_check());
         request->add_header(std::move(h));
       }
@@ -1297,7 +1297,7 @@ class RldpHttpProxy : public td::actor::Actor {
         .release();
   }
 
-  void start_tcp_tunnel(td::Bits256 id, ton::adnl::AdnlNodeIdShort src, ton::adnl::AdnlNodeIdShort local_id,
+  void start_tcp_tunnel(td::Bits256 id, ion::adnl::AdnlNodeIdShort src, ion::adnl::AdnlNodeIdShort local_id,
                         std::string http_version, td::IPAddress ip, td::Promise<td::BufferSlice> promise) {
     auto fd = td::SocketFd::open(ip);
     if (fd.is_error()) {
@@ -1307,15 +1307,15 @@ class RldpHttpProxy : public td::actor::Actor {
     td::actor::create_actor<RldpTcpTunnel>(td::actor::ActorOptions().with_name("tunnel").with_poll(), id, src, local_id,
                                            adnl_.get(), rldp_dispatcher_.get(), actor_id(this), fd.move_as_ok())
         .release();
-    std::vector<ton::tl_object_ptr<ton::ton_api::http_header>> headers;
+    std::vector<ion::tl_object_ptr<ion::ion_api::http_header>> headers;
     headers.push_back(
-        ton::create_tl_object<ton::ton_api::http_header>(PROXY_SITE_VERISON_HEADER_NAME, PROXY_VERSION_HEADER));
-    promise.set_result(ton::create_serialize_tl_object<ton::ton_api::http_response>(
+        ion::create_tl_object<ion::ion_api::http_header>(PROXY_SITE_VERISON_HEADER_NAME, PROXY_VERSION_HEADER));
+    promise.set_result(ion::create_serialize_tl_object<ion::ion_api::http_response>(
         http_version, 200, "Connection Established", std::move(headers), false));
   }
 
   void receive_payload_part_request(td::BufferSlice data, td::Promise<td::BufferSlice> promise) {
-    auto F = ton::fetch_tl_object<ton::ton_api::http_getNextPayloadPart>(data, true);
+    auto F = ion::fetch_tl_object<ion::ion_api::http_getNextPayloadPart>(data, true);
     if (F.is_error()) {
       LOG(INFO) << "failed to parse query: " << F.error();
       promise.set_error(F.move_as_error());
@@ -1333,7 +1333,7 @@ class RldpHttpProxy : public td::actor::Actor {
 
   void register_payload_sender(
       td::Bits256 id,
-      std::function<void(ton::tl_object_ptr<ton::ton_api::http_getNextPayloadPart>, td::Promise<td::BufferSlice>)> f,
+      std::function<void(ion::tl_object_ptr<ion::ion_api::http_getNextPayloadPart>, td::Promise<td::BufferSlice>)> f,
       td::Promise<RegisteredPayloadSenderGuard> promise) {
     auto &f1 = payload_senders_[id];
     if (f1) {
@@ -1353,7 +1353,7 @@ class RldpHttpProxy : public td::actor::Actor {
     payload_senders_.erase(id);
   }
 
-  void add_adnl_addr(ton::adnl::AdnlNodeIdShort id) {
+  void add_adnl_addr(ion::adnl::AdnlNodeIdShort id) {
     server_ids_.insert(id);
   }
 
@@ -1365,11 +1365,11 @@ class RldpHttpProxy : public td::actor::Actor {
     proxy_all_ = value;
   }
 
-  void set_storage_gateway(ton::adnl::AdnlNodeIdShort id) {
+  void set_storage_gateway(ion::adnl::AdnlNodeIdShort id) {
     storage_gateway_ = id;
   }
 
-  void update_peer_capabilities(ton::adnl::AdnlNodeIdShort peer, td::uint64 capabilities) {
+  void update_peer_capabilities(ion::adnl::AdnlNodeIdShort peer, td::uint64 capabilities) {
     auto &c = peer_capabilities_[peer];
     if (c.capabilities != capabilities) {
       LOG(DEBUG) << "Update capabilities of peer " << peer << " : " << capabilities;
@@ -1380,18 +1380,18 @@ class RldpHttpProxy : public td::actor::Actor {
                             capabilities & CAPABILITY_RLDP2);
   }
 
-  void ask_peer_capabilities(ton::adnl::AdnlNodeIdShort peer) {
+  void ask_peer_capabilities(ion::adnl::AdnlNodeIdShort peer) {
     auto &c = peer_capabilities_[peer];
     if (!c.received && c.retry_at.is_in_past()) {
       c.retry_at = td::Timestamp::in(30.0);
-      auto send_query = [&, this, SelfId = actor_id(this)](const ton::adnl::AdnlNodeIdShort &local_id) {
+      auto send_query = [&, this, SelfId = actor_id(this)](const ion::adnl::AdnlNodeIdShort &local_id) {
         td::actor::send_closure(
-            adnl_, &ton::adnl::Adnl::send_query, local_id, peer, "q",
+            adnl_, &ion::adnl::Adnl::send_query, local_id, peer, "q",
             [SelfId, peer](td::Result<td::BufferSlice> R) {
               if (R.is_error()) {
                 return;
               }
-              auto r_obj = ton::fetch_tl_object<ton::ton_api::http_proxy_capabilities>(R.move_as_ok(), true);
+              auto r_obj = ion::fetch_tl_object<ion::ion_api::http_proxy_capabilities>(R.move_as_ok(), true);
               if (r_obj.is_error()) {
                 return;
               }
@@ -1399,9 +1399,9 @@ class RldpHttpProxy : public td::actor::Actor {
                                       r_obj.ok()->capabilities_);
             },
             td::Timestamp::in(3.0),
-            ton::create_serialize_tl_object<ton::ton_api::http_proxy_getCapabilities>(CAPABILITIES));
+            ion::create_serialize_tl_object<ion::ion_api::http_proxy_getCapabilities>(CAPABILITIES));
       };
-      for (const ton::adnl::AdnlNodeIdShort &local_id : server_ids_) {
+      for (const ion::adnl::AdnlNodeIdShort &local_id : server_ids_) {
         if (local_id != local_id_) {
           send_query(local_id);
         }
@@ -1426,33 +1426,33 @@ class RldpHttpProxy : public td::actor::Actor {
   bool is_client_{false};
   td::uint16 client_port_{0};
 
-  std::set<ton::adnl::AdnlNodeIdShort> server_ids_;
-  std::map<ton::adnl::AdnlNodeIdShort, ton::adnl::AdnlNodeIdFull> server_ids_full_;
-  ton::adnl::AdnlNodeIdShort local_id_;
-  ton::adnl::AdnlNodeIdShort dht_id_;
+  std::set<ion::adnl::AdnlNodeIdShort> server_ids_;
+  std::map<ion::adnl::AdnlNodeIdShort, ion::adnl::AdnlNodeIdFull> server_ids_full_;
+  ion::adnl::AdnlNodeIdShort local_id_;
+  ion::adnl::AdnlNodeIdShort dht_id_;
 
-  td::actor::ActorOwn<ton::http::HttpServer> server_;
+  td::actor::ActorOwn<ion::http::HttpServer> server_;
   std::map<std::string, Host> hosts_;
 
-  td::actor::ActorOwn<ton::keyring::Keyring> keyring_;
-  td::actor::ActorOwn<ton::adnl::AdnlNetworkManager> adnl_network_manager_;
-  td::actor::ActorOwn<ton::adnl::Adnl> adnl_;
-  td::actor::ActorOwn<ton::dht::Dht> dht_;
-  td::actor::ActorOwn<ton::rldp::Rldp> rldp_;
-  td::actor::ActorOwn<ton::rldp2::Rldp> rldp2_;
+  td::actor::ActorOwn<ion::keyring::Keyring> keyring_;
+  td::actor::ActorOwn<ion::adnl::AdnlNetworkManager> adnl_network_manager_;
+  td::actor::ActorOwn<ion::adnl::Adnl> adnl_;
+  td::actor::ActorOwn<ion::dht::Dht> dht_;
+  td::actor::ActorOwn<ion::rldp::Rldp> rldp_;
+  td::actor::ActorOwn<ion::rldp2::Rldp> rldp2_;
   td::actor::ActorOwn<RldpDispatcher> rldp_dispatcher_;
 
-  std::shared_ptr<ton::dht::DhtGlobalConfig> dht_config_;
+  std::shared_ptr<ion::dht::DhtGlobalConfig> dht_config_;
 
   std::string db_root_ = ".";
   bool proxy_all_ = false;
 
   td::actor::ActorOwn<tonlib::TonlibClientWrapper> tonlib_client_;
   td::actor::ActorOwn<DNSResolver> dns_resolver_;
-  ton::adnl::AdnlNodeIdShort storage_gateway_ = ton::adnl::AdnlNodeIdShort::zero();
+  ion::adnl::AdnlNodeIdShort storage_gateway_ = ion::adnl::AdnlNodeIdShort::zero();
 
   std::map<td::Bits256,
-           std::function<void(ton::tl_object_ptr<ton::ton_api::http_getNextPayloadPart>, td::Promise<td::BufferSlice>)>>
+           std::function<void(ion::tl_object_ptr<ion::ion_api::http_getNextPayloadPart>, td::Promise<td::BufferSlice>)>>
       payload_senders_;
 
   struct PeerCapabilities {
@@ -1460,7 +1460,7 @@ class RldpHttpProxy : public td::actor::Actor {
     bool received = false;
     td::Timestamp retry_at = td::Timestamp::now();
   };
-  std::map<ton::adnl::AdnlNodeIdShort, PeerCapabilities> peer_capabilities_;
+  std::map<ion::adnl::AdnlNodeIdShort, PeerCapabilities> peer_capabilities_;
 };
 
 void TcpToRldpRequestSender::resolve(std::string host) {
@@ -1494,7 +1494,7 @@ void TcpToRldpRequestSender::resolve(std::string host) {
   }
   if (td::ends_with(S, ".adnl")) {
     S.truncate(S.size() - 5);
-    auto R = ton::adnl::AdnlNodeIdShort::parse(S);
+    auto R = ion::adnl::AdnlNodeIdShort::parse(S);
     if (R.is_error()) {
       abort_query(R.move_as_error_prefix("failed to parse adnl addr: "));
       return;
@@ -1518,7 +1518,7 @@ void TcpToRldpRequestSender::resolve(std::string host) {
                           });
 }
 
-void TcpToRldpRequestSender::resolved(ton::adnl::AdnlNodeIdShort id) {
+void TcpToRldpRequestSender::resolved(ion::adnl::AdnlNodeIdShort id) {
   dst_ = id;
   td::actor::send_closure(proxy_, &RldpHttpProxy::ask_peer_capabilities, id);
 
@@ -1534,15 +1534,15 @@ void TcpToRldpRequestSender::resolved(ton::adnl::AdnlNodeIdShort id) {
                                                  proxy_, is_tunnel())
       .release();
 
-  auto f = ton::serialize_tl_object(request_tl_, true);
-  td::actor::send_closure(rldp_, &ton::adnl::AdnlSenderInterface::send_query_ex, local_id_, dst_,
+  auto f = ion::serialize_tl_object(request_tl_, true);
+  td::actor::send_closure(rldp_, &ion::adnl::AdnlSenderInterface::send_query_ex, local_id_, dst_,
                           "http request over rldp", std::move(P), td::Timestamp::in(30.0), std::move(f), 16 << 10);
 }
 
 void HttpRldpPayloadSender::start_up() {
   td::actor::send_closure(
       proxy_, &RldpHttpProxy::register_payload_sender, id_,
-      [SelfId = actor_id(this)](ton::tl_object_ptr<ton::ton_api::http_getNextPayloadPart> f,
+      [SelfId = actor_id(this)](ion::tl_object_ptr<ion::ion_api::http_getNextPayloadPart> f,
                                 td::Promise<td::BufferSlice> promise) {
         td::actor::send_closure(SelfId, &HttpRldpPayloadSender::receive_query, std::move(f), std::move(promise));
       },
@@ -1553,7 +1553,7 @@ void HttpRldpPayloadSender::start_up() {
         td::actor::send_closure(SelfId, &HttpRldpPayloadSender::registered_sender, R.move_as_ok());
       });
 
-  class Cb : public ton::http::HttpPayload::Callback {
+  class Cb : public ion::http::HttpPayload::Callback {
    public:
     Cb(td::actor::ActorId<HttpRldpPayloadSender> id, size_t watermark) : self_id_(id), watermark_(watermark) {
     }
@@ -1576,7 +1576,7 @@ void HttpRldpPayloadSender::start_up() {
   };
 
   payload_->add_callback(
-      std::make_unique<Cb>(actor_id(this), is_tunnel_ ? 1 : ton::http::HttpRequest::low_watermark()));
+      std::make_unique<Cb>(actor_id(this), is_tunnel_ ? 1 : ion::http::HttpRequest::low_watermark()));
 
   alarm_timestamp() = td::Timestamp::in(is_tunnel_ ? 60.0 : 10.0);
 }
@@ -1587,7 +1587,7 @@ void RldpTcpTunnel::start_up() {
                                                            td::PollFlags::ReadWrite());
   td::actor::send_closure(
       proxy_, &RldpHttpProxy::register_payload_sender, id_,
-      [SelfId = actor_id(this)](ton::tl_object_ptr<ton::ton_api::http_getNextPayloadPart> f,
+      [SelfId = actor_id(this)](ion::tl_object_ptr<ion::ion_api::http_getNextPayloadPart> f,
                                 td::Promise<td::BufferSlice> promise) {
         td::actor::send_closure(SelfId, &RldpTcpTunnel::receive_query, std::move(f), std::move(promise));
       },
@@ -1649,11 +1649,11 @@ int main(int argc, char *argv[]) {
 
   td::OptionParser p;
   p.set_description(
-      "A simple rldp-to-http and http-to-rldp proxy for running and accessing ton sites\n"
-      "Example:\n\trldp-http-proxy -p 8080 -c 3333 -C ton-global.config.json\tRuns a local HTTP->RLDP proxy that "
+      "A simple rldp-to-http and http-to-rldp proxy for running and accessing ion sites\n"
+      "Example:\n\trldp-http-proxy -p 8080 -c 3333 -C ion-global.config.json\tRuns a local HTTP->RLDP proxy that "
       "accepts HTTP proxy queries at localhost:8080\n"
-      "Example:\n\trldp-http-proxy -a <global-ip>:3333 -L example.ton -C ton-global.config.json\tRuns a local "
-      "RLDP->HTTP proxy on UDP port <global-ip>:3333 that forwards all queries for http://example.ton to HTTP server "
+      "Example:\n\trldp-http-proxy -a <global-ip>:3333 -L example.ion -C ion-global.config.json\tRuns a local "
+      "RLDP->HTTP proxy on UDP port <global-ip>:3333 that forwards all queries for http://example.ion to HTTP server "
       "at localhost:80\n");
   p.add_option('v', "verbosity", "set verbosity level", [&](td::Slice arg) {
     int v = VERBOSITY_NAME(FATAL) + (td::to_integer<int>(arg));
@@ -1683,7 +1683,7 @@ int main(int argc, char *argv[]) {
     return td::Status::OK();
   });
   p.add_checked_option('A', "adnl", "server ADNL addr", [&](td::Slice arg) -> td::Status {
-    TRY_RESULT(adnl, ton::adnl::AdnlNodeIdShort::parse(arg));
+    TRY_RESULT(adnl, ion::adnl::AdnlNodeIdShort::parse(arg));
     td::actor::send_closure(x, &RldpHttpProxy::add_adnl_addr, adnl);
     return td::Status::OK();
   });
@@ -1693,7 +1693,7 @@ int main(int argc, char *argv[]) {
                          td::actor::send_closure(x, &RldpHttpProxy::set_client_port, port);
                          return td::Status::OK();
                        });
-  p.add_option('C', "global-config", "global TON configuration file",
+  p.add_option('C', "global-config", "global ION configuration file",
                [&](td::Slice arg) { td::actor::send_closure(x, &RldpHttpProxy::set_global_config, arg.str()); });
   p.add_checked_option('L', "local",
                        "<hosthame>:<ports>, hostname that will be proxied to localhost\n"
@@ -1725,12 +1725,12 @@ int main(int argc, char *argv[]) {
     logger_ = td::FileLog::create(fname.str()).move_as_ok();
     td::log_interface = logger_.get();
   });
-  p.add_checked_option('S', "storage-gateway", "adnl address of ton storage gateway", [&](td::Slice arg) -> td::Status {
-    TRY_RESULT(adnl, ton::adnl::AdnlNodeIdShort::parse(arg));
+  p.add_checked_option('S', "storage-gateway", "adnl address of ion storage gateway", [&](td::Slice arg) -> td::Status {
+    TRY_RESULT(adnl, ion::adnl::AdnlNodeIdShort::parse(arg));
     td::actor::send_closure(x, &RldpHttpProxy::set_storage_gateway, adnl);
     return td::Status::OK();
   });
-  p.add_checked_option('P', "proxy-all", "value=[YES|NO]. proxy all HTTP requests (default only *.ton and *.adnl)",
+  p.add_checked_option('P', "proxy-all", "value=[YES|NO]. proxy all HTTP requests (default only *.ion and *.adnl)",
                        [&](td::Slice value) {
                          if (value == "YES" || value == "yes") {
                            td::actor::send_closure(x, &RldpHttpProxy::set_proxy_all, true);

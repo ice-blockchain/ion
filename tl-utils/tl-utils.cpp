@@ -1,35 +1,35 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
 #include "tl-utils.hpp"
 #include "tl/tl_object_store.h"
-#include "auto/tl/ton_api.hpp"
+#include "auto/tl/ion_api.hpp"
 #include "td/utils/tl_storers.h"
 #include "td/utils/crypto.h"
 #include "crypto/common/bitstring.h"
 
-namespace ton {
+namespace ion {
 
-td::BufferSlice serialize_tl_object(const ton_api::Object *T, bool boxed, td::BufferSlice &&suffix) {
+td::BufferSlice serialize_tl_object(const ion_api::Object *T, bool boxed, td::BufferSlice &&suffix) {
   return serialize_tl_object(T, boxed, suffix.as_slice());
 }
 
-td::BufferSlice serialize_tl_object(const ton_api::Object *T, bool boxed, td::Slice suffix) {
+td::BufferSlice serialize_tl_object(const ion_api::Object *T, bool boxed, td::Slice suffix) {
   td::TlStorerCalcLength X;
   T->store(X);
   auto l = X.get_length() + (boxed ? 4 : 0);
@@ -49,7 +49,7 @@ td::BufferSlice serialize_tl_object(const ton_api::Object *T, bool boxed, td::Sl
   return B;
 }
 
-td::BufferSlice serialize_tl_object(const ton_api::Object *T, bool boxed) {
+td::BufferSlice serialize_tl_object(const ion_api::Object *T, bool boxed) {
   td::TlStorerCalcLength X;
   T->store(X);
   auto l = X.get_length() + (boxed ? 4 : 0);
@@ -65,7 +65,7 @@ td::BufferSlice serialize_tl_object(const ton_api::Object *T, bool boxed) {
   return B;
 }
 
-td::BufferSlice serialize_tl_object(const ton_api::Function *T, bool boxed) {
+td::BufferSlice serialize_tl_object(const ion_api::Function *T, bool boxed) {
   CHECK(boxed);
   td::TlStorerCalcLength X;
   T->store(X);
@@ -80,11 +80,11 @@ td::BufferSlice serialize_tl_object(const ton_api::Function *T, bool boxed) {
   return B;
 }
 
-td::BufferSlice serialize_tl_object(const ton_api::Function *T, bool boxed, td::BufferSlice &&suffix) {
+td::BufferSlice serialize_tl_object(const ion_api::Function *T, bool boxed, td::BufferSlice &&suffix) {
   return serialize_tl_object(T, boxed, suffix.as_slice());
 }
 
-td::BufferSlice serialize_tl_object(const ton_api::Function *T, bool boxed, td::Slice suffix) {
+td::BufferSlice serialize_tl_object(const ion_api::Function *T, bool boxed, td::Slice suffix) {
   CHECK(boxed);
   td::TlStorerCalcLength X;
   T->store(X);
@@ -103,7 +103,7 @@ td::BufferSlice serialize_tl_object(const ton_api::Function *T, bool boxed, td::
   return B;
 }
 
-td::UInt256 get_tl_object_sha256(const ton_api::Object *T) {
+td::UInt256 get_tl_object_sha256(const ion_api::Object *T) {
   td::TlStorerCalcLength X;
   T->store(X);
   auto len = X.get_length() + 4;
@@ -119,7 +119,7 @@ td::UInt256 get_tl_object_sha256(const ton_api::Object *T) {
   return id256;
 }
 
-td::Bits256 get_tl_object_sha_bits256(const ton_api::Object *T) {
+td::Bits256 get_tl_object_sha_bits256(const ion_api::Object *T) {
   td::TlStorerCalcLength X;
   T->store(X);
   auto len = X.get_length() + 4;
@@ -135,4 +135,4 @@ td::Bits256 get_tl_object_sha_bits256(const ton_api::Object *T) {
   return id256;
 }
 
-}  // namespace ton
+}  // namespace ion

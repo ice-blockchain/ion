@@ -1,18 +1,18 @@
 /* 
-    This file is part of TON Blockchain source code.
+    This file is part of ION Blockchain source code.
 
-    TON Blockchain is free software; you can redistribute it and/or
+    ION Blockchain is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
     as published by the Free Software Foundation; either version 2
     of the License, or (at your option) any later version.
 
-    TON Blockchain is distributed in the hope that it will be useful,
+    ION Blockchain is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with TON Blockchain.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain.  If not, see <http://www.gnu.org/licenses/>.
 
     In addition, as a special exception, the copyright holders give permission 
     to link the code of portions of this program with the OpenSSL library. 
@@ -61,13 +61,13 @@ static inline void fail_unless(td::Status res) {
   }
 }
 
-td::Ref<vm::Cell> load_block(std::string filename, ton::BlockIdExt& id) {
+td::Ref<vm::Cell> load_block(std::string filename, ion::BlockIdExt& id) {
   std::cerr << "loading block from bag-of-cell file " << filename << std::endl;
   auto bytes_res = block::load_binary_file(filename);
   if (bytes_res.is_error()) {
     throw IntError{PSTRING() << "cannot load file `" << filename << "` : " << bytes_res.move_as_error()};
   }
-  ton::FileHash fhash;
+  ion::FileHash fhash;
   td::sha256(bytes_res.ok(), fhash.as_slice());
   vm::BagOfCells boc;
   auto res = boc.deserialize(bytes_res.move_as_ok());
@@ -78,8 +78,8 @@ td::Ref<vm::Cell> load_block(std::string filename, ton::BlockIdExt& id) {
     throw IntError{"cannot deserialize bag-of-cells"};
   }
   auto root = boc.get_root_cell();
-  std::vector<ton::BlockIdExt> prev;
-  ton::BlockIdExt mc_blkid;
+  std::vector<ion::BlockIdExt> prev;
+  ion::BlockIdExt mc_blkid;
   bool after_split;
   fail_unless(block::unpack_block_prev_blk_try(root, id, prev, mc_blkid, after_split, &id));
   id.file_hash = fhash;
@@ -87,7 +87,7 @@ td::Ref<vm::Cell> load_block(std::string filename, ton::BlockIdExt& id) {
   return root;
 }
 
-bool save_block(std::string filename, Ref<vm::Cell> root, ton::BlockIdExt& id) {
+bool save_block(std::string filename, Ref<vm::Cell> root, ion::BlockIdExt& id) {
   std::cerr << "saving block into bag-of-cell file " << filename << std::endl;
   if (root.is_null()) {
     throw IntError{"new block has no root"};
@@ -107,9 +107,9 @@ bool save_block(std::string filename, Ref<vm::Cell> root, ton::BlockIdExt& id) {
   return true;
 }
 
-Ref<vm::Cell> adjust_block(Ref<vm::Cell> root, int vseqno_incr, const ton::BlockIdExt& id) {
-  std::vector<ton::BlockIdExt> prev;
-  ton::BlockIdExt mc_blkid;
+Ref<vm::Cell> adjust_block(Ref<vm::Cell> root, int vseqno_incr, const ion::BlockIdExt& id) {
+  std::vector<ion::BlockIdExt> prev;
+  ion::BlockIdExt mc_blkid;
   bool after_split;
   fail_unless(block::unpack_block_prev_blk_try(root, id, prev, mc_blkid, after_split));
   std::cerr << "unpacked header of block " << id.to_str() << std::endl;
@@ -174,7 +174,7 @@ int main(int argc, char* const argv[]) {
   in_fname = argv[optind];
   out_fname = argv[optind + 1];
   try {
-    ton::BlockIdExt old_id, new_id;
+    ion::BlockIdExt old_id, new_id;
     auto root = load_block(in_fname, old_id);
     if (root.is_null()) {
       return fatal("cannot load BoC from file "s + in_fname);

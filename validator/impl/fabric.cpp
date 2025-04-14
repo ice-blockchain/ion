@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -31,12 +31,12 @@
 #include "validate-query.hpp"
 #include "check-proof.hpp"
 #include "top-shard-descr.hpp"
-#include "ton/ton-io.hpp"
+#include "ion/ion-io.hpp"
 #include "liteserver.hpp"
 #include "validator/fabric.h"
 #include "liteserver-cache.hpp"
 
-namespace ton {
+namespace ion {
 
 namespace validator {
 
@@ -94,19 +94,19 @@ td::Result<td::Ref<ShardState>> create_shard_state(BlockIdExt block_id, td::Ref<
 }
 
 td::Result<BlockHandle> create_block_handle(td::BufferSlice data) {
-  return ton::validator::BlockHandleImpl::create(data.as_slice());
+  return ion::validator::BlockHandleImpl::create(data.as_slice());
 }
 
 td::Result<BlockHandle> create_block_handle(td::Slice data) {
-  return ton::validator::BlockHandleImpl::create(data);
+  return ion::validator::BlockHandleImpl::create(data);
 }
 
 td::Result<ConstBlockHandle> create_temp_block_handle(td::BufferSlice data) {
-  return ton::validator::BlockHandleImpl::create(std::move(data));
+  return ion::validator::BlockHandleImpl::create(std::move(data));
 }
 
 BlockHandle create_empty_block_handle(BlockIdExt id) {
-  return ton::validator::BlockHandleImpl::create_empty(id);
+  return ion::validator::BlockHandleImpl::create_empty(id);
 }
 
 td::Ref<BlockSignatureSet> create_signature_set(std::vector<BlockSignature> sig_set) {
@@ -269,4 +269,4 @@ void run_validate_shard_block_description(td::BufferSlice data, BlockHandle mast
 
 }  // namespace validator
 
-}  // namespace ton
+}  // namespace ion

@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -20,7 +20,7 @@
 
 #include "tonlib/utils.h"
 
-#include "ton/lite-tl.hpp"
+#include "ion/lite-tl.hpp"
 #include "block/check-proof.h"
 #include "block/mc-config.h"
 #include "block/block-auto.h"
@@ -62,12 +62,12 @@ void LastConfig::with_last_block(td::Result<LastBlockState> r_last_block) {
   }
 
   auto last_block = r_last_block.move_as_ok();
-  client_.send_query(ton::lite_api::liteServer_getConfigAll(block::ConfigInfo::needPrevBlocks,
+  client_.send_query(ion::lite_api::liteServer_getConfigAll(block::ConfigInfo::needPrevBlocks,
                                                             create_tl_lite_block_id(last_block.last_block_id)),
                      [this](auto r_config) { this->on_config(std::move(r_config)); });
 }
 
-void LastConfig::on_config(td::Result<ton::ton_api::object_ptr<ton::lite_api::liteServer_configInfo>> r_config) {
+void LastConfig::on_config(td::Result<ion::ion_api::object_ptr<ion::lite_api::liteServer_configInfo>> r_config) {
   auto status = process_config(std::move(r_config));
   if (status.is_ok()) {
     on_ok();
@@ -79,13 +79,13 @@ void LastConfig::on_config(td::Result<ton::ton_api::object_ptr<ton::lite_api::li
 }
 
 td::Status LastConfig::process_config(
-    td::Result<ton::ton_api::object_ptr<ton::lite_api::liteServer_configInfo>> r_config) {
+    td::Result<ion::ion_api::object_ptr<ion::lite_api::liteServer_configInfo>> r_config) {
   TRY_RESULT(raw_config, std::move(r_config));
   TRY_STATUS_PREFIX(TRY_VM(process_config_proof(std::move(raw_config))), TonlibError::ValidateConfig());
   return td::Status::OK();
 }
 
-td::Status LastConfig::process_config_proof(ton::ton_api::object_ptr<ton::lite_api::liteServer_configInfo> raw_config) {
+td::Status LastConfig::process_config_proof(ion::ion_api::object_ptr<ion::lite_api::liteServer_configInfo> raw_config) {
   auto blkid = create_block_id(raw_config->id_);
   if (!blkid.is_masterchain_ext()) {
     return td::Status::Error(PSLICE() << "reference block " << blkid.to_str()

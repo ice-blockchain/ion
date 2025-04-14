@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -20,7 +20,7 @@
 
 #include "block/block-auto.h"
 #include "block/block-parse.h"
-namespace ton {
+namespace ion {
 
 namespace smc {
 td::Ref<vm::CellSlice> pack_grams(td::uint64 amount) {
@@ -56,7 +56,7 @@ td::Ref<vm::Cell> GenericAccount::get_init_state(const td::Ref<vm::Cell>& code,
       .store_ref(std::move(data))
       .finalize();
 }
-block::StdAddress GenericAccount::get_address(ton::WorkchainId workchain_id,
+block::StdAddress GenericAccount::get_address(ion::WorkchainId workchain_id,
                                               const td::Ref<vm::Cell>& init_state) noexcept {
   return block::StdAddress(workchain_id, init_state->get_hash().bits(), true /*bounce*/);
 }
@@ -162,4 +162,4 @@ td::Result<td::uint32> GenericAccount::get_wallet_id(const SmartContract& sc) {
     return static_cast<td::uint32>(answer.stack.write().pop_long_range(std::numeric_limits<td::uint32>::max()));
   }());
 }
-}  // namespace ton
+}  // namespace ion

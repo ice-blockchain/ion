@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -57,7 +57,7 @@ bool OutputQueueMerger::MsgKeyValue::invalidate() {
   return false;
 }
 
-ton::LogicalTime OutputQueueMerger::MsgKeyValue::get_node_lt(Ref<vm::Cell> node, int key_pfx_len) {
+ion::LogicalTime OutputQueueMerger::MsgKeyValue::get_node_lt(Ref<vm::Cell> node, int key_pfx_len) {
   if (node.is_null() || (unsigned)key_pfx_len > (unsigned)max_key_len) {
     return std::numeric_limits<td::uint64>::max();
   }
@@ -145,12 +145,12 @@ bool OutputQueueMerger::add_root(int src, Ref<vm::Cell> outmsg_root) {
   return true;
 }
 
-OutputQueueMerger::OutputQueueMerger(ton::ShardIdFull _queue_for, std::vector<Neighbor> _neighbors)
+OutputQueueMerger::OutputQueueMerger(ion::ShardIdFull _queue_for, std::vector<Neighbor> _neighbors)
     : queue_for(_queue_for), neighbors(std::move(_neighbors)), eof(false), failed(false) {
   init();
 }
 
-OutputQueueMerger::OutputQueueMerger(ton::ShardIdFull _queue_for, std::vector<block::McShardDescr> _neighbors)
+OutputQueueMerger::OutputQueueMerger(ion::ShardIdFull _queue_for, std::vector<block::McShardDescr> _neighbors)
     : queue_for(_queue_for), eof(false), failed(false) {
   for (auto& nb : _neighbors) {
     neighbors.emplace_back(nb.top_block_id(), nb.outmsg_root, nb.is_disabled());

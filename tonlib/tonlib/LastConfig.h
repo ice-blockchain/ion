@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -58,9 +58,9 @@ class LastConfig : public td::actor::Actor {
   std::vector<td::int32> params_{4, 18, 20, 21, 24, 25};
 
   void with_last_block(td::Result<LastBlockState> r_last_block);
-  void on_config(td::Result<ton::ton_api::object_ptr<ton::lite_api::liteServer_configInfo>> r_config);
-  td::Status process_config(td::Result<ton::ton_api::object_ptr<ton::lite_api::liteServer_configInfo>> r_config);
-  td::Status process_config_proof(ton::ton_api::object_ptr<ton::lite_api::liteServer_configInfo> config);
+  void on_config(td::Result<ion::ion_api::object_ptr<ion::lite_api::liteServer_configInfo>> r_config);
+  td::Status process_config(td::Result<ion::ion_api::object_ptr<ion::lite_api::liteServer_configInfo>> r_config);
+  td::Status process_config_proof(ion::ion_api::object_ptr<ion::lite_api::liteServer_configInfo> config);
 
   void on_ok();
   void on_error(td::Status status);

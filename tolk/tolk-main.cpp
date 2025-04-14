@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain source code.
+    This file is part of ION Blockchain source code.
 
-    TON Blockchain is free software; you can redistribute it and/or
+    ION Blockchain is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
     as published by the Free Software Foundation; either version 2
     of the License, or (at your option) any later version.
 
-    TON Blockchain is distributed in the hope that it will be useful,
+    ION Blockchain is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with TON Blockchain.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain.  If not, see <http://www.gnu.org/licenses/>.
 
     In addition, as a special exception, the copyright holders give permission
     to link the code of portions of this program with the OpenSSL library.
@@ -109,9 +109,9 @@ static std::string join_path(std::string dir, const char* relative) {
 
 static std::string auto_discover_stdlib_folder() {
   // if the user launches tolk compiler from a package installed (e.g. /usr/bin/tolk),
-  // locate stdlib in /usr/share/ton/smartcont (this folder exists on package installation)
+  // locate stdlib in /usr/share/ion/smartcont (this folder exists on package installation)
   // (note, that paths are not absolute, they are relative to the launched binary)
-  // consider https://github.com/ton-blockchain/packages for actual paths
+  // consider https://github.com/ice-blockchain/packages for actual paths
   std::string executable_filename;
   if (!get_current_executable_filename(executable_filename)) {
     return {};
@@ -122,11 +122,11 @@ static std::string auto_discover_stdlib_folder() {
   std::string executable_dir = executable_filename.substr(0, slash_pos + 1);
 
 #ifdef TD_DARWIN
-  std::string def_location = join_path(executable_dir, "../share/ton/ton/smartcont/tolk-stdlib");
+  std::string def_location = join_path(executable_dir, "../share/ion/ion/smartcont/tolk-stdlib");
 #elif TD_WINDOWS
   std::string def_location = join_path(executable_dir, "smartcont/tolk-stdlib");
 #else  // linux
-  std::string def_location = join_path(executable_dir, "../share/ton/smartcont/tolk-stdlib");
+  std::string def_location = join_path(executable_dir, "../share/ion/smartcont/tolk-stdlib");
 #endif
 
   if (stdlib_folder_exists(def_location.c_str())) {
@@ -134,8 +134,8 @@ static std::string auto_discover_stdlib_folder() {
   }
 
   // so, the binary is not from a system package
-  // maybe it's just built from sources? e.g. ~/ton/cmake-build-debug/tolk/tolk
-  // then, check the ~/ton/crypto/smartcont folder
+  // maybe it's just built from sources? e.g. ~/ion/cmake-build-debug/tolk/tolk
+  // then, check the ~/ion/crypto/smartcont folder
   std::string near_when_built_from_sources = join_path(executable_dir, "../../crypto/smartcont/tolk-stdlib");
   if (stdlib_folder_exists(near_when_built_from_sources.c_str())) {
     return near_when_built_from_sources;

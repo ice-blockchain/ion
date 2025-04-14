@@ -6,7 +6,7 @@
 }:
 
 pkgs.llvmPackages_14.stdenv.mkDerivation {
-  pname = "ton";
+  pname = "ion";
   version = "dev-lib";
 
   src = ./.;
@@ -31,7 +31,7 @@ pkgs.llvmPackages_14.stdenv.mkDerivation {
   configureFlags = [];
 
   cmakeFlags = [
-    "-DTON_USE_ABSEIL=OFF"
+    "-DION_USE_ABSEIL=OFF"
     "-DNIX=ON"
     "-DCMAKE_CXX_FLAGS=-stdlib=libc++"
     "-DCMAKE_OSX_DEPLOYMENT_TARGET:STRING=11.3"

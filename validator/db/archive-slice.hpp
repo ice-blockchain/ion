@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -28,7 +28,7 @@ namespace rocksdb {
 class Statistics;
 }
 
-namespace ton {
+namespace ion {
 
 namespace validator {
 
@@ -113,8 +113,8 @@ class ArchiveSlice : public td::actor::Actor {
   void get_block_by_lt(AccountIdPrefixFull account_id, LogicalTime lt, td::Promise<ConstBlockHandle> promise);
   void get_block_by_seqno(AccountIdPrefixFull account_id, BlockSeqno seqno, td::Promise<ConstBlockHandle> promise);
   void get_block_common(AccountIdPrefixFull account_id,
-                        std::function<td::int32(ton_api::db_lt_desc_value &)> compare_desc,
-                        std::function<td::int32(ton_api::db_lt_el_value &)> compare, bool exact,
+                        std::function<td::int32(ion_api::db_lt_desc_value &)> compare_desc,
+                        std::function<td::int32(ion_api::db_lt_el_value &)> compare, bool exact,
                         td::Promise<ConstBlockHandle> promise);
 
   void get_slice(td::uint64 archive_id, td::uint64 offset, td::uint32 limit, td::Promise<td::BufferSlice> promise);
@@ -238,4 +238,4 @@ class ArchiveLru : public td::actor::Actor {
 
 }  // namespace validator
 
-}  // namespace ton
+}  // namespace ion

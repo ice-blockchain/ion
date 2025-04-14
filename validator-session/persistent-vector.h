@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -27,7 +27,7 @@
 
 #include "validator-session-description.h"
 
-namespace ton {
+namespace ion {
 
 namespace validatorsession {
 
@@ -107,11 +107,11 @@ template <typename T>
 class CntVector : public ValidatorSessionDescription::RootObject {
  public:
   static HashType create_hash(ValidatorSessionDescription& desc, std::vector<T>& value) {
-    auto obj = create_tl_object<ton_api::hashable_cntVector>(get_vs_hash(desc, value));
+    auto obj = create_tl_object<ion_api::hashable_cntVector>(get_vs_hash(desc, value));
     return desc.compute_hash(serialize_tl_object(obj, true).as_slice());
   }
   static HashType create_hash(ValidatorSessionDescription& desc, td::uint32 size, const T* value) {
-    auto obj = create_tl_object<ton_api::hashable_cntVector>(get_vs_hash(desc, size, value));
+    auto obj = create_tl_object<ion_api::hashable_cntVector>(get_vs_hash(desc, size, value));
     return desc.compute_hash(serialize_tl_object(obj, true).as_slice());
   }
   static bool compare(const RootObject* r, td::uint32 size, const T* data, HashType hash) {
@@ -198,7 +198,7 @@ class CntVector : public ValidatorSessionDescription::RootObject {
     std::vector<T> v;
     v.resize(b->size());
     for (td::uint32 i = 0; i < b->size(); i++) {
-      v[i] = ton::validatorsession::move_to_persistent(desc, b->data_[i]);
+      v[i] = ion::validatorsession::move_to_persistent(desc, b->data_[i]);
     }
     auto r = lookup(desc, v, b->hash_, false);
     if (r) {
@@ -556,11 +556,11 @@ template <typename T, typename Compare = std::less<T>>
 class CntSortedVector : public ValidatorSessionDescription::RootObject {
  public:
   static HashType create_hash(ValidatorSessionDescription& desc, std::vector<T>& value) {
-    auto obj = create_tl_object<ton_api::hashable_cntSortedVector>(get_vs_hash(desc, value));
+    auto obj = create_tl_object<ion_api::hashable_cntSortedVector>(get_vs_hash(desc, value));
     return desc.compute_hash(serialize_tl_object(obj, true).as_slice());
   }
   static HashType create_hash(ValidatorSessionDescription& desc, td::uint32 size, const T* value) {
-    auto obj = create_tl_object<ton_api::hashable_cntSortedVector>(get_vs_hash(desc, size, value));
+    auto obj = create_tl_object<ion_api::hashable_cntSortedVector>(get_vs_hash(desc, size, value));
     return desc.compute_hash(serialize_tl_object(obj, true).as_slice());
   }
   static bool compare(const RootObject* r, td::uint32 size, const T* data, HashType hash) {
@@ -648,7 +648,7 @@ class CntSortedVector : public ValidatorSessionDescription::RootObject {
     std::vector<T> v;
     v.resize(b->size());
     for (td::uint32 i = 0; i < v.size(); i++) {
-      v[i] = ton::validatorsession::move_to_persistent(desc, b->data_[i]);
+      v[i] = ion::validatorsession::move_to_persistent(desc, b->data_[i]);
     }
     auto r = lookup(desc, v, b->hash_, false);
     if (r) {
@@ -798,4 +798,4 @@ class CntSortedVector : public ValidatorSessionDescription::RootObject {
 
 }  // namespace validatorsession
 
-}  // namespace ton
+}  // namespace ion

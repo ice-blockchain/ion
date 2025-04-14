@@ -1,30 +1,30 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
 #pragma once
 
-#include "ton/ton-types.h"
+#include "ion/ion-types.h"
 #include "td/actor/actor.h"
 #include "validator/interfaces/shard.h"
 #include "td/db/KeyValue.h"
-#include "ton/ton-tl.hpp"
+#include "ion/ion-tl.hpp"
 
-namespace ton {
+namespace ion {
 
 namespace validator {
 
@@ -32,11 +32,11 @@ namespace fileref {
 
 class Empty {
  public:
-  tl_object_ptr<ton_api::db_filedb_Key> tl() const {
-    return create_tl_object<ton_api::db_filedb_key_empty>();
+  tl_object_ptr<ion_api::db_filedb_Key> tl() const {
+    return create_tl_object<ion_api::db_filedb_key_empty>();
   }
   FileHash hash() const {
-    return create_hash_tl_object<ton_api::db_filedb_key_empty>();
+    return create_hash_tl_object<ion_api::db_filedb_key_empty>();
   }
   ShardIdFull shard() const {
     return ShardIdFull{masterchainId};
@@ -62,11 +62,11 @@ class BlockShort {
 
 class Block {
  public:
-  tl_object_ptr<ton_api::db_filedb_Key> tl() const {
-    return create_tl_object<ton_api::db_filedb_key_blockFile>(create_tl_block_id(block_id));
+  tl_object_ptr<ion_api::db_filedb_Key> tl() const {
+    return create_tl_object<ion_api::db_filedb_key_blockFile>(create_tl_block_id(block_id));
   }
   FileHash hash() const {
-    return create_hash_tl_object<ton_api::db_filedb_key_blockFile>(create_tl_block_id(block_id));
+    return create_hash_tl_object<ion_api::db_filedb_key_blockFile>(create_tl_block_id(block_id));
   }
   ShardIdFull shard() const {
     return block_id.shard_full();
@@ -94,11 +94,11 @@ class ZeroStateShort {
 
 class ZeroState {
  public:
-  tl_object_ptr<ton_api::db_filedb_Key> tl() const {
-    return create_tl_object<ton_api::db_filedb_key_zeroStateFile>(create_tl_block_id(block_id));
+  tl_object_ptr<ion_api::db_filedb_Key> tl() const {
+    return create_tl_object<ion_api::db_filedb_key_zeroStateFile>(create_tl_block_id(block_id));
   }
   FileHash hash() const {
-    return create_hash_tl_object<ton_api::db_filedb_key_zeroStateFile>(create_tl_block_id(block_id));
+    return create_hash_tl_object<ion_api::db_filedb_key_zeroStateFile>(create_tl_block_id(block_id));
   }
   ShardIdFull shard() const {
     return block_id.shard_full();
@@ -127,12 +127,12 @@ class PersistentStateShort {
 
 class PersistentState {
  public:
-  tl_object_ptr<ton_api::db_filedb_Key> tl() const {
-    return create_tl_object<ton_api::db_filedb_key_persistentStateFile>(create_tl_block_id(block_id),
+  tl_object_ptr<ion_api::db_filedb_Key> tl() const {
+    return create_tl_object<ion_api::db_filedb_key_persistentStateFile>(create_tl_block_id(block_id),
                                                                         create_tl_block_id(masterchain_block_id));
   }
   FileHash hash() const {
-    return create_hash_tl_object<ton_api::db_filedb_key_persistentStateFile>(create_tl_block_id(block_id),
+    return create_hash_tl_object<ion_api::db_filedb_key_persistentStateFile>(create_tl_block_id(block_id),
                                                                              create_tl_block_id(masterchain_block_id));
   }
   ShardIdFull shard() const {
@@ -162,11 +162,11 @@ class ProofShort {
 
 class Proof {
  public:
-  tl_object_ptr<ton_api::db_filedb_Key> tl() const {
-    return create_tl_object<ton_api::db_filedb_key_proof>(create_tl_block_id(block_id));
+  tl_object_ptr<ion_api::db_filedb_Key> tl() const {
+    return create_tl_object<ion_api::db_filedb_key_proof>(create_tl_block_id(block_id));
   }
   FileHash hash() const {
-    return create_hash_tl_object<ton_api::db_filedb_key_proof>(create_tl_block_id(block_id));
+    return create_hash_tl_object<ion_api::db_filedb_key_proof>(create_tl_block_id(block_id));
   }
   ShardIdFull shard() const {
     return block_id.shard_full();
@@ -194,11 +194,11 @@ class ProofLinkShort {
 
 class ProofLink {
  public:
-  tl_object_ptr<ton_api::db_filedb_Key> tl() const {
-    return create_tl_object<ton_api::db_filedb_key_proofLink>(create_tl_block_id(block_id));
+  tl_object_ptr<ion_api::db_filedb_Key> tl() const {
+    return create_tl_object<ion_api::db_filedb_key_proofLink>(create_tl_block_id(block_id));
   }
   FileHash hash() const {
-    return create_hash_tl_object<ton_api::db_filedb_key_proofLink>(create_tl_block_id(block_id));
+    return create_hash_tl_object<ion_api::db_filedb_key_proofLink>(create_tl_block_id(block_id));
   }
   ShardIdFull shard() const {
     return block_id.shard_full();
@@ -226,11 +226,11 @@ class SignaturesShort {
 
 class Signatures {
  public:
-  tl_object_ptr<ton_api::db_filedb_Key> tl() const {
-    return create_tl_object<ton_api::db_filedb_key_signatures>(create_tl_block_id(block_id));
+  tl_object_ptr<ion_api::db_filedb_Key> tl() const {
+    return create_tl_object<ion_api::db_filedb_key_signatures>(create_tl_block_id(block_id));
   }
   FileHash hash() const {
-    return create_hash_tl_object<ton_api::db_filedb_key_signatures>(create_tl_block_id(block_id));
+    return create_hash_tl_object<ion_api::db_filedb_key_signatures>(create_tl_block_id(block_id));
   }
   ShardIdFull shard() const {
     return block_id.shard_full();
@@ -258,13 +258,13 @@ class CandidateShort {
 
 class Candidate {
  public:
-  tl_object_ptr<ton_api::db_filedb_Key> tl() const {
-    return create_tl_object<ton_api::db_filedb_key_candidate>(
-        create_tl_object<ton_api::db_candidate_id>(source.tl(), create_tl_block_id(block_id), collated_data_file_hash));
+  tl_object_ptr<ion_api::db_filedb_Key> tl() const {
+    return create_tl_object<ion_api::db_filedb_key_candidate>(
+        create_tl_object<ion_api::db_candidate_id>(source.tl(), create_tl_block_id(block_id), collated_data_file_hash));
   }
   FileHash hash() const {
-    return create_hash_tl_object<ton_api::db_filedb_key_candidate>(
-        create_tl_object<ton_api::db_candidate_id>(source.tl(), create_tl_block_id(block_id), collated_data_file_hash));
+    return create_hash_tl_object<ion_api::db_filedb_key_candidate>(
+        create_tl_object<ion_api::db_candidate_id>(source.tl(), create_tl_block_id(block_id), collated_data_file_hash));
   }
   ShardIdFull shard() const {
     return block_id.shard_full();
@@ -294,11 +294,11 @@ class CandidateRefShort {
 
 class CandidateRef {
  public:
-  tl_object_ptr<ton_api::db_filedb_Key> tl() const {
-    return create_tl_object<ton_api::db_filedb_key_candidateRef>(create_tl_block_id(block_id));
+  tl_object_ptr<ion_api::db_filedb_Key> tl() const {
+    return create_tl_object<ion_api::db_filedb_key_candidateRef>(create_tl_block_id(block_id));
   }
   FileHash hash() const {
-    return create_hash_tl_object<ton_api::db_filedb_key_candidateRef>(create_tl_block_id(block_id));
+    return create_hash_tl_object<ion_api::db_filedb_key_candidateRef>(create_tl_block_id(block_id));
   }
   ShardIdFull shard() const {
     return block_id.shard_full();
@@ -326,11 +326,11 @@ class BlockInfoShort {
 
 class BlockInfo {
  public:
-  tl_object_ptr<ton_api::db_filedb_Key> tl() const {
-    return create_tl_object<ton_api::db_filedb_key_blockInfo>(create_tl_block_id(block_id));
+  tl_object_ptr<ion_api::db_filedb_Key> tl() const {
+    return create_tl_object<ion_api::db_filedb_key_blockInfo>(create_tl_block_id(block_id));
   }
   FileHash hash() const {
-    return create_hash_tl_object<ton_api::db_filedb_key_blockInfo>(create_tl_block_id(block_id));
+    return create_hash_tl_object<ion_api::db_filedb_key_blockInfo>(create_tl_block_id(block_id));
   }
   ShardIdFull shard() const {
     return block_id.shard_full();
@@ -382,7 +382,7 @@ class FileReference {
   }
   FileReference() : ref_(fileref::Empty{}) {
   }
-  FileReference(tl_object_ptr<ton_api::db_filedb_Key> key);
+  FileReference(tl_object_ptr<ion_api::db_filedb_Key> key);
 
   static td::Result<FileReference> create(std::string filename);
 
@@ -392,7 +392,7 @@ class FileReference {
 
   FileReferenceShort shortref() const;
 
-  tl_object_ptr<ton_api::db_filedb_Key> tl() const;
+  tl_object_ptr<ion_api::db_filedb_Key> tl() const;
   td::Bits256 hash() const;
   ShardIdFull shard() const;
   std::string filename() const;
@@ -401,5 +401,5 @@ class FileReference {
 
 }  // namespace validator
 
-}  // namespace ton
+}  // namespace ion
 

@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -20,12 +20,12 @@
 
 #include "adnl/adnl.h"
 #include "adnl/utils.hpp"
-#include "auto/tl/ton_api.h"
+#include "auto/tl/ion_api.h"
 
 #include "catchain-types.h"
 #include "catchain-receiver-interface.h"
 
-namespace ton {
+namespace ion {
 
 namespace catchain {
 
@@ -45,9 +45,9 @@ class CatChainReceiver : public CatChainReceiverInterface {
     PublicKeyHash local_id_;
   };
   virtual PrintId print_id() const = 0;
-  virtual CatChainReceivedBlock *create_block(tl_object_ptr<ton_api::catchain_block> block,
+  virtual CatChainReceivedBlock *create_block(tl_object_ptr<ion_api::catchain_block> block,
                                               td::SharedSlice payload) = 0;
-  virtual CatChainReceivedBlock *create_block(tl_object_ptr<ton_api::catchain_block_dep> block) = 0;
+  virtual CatChainReceivedBlock *create_block(tl_object_ptr<ion_api::catchain_block_dep> block) = 0;
   virtual CatChainReceiverSource *get_source(td::uint32 source_id) const = 0;
   virtual PublicKeyHash get_source_hash(td::uint32 source_id) const = 0;
   virtual td::uint32 get_forks_cnt() const = 0;
@@ -61,8 +61,8 @@ class CatChainReceiver : public CatChainReceiverInterface {
 
   virtual const CatChainOptions &opts() const = 0;
 
-  virtual td::Status validate_block_sync(const tl_object_ptr<ton_api::catchain_block_dep> &dep) const = 0;
-  virtual td::Status validate_block_sync(const tl_object_ptr<ton_api::catchain_block> &block,
+  virtual td::Status validate_block_sync(const tl_object_ptr<ion_api::catchain_block_dep> &dep) const = 0;
+  virtual td::Status validate_block_sync(const tl_object_ptr<ion_api::catchain_block> &block,
                                          const td::Slice &payload) const = 0;
 
   virtual ~CatChainReceiver() = default;
@@ -72,16 +72,16 @@ td::uint64 get_max_block_height(const CatChainOptions& opts, size_t sources_cnt)
 
 }  // namespace catchain
 
-}  // namespace ton
+}  // namespace ion
 
 namespace td {
 
-inline td::StringBuilder &operator<<(td::StringBuilder &sb, const ton::catchain::CatChainReceiver::PrintId &print_id) {
+inline td::StringBuilder &operator<<(td::StringBuilder &sb, const ion::catchain::CatChainReceiver::PrintId &print_id) {
   sb << "[catchainreceiver " << print_id.instance_ << "@" << print_id.local_id_ << "]";
   return sb;
 }
 
-inline td::StringBuilder &operator<<(td::StringBuilder &sb, const ton::catchain::CatChainReceiver *catchain) {
+inline td::StringBuilder &operator<<(td::StringBuilder &sb, const ion::catchain::CatChainReceiver *catchain) {
   sb << catchain->print_id();
   return sb;
 }

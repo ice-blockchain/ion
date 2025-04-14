@@ -19,4 +19,4 @@ target_include_directories(common PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>/.. 
   ${OPENSSL_INCLUDE_DIR}
 )
-target_link_libraries(common PRIVATE tdutils ton_crypto )
+target_link_libraries(common PRIVATE tdutils ion_crypto )

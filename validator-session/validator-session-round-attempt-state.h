@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #pragma once
@@ -31,7 +31,7 @@
 #include <limits>
 
 
-namespace ton {
+namespace ion {
 
 namespace validatorsession {
 
@@ -40,7 +40,7 @@ using HashType = ValidatorSessionDescription::HashType;
 struct SessionBlockCandidateSignature : public ValidatorSessionDescription::RootObject {
  public:
   static auto create_hash(ValidatorSessionDescription& desc, td::Slice data) {
-    auto obj = create_tl_object<ton_api::hashable_blockSignature>(desc.compute_hash(data));
+    auto obj = create_tl_object<ion_api::hashable_blockSignature>(desc.compute_hash(data));
     return desc.compute_hash(serialize_tl_object(obj, true).as_slice());
   }
 
@@ -108,7 +108,7 @@ class SentBlock : public ValidatorSessionDescription::RootObject {
   static HashType create_hash(ValidatorSessionDescription& desc, td::uint32 src_idx, ValidatorSessionRootHash root_hash,
                               ValidatorSessionFileHash file_hash,
                               ValidatorSessionCollatedDataFileHash collated_data_file_hash) {
-    auto obj = create_tl_object<ton_api::hashable_sentBlock>(src_idx, get_vs_hash(desc, root_hash),
+    auto obj = create_tl_object<ion_api::hashable_sentBlock>(src_idx, get_vs_hash(desc, root_hash),
                                                              get_vs_hash(desc, file_hash),
                                                              get_vs_hash(desc, collated_data_file_hash));
     return desc.compute_hash(serialize_tl_object(obj, true).as_slice());
@@ -231,7 +231,7 @@ class SentBlock : public ValidatorSessionDescription::RootObject {
 class SessionBlockCandidate : public ValidatorSessionDescription::RootObject {
  public:
   static HashType create_hash(ValidatorSessionDescription& desc, HashType block, HashType approved) {
-    auto obj = create_tl_object<ton_api::hashable_blockCandidate>(block, approved);
+    auto obj = create_tl_object<ion_api::hashable_blockCandidate>(block, approved);
     return desc.compute_hash(serialize_tl_object(obj, true).as_slice());
   }
   static bool compare(const RootObject* r, const SentBlock* block, const SessionBlockCandidateSignatureVector* approved,
@@ -333,7 +333,7 @@ class SessionBlockCandidate : public ValidatorSessionDescription::RootObject {
 class SessionVoteCandidate : public ValidatorSessionDescription::RootObject {
  public:
   static HashType create_hash(ValidatorSessionDescription& desc, HashType block, HashType voted) {
-    auto obj = create_tl_object<ton_api::hashable_blockVoteCandidate>(block, voted);
+    auto obj = create_tl_object<ion_api::hashable_blockVoteCandidate>(block, voted);
     return desc.compute_hash(serialize_tl_object(obj, true).as_slice());
   }
   static bool compare(const RootObject* r, const SentBlock* block, const CntVector<bool>* voted, HashType hash) {
@@ -438,7 +438,7 @@ class ValidatorSessionRoundAttemptState : public ValidatorSessionDescription::Ro
  public:
   static HashType create_hash(ValidatorSessionDescription& desc, td::uint32 seqno, HashType votes,
                               HashType precommitted, bool vote_for_inited, HashType vote_for) {
-    auto obj = create_tl_object<ton_api::hashable_validatorSessionRoundAttempt>(seqno, votes, precommitted,
+    auto obj = create_tl_object<ion_api::hashable_validatorSessionRoundAttempt>(seqno, votes, precommitted,
                                                                                 vote_for_inited, vote_for);
     return desc.compute_hash(serialize_tl_object(obj, true).as_slice());
   }
@@ -550,27 +550,27 @@ class ValidatorSessionRoundAttemptState : public ValidatorSessionDescription::Ro
   static const ValidatorSessionRoundAttemptState* action(ValidatorSessionDescription& desc,
                                                          const ValidatorSessionRoundAttemptState* state,
                                                          td::uint32 src_idx, td::uint32 att,
-                                                         const ton_api::validatorSession_message_voteFor& act,
+                                                         const ion_api::validatorSession_message_voteFor& act,
                                                          const ValidatorSessionRoundState* round);
   static const ValidatorSessionRoundAttemptState* action(ValidatorSessionDescription& desc,
                                                          const ValidatorSessionRoundAttemptState* state,
                                                          td::uint32 src_idx, td::uint32 att,
-                                                         const ton_api::validatorSession_message_vote& act,
+                                                         const ion_api::validatorSession_message_vote& act,
                                                          const ValidatorSessionRoundState* round);
   static const ValidatorSessionRoundAttemptState* action(ValidatorSessionDescription& desc,
                                                          const ValidatorSessionRoundAttemptState* state,
                                                          td::uint32 src_idx, td::uint32 att,
-                                                         const ton_api::validatorSession_message_precommit& act,
+                                                         const ion_api::validatorSession_message_precommit& act,
                                                          const ValidatorSessionRoundState* round);
   static const ValidatorSessionRoundAttemptState* action(ValidatorSessionDescription& desc,
                                                          const ValidatorSessionRoundAttemptState* state,
                                                          td::uint32 src_idx, td::uint32 att,
-                                                         const ton_api::validatorSession_message_empty& act,
+                                                         const ion_api::validatorSession_message_empty& act,
                                                          const ValidatorSessionRoundState* round);
   static const ValidatorSessionRoundAttemptState* action(ValidatorSessionDescription& desc,
                                                          const ValidatorSessionRoundAttemptState* state,
                                                          td::uint32 src_idx, td::uint32 att,
-                                                         const ton_api::validatorSession_round_Message* action,
+                                                         const ion_api::validatorSession_round_Message* action,
                                                          const ValidatorSessionRoundState* round);
   template <class T>
   static const ValidatorSessionRoundAttemptState* action(ValidatorSessionDescription& desc,
@@ -583,21 +583,21 @@ class ValidatorSessionRoundAttemptState : public ValidatorSessionDescription::Ro
                                                            const ValidatorSessionRoundAttemptState* state,
                                                            td::uint32 src_idx, td::uint32 att,
                                                            const ValidatorSessionRoundState* round,
-                                                           const ton_api::validatorSession_round_Message* cmp,
+                                                           const ion_api::validatorSession_round_Message* cmp,
                                                            bool& made);
   static const ValidatorSessionRoundAttemptState* try_precommit(ValidatorSessionDescription& desc,
                                                                 const ValidatorSessionRoundAttemptState* state,
                                                                 td::uint32 src_idx, td::uint32 att,
                                                                 const ValidatorSessionRoundState* round,
-                                                                const ton_api::validatorSession_round_Message* cmp,
+                                                                const ion_api::validatorSession_round_Message* cmp,
                                                                 bool& made);
   static const ValidatorSessionRoundAttemptState* make_one(ValidatorSessionDescription& desc,
                                                            const ValidatorSessionRoundAttemptState* state,
                                                            td::uint32 src_idx, td::uint32 att,
                                                            const ValidatorSessionRoundState* round,
-                                                           const ton_api::validatorSession_round_Message* cmp,
+                                                           const ion_api::validatorSession_round_Message* cmp,
                                                            bool& made);
-  tl_object_ptr<ton_api::validatorSession_round_Message> create_action(ValidatorSessionDescription& desc,
+  tl_object_ptr<ion_api::validatorSession_round_Message> create_action(ValidatorSessionDescription& desc,
                                                                        const ValidatorSessionRoundState* round,
                                                                        td::uint32 src_idx, td::uint32 att) const;
   void dump(ValidatorSessionDescription& desc, td::StringBuilder& sb) const;
@@ -617,4 +617,4 @@ using AttemptVector =
 
 }  // namespace validatorsession
 
-}  // namespace ton
+}  // namespace ion

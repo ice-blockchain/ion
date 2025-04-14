@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -2665,7 +2665,7 @@ void interpret_run_vm(IntCtx& ctx, int mode) {
   bool with_data = mode & 4;
   Ref<vm::Tuple> c7;
   Ref<vm::Cell> data, actions;
-  int global_version = (mode & 1024) ? ctx.stack.pop_smallint_range(ton::SUPPORTED_VERSION) : ton::SUPPORTED_VERSION;
+  int global_version = (mode & 1024) ? ctx.stack.pop_smallint_range(ion::SUPPORTED_VERSION) : ion::SUPPORTED_VERSION;
   long long gas_max = (mode & 128) ? ctx.stack.pop_long_range(vm::GasLimits::infty) : vm::GasLimits::infty;
   long long gas_limit = (mode & 8) ? ctx.stack.pop_long_range(vm::GasLimits::infty) : vm::GasLimits::infty;
   if (!(mode & 128)) {
@@ -3390,7 +3390,7 @@ void init_words_common(Dictionary& d) {
   d.def_ctx_tail_word("$() ", interpret_get_cmdline_arg);
 }
 
-void init_words_ton(Dictionary& d) {
+void init_words_ion(Dictionary& d) {
   using namespace std::placeholders;
   d.def_stack_word("smca>$ ", interpret_pack_std_smc_addr);
   d.def_stack_word("$>smca ", interpret_unpack_std_smc_addr);

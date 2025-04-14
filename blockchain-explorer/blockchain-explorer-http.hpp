@@ -1,18 +1,18 @@
 /* 
-    This file is part of TON Blockchain source code.
+    This file is part of ION Blockchain source code.
 
-    TON Blockchain is free software; you can redistribute it and/or
+    ION Blockchain is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
     as published by the Free Software Foundation; either version 2
     of the License, or (at your option) any later version.
 
-    TON Blockchain is distributed in the hope that it will be useful,
+    ION Blockchain is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with TON Blockchain.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain.  If not, see <http://www.gnu.org/licenses/>.
 
     In addition, as a special exception, the copyright holders give permission 
     to link the code of portions of this program with the OpenSSL library. 
@@ -27,7 +27,7 @@
 */
 #pragma once
 
-#include "ton/ton-types.h"
+#include "ion/ion-types.h"
 #include "vm/boc.h"
 #include "vm/cellops.h"
 #include "td/utils/Random.h"
@@ -45,76 +45,76 @@ class HttpAnswer {
   };
   struct TransactionCell {
     block::StdAddress addr;
-    ton::BlockIdExt block_id;
+    ion::BlockIdExt block_id;
     td::Ref<vm::Cell> root;
   };
   struct AccountCell {
     block::StdAddress addr;
-    ton::BlockIdExt block_id;
+    ion::BlockIdExt block_id;
     td::Ref<vm::Cell> root;
     std::vector<td::Ref<vm::Cell>> q_roots;
   };
   struct BlockHeaderCell {
-    ton::BlockIdExt block_id;
+    ion::BlockIdExt block_id;
     td::Ref<vm::Cell> root;
   };
   struct BlockShardsCell {
-    ton::BlockIdExt block_id;
+    ion::BlockIdExt block_id;
     td::Ref<vm::Cell> root;
   };
 
   struct AccountLink {
     block::StdAddress account_id;
-    ton::BlockIdExt block_id;
+    ion::BlockIdExt block_id;
   };
   struct MessageLink {
     td::Ref<vm::Cell> root;
   };
   struct TransactionLink {
     block::StdAddress account_id;
-    ton::LogicalTime lt;
-    ton::Bits256 hash;
+    ion::LogicalTime lt;
+    ion::Bits256 hash;
   };
   struct TransactionLinkShort {
-    ton::BlockIdExt block_id;
+    ion::BlockIdExt block_id;
     block::StdAddress account_id;
-    ton::LogicalTime lt;
+    ion::LogicalTime lt;
   };
   struct BlockLink {
-    ton::BlockIdExt block_id;
+    ion::BlockIdExt block_id;
   };
   struct BlockViewLink {
-    ton::BlockIdExt block_id;
+    ion::BlockIdExt block_id;
   };
   struct ConfigViewLink {
-    ton::BlockIdExt block_id;
+    ion::BlockIdExt block_id;
   };
   struct BlockDownloadLink {
-    ton::BlockIdExt block_id;
+    ion::BlockIdExt block_id;
   };
   struct BlockSearch {
-    ton::BlockIdExt block_id;
+    ion::BlockIdExt block_id;
   };
   struct AccountSearch {
-    ton::BlockIdExt block_id;
+    ion::BlockIdExt block_id;
     block::StdAddress addr;
   };
   struct TransactionSearch {
-    ton::BlockIdExt block_id;
+    ion::BlockIdExt block_id;
     block::StdAddress addr;
-    ton::LogicalTime lt;
-    ton::Bits256 hash;
+    ion::LogicalTime lt;
+    ion::Bits256 hash;
   };
   struct TransactionList {
     struct TransactionDescr {
-      TransactionDescr(block::StdAddress addr, ton::LogicalTime lt, ton::Bits256 hash)
+      TransactionDescr(block::StdAddress addr, ion::LogicalTime lt, ion::Bits256 hash)
           : addr(addr), lt(lt), hash(hash) {
       }
       block::StdAddress addr;
-      ton::LogicalTime lt;
-      ton::Bits256 hash;
+      ion::LogicalTime lt;
+      ion::Bits256 hash;
     };
-    ton::BlockIdExt block_id;
+    ion::BlockIdExt block_id;
     std::vector<TransactionDescr> vec;
     td::uint32 req_count_;
   };
@@ -149,14 +149,14 @@ class HttpAnswer {
   void set_title(std::string title) {
     title_ = title;
   }
-  void set_block_id(ton::BlockIdExt block_id) {
+  void set_block_id(ion::BlockIdExt block_id) {
     block_id_ = block_id;
     workchain_id_ = block_id_.id.workchain;
   }
   void set_account_id(block::StdAddress addr) {
     account_id_ = addr;
   }
-  void set_workchain(ton::WorkchainId workchain_id) {
+  void set_workchain(ion::WorkchainId workchain_id) {
     workchain_id_ = workchain_id;
   }
 
@@ -185,8 +185,8 @@ class HttpAnswer {
   }
   HttpAnswer &operator<<(AddressCell addr);
   HttpAnswer &operator<<(MessageCell msg);
-  HttpAnswer &operator<<(ton::BlockIdExt block_id);
-  HttpAnswer &operator<<(ton::BlockId block_id);
+  HttpAnswer &operator<<(ion::BlockIdExt block_id);
+  HttpAnswer &operator<<(ion::BlockId block_id);
   HttpAnswer &operator<<(TransactionCell trans);
   HttpAnswer &operator<<(AccountCell trans);
   HttpAnswer &operator<<(BlockHeaderCell head);
@@ -222,11 +222,11 @@ class HttpAnswer {
   }
 
  private:
-  void block_id_link(ton::BlockIdExt block_id);
+  void block_id_link(ion::BlockIdExt block_id);
 
   std::string title_;
-  ton::BlockIdExt block_id_;
-  ton::WorkchainId workchain_id_ = ton::workchainInvalid;
+  ion::BlockIdExt block_id_;
+  ion::WorkchainId workchain_id_ = ion::workchainInvalid;
   block::StdAddress account_id_;
 
   std::string prefix_;

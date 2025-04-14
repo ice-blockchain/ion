@@ -1,18 +1,18 @@
 /* 
-    This file is part of TON Blockchain source code.
+    This file is part of ION Blockchain source code.
 
-    TON Blockchain is free software; you can redistribute it and/or
+    ION Blockchain is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
     as published by the Free Software Foundation; either version 2
     of the License, or (at your option) any later version.
 
-    TON Blockchain is distributed in the hope that it will be useful,
+    ION Blockchain is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with TON Blockchain.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain.  If not, see <http://www.gnu.org/licenses/>.
 
     In addition, as a special exception, the copyright holders give permission 
     to link the code of portions of this program with the OpenSSL library. 
@@ -34,7 +34,7 @@
 #include "td/utils/OptionParser.h"
 #include "td/utils/filesystem.h"
 #include "dht/dht.hpp"
-#include "auto/tl/ton_api_json.h"
+#include "auto/tl/ion_api_json.h"
 #include "common/delay.h"
 #include "td/utils/Random.h"
 #include "terminal/terminal.h"
@@ -43,21 +43,21 @@
 
 class AdnlNode : public td::actor::Actor {
  private:
-  td::actor::ActorOwn<ton::adnl::AdnlNetworkManager> network_manager_;
-  td::actor::ActorOwn<ton::adnl::Adnl> adnl_;
-  td::actor::ActorOwn<ton::keyring::Keyring> keyring_;
-  ton::adnl::AdnlNodeIdShort local_id_;
+  td::actor::ActorOwn<ion::adnl::AdnlNetworkManager> network_manager_;
+  td::actor::ActorOwn<ion::adnl::Adnl> adnl_;
+  td::actor::ActorOwn<ion::keyring::Keyring> keyring_;
+  ion::adnl::AdnlNodeIdShort local_id_;
 
   std::string host_ = "127.0.0.1";
   td::uint16 port_ = 2380;
 
-  std::string global_config_ = "ton-global.config";
+  std::string global_config_ = "ion-global.config";
 
   struct NodeInfo {
-    ton::adnl::AdnlNodeIdShort id;
+    ion::adnl::AdnlNodeIdShort id;
     td::uint32 sent = 0, received = 0;
     double sum_time = 0.0;
-    explicit NodeInfo(ton::adnl::AdnlNodeIdShort id) : id(id) {
+    explicit NodeInfo(ion::adnl::AdnlNodeIdShort id) : id(id) {
     }
   };
   std::vector<NodeInfo> nodes_;
@@ -77,23 +77,23 @@ class AdnlNode : public td::actor::Actor {
   }
 
   void run() {
-    network_manager_ = ton::adnl::AdnlNetworkManager::create(port_);
-    keyring_ = ton::keyring::Keyring::create("");
-    adnl_ = ton::adnl::Adnl::create("", keyring_.get());
-    td::actor::send_closure(adnl_, &ton::adnl::Adnl::register_network_manager, network_manager_.get());
+    network_manager_ = ion::adnl::AdnlNetworkManager::create(port_);
+    keyring_ = ion::keyring::Keyring::create("");
+    adnl_ = ion::adnl::Adnl::create("", keyring_.get());
+    td::actor::send_closure(adnl_, &ion::adnl::Adnl::register_network_manager, network_manager_.get());
 
     td::IPAddress addr;
     addr.init_host_port(host_, port_).ensure();
-    ton::adnl::AdnlCategoryMask mask;
+    ion::adnl::AdnlCategoryMask mask;
     mask[0] = true;
-    td::actor::send_closure(network_manager_, &ton::adnl::AdnlNetworkManager::add_self_addr, addr, mask, 0);
-    auto pk = ton::privkeys::Ed25519::random();
-    td::actor::send_closure(keyring_, &ton::keyring::Keyring::add_key, pk, true, [](td::Result<td::Unit>) {});
-    ton::adnl::AdnlNodeIdFull local_id_full(pk.pub());
-    ton::adnl::AdnlAddressList addr_list;
+    td::actor::send_closure(network_manager_, &ion::adnl::AdnlNetworkManager::add_self_addr, addr, mask, 0);
+    auto pk = ion::privkeys::Ed25519::random();
+    td::actor::send_closure(keyring_, &ion::keyring::Keyring::add_key, pk, true, [](td::Result<td::Unit>) {});
+    ion::adnl::AdnlNodeIdFull local_id_full(pk.pub());
+    ion::adnl::AdnlAddressList addr_list;
     addr_list.set_version(static_cast<td::int32>(td::Clocks::system()));
-    addr_list.set_reinit_date(ton::adnl::Adnl::adnl_start_time());
-    td::actor::send_closure(adnl_, &ton::adnl::Adnl::add_id, local_id_full, std::move(addr_list), (td::uint8)0);
+    addr_list.set_reinit_date(ion::adnl::Adnl::adnl_start_time());
+    td::actor::send_closure(adnl_, &ion::adnl::Adnl::add_id, local_id_full, std::move(addr_list), (td::uint8)0);
     local_id_ = local_id_full.compute_short_id();
 
     auto r_dht = get_dht_config();
@@ -101,27 +101,27 @@ class AdnlNode : public td::actor::Actor {
       LOG(FATAL) << "Cannot get dht config: " << r_dht.move_as_error();
     }
     auto dht = r_dht.move_as_ok();
-    ton::adnl::AdnlNodesList static_nodes;
+    ion::adnl::AdnlNodesList static_nodes;
     for (const auto &node : dht->nodes().list()) {
       LOG(INFO) << "Node #" << nodes_.size() << " : " << node.adnl_id().compute_short_id();
       nodes_.emplace_back(node.adnl_id().compute_short_id());
-      static_nodes.push(ton::adnl::AdnlNode(node.adnl_id(), node.addr_list()));
+      static_nodes.push(ion::adnl::AdnlNode(node.adnl_id(), node.addr_list()));
     }
-    td::actor::send_closure(adnl_, &ton::adnl::Adnl::add_static_nodes_from_config, std::move(static_nodes));
+    td::actor::send_closure(adnl_, &ion::adnl::Adnl::add_static_nodes_from_config, std::move(static_nodes));
 
-    ton::delay_action([SelfId = actor_id(this)]() { td::actor::send_closure(SelfId, &AdnlNode::send_pings); },
+    ion::delay_action([SelfId = actor_id(this)]() { td::actor::send_closure(SelfId, &AdnlNode::send_pings); },
                       td::Timestamp::in(1.0));
   }
 
-  td::Result<std::shared_ptr<ton::dht::DhtGlobalConfig>> get_dht_config() {
+  td::Result<std::shared_ptr<ion::dht::DhtGlobalConfig>> get_dht_config() {
     TRY_RESULT_PREFIX(conf_data, td::read_file(global_config_), "failed to read: ");
     TRY_RESULT_PREFIX(conf_json, td::json_decode(conf_data.as_slice()), "failed to parse json: ");
-    ton::ton_api::config_global conf;
-    TRY_STATUS_PREFIX(ton::ton_api::from_json(conf, conf_json.get_object()), "json does not fit TL scheme: ");
+    ion::ion_api::config_global conf;
+    TRY_STATUS_PREFIX(ion::ion_api::from_json(conf, conf_json.get_object()), "json does not fit TL scheme: ");
     if (!conf.dht_) {
-      return td::Status::Error(ton::ErrorCode::error, "does not contain [dht] section");
+      return td::Status::Error(ion::ErrorCode::error, "does not contain [dht] section");
     }
-    TRY_RESULT_PREFIX(dht, ton::dht::Dht::create_global_config(std::move(conf.dht_)), "bad [dht] section: ");
+    TRY_RESULT_PREFIX(dht, ion::dht::Dht::create_global_config(std::move(conf.dht_)), "bad [dht] section: ");
     return std::move(dht);
   }
 
@@ -133,18 +133,18 @@ class AdnlNode : public td::actor::Actor {
       LOG(INFO) << "Sending ping to " << id;
       ++pending_;
       td::actor::send_closure(
-          adnl_, &ton::adnl::Adnl::send_query, local_id_, id, "ping",
+          adnl_, &ion::adnl::Adnl::send_query, local_id_, id, "ping",
           [SelfId = actor_id(this), i, timer = td::Timer()](td::Result<td::BufferSlice> R) {
             td::actor::send_closure(SelfId, &AdnlNode::on_pong, i, timer.elapsed(), R.is_ok());
           }, td::Timestamp::in(5.0),
-          ton::create_serialize_tl_object<ton::ton_api::dht_ping>(td::Random::fast_uint64()));
+          ion::create_serialize_tl_object<ion::ion_api::dht_ping>(td::Random::fast_uint64()));
     }
 
     if (pings_remaining_ == 0) {
       --pending_;
       try_finish();
     } else {
-      ton::delay_action([SelfId = actor_id(this)]() { td::actor::send_closure(SelfId, &AdnlNode::send_pings); },
+      ion::delay_action([SelfId = actor_id(this)]() { td::actor::send_closure(SelfId, &AdnlNode::send_pings); },
                         td::Timestamp::in(1.0));
     }
   }

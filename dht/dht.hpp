@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -32,9 +32,9 @@
 #include "dht.h"
 #include "dht-node.hpp"
 
-#include "auto/tl/ton_api.hpp"
+#include "auto/tl/ion_api.hpp"
 
-namespace ton {
+namespace ion {
 
 namespace dht {
 
@@ -93,7 +93,7 @@ class DhtMember : public Dht {
                                                td::actor::ActorId<adnl::Adnl> adnl, td::int32 network_id,
                                                td::uint32 k = 10, td::uint32 a = 3, bool client_only = false);
 
-  //virtual void update_addr_list(tl_object_ptr<ton_api::adnl_addressList> addr_list) = 0;
+  //virtual void update_addr_list(tl_object_ptr<ion_api::adnl_addressList> addr_list) = 0;
   //virtual void add_node(adnl::AdnlNodeIdShort id) = 0;
   virtual void add_full_node(DhtKeyId id, DhtNode node, bool set_active) = 0;
 
@@ -129,4 +129,4 @@ inline td::StringBuilder &operator<<(td::StringBuilder &sb, const DhtMember *dht
 
 }  // namespace dht
 
-}  // namespace ton
+}  // namespace ion

@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -25,7 +25,7 @@
 #include "block/block.h"
 #include "vm/cells/CellString.h"
 
-namespace ton {
+namespace ion {
 
 struct WalletV3Traits {
   using InitData = WalletInterface::DefaultInitData;
@@ -47,9 +47,9 @@ class WalletV3 : public WalletBase<WalletV3, WalletV3Traits> {
   td::Result<td::uint32> get_wallet_id() const override;
   td::Result<td::Ed25519::PublicKey> get_public_key() const override;
 };
-}  // namespace ton
+}  // namespace ion
 
-namespace ton {
+namespace ion {
 
 struct RestrictedWalletTraits {
   struct InitData {
@@ -170,4 +170,4 @@ class RestrictedWallet : public WalletBase<RestrictedWallet, RestrictedWalletTra
     return vm::CellBuilder().store_bytes(signature).append_cellslice(vm::load_cell_slice(message_outer)).finalize();
   }
 };
-}  // namespace ton
+}  // namespace ion

@@ -1,25 +1,25 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
 #include "adnl-ext-client.hpp"
 #include "adnl-ext-client.h"
 
-namespace ton {
+namespace ion {
 
 namespace adnl {
 
@@ -76,14 +76,14 @@ void AdnlExtClientImpl::try_stop() {
 
 td::Status AdnlOutboundConnection::process_custom_packet(td::BufferSlice &data, bool &processed) {
   if (data.size() == 12) {
-    auto F = fetch_tl_object<ton_api::tcp_pong>(data.clone(), true);
+    auto F = fetch_tl_object<ion_api::tcp_pong>(data.clone(), true);
     if (F.is_ok()) {
       processed = true;
       return td::Status::OK();
     }
   }
   if (!local_id_.empty() && nonce_.size() != 0) {
-    auto F = fetch_tl_object<ton_api::tcp_authentificationNonce>(data.clone(), true);
+    auto F = fetch_tl_object<ion_api::tcp_authentificationNonce>(data.clone(), true);
     if (F.is_ok()) {
       auto f = F.move_as_ok();
       if (f->nonce_.size() == 0 || f->nonce_.size() > 512) {
@@ -97,7 +97,7 @@ td::Status AdnlOutboundConnection::process_custom_packet(td::BufferSlice &data, 
       TRY_RESULT(B, dec->sign(ss.as_slice()));
 
       auto obj =
-          create_tl_object<ton_api::tcp_authentificationComplete>(local_id_.compute_public_key().tl(), std::move(B));
+          create_tl_object<ion_api::tcp_authentificationComplete>(local_id_.compute_public_key().tl(), std::move(B));
       send(serialize_tl_object(obj, true));
 
       nonce_.clear();
@@ -147,7 +147,7 @@ void AdnlOutboundConnection::start_up() {
   if (!local_id_.empty()) {
     nonce_ = td::SecureString{32};
     td::Random::secure_bytes(nonce_.as_mutable_slice());
-    auto obj = create_tl_object<ton_api::tcp_authentificate>(td::BufferSlice{nonce_.as_slice()});
+    auto obj = create_tl_object<ion_api::tcp_authentificate>(td::BufferSlice{nonce_.as_slice()});
     send(serialize_tl_object(obj, true));
   }
 }
@@ -288,4 +288,4 @@ td::actor::ActorOwn<AdnlExtMultiClient> AdnlExtMultiClient::create(
 
 }  // namespace adnl
 
-}  // namespace ton
+}  // namespace ion

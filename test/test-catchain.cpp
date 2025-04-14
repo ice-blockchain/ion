@@ -1,18 +1,18 @@
 /* 
-    This file is part of TON Blockchain source code.
+    This file is part of ION Blockchain source code.
 
-    TON Blockchain is free software; you can redistribute it and/or
+    ION Blockchain is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
     as published by the Free Software Foundation; either version 2
     of the License, or (at your option) any later version.
 
-    TON Blockchain is distributed in the hope that it will be useful,
+    ION Blockchain is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with TON Blockchain.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain.  If not, see <http://www.gnu.org/licenses/>.
 
     In addition, as a special exception, the copyright holders give permission 
     to link the code of portions of this program with the OpenSSL library. 
@@ -51,21 +51,21 @@
 #include <set>
 
 struct Node {
-  ton::PublicKeyHash id;
-  ton::PublicKey id_full;
-  ton::adnl::AdnlNodeIdShort adnl_id;
-  ton::adnl::AdnlNodeIdFull adnl_id_full;
+  ion::PublicKeyHash id;
+  ion::PublicKey id_full;
+  ion::adnl::AdnlNodeIdShort adnl_id;
+  ion::adnl::AdnlNodeIdFull adnl_id_full;
 };
 
 class CatChainInst : public td::actor::Actor {
  public:
-  class PayloadExtra : public ton::catchain::CatChainBlock::Extra {
+  class PayloadExtra : public ion::catchain::CatChainBlock::Extra {
    public:
     PayloadExtra(td::uint64 sum) : sum(sum) {
     }
     td::uint64 sum;
   };
-  void process_blocks(std::vector<ton::catchain::CatChainBlock *> blocks) {
+  void process_blocks(std::vector<ion::catchain::CatChainBlock *> blocks) {
     td::uint64 sum = sum_;
     for (auto &B : blocks) {
       auto E = dynamic_cast<const PayloadExtra *>(B->extra());
@@ -80,7 +80,7 @@ class CatChainInst : public td::actor::Actor {
 
     sum_ = sum;
 
-    td::actor::send_closure(catchain_, &ton::catchain::CatChain::processed_block,
+    td::actor::send_closure(catchain_, &ion::catchain::CatChain::processed_block,
                             td::BufferSlice{td::Slice{reinterpret_cast<char *>(x), 16}});
 
     alarm_timestamp() = td::Timestamp::in(0.1);
@@ -89,7 +89,7 @@ class CatChainInst : public td::actor::Actor {
   }
   void finished_processing() {
   }
-  void preprocess_block(ton::catchain::CatChainBlock *block) {
+  void preprocess_block(ion::catchain::CatChainBlock *block) {
     td::uint64 sum = 0;
     auto prev = block->prev();
     if (prev) {
@@ -117,27 +117,27 @@ class CatChainInst : public td::actor::Actor {
   }
 
   void alarm() override {
-    td::actor::send_closure(catchain_, &ton::catchain::CatChain::need_new_block, td::Timestamp::in(0.1));
+    td::actor::send_closure(catchain_, &ion::catchain::CatChain::need_new_block, td::Timestamp::in(0.1));
   }
 
   void start_up() override {
     alarm_timestamp() = td::Timestamp::in(0.1);
-    ton::CatChainOptions opts;
+    ion::CatChainOptions opts;
     opts.debug_disable_db = true;
     //opts.block_hash_covers_data = true;
 
-    std::vector<ton::catchain::CatChainNode> nodes;
+    std::vector<ion::catchain::CatChainNode> nodes;
     for (auto &n : nodes_) {
-      nodes.push_back(ton::catchain::CatChainNode{n.adnl_id, n.id_full});
+      nodes.push_back(ion::catchain::CatChainNode{n.adnl_id, n.id_full});
     }
     catchain_ =
-        ton::catchain::CatChain::create(make_callback(), opts, keyring_, adnl_, overlay_manager_, std::move(nodes),
+        ion::catchain::CatChain::create(make_callback(), opts, keyring_, adnl_, overlay_manager_, std::move(nodes),
                                         nodes_[idx_].id, unique_hash_, std::string(""), "", false);
   }
 
-  CatChainInst(td::actor::ActorId<ton::keyring::Keyring> keyring, td::actor::ActorId<ton::adnl::Adnl> adnl,
-               td::actor::ActorId<ton::overlay::Overlays> overlay_manager, std::vector<Node> nodes, td::uint32 idx,
-               ton::catchain::CatChainSessionId unique_hash)
+  CatChainInst(td::actor::ActorId<ion::keyring::Keyring> keyring, td::actor::ActorId<ion::adnl::Adnl> adnl,
+               td::actor::ActorId<ion::overlay::Overlays> overlay_manager, std::vector<Node> nodes, td::uint32 idx,
+               ion::catchain::CatChainSessionId unique_hash)
       : keyring_(keyring)
       , adnl_(adnl)
       , overlay_manager_(overlay_manager)
@@ -146,25 +146,25 @@ class CatChainInst : public td::actor::Actor {
       , unique_hash_(unique_hash) {
   }
 
-  std::unique_ptr<ton::catchain::CatChain::Callback> make_callback() {
-    class Callback : public ton::catchain::CatChain::Callback {
+  std::unique_ptr<ion::catchain::CatChain::Callback> make_callback() {
+    class Callback : public ion::catchain::CatChain::Callback {
      public:
-      void process_blocks(std::vector<ton::catchain::CatChainBlock *> blocks) override {
+      void process_blocks(std::vector<ion::catchain::CatChainBlock *> blocks) override {
         td::actor::send_closure(id_, &CatChainInst::process_blocks, std::move(blocks));
       }
       void finished_processing() override {
         td::actor::send_closure(id_, &CatChainInst::finished_processing);
       }
-      void preprocess_block(ton::catchain::CatChainBlock *block) override {
+      void preprocess_block(ion::catchain::CatChainBlock *block) override {
         td::actor::send_closure(id_, &CatChainInst::preprocess_block, std::move(block));
       }
-      void process_broadcast(const ton::PublicKeyHash &src, td::BufferSlice data) override {
+      void process_broadcast(const ion::PublicKeyHash &src, td::BufferSlice data) override {
         UNREACHABLE();
       }
-      void process_message(const ton::PublicKeyHash &src, td::BufferSlice data) override {
+      void process_message(const ion::PublicKeyHash &src, td::BufferSlice data) override {
         UNREACHABLE();
       }
-      void process_query(const ton::PublicKeyHash &src, td::BufferSlice data,
+      void process_query(const ion::PublicKeyHash &src, td::BufferSlice data,
                          td::Promise<td::BufferSlice> promise) override {
         UNREACHABLE();
       }
@@ -193,21 +193,21 @@ class CatChainInst : public td::actor::Actor {
     x[0] = sum + 1;
     x[1] = sum + 1;
 
-    td::actor::send_closure(catchain_, &ton::catchain::CatChain::debug_add_fork,
+    td::actor::send_closure(catchain_, &ion::catchain::CatChain::debug_add_fork,
                             td::BufferSlice{td::Slice{reinterpret_cast<char *>(x), 16}}, height + 1);
   }
 
  private:
-  td::actor::ActorId<ton::keyring::Keyring> keyring_;
-  td::actor::ActorId<ton::adnl::Adnl> adnl_;
-  td::actor::ActorId<ton::overlay::Overlays> overlay_manager_;
+  td::actor::ActorId<ion::keyring::Keyring> keyring_;
+  td::actor::ActorId<ion::adnl::Adnl> adnl_;
+  td::actor::ActorId<ion::overlay::Overlays> overlay_manager_;
 
   std::vector<Node> nodes_;
   td::uint32 idx_;
 
-  ton::catchain::CatChainSessionId unique_hash_;
+  ion::catchain::CatChainSessionId unique_hash_;
 
-  td::actor::ActorOwn<ton::catchain::CatChain> catchain_;
+  td::actor::ActorOwn<ion::catchain::CatChain> catchain_;
   td::uint64 sum_ = 0;
   td::uint32 height_ = 0;
   std::vector<td::uint64> prev_values_;
@@ -226,20 +226,20 @@ int main(int argc, char *argv[]) {
 
   td::set_default_failure_signal_handler().ensure();
 
-  td::actor::ActorOwn<ton::keyring::Keyring> keyring;
-  td::actor::ActorOwn<ton::adnl::TestLoopbackNetworkManager> network_manager;
-  td::actor::ActorOwn<ton::adnl::Adnl> adnl;
-  td::actor::ActorOwn<ton::overlay::Overlays> overlay_manager;
+  td::actor::ActorOwn<ion::keyring::Keyring> keyring;
+  td::actor::ActorOwn<ion::adnl::TestLoopbackNetworkManager> network_manager;
+  td::actor::ActorOwn<ion::adnl::Adnl> adnl;
+  td::actor::ActorOwn<ion::overlay::Overlays> overlay_manager;
 
   td::actor::Scheduler scheduler({7});
   scheduler.run_in_context([&] {
-    ton::errorlog::ErrorLog::create(db_root_);
-    keyring = ton::keyring::Keyring::create(db_root_);
-    network_manager = td::actor::create_actor<ton::adnl::TestLoopbackNetworkManager>("test net");
-    adnl = ton::adnl::Adnl::create(db_root_, keyring.get());
+    ion::errorlog::ErrorLog::create(db_root_);
+    keyring = ion::keyring::Keyring::create(db_root_);
+    network_manager = td::actor::create_actor<ion::adnl::TestLoopbackNetworkManager>("test net");
+    adnl = ion::adnl::Adnl::create(db_root_, keyring.get());
     overlay_manager =
-        ton::overlay::Overlays::create(db_root_, keyring.get(), adnl.get(), td::actor::ActorId<ton::dht::Dht>{});
-    td::actor::send_closure(adnl, &ton::adnl::Adnl::register_network_manager, network_manager.get());
+        ion::overlay::Overlays::create(db_root_, keyring.get(), adnl.get(), td::actor::ActorId<ion::dht::Dht>{});
+    td::actor::send_closure(adnl, &ion::adnl::Adnl::register_network_manager, network_manager.get());
   });
 
   for (td::uint32 att = 0; att < 20; att++) {
@@ -247,36 +247,36 @@ int main(int argc, char *argv[]) {
     nodes.resize(total_nodes);
 
     scheduler.run_in_context([&] {
-      auto addr = ton::adnl::TestLoopbackNetworkManager::generate_dummy_addr_list();
+      auto addr = ion::adnl::TestLoopbackNetworkManager::generate_dummy_addr_list();
 
       for (auto &n : nodes) {
-        auto pk1 = ton::PrivateKey{ton::privkeys::Ed25519::random()};
+        auto pk1 = ion::PrivateKey{ion::privkeys::Ed25519::random()};
         auto pub1 = pk1.compute_public_key();
-        n.adnl_id_full = ton::adnl::AdnlNodeIdFull{pub1};
-        n.adnl_id = ton::adnl::AdnlNodeIdShort{pub1.compute_short_id()};
-        td::actor::send_closure(keyring, &ton::keyring::Keyring::add_key, std::move(pk1), true, [](td::Unit) {});
-        td::actor::send_closure(adnl, &ton::adnl::Adnl::add_id, ton::adnl::AdnlNodeIdFull{pub1}, addr,
+        n.adnl_id_full = ion::adnl::AdnlNodeIdFull{pub1};
+        n.adnl_id = ion::adnl::AdnlNodeIdShort{pub1.compute_short_id()};
+        td::actor::send_closure(keyring, &ion::keyring::Keyring::add_key, std::move(pk1), true, [](td::Unit) {});
+        td::actor::send_closure(adnl, &ion::adnl::Adnl::add_id, ion::adnl::AdnlNodeIdFull{pub1}, addr,
                                 static_cast<td::uint8>(0));
-        td::actor::send_closure(network_manager, &ton::adnl::TestLoopbackNetworkManager::add_node_id, n.adnl_id, true,
+        td::actor::send_closure(network_manager, &ion::adnl::TestLoopbackNetworkManager::add_node_id, n.adnl_id, true,
                                 true);
 
-        auto pk2 = ton::PrivateKey{ton::privkeys::Ed25519::random()};
+        auto pk2 = ion::PrivateKey{ion::privkeys::Ed25519::random()};
         auto pub2 = pk2.compute_public_key();
         n.id_full = pub2;
         n.id = pub2.compute_short_id();
-        td::actor::send_closure(keyring, &ton::keyring::Keyring::add_key, std::move(pk2), true, [](td::Unit) {});
+        td::actor::send_closure(keyring, &ion::keyring::Keyring::add_key, std::move(pk2), true, [](td::Unit) {});
 
         LOG(DEBUG) << "created node " << n.adnl_id << " " << n.id;
       }
 
       for (auto &n1 : nodes) {
         for (auto &n2 : nodes) {
-          td::actor::send_closure(adnl, &ton::adnl::Adnl::add_peer, n1.adnl_id, n2.adnl_id_full, addr);
+          td::actor::send_closure(adnl, &ion::adnl::Adnl::add_peer, n1.adnl_id, n2.adnl_id_full, addr);
         }
       }
     });
 
-    ton::catchain::CatChainSessionId unique_id;
+    ion::catchain::CatChainSessionId unique_id;
     td::Random::secure_bytes(unique_id.as_slice());
 
     std::vector<td::actor::ActorOwn<CatChainInst>> inst;

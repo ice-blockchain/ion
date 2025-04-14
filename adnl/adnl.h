@@ -1,32 +1,32 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
 #pragma once
 
 #include "td/actor/actor.h"
-#include "auto/tl/ton_api.h"
+#include "auto/tl/ion_api.h"
 #include "td/utils/port/IPAddress.h"
 #include "adnl-node-id.hpp"
 #include "adnl-node.h"
 #include "common/errorcode.h"
 #include "keyring/keyring.h"
 
-namespace ton {
+namespace ion {
 
 namespace dht {
 class Dht;
@@ -121,7 +121,7 @@ class Adnl : public AdnlSenderInterface {
   virtual void create_tunnel(AdnlNodeIdShort dst, td::uint32 size,
                              td::Promise<std::pair<td::actor::ActorOwn<AdnlTunnel>, AdnlAddress>> promise) = 0;
 
-  virtual void get_stats(bool all, td::Promise<tl_object_ptr<ton_api::adnl_stats>> promise) = 0;
+  virtual void get_stats(bool all, td::Promise<tl_object_ptr<ion_api::adnl_stats>> promise) = 0;
 
   static td::actor::ActorOwn<Adnl> create(std::string db, td::actor::ActorId<keyring::Keyring> keyring);
 
@@ -136,4 +136,4 @@ class Adnl : public AdnlSenderInterface {
 
 using Adnl = adnl::Adnl;
 
-}  // namespace ton
+}  // namespace ion

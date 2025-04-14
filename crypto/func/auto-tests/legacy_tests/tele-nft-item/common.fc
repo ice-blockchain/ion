@@ -1,5 +1,5 @@
-const int one_ton = 1000000000;
-const int dns_next_resolver_prefix = 0xba93; ;; dns_next_resolver prefix - https://github.com/ton-blockchain/ton/blob/7e3df93ca2ab336716a230fceb1726d81bac0a06/crypto/block/block.tlb#L819
+const int one_ion = 1000000000;
+const int dns_next_resolver_prefix = 0xba93; ;; dns_next_resolver prefix - https://github.com/ice-blockchain/ion/blob/7e3df93ca2ab336716a230fceb1726d81bac0a06/crypto/block/block.tlb#L819
 
 const int op::fill_up = 0x370fec51;
 const int op::outbid_notification = 0x557cea20;
@@ -53,7 +53,7 @@ const int err::incorrect_workchain = 333;
 const int err::no_first_zero_byte = 413;
 const int err::bad_subdomain_length = 70;
 
-const int min_tons_for_storage = one_ton;
+const int min_ions_for_storage = one_ion;
 const int workchain = 0;
 
 int equal_slices(slice a, slice b) asm "SDEQ";
@@ -68,7 +68,7 @@ slice zero_address() asm "b{00} PUSHSLICE";
 }
 
 
-;; "ton\0test\0" -> "ton"
+;; "ion\0test\0" -> "ion"
 int get_top_domain_bits(slice domain) inline {
     int i = -8;
     int char = 1;

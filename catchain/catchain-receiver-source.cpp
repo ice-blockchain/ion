@@ -1,25 +1,25 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
 #include "catchain-receiver-source.hpp"
 #include "common/errorlog.h"
 
-namespace ton {
+namespace ion {
 
 namespace catchain {
 
@@ -141,7 +141,7 @@ void CatChainReceiverSourceImpl::on_new_block(CatChainReceivedBlock *block) {
     CHECK(block->get_hash() != it->second->get_hash());
     VLOG(CATCHAIN_WARNING) << this << ": found fork on height " << block->get_height();
     if (!fork_is_found()) {
-      on_found_fork_proof(create_serialize_tl_object<ton_api::catchain_block_data_fork>(block->export_tl_dep(),
+      on_found_fork_proof(create_serialize_tl_object<ion_api::catchain_block_data_fork>(block->export_tl_dep(),
                                                                                         it->second->export_tl_dep())
                               .as_slice());
       chain_->on_found_fork_proof(id_, fork_proof());
@@ -154,7 +154,7 @@ void CatChainReceiverSourceImpl::on_new_block(CatChainReceivedBlock *block) {
 
 void CatChainReceiverSourceImpl::on_found_fork_proof(const td::Slice &proof) {
   if (!fork_is_found()) {
-    fetch_tl_object<ton_api::catchain_block_data_fork>(proof, true).ensure();
+    fetch_tl_object<ion_api::catchain_block_data_fork>(proof, true).ensure();
     fork_proof_ = td::SharedSlice{proof};
     errorlog::ErrorLog::log(PSTRING() << "catchain " << chain_->get_incarnation() << " source " << id_
                                       << " found fork. hash=" << sha256_bits256(fork_proof_.as_slice()).to_hex());
@@ -173,4 +173,4 @@ bool CatChainReceiverSourceImpl::allow_send_block(CatChainBlockHash hash) {
 
 }  // namespace catchain
 
-}  // namespace ton
+}  // namespace ion

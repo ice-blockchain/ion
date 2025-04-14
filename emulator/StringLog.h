@@ -1,5 +1,5 @@
-#ifndef TON_STRINGLOG_H
-#define TON_STRINGLOG_H
+#ifndef ION_STRINGLOG_H
+#define ION_STRINGLOG_H
 
 #include "td/utils/logging.h"
 #include <thread>
@@ -24,4 +24,4 @@ class StringLog : public td::LogInterface {
   std::string str;
 };
 
-#endif  //TON_STRINGLOG_H
+#endif  //ION_STRINGLOG_H

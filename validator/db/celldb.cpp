@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -24,11 +24,11 @@
 #include "td/db/RocksDb.h"
 #include "rocksdb/utilities/optimistic_transaction_db.h"
 
-#include "ton/ton-tl.hpp"
-#include "ton/ton-io.hpp"
+#include "ion/ion-tl.hpp"
+#include "ion/ion-io.hpp"
 #include "common/delay.h"
 
-namespace ton {
+namespace ion {
 
 namespace validator {
 class CellDbAsyncExecutor : public vm::DynamicBagOfCellsDb::AsyncExecutor {
@@ -323,7 +323,7 @@ void CellDbIn::flush_db_stats() {
   auto celldb_stats = prepare_stats();
   td::StringBuilder ss;
   for (auto& [key, value] : celldb_stats) {
-    ss << "ton.celldb." << key << " " << value << "\n";
+    ss << "ion.celldb." << key << " " << value << "\n";
   }
 
   auto stats =
@@ -536,7 +536,7 @@ td::Result<CellDbIn::DbEntry> CellDbIn::get_block(KeyHash key_hash) {
   if (S == td::KeyValue::GetStatus::NotFound) {
     return td::Status::Error(ErrorCode::notready, "not in db");
   }
-  auto obj = fetch_tl_object<ton_api::db_celldb_value>(td::BufferSlice{value}, true);
+  auto obj = fetch_tl_object<ion_api::db_celldb_value>(td::BufferSlice{value}, true);
   obj.ensure();
   return DbEntry{obj.move_as_ok()};
 }
@@ -681,7 +681,7 @@ void CellDb::start_up() {
   };
 }
 
-CellDbIn::DbEntry::DbEntry(tl_object_ptr<ton_api::db_celldb_value> entry)
+CellDbIn::DbEntry::DbEntry(tl_object_ptr<ion_api::db_celldb_value> entry)
     : block_id(create_block_id(entry->block_id_))
     , prev(entry->prev_)
     , next(entry->next_)
@@ -689,7 +689,7 @@ CellDbIn::DbEntry::DbEntry(tl_object_ptr<ton_api::db_celldb_value> entry)
 }
 
 td::BufferSlice CellDbIn::DbEntry::release() {
-  return create_serialize_tl_object<ton_api::db_celldb_value>(create_tl_block_id(block_id), prev, next, root_hash);
+  return create_serialize_tl_object<ion_api::db_celldb_value>(create_tl_block_id(block_id), prev, next, root_hash);
 }
 
 std::vector<std::pair<std::string, std::string>> CellDbIn::CellDbStatistics::prepare_stats() {
@@ -716,4 +716,4 @@ std::vector<std::pair<std::string, std::string>> CellDbIn::CellDbStatistics::pre
 
 }  // namespace validator
 
-}  // namespace ton
+}  // namespace ion

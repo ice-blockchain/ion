@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -20,7 +20,7 @@
 
 #include "adnl/adnl-local-id.h"
 #include "adnl/adnl-node-id.hpp"
-#include "auto/tl/ton_api.h"
+#include "auto/tl/ion_api.h"
 #include "common/refcnt.hpp"
 #include "overlay/overlay.h"
 #include "td/actor/PromiseFuture.h"
@@ -29,7 +29,7 @@
 #include "td/utils/buffer.h"
 #include "td/utils/common.h"
 
-namespace ton {
+namespace ion {
 
 namespace overlay {
 
@@ -95,13 +95,13 @@ class BroadcastSimple : public td::ListNode {
   td::Status run();
   td::Status run_continue();
 
-  tl_object_ptr<ton_api::overlay_broadcast> tl() const;
+  tl_object_ptr<ion_api::overlay_broadcast> tl() const;
   td::BufferSlice serialize();
 
   void update_overlay(OverlayImpl *overlay);
   void broadcast_checked(td::Result<td::Unit> R);
 
-  static td::Status create(OverlayImpl *overlay, adnl::AdnlNodeIdShort src_peer_id, tl_object_ptr<ton_api::overlay_broadcast> broadcast);
+  static td::Status create(OverlayImpl *overlay, adnl::AdnlNodeIdShort src_peer_id, tl_object_ptr<ion_api::overlay_broadcast> broadcast);
   static td::Status create_new(td::actor::ActorId<OverlayImpl> overlay, td::actor::ActorId<keyring::Keyring> keyring,
                                PublicKeyHash local_id, td::BufferSlice data, td::uint32 flags);
 
@@ -117,4 +117,4 @@ class BroadcastSimple : public td::ListNode {
 
 }  // namespace overlay
 
-}  // namespace ton
+}  // namespace ion

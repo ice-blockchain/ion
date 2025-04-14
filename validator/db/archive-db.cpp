@@ -7,7 +7,7 @@
 #include "td/db/RocksDb.h"
 #include "validator/fabric.h"
 
-namespace ton {
+namespace ion {
 
 namespace validator {
 
@@ -222,15 +222,15 @@ ArchiveManager::FileDescription *ArchiveManager::add_file(UnixTime ts, bool key_
     }
     (key_block ? tk : t).push_back(ts);
     index_
-        ->set(create_serialize_tl_object<ton_api::db_archive_index_key>().as_slice(),
-              create_serialize_tl_object<ton_api::db_archive_index_value>(std::move(t), std::move(tk)).as_slice())
+        ->set(create_serialize_tl_object<ion_api::db_archive_index_key>().as_slice(),
+              create_serialize_tl_object<ion_api::db_archive_index_value>(std::move(t), std::move(tk)).as_slice())
         .ensure();
   }
   {
     index_
-        ->set(create_serialize_tl_object<ton_api::db_archive_package_key>(ts, key_block).as_slice(),
-              create_serialize_tl_object<ton_api::db_archive_package_value>(
-                  ts, key_block, std::vector<tl_object_ptr<ton_api::db_archive_package_firstBlock>>(), false)
+        ->set(create_serialize_tl_object<ion_api::db_archive_package_key>(ts, key_block).as_slice(),
+              create_serialize_tl_object<ion_api::db_archive_package_value>(
+                  ts, key_block, std::vector<tl_object_ptr<ion_api::db_archive_package_firstBlock>>(), false)
                   .as_slice())
         .ensure();
   }
@@ -245,14 +245,14 @@ ArchiveManager::FileDescription *ArchiveManager::add_file(UnixTime ts, bool key_
 }
 
 void ArchiveManager::load_package(UnixTime ts, bool key_block) {
-  auto key = create_serialize_tl_object<ton_api::db_archive_package_key>(ts, key_block);
+  auto key = create_serialize_tl_object<ion_api::db_archive_package_key>(ts, key_block);
 
   std::string value;
   auto v = index_->get(key.as_slice(), value);
   v.ensure();
   CHECK(v.move_as_ok() == td::KeyValue::GetStatus::Ok);
 
-  auto R = fetch_tl_object<ton_api::db_archive_package_value>(value, true);
+  auto R = fetch_tl_object<ion_api::db_archive_package_value>(value, true);
   R.ensure();
   auto x = R.move_as_ok();
 
@@ -278,15 +278,15 @@ void ArchiveManager::update_desc(FileDescription &desc, ShardIdFull shard, Block
     return;
   }
   desc.first_blocks[shard] = FileDescription::Desc{seqno, lt};
-  std::vector<tl_object_ptr<ton_api::db_archive_package_firstBlock>> vec;
+  std::vector<tl_object_ptr<ion_api::db_archive_package_firstBlock>> vec;
   for (auto &e : desc.first_blocks) {
-    vec.push_back(create_tl_object<ton_api::db_archive_package_firstBlock>(e.first.workchain, e.first.shard,
+    vec.push_back(create_tl_object<ion_api::db_archive_package_firstBlock>(e.first.workchain, e.first.shard,
                                                                            e.second.seqno, e.second.lt));
   }
   index_->begin_transaction().ensure();
   index_
-      ->set(create_serialize_tl_object<ton_api::db_archive_package_key>(desc.unix_time, desc.key_block).as_slice(),
-            create_serialize_tl_object<ton_api::db_archive_package_value>(desc.unix_time, desc.key_block,
+      ->set(create_serialize_tl_object<ion_api::db_archive_package_key>(desc.unix_time, desc.key_block).as_slice(),
+            create_serialize_tl_object<ion_api::db_archive_package_value>(desc.unix_time, desc.key_block,
                                                                           std::move(vec), false)
                 .as_slice())
       .ensure();
@@ -311,10 +311,10 @@ void ArchiveManager::start_up() {
   td::mkdir(db_root_ + "/packed").ensure();
   index_ = std::make_shared<td::RocksDb>(td::RocksDb::open(db_root_ + "/packed/globalindex").move_as_ok());
   std::string value;
-  auto v = index_->get(create_serialize_tl_object<ton_api::db_archive_index_key>().as_slice(), value);
+  auto v = index_->get(create_serialize_tl_object<ion_api::db_archive_index_key>().as_slice(), value);
   v.ensure();
   if (v.move_as_ok() == td::KeyValue::GetStatus::Ok) {
-    auto R = fetch_tl_object<ton_api::db_archive_index_value>(value, true);
+    auto R = fetch_tl_object<ion_api::db_archive_index_value>(value, true);
     R.ensure();
     auto x = R.move_as_ok();
 
@@ -329,4 +329,4 @@ void ArchiveManager::start_up() {
 
 }  // namespace validator
 
-}  // namespace ton
+}  // namespace ion

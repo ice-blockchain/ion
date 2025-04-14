@@ -1,32 +1,32 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "StorageProvider.h"
 #include "td/db/RocksDb.h"
 #include "td/utils/JsonBuilder.h"
-#include "auto/tl/ton_api_json.h"
+#include "auto/tl/ion_api_json.h"
 #include "td/utils/port/path.h"
 #include "block/block-auto.h"
 #include "common/delay.h"
 #include "td/actor/MultiPromise.h"
 
-namespace ton {
+namespace ion {
 
-td::Result<ProviderParams> ProviderParams::create(const tl_object_ptr<ton_api::storage_daemon_provider_params>& obj) {
+td::Result<ProviderParams> ProviderParams::create(const tl_object_ptr<ion_api::storage_daemon_provider_params>& obj) {
   ProviderParams p;
   p.accept_new_contracts = obj->accept_new_contracts_;
   p.rate_per_mb_day = td::string_to_int256(obj->rate_per_mb_day_);
@@ -39,8 +39,8 @@ td::Result<ProviderParams> ProviderParams::create(const tl_object_ptr<ton_api::s
   return p;
 }
 
-tl_object_ptr<ton_api::storage_daemon_provider_params> ProviderParams::tl() const {
-  return create_tl_object<ton_api::storage_daemon_provider_params>(
+tl_object_ptr<ion_api::storage_daemon_provider_params> ProviderParams::tl() const {
+  return create_tl_object<ion_api::storage_daemon_provider_params>(
       accept_new_contracts, rate_per_mb_day->to_dec_string(), max_span, minimal_file_size, maximal_file_size);
 }
 
@@ -67,8 +67,8 @@ void StorageProvider::start_up() {
   td::mkdir(db_root_).ensure();
   db_ = std::make_unique<td::RocksDb>(td::RocksDb::open(db_root_).move_as_ok());
 
-  auto r_state = db::db_get<ton_api::storage_provider_db_state>(
-      *db_, create_hash_tl_object<ton_api::storage_provider_db_key_state>(), true);
+  auto r_state = db::db_get<ion_api::storage_provider_db_state>(
+      *db_, create_hash_tl_object<ion_api::storage_provider_db_key_state>(), true);
   r_state.ensure();
   auto state = r_state.move_as_ok();
   if (state) {
@@ -92,8 +92,8 @@ void StorageProvider::start_up() {
       td::actor::create_actor<FabricContractWrapper>("ContractWrapper", main_address_, tonlib_client_, keyring_,
                                                      td::make_unique<Callback>(actor_id(this)), last_processed_lt_);
 
-  auto r_config = db::db_get<ton_api::storage_daemon_providerConfig>(
-      *db_, create_hash_tl_object<ton_api::storage_provider_db_key_providerConfig>(), true);
+  auto r_config = db::db_get<ion_api::storage_daemon_providerConfig>(
+      *db_, create_hash_tl_object<ion_api::storage_provider_db_key_providerConfig>(), true);
   r_config.ensure();
   auto config_obj = r_config.move_as_ok();
   if (config_obj) {
@@ -105,8 +105,8 @@ void StorageProvider::start_up() {
   }
   LOG(INFO) << "Config: max_contracts=" << config_.max_contracts << ", max_total_size=" << config_.max_total_size;
 
-  auto r_contract_list = db::db_get<ton_api::storage_provider_db_contractList>(
-      *db_, create_hash_tl_object<ton_api::storage_provider_db_key_contractList>(), true);
+  auto r_contract_list = db::db_get<ion_api::storage_provider_db_contractList>(
+      *db_, create_hash_tl_object<ion_api::storage_provider_db_key_contractList>(), true);
   r_contract_list.ensure();
   auto contract_list = r_contract_list.move_as_ok();
   if (contract_list) {
@@ -117,8 +117,8 @@ void StorageProvider::start_up() {
         LOG(ERROR) << "Duplicate contract in db: " << address.to_string();
         continue;
       }
-      auto r_contract = db::db_get<ton_api::storage_provider_db_storageContract>(
-          *db_, create_hash_tl_object<ton_api::storage_provider_db_key_storageContract>(address.wc, address.addr),
+      auto r_contract = db::db_get<ion_api::storage_provider_db_storageContract>(
+          *db_, create_hash_tl_object<ion_api::storage_provider_db_key_storageContract>(address.wc, address.addr),
           true);
       r_contract.ensure();
       auto db_contract = r_contract.move_as_ok();
@@ -136,8 +136,8 @@ void StorageProvider::start_up() {
       contract.rate = td::string_to_int256(db_contract->rate_);
       contracts_total_size_ += contract.file_size;
 
-      auto r_tree = db::db_get<ton_api::storage_provider_db_microchunkTree>(
-          *db_, create_hash_tl_object<ton_api::storage_provider_db_key_microchunkTree>(address.wc, address.addr), true);
+      auto r_tree = db::db_get<ion_api::storage_provider_db_microchunkTree>(
+          *db_, create_hash_tl_object<ion_api::storage_provider_db_key_microchunkTree>(address.wc, address.addr), true);
       r_tree.ensure();
       auto tree = r_tree.move_as_ok();
       if (tree) {
@@ -219,8 +219,8 @@ void StorageProvider::set_params(ProviderParams params, td::Promise<td::Unit> pr
 void StorageProvider::db_store_state() {
   LOG(DEBUG) << "db_store_state last_lt=" << last_processed_lt_;
   db_->begin_transaction().ensure();
-  db_->set(create_hash_tl_object<ton_api::storage_provider_db_key_state>().as_slice(),
-           create_serialize_tl_object<ton_api::storage_provider_db_state>(last_processed_lt_))
+  db_->set(create_hash_tl_object<ion_api::storage_provider_db_key_state>().as_slice(),
+           create_serialize_tl_object<ion_api::storage_provider_db_state>(last_processed_lt_))
       .ensure();
   db_->commit_transaction().ensure();
 }
@@ -228,7 +228,7 @@ void StorageProvider::db_store_state() {
 void StorageProvider::db_store_config() {
   LOG(DEBUG) << "db_store_config";
   db_->begin_transaction().ensure();
-  db_->set(create_hash_tl_object<ton_api::storage_provider_db_key_providerConfig>().as_slice(),
+  db_->set(create_hash_tl_object<ion_api::storage_provider_db_key_providerConfig>().as_slice(),
            serialize_tl_object(config_.tl(), true))
       .ensure();
   db_->commit_transaction().ensure();
@@ -349,22 +349,22 @@ void StorageProvider::db_update_storage_contract(const ContractAddress& address,
   LOG(DEBUG) << "db_update_storage_contract " << address.to_string() << " " << update_list;
   db_->begin_transaction().ensure();
   if (update_list) {
-    std::vector<tl_object_ptr<ton_api::storage_provider_db_contractAddress>> list;
+    std::vector<tl_object_ptr<ion_api::storage_provider_db_contractAddress>> list;
     for (const auto& t : contracts_) {
-      list.push_back(create_tl_object<ton_api::storage_provider_db_contractAddress>(t.first.wc, t.first.addr));
+      list.push_back(create_tl_object<ion_api::storage_provider_db_contractAddress>(t.first.wc, t.first.addr));
     }
-    db_->set(create_hash_tl_object<ton_api::storage_provider_db_key_contractList>().as_slice(),
-             create_serialize_tl_object<ton_api::storage_provider_db_contractList>(std::move(list)))
+    db_->set(create_hash_tl_object<ion_api::storage_provider_db_key_contractList>().as_slice(),
+             create_serialize_tl_object<ion_api::storage_provider_db_contractList>(std::move(list)))
         .ensure();
   }
-  auto key = create_hash_tl_object<ton_api::storage_provider_db_key_storageContract>(address.wc, address.addr);
+  auto key = create_hash_tl_object<ion_api::storage_provider_db_key_storageContract>(address.wc, address.addr);
   auto it = contracts_.find(address);
   if (it == contracts_.end()) {
     db_->erase(key.as_slice()).ensure();
   } else {
     const StorageContract& contract = it->second;
     db_->set(key.as_slice(),
-             create_serialize_tl_object<ton_api::storage_provider_db_storageContract>(
+             create_serialize_tl_object<ion_api::storage_provider_db_storageContract>(
                  contract.torrent_hash, contract.microchunk_hash, contract.created_time, (int)contract.state,
                  contract.file_size, contract.rate->to_dec_string(), contract.max_span));
   }
@@ -374,12 +374,12 @@ void StorageProvider::db_update_storage_contract(const ContractAddress& address,
 void StorageProvider::db_update_microchunk_tree(const ContractAddress& address) {
   LOG(DEBUG) << "db_update_microchunk_tree " << address.to_string();
   db_->begin_transaction().ensure();
-  auto key = create_hash_tl_object<ton_api::storage_provider_db_key_microchunkTree>(address.wc, address.addr);
+  auto key = create_hash_tl_object<ion_api::storage_provider_db_key_microchunkTree>(address.wc, address.addr);
   auto it = contracts_.find(address);
   if (it == contracts_.end() || it->second.microchunk_tree == nullptr) {
     db_->erase(key.as_slice()).ensure();
   } else {
-    db_->set(key.as_slice(), create_serialize_tl_object<ton_api::storage_provider_db_microchunkTree>(
+    db_->set(key.as_slice(), create_serialize_tl_object<ion_api::storage_provider_db_microchunkTree>(
                                  vm::std_boc_serialize(it->second.microchunk_tree->get_root()).move_as_ok()));
   }
   db_->commit_transaction().ensure();
@@ -724,12 +724,12 @@ void StorageProvider::sent_next_proof(ContractAddress address) {
 }
 
 void StorageProvider::get_provider_info(bool with_balances, bool with_contracts,
-                                        td::Promise<tl_object_ptr<ton_api::storage_daemon_providerInfo>> promise) {
-  auto result = std::make_shared<ton_api::storage_daemon_providerInfo>();
+                                        td::Promise<tl_object_ptr<ion_api::storage_daemon_providerInfo>> promise) {
+  auto result = std::make_shared<ion_api::storage_daemon_providerInfo>();
   td::MultiPromise mp;
   auto ig = mp.init_guard();
   ig.add_promise(promise.wrap(
-      [result](td::Unit) { return create_tl_object<ton_api::storage_daemon_providerInfo>(std::move(*result)); }));
+      [result](td::Unit) { return create_tl_object<ion_api::storage_daemon_providerInfo>(std::move(*result)); }));
   result->address_ = main_address_.to_string();
   result->config_ = config_.tl();
   result->contracts_count_ = (int)contracts_.size();
@@ -744,7 +744,7 @@ void StorageProvider::get_provider_info(bool with_balances, bool with_contracts,
   }
   if (with_contracts) {
     for (const auto& p : contracts_) {
-      auto obj = create_tl_object<ton_api::storage_daemon_contractInfo>();
+      auto obj = create_tl_object<ion_api::storage_daemon_contractInfo>();
       const StorageContract& contract = p.second;
       obj->address_ = p.first.to_string();
       obj->state_ = (int)contract.state;
@@ -837,7 +837,7 @@ void StorageProvider::send_coins(ContractAddress dest, td::RefInt256 amount, std
     }
     b.store_bytes(td::Slice(message));
   }
-  LOG(INFO) << "Sending " << amount << " nanoTON to " << dest.to_string();
+  LOG(INFO) << "Sending " << amount << " nanoION to " << dest.to_string();
   td::actor::send_closure(contract_wrapper_, &FabricContractWrapper::send_internal_message, dest, amount,
                           b.finalize_novm(), std::move(promise));
 }
@@ -851,12 +851,12 @@ void StorageProvider::close_storage_contract(ContractAddress address, td::Promis
   promise.set_result(td::Unit());
 }
 
-StorageProvider::Config::Config(const tl_object_ptr<ton_api::storage_daemon_providerConfig>& obj)
+StorageProvider::Config::Config(const tl_object_ptr<ion_api::storage_daemon_providerConfig>& obj)
     : max_contracts(obj->max_contracts_), max_total_size(obj->max_total_size_) {
 }
 
-tl_object_ptr<ton_api::storage_daemon_providerConfig> StorageProvider::Config::tl() const {
-  return create_tl_object<ton_api::storage_daemon_providerConfig>(max_contracts, max_total_size);
+tl_object_ptr<ion_api::storage_daemon_providerConfig> StorageProvider::Config::tl() const {
+  return create_tl_object<ion_api::storage_daemon_providerConfig>(max_contracts, max_total_size);
 }
 
-}  // namespace ton
+}  // namespace ion

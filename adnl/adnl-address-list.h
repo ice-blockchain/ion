@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -21,7 +21,7 @@
 #include "adnl-network-manager.h"
 #include "crypto/common/refcnt.hpp"
 
-namespace ton {
+namespace ion {
 
 namespace adnl {
 
@@ -35,7 +35,7 @@ class AdnlAddressImpl : public td::CntObject {
   virtual Hash get_hash() const;
   virtual bool is_public() const = 0;
   virtual td::uint32 serialized_size() const = 0;
-  virtual tl_object_ptr<ton_api::adnl_Address> tl() const = 0;
+  virtual tl_object_ptr<ion_api::adnl_Address> tl() const = 0;
   virtual td::actor::ActorOwn<AdnlNetworkConnection> create_connection(
       td::actor::ActorId<AdnlNetworkManager> network_manager, td::actor::ActorId<Adnl> adnl,
       std::unique_ptr<AdnlNetworkConnection::Callback> callback) const = 0;
@@ -43,14 +43,14 @@ class AdnlAddressImpl : public td::CntObject {
     return false;
   }
 
-  static td::Ref<AdnlAddressImpl> create(const tl_object_ptr<ton_api::adnl_Address> &addr);
+  static td::Ref<AdnlAddressImpl> create(const tl_object_ptr<ion_api::adnl_Address> &addr);
 };
 
 using AdnlAddress = td::Ref<AdnlAddressImpl>;
 
 class AdnlAddressList {
  private:
-  AdnlAddressList(const tl_object_ptr<ton_api::adnl_addressList> &addrs);
+  AdnlAddressList(const tl_object_ptr<ion_api::adnl_addressList> &addrs);
 
   td::int32 version_;
   td::int32 reinit_date_;
@@ -100,11 +100,11 @@ class AdnlAddressList {
     return td::narrow_cast<td::uint32>(addrs_.size());
   }
   td::uint32 serialized_size() const;
-  tl_object_ptr<ton_api::adnl_addressList> tl() const;
+  tl_object_ptr<ion_api::adnl_addressList> tl() const;
   AdnlAddressList() : version_{-1}, reinit_date_{0}, priority_{0}, expire_at_{0} {
   }
 
-  static td::Result<AdnlAddressList> create(const tl_object_ptr<ton_api::adnl_addressList> &addr_list);
+  static td::Result<AdnlAddressList> create(const tl_object_ptr<ion_api::adnl_addressList> &addr_list);
   td::Status add_udp_address(td::IPAddress addr);
 
   void set_reverse(bool x = true) {
@@ -117,4 +117,4 @@ class AdnlAddressList {
 
 }  // namespace adnl
 
-}  // namespace ton
+}  // namespace ion

@@ -1,29 +1,29 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
 #include "rldp-in.hpp"
-#include "auto/tl/ton_api.h"
-#include "auto/tl/ton_api.hpp"
+#include "auto/tl/ion_api.h"
+#include "auto/tl/ion_api.hpp"
 #include "td/utils/Random.h"
 #include "fec/fec.h"
 #include "RldpConnection.h"
 
-namespace ton {
+namespace ion {
 
 namespace rldp2 {
 
@@ -90,7 +90,7 @@ void RldpIn::send_message_ex(adnl::AdnlNodeIdShort src, adnl::AdnlNodeIdShort ds
   td::Bits256 id;
   td::Random::secure_bytes(id.as_slice());
 
-  auto B = serialize_tl_object(create_tl_object<ton_api::rldp_message>(id, std::move(data)), true);
+  auto B = serialize_tl_object(create_tl_object<ion_api::rldp_message>(id, std::move(data)), true);
 
   auto transfer_id = get_random_transfer_id();
   send_closure(create_connection(src, dst), &RldpConnectionActor::send, transfer_id, std::move(B), timeout);
@@ -102,7 +102,7 @@ void RldpIn::send_query_ex(adnl::AdnlNodeIdShort src, adnl::AdnlNodeIdShort dst,
   auto query_id = adnl::AdnlQuery::random_query_id();
 
   auto date = static_cast<td::uint32>(timeout.at_unix()) + 1;
-  auto B = serialize_tl_object(create_tl_object<ton_api::rldp_query>(query_id, max_answer_size, date, std::move(data)),
+  auto B = serialize_tl_object(create_tl_object<ion_api::rldp_query>(query_id, max_answer_size, date, std::move(data)),
                                true);
 
   auto connection = create_connection(src, dst);
@@ -116,7 +116,7 @@ void RldpIn::send_query_ex(adnl::AdnlNodeIdShort src, adnl::AdnlNodeIdShort dst,
 
 void RldpIn::answer_query(adnl::AdnlNodeIdShort src, adnl::AdnlNodeIdShort dst, td::Timestamp timeout,
                           adnl::AdnlQueryId query_id, TransferId transfer_id, td::BufferSlice data) {
-  auto B = serialize_tl_object(create_tl_object<ton_api::rldp_answer>(query_id, std::move(data)), true);
+  auto B = serialize_tl_object(create_tl_object<ion_api::rldp_answer>(query_id, std::move(data)), true);
 
   send_closure(create_connection(src, dst), &RldpConnectionActor::send, transfer_id, std::move(B), timeout);
 }
@@ -155,23 +155,23 @@ void RldpIn::receive_message(adnl::AdnlNodeIdShort source, adnl::AdnlNodeIdShort
 
   auto data = r_data.move_as_ok();
   //LOG(ERROR) << "RECEIVE MESSAGE " << data.size();
-  auto F = fetch_tl_object<ton_api::rldp_Message>(std::move(data), true);
+  auto F = fetch_tl_object<ion_api::rldp_Message>(std::move(data), true);
   if (F.is_error()) {
     VLOG(RLDP_INFO) << "failed to parse rldp packet [" << source << "->" << local_id << "]: " << F.move_as_error();
     return;
   }
 
-  ton_api::downcast_call(*F.move_as_ok().get(),
+  ion_api::downcast_call(*F.move_as_ok().get(),
                          [&](auto &obj) { this->process_message(source, local_id, transfer_id, obj); });
 }
 
 void RldpIn::process_message(adnl::AdnlNodeIdShort source, adnl::AdnlNodeIdShort local_id, TransferId transfer_id,
-                             ton_api::rldp_message &message) {
+                             ion_api::rldp_message &message) {
   td::actor::send_closure(adnl_, &adnl::AdnlPeerTable::deliver, source, local_id, std::move(message.data_));
 }
 
 void RldpIn::process_message(adnl::AdnlNodeIdShort source, adnl::AdnlNodeIdShort local_id, TransferId transfer_id,
-                             ton_api::rldp_query &message) {
+                             ion_api::rldp_query &message) {
   auto P = td::PromiseCreator::lambda([SelfId = actor_id(this), source, local_id,
                                        timeout = td::Timestamp::at_unix(message.timeout_), query_id = message.query_id_,
                                        max_answer_size = static_cast<td::uint64>(message.max_answer_size_),
@@ -194,7 +194,7 @@ void RldpIn::process_message(adnl::AdnlNodeIdShort source, adnl::AdnlNodeIdShort
 }
 
 void RldpIn::process_message(adnl::AdnlNodeIdShort source, adnl::AdnlNodeIdShort local_id, TransferId transfer_id,
-                             ton_api::rldp_answer &message) {
+                             ion_api::rldp_answer &message) {
   auto it = queries_.find(transfer_id);
   if (it != queries_.end()) {
     it->second.set_value(std::move(message.data_));
@@ -213,9 +213,9 @@ void RldpIn::add_id(adnl::AdnlNodeIdShort local_id) {
     return;
   }
 
-  std::vector<std::string> X{adnl::Adnl::int_to_bytestring(ton_api::rldp2_messagePart::ID),
-                             adnl::Adnl::int_to_bytestring(ton_api::rldp2_confirm::ID),
-                             adnl::Adnl::int_to_bytestring(ton_api::rldp2_complete::ID)};
+  std::vector<std::string> X{adnl::Adnl::int_to_bytestring(ion_api::rldp2_messagePart::ID),
+                             adnl::Adnl::int_to_bytestring(ion_api::rldp2_confirm::ID),
+                             adnl::Adnl::int_to_bytestring(ion_api::rldp2_complete::ID)};
   for (auto &x : X) {
     td::actor::send_closure(adnl_, &adnl::Adnl::subscribe, local_id, x, make_adnl_callback());
   }
@@ -260,4 +260,4 @@ td::actor::ActorOwn<Rldp> Rldp::create(td::actor::ActorId<adnl::Adnl> adnl) {
 
 }  // namespace rldp2
 
-}  // namespace ton
+}  // namespace ion

@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -21,15 +21,15 @@
 #include "td/utils/overloaded.h"
 #include "keys/encryptor.h"
 
-#include "auto/tl/ton_api.hpp"
+#include "auto/tl/ion_api.hpp"
 
 #include <map>
 
-namespace ton {
+namespace ion {
 
 namespace dht {
 
-td::Result<DhtKey> DhtKey::create(tl_object_ptr<ton_api::dht_key> key) {
+td::Result<DhtKey> DhtKey::create(tl_object_ptr<ion_api::dht_key> key) {
   if (key->name_.length() > max_name_length()) {
     return td::Status::Error(ErrorCode::error, PSTRING() << "too big name length. length=" << key->name_.length());
   }
@@ -43,8 +43,8 @@ td::Result<DhtKey> DhtKey::create(tl_object_ptr<ton_api::dht_key> key) {
   return DhtKey{PublicKeyHash{key->id_}, key->name_.as_slice().str(), static_cast<td::uint32>(key->idx_)};
 }
 
-tl_object_ptr<ton_api::dht_key> DhtKey::tl() const {
-  return create_tl_object<ton_api::dht_key>(id_.tl(), td::BufferSlice{namestr_}, idx_);
+tl_object_ptr<ion_api::dht_key> DhtKey::tl() const {
+  return create_tl_object<ion_api::dht_key>(id_.tl(), td::BufferSlice{namestr_}, idx_);
 }
 
 td::Status DhtKey::check() const {
@@ -90,13 +90,13 @@ td::Status DhtKeyDescription::check() const {
   return td::Status::OK();
 }
 
-tl_object_ptr<ton_api::dht_keyDescription> DhtKeyDescription::tl() const {
-  return create_tl_object<ton_api::dht_keyDescription>(key_.tl(), public_key_.tl(), update_rule_->tl(),
+tl_object_ptr<ion_api::dht_keyDescription> DhtKeyDescription::tl() const {
+  return create_tl_object<ion_api::dht_keyDescription>(key_.tl(), public_key_.tl(), update_rule_->tl(),
                                                        signature_.clone_as_buffer_slice());
 }
 
 td::BufferSlice DhtKeyDescription::to_sign() const {
-  return create_serialize_tl_object<ton_api::dht_keyDescription>(key_.tl(), public_key_.tl(), update_rule_->tl(),
+  return create_serialize_tl_object<ion_api::dht_keyDescription>(key_.tl(), public_key_.tl(), update_rule_->tl(),
                                                                  td::BufferSlice());
 }
 
@@ -120,7 +120,7 @@ td::Result<DhtKeyDescription> DhtKeyDescription::create(DhtKey key, PublicKey pu
   return std::move(desc);
 }
 
-td::Result<DhtKeyDescription> DhtKeyDescription::create(tl_object_ptr<ton_api::dht_keyDescription> desc,
+td::Result<DhtKeyDescription> DhtKeyDescription::create(tl_object_ptr<ion_api::dht_keyDescription> desc,
                                                         bool check_signature) {
   auto signature = std::move(desc->signature_);
   td::BufferSlice to_sign;
@@ -143,7 +143,7 @@ td::Result<DhtKeyDescription> DhtKeyDescription::create(tl_object_ptr<ton_api::d
   return DhtKeyDescription{std::move(key), std::move(public_key), std::move(update_rule), std::move(signature)};
 }
 
-td::Result<DhtValue> DhtValue::create(tl_object_ptr<ton_api::dht_value> obj, bool check_signature) {
+td::Result<DhtValue> DhtValue::create(tl_object_ptr<ion_api::dht_value> obj, bool check_signature) {
   TRY_RESULT(desc, DhtKeyDescription::create(std::move(obj->key_), check_signature));
 
   return create(std::move(desc), std::move(obj->value_), obj->ttl_, std::move(obj->signature_));
@@ -169,13 +169,13 @@ DhtValue DhtValue::clone() const {
   return DhtValue{key_.clone(), value_.clone(), ttl_, signature_.clone()};
 }
 
-tl_object_ptr<ton_api::dht_value> DhtValue::tl() const {
-  return create_tl_object<ton_api::dht_value>(key_.tl(), value_.clone_as_buffer_slice(), ttl_,
+tl_object_ptr<ion_api::dht_value> DhtValue::tl() const {
+  return create_tl_object<ion_api::dht_value>(key_.tl(), value_.clone_as_buffer_slice(), ttl_,
                                               signature_.clone_as_buffer_slice());
 }
 
 td::BufferSlice DhtValue::to_sign() const {
-  return create_serialize_tl_object<ton_api::dht_value>(key_.tl(), value_.clone_as_buffer_slice(), ttl_,
+  return create_serialize_tl_object<ion_api::dht_value>(key_.tl(), value_.clone_as_buffer_slice(), ttl_,
                                                         td::BufferSlice());
 }
 
@@ -238,8 +238,8 @@ td::Status DhtUpdateRuleSignature::update_value(DhtValue &value, DhtValue &&new_
   return td::Status::OK();
 }
 
-tl_object_ptr<ton_api::dht_UpdateRule> DhtUpdateRuleSignature::tl() const {
-  return create_tl_object<ton_api::dht_updateRule_signature>();
+tl_object_ptr<ion_api::dht_UpdateRule> DhtUpdateRuleSignature::tl() const {
+  return create_tl_object<ion_api::dht_updateRule_signature>();
 }
 
 td::Result<std::shared_ptr<DhtUpdateRule>> DhtUpdateRuleSignature::create() {
@@ -262,8 +262,8 @@ td::Status DhtUpdateRuleAnybody::update_value(DhtValue &value, DhtValue &&new_va
   return td::Status::OK();
 }
 
-tl_object_ptr<ton_api::dht_UpdateRule> DhtUpdateRuleAnybody::tl() const {
-  return create_tl_object<ton_api::dht_updateRule_anybody>();
+tl_object_ptr<ion_api::dht_UpdateRule> DhtUpdateRuleAnybody::tl() const {
+  return create_tl_object<ion_api::dht_updateRule_anybody>();
 }
 
 td::Result<std::shared_ptr<DhtUpdateRule>> DhtUpdateRuleAnybody::create() {
@@ -277,7 +277,7 @@ td::Status DhtUpdateRuleOverlayNodes::check_value(const DhtValue &value) {
   if (value.signature().size() > 0) {
     return td::Status::Error(ErrorCode::protoviolation, "cannot have signature in DhtUpdateRuleOverlayNodes");
   }
-  auto F = fetch_tl_object<ton_api::overlay_nodes>(value.value().clone_as_buffer_slice(), true);
+  auto F = fetch_tl_object<ion_api::overlay_nodes>(value.value().clone_as_buffer_slice(), true);
   if (F.is_error()) {
     return td::Status::Error(ErrorCode::protoviolation, "bad overlay nodes value");
   }
@@ -286,7 +286,7 @@ td::Status DhtUpdateRuleOverlayNodes::check_value(const DhtValue &value) {
     TRY_RESULT(pub, adnl::AdnlNodeIdFull::create(node->id_));
     auto sig = std::move(node->signature_);
     auto obj =
-        create_tl_object<ton_api::overlay_node_toSign>(pub.compute_short_id().tl(), node->overlay_, node->version_);
+        create_tl_object<ion_api::overlay_node_toSign>(pub.compute_short_id().tl(), node->overlay_, node->version_);
     if (node->overlay_ != value.key().key().public_key_hash().bits256_value()) {
       return td::Status::Error(ErrorCode::protoviolation, "bad overlay id");
     }
@@ -298,12 +298,12 @@ td::Status DhtUpdateRuleOverlayNodes::check_value(const DhtValue &value) {
 }
 
 td::Status DhtUpdateRuleOverlayNodes::update_value(DhtValue &value, DhtValue &&new_value) {
-  TRY_RESULT_PREFIX(N, fetch_tl_object<ton_api::overlay_nodes>(value.value().clone_as_buffer_slice(), true),
+  TRY_RESULT_PREFIX(N, fetch_tl_object<ion_api::overlay_nodes>(value.value().clone_as_buffer_slice(), true),
                     "bad dht value in updateRule.overlayNodes: ");
-  TRY_RESULT_PREFIX(L, fetch_tl_object<ton_api::overlay_nodes>(new_value.value().clone_as_buffer_slice(), true),
+  TRY_RESULT_PREFIX(L, fetch_tl_object<ion_api::overlay_nodes>(new_value.value().clone_as_buffer_slice(), true),
                     "bad dht value in updateRule.overlayNodes: ");
 
-  std::vector<tl_object_ptr<ton_api::overlay_node>> res;
+  std::vector<tl_object_ptr<ion_api::overlay_node>> res;
 
   std::map<adnl::AdnlNodeIdShort, size_t> S;
   for (auto &n : N->nodes_) {
@@ -350,11 +350,11 @@ td::Status DhtUpdateRuleOverlayNodes::update_value(DhtValue &value, DhtValue &&n
     v.resize(v.size() - 1);
   }
 
-  std::vector<tl_object_ptr<ton_api::overlay_node>> vec;
+  std::vector<tl_object_ptr<ion_api::overlay_node>> vec;
   for (auto &p : v) {
     vec.push_back(std::move(res[p.first]));
   }
-  auto nodes = create_serialize_tl_object<ton_api::overlay_nodes>(std::move(vec));
+  auto nodes = create_serialize_tl_object<ion_api::overlay_nodes>(std::move(vec));
   CHECK(nodes.size() == size);
   CHECK(nodes.size() <= DhtValue::max_value_size());
 
@@ -364,8 +364,8 @@ td::Status DhtUpdateRuleOverlayNodes::update_value(DhtValue &value, DhtValue &&n
   return td::Status::OK();
 }
 
-bool DhtUpdateRuleOverlayNodes::check_is_acceptable(const ton::dht::DhtValue &value) {
-  auto F = fetch_tl_object<ton_api::overlay_nodes>(value.value().clone_as_buffer_slice(), true);
+bool DhtUpdateRuleOverlayNodes::check_is_acceptable(const ion::dht::DhtValue &value) {
+  auto F = fetch_tl_object<ion_api::overlay_nodes>(value.value().clone_as_buffer_slice(), true);
   if (F.is_error()) {
     return false;
   }
@@ -379,24 +379,24 @@ bool DhtUpdateRuleOverlayNodes::check_is_acceptable(const ton::dht::DhtValue &va
   return false;
 }
 
-tl_object_ptr<ton_api::dht_UpdateRule> DhtUpdateRuleOverlayNodes::tl() const {
-  return create_tl_object<ton_api::dht_updateRule_overlayNodes>();
+tl_object_ptr<ion_api::dht_UpdateRule> DhtUpdateRuleOverlayNodes::tl() const {
+  return create_tl_object<ion_api::dht_updateRule_overlayNodes>();
 }
 
 td::Result<std::shared_ptr<DhtUpdateRule>> DhtUpdateRuleOverlayNodes::create() {
   return std::make_shared<DhtUpdateRuleOverlayNodes>();
 }
 
-td::Result<std::shared_ptr<DhtUpdateRule>> DhtUpdateRule::create(tl_object_ptr<ton_api::dht_UpdateRule> obj) {
+td::Result<std::shared_ptr<DhtUpdateRule>> DhtUpdateRule::create(tl_object_ptr<ion_api::dht_UpdateRule> obj) {
   td::Result<std::shared_ptr<DhtUpdateRule>> R;
-  ton_api::downcast_call(
+  ion_api::downcast_call(
       *obj.get(),
-      td::overloaded([&](ton_api::dht_updateRule_signature &obj) { R = DhtUpdateRuleSignature::create(); },
-                     [&](ton_api::dht_updateRule_anybody &obj) { R = DhtUpdateRuleAnybody::create(); },
-                     [&](ton_api::dht_updateRule_overlayNodes &obj) { R = DhtUpdateRuleOverlayNodes::create(); }));
+      td::overloaded([&](ion_api::dht_updateRule_signature &obj) { R = DhtUpdateRuleSignature::create(); },
+                     [&](ion_api::dht_updateRule_anybody &obj) { R = DhtUpdateRuleAnybody::create(); },
+                     [&](ion_api::dht_updateRule_overlayNodes &obj) { R = DhtUpdateRuleOverlayNodes::create(); }));
   return R;
 }
 
 }  // namespace dht
 
-}  // namespace ton
+}  // namespace ion

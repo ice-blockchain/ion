@@ -1,4 +1,4 @@
-The aim of this text is to describe how to quickly obtain a small amount of test Grams for test purposes, or a larger amount of test Grams for running a validator in the test network. We assume familiarity with the TON Blockchain LiteClient as explained in the LiteClient-HOWTO, and with the procedure required to compile the LiteClient and other software. For obtaining larger amount of test Grams required for running a validator, we also assume acquaintance with the FullNode-HOWTO and Validator-HOWTO. You will also need a dedicated server powerful enough for running a Full Node in order to obtain the larger amount of test Grams. Obtaining small amounts of test Grams does not require a dedicated server and may be done in several minutes on a home computer.
+The aim of this text is to describe how to quickly obtain a small amount of test Grams for test purposes, or a larger amount of test Grams for running a validator in the test network. We assume familiarity with the ION Blockchain LiteClient as explained in the LiteClient-HOWTO, and with the procedure required to compile the LiteClient and other software. For obtaining larger amount of test Grams required for running a validator, we also assume acquaintance with the FullNode-HOWTO and Validator-HOWTO. You will also need a dedicated server powerful enough for running a Full Node in order to obtain the larger amount of test Grams. Obtaining small amounts of test Grams does not require a dedicated server and may be done in several minutes on a home computer.
 
 1. Proof-of-Work TestGiver smart contracts
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -38,7 +38,7 @@ You should randomly choose one of these "proof-of-work testgiver" smart contract
 2. The "mining" process
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-In order to create an external message containing the "proof of work", you should run a special "mining" utility, compiled from the TON sources located in the GitHub repository. The utility is located in file './crypto/pow-miner' with respect to the build directory, and can be compiled by typing 'make pow-miner' in the build directory.
+In order to create an external message containing the "proof of work", you should run a special "mining" utility, compiled from the ION sources located in the GitHub repository. The utility is located in file './crypto/pow-miner' with respect to the build directory, and can be compiled by typing 'make pow-miner' in the build directory.
 
 However, before running "pow-miner", you need to know the actual values of "seed" and "complexity" parameters of the chosen "proof-of-work testgiver" smart contract. This can be done by invoking get-method "get_pow_params" of this smart contract. For instance, if you use testgiver smart contract kf-kkdY_B7p-77TLn2hUhM6QidWrrsl8FYWCIvBMpZKprBtN, you can simply type
 

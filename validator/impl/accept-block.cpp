@@ -1,26 +1,26 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
 #include "accept-block.hpp"
 #include "adnl/utils.hpp"
 #include "interfaces/validator-manager.h"
-#include "ton/ton-tl.hpp"
-#include "ton/ton-io.hpp"
+#include "ion/ion-tl.hpp"
+#include "ion/ion-io.hpp"
 
 #include "fabric.h"
 #include "top-shard-descr.hpp"
@@ -34,7 +34,7 @@
 
 #include "validator/invariants.hpp"
 
-namespace ton {
+namespace ion {
 
 namespace validator {
 using namespace std::literals::string_literals;
@@ -123,8 +123,8 @@ bool AcceptBlockQuery::precheck_header() {
     }
   }
   // 2. check header fields
-  std::vector<ton::BlockIdExt> prev;
-  ton::BlockIdExt mc_blkid;
+  std::vector<ion::BlockIdExt> prev;
+  ion::BlockIdExt mc_blkid;
   bool after_split;
   auto res = block::unpack_block_prev_blk_try(block_root_, id_, prev, mc_blkid, after_split);
   if (res.is_error()) {
@@ -656,11 +656,11 @@ void AcceptBlockQuery::find_known_ancestors() {
   prev_mc_blkid_ = mc_blkid_;
   auto config = last_mc_state_->get_config();
   CHECK(config);
-  auto shard = ton::ShardIdFull(id_);
+  auto shard = ion::ShardIdFull(id_);
   auto ancestor = config->get_shard_hash(shard, false);
   if (ancestor.is_null()) {
-    ancestor = config->get_shard_hash(ton::shard_child(shard, true));
-    auto ancestor2 = config->get_shard_hash(ton::shard_child(shard, false));
+    ancestor = config->get_shard_hash(ion::shard_child(shard, true));
+    auto ancestor2 = config->get_shard_hash(ion::shard_child(shard, false));
     if (ancestor.is_null() || ancestor2.is_null()) {
       VLOG(VALIDATOR_WARNING) << " cannot retrieve information about shard " + shard.to_str() +
                                      " from masterchain block " + last_mc_id_.to_str() +
@@ -681,7 +681,7 @@ void AcceptBlockQuery::find_known_ancestors() {
     VLOG(VALIDATOR_DEBUG) << "found one regular ancestor " << ancestor->blk_.to_str();
     ancestors_seqno_ = ancestor->seqno();
     ancestors_.emplace_back(std::move(ancestor));
-  } else if (ton::shard_is_parent(ancestor->shard(), shard)) {
+  } else if (ion::shard_is_parent(ancestor->shard(), shard)) {
     VLOG(VALIDATOR_DEBUG) << "found one parent ancestor " << ancestor->blk_.to_str();
     ancestors_seqno_ = ancestor->seqno();
     ancestors_.emplace_back(std::move(ancestor));
@@ -720,7 +720,7 @@ void AcceptBlockQuery::find_known_ancestors() {
 
 void AcceptBlockQuery::require_proof_link(BlockIdExt id) {
   VLOG(VALIDATOR_DEBUG) << "require_proof_link(" << id.to_str() << ")";
-  CHECK(ton::ShardIdFull(id) == ton::ShardIdFull(id_));
+  CHECK(ion::ShardIdFull(id) == ion::ShardIdFull(id_));
   CHECK(id.id.seqno == id_.id.seqno - 1 - proof_links_.size());
   td::actor::send_closure_later(manager_, &ValidatorManager::wait_block_proof_link_short, id, timeout_,
                                 [SelfId = actor_id(this), id](td::Result<Ref<ProofLink>> R) {
@@ -820,7 +820,7 @@ void AcceptBlockQuery::got_proof_link(BlockIdExt id, Ref<ProofLink> proof) {
   } else {
     CHECK(id.id.seqno > ancestors_seqno_);
     // intermediate link
-    if (link_prev_.size() != 1 || ton::ShardIdFull(link_prev_[0].id) != ton::ShardIdFull(id_) ||
+    if (link_prev_.size() != 1 || ion::ShardIdFull(link_prev_[0].id) != ion::ShardIdFull(id_) ||
         link_prev_[0].id.seqno + 1 != id.id.seqno) {
       fatal_error("invalid intermediate link at block "s + id.to_str() + " for shardchain block " + id_.to_str(),
                   ErrorCode::cancelled);
@@ -956,4 +956,4 @@ void AcceptBlockQuery::applied() {
 
 }  // namespace validator
 
-}  // namespace ton
+}  // namespace ion

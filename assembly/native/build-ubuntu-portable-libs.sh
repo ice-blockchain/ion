@@ -118,10 +118,10 @@ cmake -GNinja .. \
 
 
 
-test $? -eq 0 || { echo "Can't configure ton"; exit 1; }
+test $? -eq 0 || { echo "Can't configure ion"; exit 1; }
 
 ninja tonlibjson emulator
-test $? -eq 0 || { echo "Can't compile ton"; exit 1; }
+test $? -eq 0 || { echo "Can't compile ion"; exit 1; }
 
 cd ..
 

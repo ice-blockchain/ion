@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -20,7 +20,7 @@
 #include "overlay.hpp"
 #include "keys/encryptor.h"
 
-namespace ton {
+namespace ion {
 
 namespace overlay {
 
@@ -189,18 +189,18 @@ td::Status OverlayFecBroadcastPart::distribute() {
   return td::Status::OK();
 }
 
-tl_object_ptr<ton_api::overlay_broadcastFec> OverlayFecBroadcastPart::export_tl() {
+tl_object_ptr<ion_api::overlay_broadcastFec> OverlayFecBroadcastPart::export_tl() {
   if (data_.size() == 0) {
     data_ = bcast_->get_part(seqno_);
   }
 
-  return create_tl_object<ton_api::overlay_broadcastFec>(
+  return create_tl_object<ion_api::overlay_broadcastFec>(
       source_.tl(), cert_ ? cert_->tl() : Certificate::empty_tl(), bcast_->get_data_hash(), bcast_->get_size(),
       bcast_->get_flags(), data_.clone(), seqno_, bcast_->get_fec_type().tl(), bcast_->get_date(), signature_.clone());
 }
 
-tl_object_ptr<ton_api::overlay_broadcastFecShort> OverlayFecBroadcastPart::export_tl_short() {
-  return create_tl_object<ton_api::overlay_broadcastFecShort>(
+tl_object_ptr<ion_api::overlay_broadcastFecShort> OverlayFecBroadcastPart::export_tl_short() {
+  return create_tl_object<ion_api::overlay_broadcastFecShort>(
       source_.tl(), cert_ ? cert_->tl() : Certificate::empty_tl(), broadcast_hash_, part_data_hash_, seqno_,
       signature_.clone());
 }
@@ -214,12 +214,12 @@ td::BufferSlice OverlayFecBroadcastPart::export_serialized_short() {
 }
 
 td::BufferSlice OverlayFecBroadcastPart::to_sign() {
-  auto obj = create_tl_object<ton_api::overlay_broadcast_toSign>(part_hash_, date_);
+  auto obj = create_tl_object<ion_api::overlay_broadcast_toSign>(part_hash_, date_);
   return serialize_tl_object(obj, true);
 }
 
 td::Status OverlayFecBroadcastPart::create(OverlayImpl *overlay, adnl::AdnlNodeIdShort src_peer_id,
-                                           tl_object_ptr<ton_api::overlay_broadcastFec> broadcast) {
+                                           tl_object_ptr<ion_api::overlay_broadcastFec> broadcast) {
   TRY_STATUS(overlay->check_date(broadcast->date_));
   auto source = PublicKey{broadcast->src_};
   auto part_data_hash = sha256_bits256(broadcast->data_.as_slice());
@@ -258,7 +258,7 @@ td::Status OverlayFecBroadcastPart::create(OverlayImpl *overlay, adnl::AdnlNodeI
 }
 
 td::Status OverlayFecBroadcastPart::create(OverlayImpl *overlay, adnl::AdnlNodeIdShort src_peer_id,
-                                           tl_object_ptr<ton_api::overlay_broadcastFecShort> broadcast) {
+                                           tl_object_ptr<ion_api::overlay_broadcastFecShort> broadcast) {
   auto bcast = overlay->get_fec_broadcast(broadcast->broadcast_hash_);
   if (!bcast) {
     return td::Status::Error(ErrorCode::notready, "short part of unknown broadcast");
@@ -339,7 +339,7 @@ Overlay::BroadcastHash OverlayFecBroadcastPart::compute_broadcast_id(PublicKey s
 Overlay::BroadcastHash OverlayFecBroadcastPart::compute_broadcast_id(PublicKeyHash source, const fec::FecType &fec_type,
                                                                      Overlay::BroadcastDataHash data_hash,
                                                                      td::uint32 size, td::uint32 flags) {
-  return get_tl_object_sha_bits256(create_tl_object<ton_api::overlay_broadcastFec_id>(
+  return get_tl_object_sha_bits256(create_tl_object<ion_api::overlay_broadcastFec_id>(
       (flags & Overlays::BroadcastFlagAnySender()) ? PublicKeyHash::zero().tl() : source.tl(),
       get_tl_object_sha_bits256(fec_type.tl()), data_hash, size, flags));
 }
@@ -348,7 +348,7 @@ Overlay::BroadcastPartHash OverlayFecBroadcastPart::compute_broadcast_part_id(Ov
                                                                               Overlay::BroadcastDataHash data_hash,
                                                                               td::uint32 seqno) {
   return get_tl_object_sha_bits256(
-      create_tl_object<ton_api::overlay_broadcastFec_partId>(broadcast_hash, data_hash, seqno));
+      create_tl_object<ion_api::overlay_broadcastFec_partId>(broadcast_hash, data_hash, seqno));
 }
 
 void OverlayFecBroadcastPart::update_overlay(OverlayImpl *overlay) {
@@ -361,4 +361,4 @@ void OverlayFecBroadcastPart::update_overlay(OverlayImpl *overlay) {
 
 }  // namespace overlay
 
-}  // namespace ton
+}  // namespace ion

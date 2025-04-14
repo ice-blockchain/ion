@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2019-2020 Telegram Systems LLP
 */
@@ -22,7 +22,7 @@
 
 #include <algorithm>
 
-namespace ton {
+namespace ion {
 
 namespace http {
 
@@ -81,8 +81,8 @@ void HttpHeader::store_http(td::ChainBufferWriter &output) {
   output.append("\r\n");
 }
 
-tl_object_ptr<ton_api::http_header> HttpHeader::store_tl() {
-  return create_tl_object<ton_api::http_header>(name, value);
+tl_object_ptr<ion_api::http_header> HttpHeader::store_tl() {
+  return create_tl_object<ion_api::http_header>(name, value);
 }
 
 td::Result<std::unique_ptr<HttpRequest>> HttpRequest::parse(std::unique_ptr<HttpRequest> request, std::string &cur_line,
@@ -237,8 +237,8 @@ void HttpRequest::store_http(td::ChainBufferWriter &output) {
   output.append(td::Slice("\r\n", 2));
 }
 
-tl_object_ptr<ton_api::http_request> HttpRequest::store_tl(td::Bits256 req_id) {
-  std::vector<tl_object_ptr<ton_api::http_header>> headers;
+tl_object_ptr<ion_api::http_request> HttpRequest::store_tl(td::Bits256 req_id) {
+  std::vector<tl_object_ptr<ion_api::http_header>> headers;
   headers.reserve(options_.size());
   for (auto &h : options_) {
     headers.push_back(h.store_tl());
@@ -248,7 +248,7 @@ tl_object_ptr<ton_api::http_request> HttpRequest::store_tl(td::Bits256 req_id) {
   } else {
     headers.push_back(HttpHeader{"Connection", "Close"}.store_tl());
   }
-  return create_tl_object<ton_api::http_request>(req_id, method_, url_, proto_version_, std::move(headers));
+  return create_tl_object<ion_api::http_request>(req_id, method_, url_, proto_version_, std::move(headers));
 }
 
 td::Status HttpPayload::parse(td::ChainBufferReader &input) {
@@ -553,7 +553,7 @@ bool HttpPayload::store_http(td::ChainBufferWriter &output, size_t max_size, Htt
   return wrote;
 }
 
-tl_object_ptr<ton_api::http_payloadPart> HttpPayload::store_tl(size_t max_size) {
+tl_object_ptr<ion_api::http_payloadPart> HttpPayload::store_tl(size_t max_size) {
   auto b = ready_bytes();
   if (b > max_size) {
     b = max_size;
@@ -561,8 +561,8 @@ tl_object_ptr<ton_api::http_payloadPart> HttpPayload::store_tl(size_t max_size) 
   max_size = b;
   td::BufferSlice x{b};
   auto S = x.as_slice();
-  auto obj = create_tl_object<ton_api::http_payloadPart>(std::move(x),
-                                                         std::vector<tl_object_ptr<ton_api::http_header>>(), false);
+  auto obj = create_tl_object<ion_api::http_payloadPart>(std::move(x),
+                                                         std::vector<tl_object_ptr<ion_api::http_header>>(), false);
 
   slice_gc();
   while (chunks_.size() > 0 && max_size > 0) {
@@ -617,9 +617,9 @@ tl_object_ptr<ton_api::http_payloadPart> HttpPayload::store_tl(size_t max_size) 
   return obj;
 }
 
-/*tl_object_ptr<ton_api::http_payloadPart> HttpPayload::store_tl(size_t max_size) {
-  auto obj = create_tl_object<ton_api::http_payloadPart>(std::vector<td::BufferSlice>(),
-                                                         std::vector<tl_object_ptr<ton_api::http_header>>(), false);
+/*tl_object_ptr<ion_api::http_payloadPart> HttpPayload::store_tl(size_t max_size) {
+  auto obj = create_tl_object<ion_api::http_payloadPart>(std::vector<td::BufferSlice>(),
+                                                         std::vector<tl_object_ptr<ion_api::http_header>>(), false);
   if (type_ == PayloadType::pt_empty) {
     return obj;
   }
@@ -678,20 +678,20 @@ tl_object_ptr<ton_api::http_payloadPart> HttpPayload::store_tl(size_t max_size) 
   return obj;
 }
 
-tl_object_ptr<ton_api::http_PayloadInfo> HttpPayload::store_info(size_t max_size) {
+tl_object_ptr<ion_api::http_PayloadInfo> HttpPayload::store_info(size_t max_size) {
   if (type_ == PayloadType::pt_empty) {
-    return create_tl_object<ton_api::http_payloadInfo>(create_tl_object<ton_api::http_payloadEmpty>());
+    return create_tl_object<ion_api::http_payloadInfo>(create_tl_object<ion_api::http_payloadEmpty>());
   }
   if (!parse_completed()) {
-    return create_tl_object<ton_api::http_payloadSizeUnknown>();
+    return create_tl_object<ion_api::http_payloadSizeUnknown>();
   }
   if (ready_bytes_ > max_size) {
-    return create_tl_object<ton_api::http_payloadBig>(ready_bytes_);
+    return create_tl_object<ion_api::http_payloadBig>(ready_bytes_);
   }
   auto obj = store_tl(max_size);
   CHECK(obj->last_);
-  return create_tl_object<ton_api::http_payloadInfo>(
-      create_tl_object<ton_api::http_payload>(std::move(obj->data_), std::move(obj->trailer_)));
+  return create_tl_object<ion_api::http_payloadInfo>(
+      create_tl_object<ion_api::http_payload>(std::move(obj->data_), std::move(obj->trailer_)));
 }*/
 
 void HttpPayload::add_callback(std::unique_ptr<HttpPayload::Callback> callback) {
@@ -844,8 +844,8 @@ void HttpResponse::store_http(td::ChainBufferWriter &output) {
   output.append(td::Slice("\r\n", 2));
 }
 
-tl_object_ptr<ton_api::http_response> HttpResponse::store_tl() {
-  std::vector<tl_object_ptr<ton_api::http_header>> headers;
+tl_object_ptr<ion_api::http_response> HttpResponse::store_tl() {
+  std::vector<tl_object_ptr<ion_api::http_header>> headers;
   headers.reserve(options_.size());
   for (auto &h : options_) {
     headers.push_back(h.store_tl());
@@ -855,7 +855,7 @@ tl_object_ptr<ton_api::http_response> HttpResponse::store_tl() {
   } else {
     headers.push_back(HttpHeader{"Connection", "Close"}.store_tl());
   }
-  return create_tl_object<ton_api::http_response>(proto_version_, code_, reason_, std::move(headers), false);
+  return create_tl_object<ion_api::http_response>(proto_version_, code_, reason_, std::move(headers), false);
 }
 
 td::Status HttpHeader::basic_check() {
@@ -910,4 +910,4 @@ void answer_error(HttpStatusCode code, std::string reason,
 
 }  // namespace http
 
-}  // namespace ton
+}  // namespace ion

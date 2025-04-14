@@ -1,11 +1,11 @@
 # Generation of Tonlib libraries for Android OS
-**Tl;dr** Download the latest version of Tonlib libraries for Android from TON release page or check the artifacts from [Android JNI GitHub action](https://github.com/ton-blockchain/ton/actions/workflows/tonlib-android-jni.yml).
+**Tl;dr** Download the latest version of Tonlib libraries for Android from ION release page or check the artifacts from [Android JNI GitHub action](https://github.com/ice-blockchain/ion/actions/workflows/tonlib-android-jni.yml).
 
 ## Compile Tonlib for Android manually 
 Prerequisite: installed Java and set environment variable JAVA_HOME. 
 ```bash
-git clone --recursive https://github.com/ton-blockchain/ton.git
-cd ton
+git clone --recursive https://github.com/ice-blockchain/ion.git
+cd ion
 cp assembly/android/build-android-tonlib.sh .
 chmod +x build-android-tonlib.sh
 sudo -E ./build-android-tonlib.sh
@@ -20,9 +20,9 @@ swift run builder --output ./build --clean
 ```
 5. Run command:
 ```bash
-echo ./build/TON.xcframework/* | xargs -n 1 cp -R ./Resources/Headers
+echo ./build/ION.xcframework/* | xargs -n 1 cp -R ./Resources/Headers
 ````
-7. Import **OpenSSL.xcframework** and **TON.xcframework** in XCode in section _"Frameworks, Libraries, and Embedded Content"_
+7. Import **OpenSSL.xcframework** and **ION.xcframework** in XCode in section _"Frameworks, Libraries, and Embedded Content"_
 8. Now you can start using Tonlib client by importing it in C or Objective-C source files:
 ```objective-c
 #import <tonlib/tonlib_client_json.h>
@@ -31,4 +31,4 @@ echo ./build/TON.xcframework/* | xargs -n 1 cp -R ./Resources/Headers
 # Generation of Tonlib libraries for Desktop applications
 You can use Tonlib compiled in an ordinary way for desktop applications. If you use Java you can load the library using JNA.
 
-The latest Tonlib library can be found among other TON artifacts either on TON release page or inside the [appropriate GitHub action](https://github.com/ton-blockchain/ton/actions/).
+The latest Tonlib library can be found among other ION artifacts either on ION release page or inside the [appropriate GitHub action](https://github.com/ice-blockchain/ion/actions/).

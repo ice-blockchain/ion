@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -21,7 +21,7 @@
 #include "adnl/adnl.h"
 #include "adnl/adnl-query.h"
 
-namespace ton {
+namespace ion {
 
 namespace adnl {
 
@@ -40,8 +40,8 @@ class AdnlMessageCreateChannel {
   td::uint32 size() const {
     return 40;
   }
-  tl_object_ptr<ton_api::adnl_Message> tl() const {
-    return create_tl_object<ton_api::adnl_message_createChannel>(key_.raw(), date_);
+  tl_object_ptr<ion_api::adnl_Message> tl() const {
+    return create_tl_object<ion_api::adnl_message_createChannel>(key_.raw(), date_);
   }
 
  private:
@@ -66,8 +66,8 @@ class AdnlMessageConfirmChannel {
   td::uint32 size() const {
     return 72;
   }
-  tl_object_ptr<ton_api::adnl_Message> tl() const {
-    return create_tl_object<ton_api::adnl_message_confirmChannel>(key_.raw(), peer_key_.raw(), date_);
+  tl_object_ptr<ion_api::adnl_Message> tl() const {
+    return create_tl_object<ion_api::adnl_message_confirmChannel>(key_.raw(), peer_key_.raw(), date_);
   }
 
  private:
@@ -86,8 +86,8 @@ class AdnlMessageCustom {
   td::uint32 size() const {
     return static_cast<td::uint32>(data_.size()) + 12;
   }
-  tl_object_ptr<ton_api::adnl_Message> tl() const {
-    return create_tl_object<ton_api::adnl_message_custom>(data_.clone());
+  tl_object_ptr<ion_api::adnl_Message> tl() const {
+    return create_tl_object<ion_api::adnl_message_custom>(data_.clone());
   }
 
  private:
@@ -101,8 +101,8 @@ class AdnlMessageNop {
   td::uint32 size() const {
     return 4;
   }
-  tl_object_ptr<ton_api::adnl_Message> tl() const {
-    return create_tl_object<ton_api::adnl_message_nop>();
+  tl_object_ptr<ion_api::adnl_Message> tl() const {
+    return create_tl_object<ion_api::adnl_message_nop>();
   }
 
  private:
@@ -118,8 +118,8 @@ class AdnlMessageReinit {
   td::uint32 size() const {
     return 8;
   }
-  tl_object_ptr<ton_api::adnl_Message> tl() const {
-    return create_tl_object<ton_api::adnl_message_reinit>(date_);
+  tl_object_ptr<ion_api::adnl_Message> tl() const {
+    return create_tl_object<ion_api::adnl_message_reinit>(date_);
   }
 
  private:
@@ -139,8 +139,8 @@ class AdnlMessageQuery {
   td::uint32 size() const {
     return static_cast<td::uint32>(data_.size()) + 44;
   }
-  tl_object_ptr<ton_api::adnl_Message> tl() const {
-    return create_tl_object<ton_api::adnl_message_query>(query_id_, data_.clone());
+  tl_object_ptr<ion_api::adnl_Message> tl() const {
+    return create_tl_object<ion_api::adnl_message_query>(query_id_, data_.clone());
   }
 
  private:
@@ -161,8 +161,8 @@ class AdnlMessageAnswer {
   td::uint32 size() const {
     return static_cast<td::uint32>(data_.size()) + 44;
   }
-  tl_object_ptr<ton_api::adnl_Message> tl() const {
-    return create_tl_object<ton_api::adnl_message_answer>(query_id_, data_.clone());
+  tl_object_ptr<ion_api::adnl_Message> tl() const {
+    return create_tl_object<ion_api::adnl_message_answer>(query_id_, data_.clone());
   }
 
  private:
@@ -190,8 +190,8 @@ class AdnlMessagePart {
   td::uint32 size() const {
     return static_cast<td::uint32>(data_.size()) + 48;
   }
-  tl_object_ptr<ton_api::adnl_Message> tl() const {
-    return create_tl_object<ton_api::adnl_message_part>(hash_, total_size_, offset_, data_.clone());
+  tl_object_ptr<ion_api::adnl_Message> tl() const {
+    return create_tl_object<ion_api::adnl_message_part>(hash_, total_size_, offset_, data_.clone());
   }
 
  private:
@@ -212,7 +212,7 @@ class AdnlMessage {
     td::uint32 size() const {
       UNREACHABLE();
     }
-    tl_object_ptr<ton_api::adnl_Message> tl() const {
+    tl_object_ptr<ion_api::adnl_Message> tl() const {
       UNREACHABLE();
     }
   };
@@ -224,13 +224,13 @@ class AdnlMessage {
       message_{Empty{}};
 
  public:
-  explicit AdnlMessage(tl_object_ptr<ton_api::adnl_Message> message);
+  explicit AdnlMessage(tl_object_ptr<ion_api::adnl_Message> message);
   template <class T>
   AdnlMessage(T m) : message_(std::move(m)) {
   }
 
-  tl_object_ptr<ton_api::adnl_Message> tl() const {
-    tl_object_ptr<ton_api::adnl_Message> res;
+  tl_object_ptr<ion_api::adnl_Message> tl() const {
+    tl_object_ptr<ion_api::adnl_Message> res;
     message_.visit([&](const auto &obj) { res = obj.tl(); });
     return res;
   }
@@ -260,7 +260,7 @@ class OutboundAdnlMessage {
   void set_flags(td::uint32 f) {
     flags_ = f;
   }
-  tl_object_ptr<ton_api::adnl_Message> tl() const {
+  tl_object_ptr<ion_api::adnl_Message> tl() const {
     return message_.tl();
   }
   td::uint32 size() const {
@@ -287,11 +287,11 @@ class AdnlMessageList {
  public:
   AdnlMessageList() {
   }
-  AdnlMessageList(tl_object_ptr<ton_api::adnl_Message> message) {
+  AdnlMessageList(tl_object_ptr<ion_api::adnl_Message> message) {
     auto msg = AdnlMessage{std::move(message)};
     messages_.emplace_back(std::move(msg));
   }
-  AdnlMessageList(std::vector<tl_object_ptr<ton_api::adnl_Message>> messages) {
+  AdnlMessageList(std::vector<tl_object_ptr<ion_api::adnl_Message>> messages) {
     for (auto &message : messages) {
       messages_.push_back(AdnlMessage{std::move(message)});
     }
@@ -303,19 +303,19 @@ class AdnlMessageList {
   td::uint32 size() const {
     return static_cast<td::uint32>(messages_.size());
   }
-  tl_object_ptr<ton_api::adnl_Message> one_message() const {
+  tl_object_ptr<ion_api::adnl_Message> one_message() const {
     CHECK(size() == 1);
     return messages_[0].tl();
   }
-  std::vector<tl_object_ptr<ton_api::adnl_Message>> mult_messages() const {
-    std::vector<tl_object_ptr<ton_api::adnl_Message>> vec;
+  std::vector<tl_object_ptr<ion_api::adnl_Message>> mult_messages() const {
+    std::vector<tl_object_ptr<ion_api::adnl_Message>> vec;
     for (auto &m : messages_) {
       vec.emplace_back(m.tl());
     }
     return vec;
   }
-  static std::vector<tl_object_ptr<ton_api::adnl_Message>> empty_vector() {
-    return std::vector<tl_object_ptr<ton_api::adnl_Message>>{};
+  static std::vector<tl_object_ptr<ion_api::adnl_Message>> empty_vector() {
+    return std::vector<tl_object_ptr<ion_api::adnl_Message>>{};
   }
   auto &vector() {
     return messages_;
@@ -329,11 +329,11 @@ class OutboundAdnlMessageList {
  public:
   OutboundAdnlMessageList() {
   }
-  OutboundAdnlMessageList(tl_object_ptr<ton_api::adnl_Message> message, td::uint32 flags) {
+  OutboundAdnlMessageList(tl_object_ptr<ion_api::adnl_Message> message, td::uint32 flags) {
     auto msg = OutboundAdnlMessage{std::move(message), flags};
     messages_.emplace_back(std::move(msg));
   }
-  OutboundAdnlMessageList(std::vector<tl_object_ptr<ton_api::adnl_Message>> messages, td::uint32 flags) {
+  OutboundAdnlMessageList(std::vector<tl_object_ptr<ion_api::adnl_Message>> messages, td::uint32 flags) {
     for (auto &message : messages) {
       messages_.push_back(OutboundAdnlMessage{std::move(message), flags});
     }
@@ -345,19 +345,19 @@ class OutboundAdnlMessageList {
   td::uint32 size() const {
     return static_cast<td::uint32>(messages_.size());
   }
-  tl_object_ptr<ton_api::adnl_Message> one_message() const {
+  tl_object_ptr<ion_api::adnl_Message> one_message() const {
     CHECK(size() == 1);
     return messages_[0].tl();
   }
-  std::vector<tl_object_ptr<ton_api::adnl_Message>> mult_messages() const {
-    std::vector<tl_object_ptr<ton_api::adnl_Message>> vec;
+  std::vector<tl_object_ptr<ion_api::adnl_Message>> mult_messages() const {
+    std::vector<tl_object_ptr<ion_api::adnl_Message>> vec;
     for (auto &m : messages_) {
       vec.emplace_back(m.tl());
     }
     return vec;
   }
-  static std::vector<tl_object_ptr<ton_api::adnl_Message>> empty_vector() {
-    return std::vector<tl_object_ptr<ton_api::adnl_Message>>{};
+  static std::vector<tl_object_ptr<ion_api::adnl_Message>> empty_vector() {
+    return std::vector<tl_object_ptr<ion_api::adnl_Message>>{};
   }
   auto &vector() {
     return messages_;
@@ -369,4 +369,4 @@ class OutboundAdnlMessageList {
 
 }  // namespace adnl
 
-}  // namespace ton
+}  // namespace ion

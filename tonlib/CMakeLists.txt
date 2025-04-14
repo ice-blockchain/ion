@@ -60,7 +60,7 @@ target_include_directories(tonlib PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>/..
   $<BUILD_INTERFACE:${OPENSSL_INCLUDE_DIR}>
 )
-target_link_libraries(tonlib PRIVATE tdactor adnllite tl_lite_api tl-lite-utils ton_crypto lite-client-common smc-envelope emulator_static)
+target_link_libraries(tonlib PRIVATE tdactor adnllite tl_lite_api tl-lite-utils ion_crypto lite-client-common smc-envelope emulator_static)
 target_link_libraries(tonlib PUBLIC tdutils tl_tonlib_api)
 
 if (TONLIB_ENABLE_JNI AND NOT ANDROID) # jni is available by default on Android
@@ -132,11 +132,11 @@ install(TARGETS tonlibjson TonlibJson EXPORT Tonlib
   INCLUDES DESTINATION include
 )
 
-if (NOT TON_USE_ABSEIL)
+if (NOT ION_USE_ABSEIL)
 if (WIN32)
   set(WINGETOPT_TARGET wingetopt)
 endif()
-install(TARGETS tdnet keys crc32c tdactor adnllite tl_api tl-utils tl_lite_api tl-lite-utils ton_crypto ton_crypto_core ton_block smc-envelope ${WINGETOPT_TARGET}
+install(TARGETS tdnet keys crc32c tdactor adnllite tl_api tl-utils tl_lite_api tl-lite-utils ion_crypto ion_crypto_core ion_block smc-envelope ${WINGETOPT_TARGET}
   tdutils tl_tonlib_api tonlib lite-client-common tddb_utils emulator_static Tonlib EXPORT Tonlib
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib
@@ -167,12 +167,12 @@ if (NOT USE_EMSCRIPTEN AND NOT TONLIBJSON_STATIC)
   )
 
   # Add SOVERSION to shared libraries
-  set_property(TARGET tonlibjson PROPERTY SOVERSION ${TON_VERSION})
+  set_property(TARGET tonlibjson PROPERTY SOVERSION ${ION_VERSION})
 endif()
 
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file("TonlibConfigVersion.cmake"
-  VERSION ${TON_VERSION}
+  VERSION ${ION_VERSION}
   COMPATIBILITY ExactVersion
 )
 install(FILES "TonlibConfig.cmake" "${CMAKE_CURRENT_BINARY_DIR}/TonlibConfigVersion.cmake"

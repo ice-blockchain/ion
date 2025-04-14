@@ -1,30 +1,30 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
 #include "download-proof.hpp"
-#include "ton/ton-tl.hpp"
+#include "ion/ion-tl.hpp"
 #include "adnl/utils.hpp"
-#include "ton/ton-shard.h"
+#include "ion/ion-shard.h"
 #include "td/utils/overloaded.h"
-#include "ton/ton-io.hpp"
+#include "ion/ion-io.hpp"
 #include "validator/full-node.h"
 
-namespace ton {
+namespace ion {
 
 namespace validator {
 
@@ -158,10 +158,10 @@ void DownloadProof::got_node_to_download(adnl::AdnlNodeIdShort node) {
 
   td::BufferSlice query;
   if (!is_key_block_) {
-    query = create_serialize_tl_object<ton_api::tonNode_prepareBlockProof>(create_tl_block_id(block_id_),
+    query = create_serialize_tl_object<ion_api::tonNode_prepareBlockProof>(create_tl_block_id(block_id_),
                                                                            allow_partial_proof_);
   } else {
-    query = create_serialize_tl_object<ton_api::tonNode_prepareKeyBlockProof>(create_tl_block_id(block_id_),
+    query = create_serialize_tl_object<ion_api::tonNode_prepareKeyBlockProof>(create_tl_block_id(block_id_),
                                                                               allow_partial_proof_);
   }
 
@@ -170,7 +170,7 @@ void DownloadProof::got_node_to_download(adnl::AdnlNodeIdShort node) {
                             "get_prepare", std::move(P), td::Timestamp::in(1.0), std::move(query));
   } else {
     td::actor::send_closure(client_, &adnl::AdnlExtClient::send_query, "get_prepare",
-                            create_serialize_tl_object_suffix<ton_api::tonNode_query>(std::move(query)),
+                            create_serialize_tl_object_suffix<ion_api::tonNode_query>(std::move(query)),
                             td::Timestamp::in(1.0), std::move(P));
   }
 }
@@ -178,17 +178,17 @@ void DownloadProof::got_node_to_download(adnl::AdnlNodeIdShort node) {
 void DownloadProof::got_block_proof_description(td::BufferSlice proof_description) {
   VLOG(FULL_NODE_DEBUG) << "downloaded proof description for " << block_id_;
 
-  auto F = fetch_tl_object<ton_api::tonNode_PreparedProof>(std::move(proof_description), true);
+  auto F = fetch_tl_object<ion_api::tonNode_PreparedProof>(std::move(proof_description), true);
   if (F.is_error()) {
     abort_query(F.move_as_error());
     return;
   }
 
   auto self = this;
-  ton_api::downcast_call(
+  ion_api::downcast_call(
       *F.move_as_ok().get(),
       td::overloaded(
-          [&](ton_api::tonNode_preparedProof &obj) {
+          [&](ion_api::tonNode_preparedProof &obj) {
             auto P = td::PromiseCreator::lambda([SelfId = actor_id(self)](td::Result<td::BufferSlice> R) {
               if (R.is_error()) {
                 td::actor::send_closure(SelfId, &DownloadProof::abort_query, R.move_as_error());
@@ -199,9 +199,9 @@ void DownloadProof::got_block_proof_description(td::BufferSlice proof_descriptio
 
             td::BufferSlice query;
             if (!is_key_block_) {
-              query = create_serialize_tl_object<ton_api::tonNode_downloadBlockProof>(create_tl_block_id(block_id_));
+              query = create_serialize_tl_object<ion_api::tonNode_downloadBlockProof>(create_tl_block_id(block_id_));
             } else {
-              query = create_serialize_tl_object<ton_api::tonNode_downloadKeyBlockProof>(create_tl_block_id(block_id_));
+              query = create_serialize_tl_object<ion_api::tonNode_downloadKeyBlockProof>(create_tl_block_id(block_id_));
             }
             if (client_.empty()) {
               td::actor::send_closure(overlays_, &overlay::Overlays::send_query_via, download_from_, local_id_,
@@ -209,11 +209,11 @@ void DownloadProof::got_block_proof_description(td::BufferSlice proof_descriptio
                                       std::move(query), FullNode::max_proof_size(), rldp_);
             } else {
               td::actor::send_closure(client_, &adnl::AdnlExtClient::send_query, "get_prepare",
-                                      create_serialize_tl_object_suffix<ton_api::tonNode_query>(std::move(query)),
+                                      create_serialize_tl_object_suffix<ion_api::tonNode_query>(std::move(query)),
                                       td::Timestamp::in(3.0), std::move(P));
             }
           },
-          [&](ton_api::tonNode_preparedProofLink &obj) {
+          [&](ion_api::tonNode_preparedProofLink &obj) {
             if (!allow_partial_proof_) {
               abort_query(td::Status::Error(ErrorCode::protoviolation, "received partial proof, though did not allow"));
               return;
@@ -229,10 +229,10 @@ void DownloadProof::got_block_proof_description(td::BufferSlice proof_descriptio
             td::BufferSlice query;
             if (!is_key_block_) {
               query =
-                  create_serialize_tl_object<ton_api::tonNode_downloadBlockProofLink>(create_tl_block_id(block_id_));
+                  create_serialize_tl_object<ion_api::tonNode_downloadBlockProofLink>(create_tl_block_id(block_id_));
             } else {
               query =
-                  create_serialize_tl_object<ton_api::tonNode_downloadKeyBlockProofLink>(create_tl_block_id(block_id_));
+                  create_serialize_tl_object<ion_api::tonNode_downloadKeyBlockProofLink>(create_tl_block_id(block_id_));
             }
             if (client_.empty()) {
               td::actor::send_closure(overlays_, &overlay::Overlays::send_query_via, download_from_, local_id_,
@@ -240,11 +240,11 @@ void DownloadProof::got_block_proof_description(td::BufferSlice proof_descriptio
                                       std::move(query), FullNode::max_proof_size(), rldp_);
             } else {
               td::actor::send_closure(client_, &adnl::AdnlExtClient::send_query, "download block proof link",
-                                      create_serialize_tl_object_suffix<ton_api::tonNode_query>(std::move(query)),
+                                      create_serialize_tl_object_suffix<ion_api::tonNode_query>(std::move(query)),
                                       td::Timestamp::in(3.0), std::move(P));
             }
           },
-          [&](ton_api::tonNode_preparedProofEmpty &obj) {
+          [&](ion_api::tonNode_preparedProofEmpty &obj) {
             abort_query(td::Status::Error(ErrorCode::notready, "proof not found"));
           }));
 }
@@ -267,4 +267,4 @@ void DownloadProof::got_block_partial_proof(td::BufferSlice proof) {
 
 }  // namespace validator
 
-}  // namespace ton
+}  // namespace ion

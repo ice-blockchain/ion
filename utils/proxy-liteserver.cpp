@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain source code.
+    This file is part of ION Blockchain source code.
 
-    TON Blockchain is free software; you can redistribute it and/or
+    ION Blockchain is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
     as published by the Free Software Foundation; either version 2
     of the License, or (at your option) any later version.
 
-    TON Blockchain is distributed in the hope that it will be useful,
+    ION Blockchain is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with TON Blockchain.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain.  If not, see <http://www.gnu.org/licenses/>.
 
     In addition, as a special exception, the copyright holders give permission
     to link the code of portions of this program with the OpenSSL library.
@@ -33,10 +33,10 @@
 #include "td/utils/Random.h"
 #include "td/utils/FileLog.h"
 #include "git.h"
-#include "auto/tl/ton_api.h"
+#include "auto/tl/ion_api.h"
 #include "auto/tl/lite_api.h"
 #include "tl-utils/lite-utils.hpp"
-#include "auto/tl/ton_api_json.h"
+#include "auto/tl/ion_api_json.h"
 #include "adnl/adnl.h"
 #include "lite-client/ext-client.h"
 
@@ -50,7 +50,7 @@
 #include <auto/tl/lite_api.hpp>
 #include "td/utils/tl_storers.h"
 
-using namespace ton;
+using namespace ion;
 
 class ProxyLiteserver : public td::actor::Actor {
  public:
@@ -106,7 +106,7 @@ class ProxyLiteserver : public td::actor::Actor {
     if (r_conf_data.is_ok()) {
       auto conf_data = r_conf_data.move_as_ok();
       TRY_RESULT_PREFIX(conf_json, td::json_decode(conf_data.as_slice()), "failed to parse json: ");
-      TRY_STATUS_PREFIX(ton_api::from_json(*config_, conf_json.get_object()), "json does not fit TL scheme: ");
+      TRY_STATUS_PREFIX(ion_api::from_json(*config_, conf_json.get_object()), "json does not fit TL scheme: ");
       TRY_RESULT_PREFIX(cfg_port, td::narrow_cast_safe<td::uint16>(config_->port_), "invalid port: ");
       TRY_RESULT_PREFIX(cfg_id, adnl::AdnlNodeIdFull::create(config_->id_), "invalid id: ");
       bool rewrite_config = false;
@@ -151,8 +151,8 @@ class ProxyLiteserver : public td::actor::Actor {
     TRY_RESULT_PREFIX(global_config_data, td::read_file(global_config_), "Failed to read global config: ");
     TRY_RESULT_PREFIX(global_config_json, td::json_decode(global_config_data.as_slice()),
                       "Failed to parse global config: ");
-    ton_api::liteclient_config_global gc;
-    TRY_STATUS_PREFIX(ton_api::from_json(gc, global_config_json.get_object()), "Failed to parse global config: ");
+    ion_api::liteclient_config_global gc;
+    TRY_STATUS_PREFIX(ion_api::from_json(gc, global_config_json.get_object()), "Failed to parse global config: ");
     TRY_RESULT_PREFIX(servers, liteclient::LiteServerConfig::parse_global_config(gc),
                       "Falied to parse liteservers in global config: ");
     if (servers.empty()) {
@@ -367,7 +367,7 @@ class ProxyLiteserver : public td::actor::Actor {
   td::uint16 port_;
   PublicKeyHash public_key_hash_;
 
-  tl_object_ptr<ton_api::proxyLiteserver_config> config_ = create_tl_object<ton_api::proxyLiteserver_config>();
+  tl_object_ptr<ion_api::proxyLiteserver_config> config_ = create_tl_object<ion_api::proxyLiteserver_config>();
   adnl::AdnlNodeIdFull id_;
 
   td::actor::ActorOwn<keyring::Keyring> keyring_;
@@ -440,7 +440,7 @@ int main(int argc, char* argv[]) {
         public_key_hash = PublicKeyHash{value};
         return td::Status::OK();
       });
-  p.add_option('C', "global-config", "global TON configuration file",
+  p.add_option('C', "global-config", "global ION configuration file",
                [&](td::Slice arg) { global_config = arg.str(); });
   p.add_option('D', "db", "db root", [&](td::Slice arg) { db_root = arg.str(); });
   p.add_option('d', "daemonize", "set SIGHUP", [&]() {

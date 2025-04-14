@@ -18,4 +18,4 @@ cmake -DCMAKE_BUILD_TYPE=Release -DTonlib_DIR=<full path to Ton sources>/example
 cmake --build .
 ```
 
-To run `tonjson_example` you may need to manually copy a `tonlibjson` shared library from `tonlib/bin` to a directory containing built binaries.
+To run `ionjson_example` you may need to manually copy a `tonlibjson` shared library from `tonlib/bin` to a directory containing built binaries.

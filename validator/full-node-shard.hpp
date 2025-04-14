@@ -1,30 +1,30 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
 #pragma once
 
-#include "auto/tl/ton_api.h"
+#include "auto/tl/ion_api.h"
 #include "full-node-shard.h"
 #include "td/actor/PromiseFuture.h"
 #include "td/utils/port/Poll.h"
 #include <set>
 
-namespace ton {
+namespace ion {
 
 namespace validator {
 
@@ -42,7 +42,7 @@ struct Neighbour {
 
   explicit Neighbour(adnl::AdnlNodeIdShort adnl_id) : adnl_id(std::move(adnl_id)) {
   }
-  void update_proto_version(ton_api::tonNode_capabilities &q);
+  void update_proto_version(ion_api::tonNode_capabilities &q);
   void query_success(double t);
   void query_failed();
   void update_roundtrip(double t);
@@ -97,64 +97,64 @@ class FullNodeShardImpl : public FullNodeShard {
   void process_query(adnl::AdnlNodeIdShort src, T &query, td::Promise<td::BufferSlice> promise) {
     promise.set_error(td::Status::Error(ErrorCode::error, "unknown query"));
   }
-  void process_query(adnl::AdnlNodeIdShort src, ton_api::tonNode_getNextBlockDescription &query,
+  void process_query(adnl::AdnlNodeIdShort src, ion_api::tonNode_getNextBlockDescription &query,
                      td::Promise<td::BufferSlice> promise);
-  void process_query(adnl::AdnlNodeIdShort src, ton_api::tonNode_prepareBlockProof &query,
+  void process_query(adnl::AdnlNodeIdShort src, ion_api::tonNode_prepareBlockProof &query,
                      td::Promise<td::BufferSlice> promise);
-  void process_query(adnl::AdnlNodeIdShort src, ton_api::tonNode_prepareKeyBlockProof &query,
+  void process_query(adnl::AdnlNodeIdShort src, ion_api::tonNode_prepareKeyBlockProof &query,
                      td::Promise<td::BufferSlice> promise);
-  void process_query(adnl::AdnlNodeIdShort src, ton_api::tonNode_downloadBlockProof &query,
+  void process_query(adnl::AdnlNodeIdShort src, ion_api::tonNode_downloadBlockProof &query,
                      td::Promise<td::BufferSlice> promise);
-  void process_query(adnl::AdnlNodeIdShort src, ton_api::tonNode_downloadBlockProofLink &query,
+  void process_query(adnl::AdnlNodeIdShort src, ion_api::tonNode_downloadBlockProofLink &query,
                      td::Promise<td::BufferSlice> promise);
-  void process_query(adnl::AdnlNodeIdShort src, ton_api::tonNode_downloadKeyBlockProof &query,
+  void process_query(adnl::AdnlNodeIdShort src, ion_api::tonNode_downloadKeyBlockProof &query,
                      td::Promise<td::BufferSlice> promise);
-  void process_query(adnl::AdnlNodeIdShort src, ton_api::tonNode_downloadKeyBlockProofLink &query,
+  void process_query(adnl::AdnlNodeIdShort src, ion_api::tonNode_downloadKeyBlockProofLink &query,
                      td::Promise<td::BufferSlice> promise);
-  void process_query(adnl::AdnlNodeIdShort src, ton_api::tonNode_prepareBlock &query,
+  void process_query(adnl::AdnlNodeIdShort src, ion_api::tonNode_prepareBlock &query,
                      td::Promise<td::BufferSlice> promise);
-  void process_query(adnl::AdnlNodeIdShort src, ton_api::tonNode_downloadBlock &query,
+  void process_query(adnl::AdnlNodeIdShort src, ion_api::tonNode_downloadBlock &query,
                      td::Promise<td::BufferSlice> promise);
-  void process_query(adnl::AdnlNodeIdShort src, ton_api::tonNode_downloadBlockFull &query,
+  void process_query(adnl::AdnlNodeIdShort src, ion_api::tonNode_downloadBlockFull &query,
                      td::Promise<td::BufferSlice> promise);
-  void process_query(adnl::AdnlNodeIdShort src, ton_api::tonNode_downloadNextBlockFull &query,
+  void process_query(adnl::AdnlNodeIdShort src, ion_api::tonNode_downloadNextBlockFull &query,
                      td::Promise<td::BufferSlice> promise);
-  void process_query(adnl::AdnlNodeIdShort src, ton_api::tonNode_prepareZeroState &query,
+  void process_query(adnl::AdnlNodeIdShort src, ion_api::tonNode_prepareZeroState &query,
                      td::Promise<td::BufferSlice> promise);
-  void process_query(adnl::AdnlNodeIdShort src, ton_api::tonNode_preparePersistentState &query,
+  void process_query(adnl::AdnlNodeIdShort src, ion_api::tonNode_preparePersistentState &query,
                      td::Promise<td::BufferSlice> promise);
-  void process_query(adnl::AdnlNodeIdShort src, ton_api::tonNode_getNextKeyBlockIds &query,
+  void process_query(adnl::AdnlNodeIdShort src, ion_api::tonNode_getNextKeyBlockIds &query,
                      td::Promise<td::BufferSlice> promise);
-  void process_query(adnl::AdnlNodeIdShort src, ton_api::tonNode_downloadZeroState &query,
+  void process_query(adnl::AdnlNodeIdShort src, ion_api::tonNode_downloadZeroState &query,
                      td::Promise<td::BufferSlice> promise);
-  void process_query(adnl::AdnlNodeIdShort src, ton_api::tonNode_downloadPersistentState &query,
+  void process_query(adnl::AdnlNodeIdShort src, ion_api::tonNode_downloadPersistentState &query,
                      td::Promise<td::BufferSlice> promise);
-  void process_query(adnl::AdnlNodeIdShort src, ton_api::tonNode_downloadPersistentStateSlice &query,
+  void process_query(adnl::AdnlNodeIdShort src, ion_api::tonNode_downloadPersistentStateSlice &query,
                      td::Promise<td::BufferSlice> promise);
-  void process_query(adnl::AdnlNodeIdShort src, ton_api::tonNode_getCapabilities &query,
+  void process_query(adnl::AdnlNodeIdShort src, ion_api::tonNode_getCapabilities &query,
                      td::Promise<td::BufferSlice> promise);
-  void process_query(adnl::AdnlNodeIdShort src, ton_api::tonNode_getArchiveInfo &query,
+  void process_query(adnl::AdnlNodeIdShort src, ion_api::tonNode_getArchiveInfo &query,
                      td::Promise<td::BufferSlice> promise);
-  void process_query(adnl::AdnlNodeIdShort src, ton_api::tonNode_getShardArchiveInfo &query,
+  void process_query(adnl::AdnlNodeIdShort src, ion_api::tonNode_getShardArchiveInfo &query,
                      td::Promise<td::BufferSlice> promise);
-  void process_query(adnl::AdnlNodeIdShort src, ton_api::tonNode_getArchiveSlice &query,
+  void process_query(adnl::AdnlNodeIdShort src, ion_api::tonNode_getArchiveSlice &query,
                      td::Promise<td::BufferSlice> promise);
-  void process_query(adnl::AdnlNodeIdShort src, ton_api::tonNode_getOutMsgQueueProof &query,
+  void process_query(adnl::AdnlNodeIdShort src, ion_api::tonNode_getOutMsgQueueProof &query,
                      td::Promise<td::BufferSlice> promise);
   void receive_query(adnl::AdnlNodeIdShort src, td::BufferSlice query, td::Promise<td::BufferSlice> promise);
   void receive_message(adnl::AdnlNodeIdShort src, td::BufferSlice data);
 
-  void process_broadcast(PublicKeyHash src, ton_api::tonNode_blockBroadcast &query);
-  void process_broadcast(PublicKeyHash src, ton_api::tonNode_blockBroadcastCompressed &query);
-  void process_block_broadcast(PublicKeyHash src, ton_api::tonNode_Broadcast &query);
+  void process_broadcast(PublicKeyHash src, ion_api::tonNode_blockBroadcast &query);
+  void process_broadcast(PublicKeyHash src, ion_api::tonNode_blockBroadcastCompressed &query);
+  void process_block_broadcast(PublicKeyHash src, ion_api::tonNode_Broadcast &query);
 
-  void process_broadcast(PublicKeyHash src, ton_api::tonNode_ihrMessageBroadcast &query);
-  void process_broadcast(PublicKeyHash src, ton_api::tonNode_externalMessageBroadcast &query);
-  void process_broadcast(PublicKeyHash src, ton_api::tonNode_newShardBlockBroadcast &query);
+  void process_broadcast(PublicKeyHash src, ion_api::tonNode_ihrMessageBroadcast &query);
+  void process_broadcast(PublicKeyHash src, ion_api::tonNode_externalMessageBroadcast &query);
+  void process_broadcast(PublicKeyHash src, ion_api::tonNode_newShardBlockBroadcast &query);
 
-  void process_broadcast(PublicKeyHash src, ton_api::tonNode_newBlockCandidateBroadcast &query);
-  void process_broadcast(PublicKeyHash src, ton_api::tonNode_newBlockCandidateBroadcastCompressed &query);
-  void process_block_candidate_broadcast(PublicKeyHash src, ton_api::tonNode_Broadcast &query);
+  void process_broadcast(PublicKeyHash src, ion_api::tonNode_newBlockCandidateBroadcast &query);
+  void process_broadcast(PublicKeyHash src, ion_api::tonNode_newBlockCandidateBroadcastCompressed &query);
+  void process_block_candidate_broadcast(PublicKeyHash src, ion_api::tonNode_Broadcast &query);
 
   void receive_broadcast(PublicKeyHash src, td::BufferSlice query);
   void check_broadcast(PublicKeyHash src, td::BufferSlice query, td::Promise<td::Unit> promise);
@@ -196,10 +196,10 @@ class FullNodeShardImpl : public FullNodeShard {
   void update_validators(std::vector<PublicKeyHash> public_key_hashes, PublicKeyHash local_hash) override;
 
   void sign_overlay_certificate(PublicKeyHash signed_key, td::uint32 expiry_at, td::uint32 max_size, td::Promise<td::BufferSlice> promise) override;
-  void import_overlay_certificate(PublicKeyHash signed_key, std::shared_ptr<ton::overlay::Certificate> cert, td::Promise<td::Unit> promise) override;
+  void import_overlay_certificate(PublicKeyHash signed_key, std::shared_ptr<ion::overlay::Certificate> cert, td::Promise<td::Unit> promise) override;
 
   void sign_new_certificate(PublicKeyHash sign_by);
-  void signed_new_certificate(ton::overlay::Certificate cert);
+  void signed_new_certificate(ion::overlay::Certificate cert);
 
   void ping_neighbours();
   void reload_neighbours();
@@ -259,7 +259,7 @@ class FullNodeShardImpl : public FullNodeShard {
   td::Timestamp update_certificate_at_;
   td::Timestamp sync_completed_at_;
 
-  std::shared_ptr<ton::overlay::Certificate> cert_;
+  std::shared_ptr<ion::overlay::Certificate> cert_;
   overlay::OverlayPrivacyRules rules_;
 
   std::map<adnl::AdnlNodeIdShort, Neighbour> neighbours_;
@@ -280,4 +280,4 @@ class FullNodeShardImpl : public FullNodeShard {
 
 }  // namespace validator
 
-}  // namespace ton
+}  // namespace ion

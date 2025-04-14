@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -21,7 +21,7 @@
 #include "adnl-node-id.hpp"
 #include "adnl-address-list.h"
 
-namespace ton {
+namespace ion {
 
 namespace adnl {
 
@@ -31,7 +31,7 @@ class AdnlAddressUdp : public AdnlAddressImpl {
   td::uint16 port_;
 
  public:
-  explicit AdnlAddressUdp(const ton_api::adnl_address_udp &obj);
+  explicit AdnlAddressUdp(const ion_api::adnl_address_udp &obj);
 
   AdnlAddressUdp(td::uint32 ip, td::uint16 port) : ip_(ip), port_(port) {
   }
@@ -47,8 +47,8 @@ class AdnlAddressUdp : public AdnlAddressImpl {
     return 12;
   }
 
-  tl_object_ptr<ton_api::adnl_Address> tl() const override {
-    return create_tl_object<ton_api::adnl_address_udp>(ip_, port_);
+  tl_object_ptr<ion_api::adnl_Address> tl() const override {
+    return create_tl_object<ion_api::adnl_address_udp>(ip_, port_);
   }
   td::actor::ActorOwn<AdnlNetworkConnection> create_connection(
       td::actor::ActorId<AdnlNetworkManager> network_manager, td::actor::ActorId<Adnl> adnl,
@@ -61,7 +61,7 @@ class AdnlAddressUdp6 : public AdnlAddressImpl {
   td::uint16 port_;
 
  public:
-  explicit AdnlAddressUdp6(const ton_api::adnl_address_udp6 &obj);
+  explicit AdnlAddressUdp6(const ion_api::adnl_address_udp6 &obj);
 
   AdnlAddressUdp6(td::Bits128 ip, td::uint16 port) : ip_(ip), port_(port) {
   }
@@ -77,8 +77,8 @@ class AdnlAddressUdp6 : public AdnlAddressImpl {
     return 12;
   }
 
-  tl_object_ptr<ton_api::adnl_Address> tl() const override {
-    return create_tl_object<ton_api::adnl_address_udp6>(ip_, port_);
+  tl_object_ptr<ion_api::adnl_Address> tl() const override {
+    return create_tl_object<ion_api::adnl_address_udp6>(ip_, port_);
   }
   td::actor::ActorOwn<AdnlNetworkConnection> create_connection(
       td::actor::ActorId<AdnlNetworkManager> network_manager, td::actor::ActorId<Adnl> adnl,
@@ -91,7 +91,7 @@ class AdnlAddressTunnel : public AdnlAddressImpl {
   PublicKey pub_key_;
 
  public:
-  explicit AdnlAddressTunnel(const ton_api::adnl_address_tunnel &obj);
+  explicit AdnlAddressTunnel(const ion_api::adnl_address_tunnel &obj);
 
   AdnlAddressTunnel(AdnlNodeIdShort adnl_id, PublicKey pub_key)
       : adnl_id_(std::move(adnl_id)), pub_key_(std::move(pub_key)) {
@@ -108,8 +108,8 @@ class AdnlAddressTunnel : public AdnlAddressImpl {
     return 4 + 32 + pub_key_.serialized_size();
   }
 
-  tl_object_ptr<ton_api::adnl_Address> tl() const override {
-    return create_tl_object<ton_api::adnl_address_tunnel>(adnl_id_.bits256_value(), pub_key_.tl());
+  tl_object_ptr<ion_api::adnl_Address> tl() const override {
+    return create_tl_object<ion_api::adnl_address_tunnel>(adnl_id_.bits256_value(), pub_key_.tl());
   }
   td::actor::ActorOwn<AdnlNetworkConnection> create_connection(
       td::actor::ActorId<AdnlNetworkManager> network_manager, td::actor::ActorId<Adnl> adnl,
@@ -127,8 +127,8 @@ class AdnlAddressReverse : public AdnlAddressImpl {
   td::uint32 serialized_size() const override {
     return 4;
   }
-  tl_object_ptr<ton_api::adnl_Address> tl() const override {
-    return create_tl_object<ton_api::adnl_address_reverse>();
+  tl_object_ptr<ion_api::adnl_Address> tl() const override {
+    return create_tl_object<ion_api::adnl_address_reverse>();
   }
   td::actor::ActorOwn<AdnlNetworkConnection> create_connection(
       td::actor::ActorId<AdnlNetworkManager> network_manager, td::actor::ActorId<Adnl> adnl,
@@ -143,4 +143,4 @@ class AdnlAddressReverse : public AdnlAddressImpl {
 
 }  // namespace adnl
 
-}  // namespace ton
+}  // namespace ion

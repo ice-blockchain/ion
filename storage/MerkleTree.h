@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -26,9 +26,9 @@
 #include "Bitset.h"
 #include <map>
 
-namespace ton {
-// merkle_node$_ {n:#} left:^(ton::MerkleTree n) right:^(ton::MerkleTree n) = ton::MerkleTree (n + 1);
-// merkle_leaf$_ hash:bits256 = ton::MerkleTree 0;
+namespace ion {
+// merkle_node$_ {n:#} left:^(ion::MerkleTree n) right:^(ion::MerkleTree n) = ion::MerkleTree (n + 1);
+// merkle_leaf$_ hash:bits256 = ion::MerkleTree 0;
 
 class MerkleTree {
  public:
@@ -61,4 +61,4 @@ class MerkleTree {
                                   std::pair<size_t, td::Bits256> *pl, std::pair<size_t, td::Bits256> *pr);
 };
 
-}  // namespace ton
+}  // namespace ion

@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -21,7 +21,7 @@
 #include "td/utils/crypto.h"
 #include "validator-session-description.hpp"
 
-namespace ton {
+namespace ion {
 
 namespace validatorsession {
 
@@ -80,7 +80,7 @@ td::uint32 ValidatorSessionDescriptionImpl::get_node_by_priority(td::uint32 roun
 ValidatorSessionCandidateId ValidatorSessionDescriptionImpl::candidate_id(
     td::uint32 src_idx, ValidatorSessionRootHash root_hash, ValidatorSessionFileHash file_hash,
     ValidatorSessionCollatedDataFileHash collated_data_file_hash) const {
-  auto obj = create_tl_object<ton_api::validatorSession_candidateId>(get_source_id(src_idx).tl(), root_hash, file_hash,
+  auto obj = create_tl_object<ion_api::validatorSession_candidateId>(get_source_id(src_idx).tl(), root_hash, file_hash,
                                                                      collated_data_file_hash);
   return get_tl_object_sha_bits256(obj);
 }
@@ -88,7 +88,7 @@ ValidatorSessionCandidateId ValidatorSessionDescriptionImpl::candidate_id(
 td::Status ValidatorSessionDescriptionImpl::check_signature(ValidatorSessionRootHash root_hash,
                                                             ValidatorSessionFileHash file_hash, td::uint32 src_idx,
                                                             td::Slice signature) const {
-  auto obj = create_tl_object<ton_api::ton_blockId>(root_hash, file_hash);
+  auto obj = create_tl_object<ion_api::ton_blockId>(root_hash, file_hash);
   auto S = serialize_tl_object(obj, true);
 
   return sources_[src_idx].encryptor->check_signature(S.as_slice(), signature);
@@ -97,7 +97,7 @@ td::Status ValidatorSessionDescriptionImpl::check_signature(ValidatorSessionRoot
 td::Status ValidatorSessionDescriptionImpl::check_approve_signature(ValidatorSessionRootHash root_hash,
                                                                     ValidatorSessionFileHash file_hash,
                                                                     td::uint32 src_idx, td::Slice signature) const {
-  auto obj = create_tl_object<ton_api::ton_blockIdApprove>(root_hash, file_hash);
+  auto obj = create_tl_object<ion_api::ton_blockIdApprove>(root_hash, file_hash);
   auto S = serialize_tl_object(obj, true);
 
   return sources_[src_idx].encryptor->check_signature(S.as_slice(), signature);
@@ -226,4 +226,4 @@ bool ValidatorSessionDescriptionImpl::MemPool::contains(const void* ptr) const {
 
 }  // namespace validatorsession
 
-}  // namespace ton
+}  // namespace ion

@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -23,7 +23,7 @@
 #include "keys/encryptor.h"
 #include "utils.hpp"
 
-namespace ton {
+namespace ion {
 
 namespace adnl {
 
@@ -244,7 +244,7 @@ void AdnlLocalId::decrypt(td::BufferSlice data, td::Promise<AdnlPacket> promise)
 }
 
 void AdnlLocalId::decrypt_continue(td::BufferSlice data, td::Promise<AdnlPacket> promise) {
-  auto R = fetch_tl_object<ton_api::adnl_packetContents>(std::move(data), true);
+  auto R = fetch_tl_object<ion_api::adnl_packetContents>(std::move(data), true);
   if (R.is_error()) {
     promise.set_error(R.move_as_error());
     return;
@@ -306,12 +306,12 @@ void AdnlLocalId::update_packet(AdnlPacket packet, bool update_id, bool sign, td
   }
 }
 
-void AdnlLocalId::get_stats(bool all, td::Promise<tl_object_ptr<ton_api::adnl_stats_localId>> promise) {
-  auto stats = create_tl_object<ton_api::adnl_stats_localId>();
+void AdnlLocalId::get_stats(bool all, td::Promise<tl_object_ptr<ion_api::adnl_stats_localId>> promise) {
+  auto stats = create_tl_object<ion_api::adnl_stats_localId>();
   stats->short_id_ = short_id_.bits256_value();
   for (auto &[ip, x] : inbound_rate_limiter_) {
     if (x.currently_decrypting_packets != 0) {
-      stats->current_decrypt_.push_back(create_tl_object<ton_api::adnl_stats_ipPackets>(
+      stats->current_decrypt_.push_back(create_tl_object<ion_api::adnl_stats_ipPackets>(
           ip.is_valid() ? PSTRING() << ip.get_ip_str() << ":" << ip.get_port() : "", x.currently_decrypting_packets));
     }
   }
@@ -351,20 +351,20 @@ void AdnlLocalId::prepare_packet_stats() {
   }
 }
 
-tl_object_ptr<ton_api::adnl_stats_localIdPackets> AdnlLocalId::PacketStats::tl(bool all) const {
+tl_object_ptr<ion_api::adnl_stats_localIdPackets> AdnlLocalId::PacketStats::tl(bool all) const {
   double threshold = all ? -1.0 : td::Clocks::system() - 600.0;
-  auto obj = create_tl_object<ton_api::adnl_stats_localIdPackets>();
+  auto obj = create_tl_object<ion_api::adnl_stats_localIdPackets>();
   obj->ts_start_ = ts_start;
   obj->ts_end_ = ts_end;
   for (const auto &[ip, packets] : decrypted_packets) {
     if (packets.last_packet_ts >= threshold) {
-      obj->decrypted_packets_.push_back(create_tl_object<ton_api::adnl_stats_ipPackets>(
+      obj->decrypted_packets_.push_back(create_tl_object<ion_api::adnl_stats_ipPackets>(
           ip.is_valid() ? PSTRING() << ip.get_ip_str() << ":" << ip.get_port() : "", packets.packets));
     }
   }
   for (const auto &[ip, packets] : dropped_packets) {
     if (packets.last_packet_ts >= threshold) {
-      obj->dropped_packets_.push_back(create_tl_object<ton_api::adnl_stats_ipPackets>(
+      obj->dropped_packets_.push_back(create_tl_object<ion_api::adnl_stats_ipPackets>(
           ip.is_valid() ? PSTRING() << ip.get_ip_str() << ":" << ip.get_port() : "", packets.packets));
     }
   }
@@ -374,4 +374,4 @@ tl_object_ptr<ton_api::adnl_stats_localIdPackets> AdnlLocalId::PacketStats::tl(b
 
 }  // namespace adnl
 
-}  // namespace ton
+}  // namespace ion

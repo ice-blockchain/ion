@@ -129,14 +129,14 @@ fun now(): int
 fun getMyAddress(): slice
     asm "MYADDR";
 
-/// Returns the balance (in nanotoncoins) of the smart contract at the start of Computation Phase.
+/// Returns the balance (in nanoioncoins) of the smart contract at the start of Computation Phase.
 /// Note that RAW primitives such as [sendMessage] do not update this field.
 @pure
 fun getMyOriginalBalance(): int
     asm "BALANCE" "FIRST";
 
 /// Same as [getMyOriginalBalance], but returns a tuple:
-/// `int` — balance in nanotoncoins;
+/// `int` — balance in nanoioncoins;
 /// `cell` — a dictionary with 32-bit keys representing the balance of "extra currencies".
 @pure
 fun getMyOriginalBalanceWithExtraCurrencies(): [int, cell?]
@@ -334,7 +334,7 @@ fun debugDumpStack(): void
  */
 
 /// Converts a `cell` [c] into a `slice`. Notice that [c] must be either an ordinary cell,
-/// or an exotic cell (see [TVM.pdf](https://ton-blockchain.github.io/docs/tvm.pdf), 3.1.2)
+/// or an exotic cell (see [TVM.pdf](https://ice-blockchain.github.io/docs/tvm.pdf), 3.1.2)
 /// which is automatically loaded to yield an ordinary cell `c'`, converted into a `slice` afterwards.
 @pure
 fun beginParse(c: cell): slice
@@ -641,7 +641,7 @@ fun addressIsNone(s: slice): bool
   Reserving Toncoins on balance and its flags.
  */
 
-/// mode = 0: Reserve exact amount of nanotoncoins
+/// mode = 0: Reserve exact amount of nanoioncoins
 const RESERVE_MODE_EXACT_AMOUNT = 0;
 /// +1: Actually reserves all but amount, meaning `currentContractBalance - amount`
 const RESERVE_MODE_ALL_BUT_AMOUNT = 1;
@@ -720,7 +720,7 @@ fun skipMessageQueryId(mutate self: slice): self
 fun storeMessageQueryId(mutate self: builder, queryId: int): self
     asm(queryId self) "64 STU";
 
-/// SEND MODES - https://docs.ton.org/tvm.pdf page 137, SENDRAWMSG
+/// SEND MODES - https://docs.ion.org/tvm.pdf page 137, SENDRAWMSG
 
 /// mode = 0 is used for ordinary messages; the gas fees are deducted from the senging amount; action phaes should NOT be ignored.
 const SEND_MODE_REGULAR = 0;
@@ -728,7 +728,7 @@ const SEND_MODE_REGULAR = 0;
 const SEND_MODE_PAY_FEES_SEPARATELY = 1;
 /// +2 means that any errors arising while processing this message during the action phase should be ignored.
 const SEND_MODE_IGNORE_ERRORS = 2;
-/// in the case of action fail - bounce transaction. No effect if SEND_MODE_IGNORE_ERRORS (+2) is used. TVM UPGRADE 2023-07. https://docs.ton.org/learn/tvm-instructions/tvm-upgrade-2023-07#sending-messages
+/// in the case of action fail - bounce transaction. No effect if SEND_MODE_IGNORE_ERRORS (+2) is used. TVM UPGRADE 2023-07. https://docs.ion.org/learn/tvm-instructions/tvm-upgrade-2023-07#sending-messages
 const SEND_MODE_BOUNCE_ON_ACTION_FAIL = 16;
 /// mode = 32 means that the current account must be destroyed if its resulting balance is zero.
 const SEND_MODE_DESTROY = 32;
@@ -736,7 +736,7 @@ const SEND_MODE_DESTROY = 32;
 const SEND_MODE_CARRY_ALL_REMAINING_MESSAGE_VALUE = 64;
 /// mode = 128 is used for messages that are to carry all the remaining balance of the current smart contract (instead of the value originally indicated in the message).
 const SEND_MODE_CARRY_ALL_BALANCE = 128;
-/// do not create an action, only estimate fee. TVM UPGRADE 2023-07. https://docs.ton.org/learn/tvm-instructions/tvm-upgrade-2023-07#sending-messages
+/// do not create an action, only estimate fee. TVM UPGRADE 2023-07. https://docs.ion.org/learn/tvm-instructions/tvm-upgrade-2023-07#sending-messages
 const SEND_MODE_ESTIMATE_FEE_ONLY = 1024;
 /// Other modes affect the fee calculation as follows:
 /// +64 substitutes the entire balance of the incoming message as an outcoming value (slightly inaccurate, gas expenses that cannot be estimated before the computation is completed are not taken into account).

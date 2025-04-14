@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain source code.
+    This file is part of ION Blockchain source code.
 
-    TON Blockchain is free software; you can redistribute it and/or
+    ION Blockchain is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
     as published by the Free Software Foundation; either version 2
     of the License, or (at your option) any later version.
 
-    TON Blockchain is distributed in the hope that it will be useful,
+    ION Blockchain is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with TON Blockchain.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain.  If not, see <http://www.gnu.org/licenses/>.
 
     In addition, as a special exception, the copyright holders give permission
     to link the code of portions of this program with the OpenSSL library.
@@ -34,7 +34,7 @@
 #include "vm/cellops.h"
 #include "vm/cells/MerkleProof.h"
 #include "block/mc-config.h"
-#include "ton/ton-shard.h"
+#include "ion/ion-shard.h"
 #include "td/utils/date.h"
 
 bool local_scripts{false};
@@ -68,14 +68,14 @@ static std::string time_to_human(unsigned ts) {
 }
 
 HttpAnswer& HttpAnswer::operator<<(AddressCell addr_c) {
-  ton::WorkchainId wc;
-  ton::StdSmcAddress addr;
+  ion::WorkchainId wc;
+  ion::StdSmcAddress addr;
   if (!block::tlb::t_MsgAddressInt.extract_std_address(addr_c.root, wc, addr)) {
     abort("<cannot unpack addr>");
     return *this;
   }
   block::StdAddress caddr{wc, addr};
-  *this << "<a href=\"" << AccountLink{caddr, ton::BlockIdExt{}} << "\">" << caddr.rserialize(true) << "</a>";
+  *this << "<a href=\"" << AccountLink{caddr, ion::BlockIdExt{}} << "\">" << caddr.rserialize(true) << "</a>";
   return *this;
 }
 
@@ -145,13 +145,13 @@ HttpAnswer& HttpAnswer::operator<<(MessageCell msg) {
   return *this;
 }
 
-HttpAnswer& HttpAnswer::operator<<(ton::BlockIdExt block_id) {
+HttpAnswer& HttpAnswer::operator<<(ion::BlockIdExt block_id) {
   return *this << "<a href=\"" << BlockLink{block_id} << "\">" << block_id.id.to_str() << "</a>";
 }
 
-HttpAnswer& HttpAnswer::operator<<(ton::BlockId block_id) {
+HttpAnswer& HttpAnswer::operator<<(ion::BlockId block_id) {
   return *this << "<a href=\"" << prefix_ << "search?workchain=" << block_id.workchain
-               << "&shard=" << ton::shard_to_str(block_id.shard) << "&seqno=" << block_id.seqno << "\">"
+               << "&shard=" << ion::shard_to_str(block_id.shard) << "&seqno=" << block_id.seqno << "\">"
                << block_id.to_str() << "</a>";
 }
 
@@ -166,14 +166,14 @@ HttpAnswer& HttpAnswer::operator<<(BlockSearch bs) {
         << "<div class=\"form-group col-lg-3 col-md-4\">"
         << "<label>shard/account</label>"
         << "<input type =\"text\" class=\"form-control mr-2\" name=\"shard\" value=\""
-        << (bs.block_id.is_valid() ? ton::shard_to_str(bs.block_id.id.shard) : "") << "\"></div>"
+        << (bs.block_id.is_valid() ? ion::shard_to_str(bs.block_id.id.shard) : "") << "\"></div>"
         << "<div class=\"form-group col-lg-3 col-md-4\">"
         << "<label>seqno</label>"
         << "<input type =\"text\" class=\"form-control mr-2\" name=\"seqno\" value=\""
         << (bs.block_id.is_valid() ? std::to_string(bs.block_id.id.seqno) : "") << "\"></div>"
         << "<div class=\"form-group col-lg-3 col-md-4\">"
         << "<label class=\"d-none d-lg-block\">&nbsp;</label>"
-        << "<div><button type=\"submit\" class=\"btn btn-primary mr-2\">Submit</button></div>"
+        << "<div><bution type=\"submit\" class=\"btn btn-primary mr-2\">Submit</bution></div>"
         << "</div></div><div class=\"row\">"
         << "<div class=\"form-group col-md-6\">"
         << "<label>logical time</label>"
@@ -207,15 +207,15 @@ HttpAnswer& HttpAnswer::operator<<(AccountSearch bs) {
         << "<div class=\"form-group col-lg-3 col-md-4\">"
         << "<label>shard</label>"
         << "<input type =\"text\" class=\"form-control mr-2\" name=\"shard\" value=\""
-        << (bs.block_id.is_valid() ? ton::shard_to_str(bs.block_id.id.shard) : "") << "\"></div>"
+        << (bs.block_id.is_valid() ? ion::shard_to_str(bs.block_id.id.shard) : "") << "\"></div>"
         << "<div class=\"form-group col-lg-3 col-md-4\">"
         << "<label>seqno</label>"
         << "<input type =\"text\" class=\"form-control mr-2\" name=\"seqno\" value=\""
         << (bs.block_id.is_valid() ? std::to_string(bs.block_id.id.seqno) : "") << "\"></div>"
         << "<div class=\"form-group col-lg-3 col-md-4\">"
         << "<label class=\"d-none d-lg-block\">&nbsp;</label>"
-        << "<div><button type=\"submit\" class=\"btn btn-primary mr-2\">Submit</button>"
-        << "<button class=\"btn btn-outline-primary\" type=\"reset\">Reset</button></div>"
+        << "<div><bution type=\"submit\" class=\"btn btn-primary mr-2\">Submit</bution>"
+        << "<bution class=\"btn btn-outline-primary\" type=\"reset\">Reset</bution></div>"
         << "</div></div><div class=\"row\">"
         << "<div class=\"form-group col-md-6\">"
         << "<label>root hash</label>"
@@ -247,15 +247,15 @@ HttpAnswer& HttpAnswer::operator<<(TransactionSearch bs) {
         << "<div class=\"form-group col-lg-3 col-md-4\">"
         << "<label>shard</label>"
         << "<input type =\"text\" class=\"form-control mr-2\" name=\"shard\" value=\""
-        << (bs.block_id.is_valid() ? ton::shard_to_str(bs.block_id.id.shard) : "") << "\"></div>"
+        << (bs.block_id.is_valid() ? ion::shard_to_str(bs.block_id.id.shard) : "") << "\"></div>"
         << "<div class=\"form-group col-lg-3 col-md-4\">"
         << "<label>seqno</label>"
         << "<input type =\"text\" class=\"form-control mr-2\" name=\"seqno\" value=\""
         << (bs.block_id.is_valid() ? std::to_string(bs.block_id.id.seqno) : "") << "\"></div>"
         << "<div class=\"form-group col-lg-3 col-md-4\">"
         << "<label class=\"d-none d-lg-block\">&nbsp;</label>"
-        << "<div><button type=\"submit\" class=\"btn btn-primary mr-2\">Submit</button>"
-        << "<button class=\"btn btn-outline-primary\" type=\"reset\">Reset</button></div>"
+        << "<div><bution type=\"submit\" class=\"btn btn-primary mr-2\">Submit</bution>"
+        << "<bution class=\"btn btn-outline-primary\" type=\"reset\">Reset</bution></div>"
         << "</div></div><div class=\"row\">"
         << "<div class=\"form-group col-md-6\">"
         << "<label>root hash</label>"
@@ -351,7 +351,7 @@ HttpAnswer& HttpAnswer::operator<<(AccountCell acc_c) {
     abort(PSTRING() << "shard block id " << block_id.to_str() << " in answer is invalid");
     return *this;
   }
-  if (!ton::shard_contains(block_id.shard_full(), ton::extract_addr_prefix(acc_c.addr.workchain, acc_c.addr.addr))) {
+  if (!ion::shard_contains(block_id.shard_full(), ion::extract_addr_prefix(acc_c.addr.workchain, acc_c.addr.addr))) {
     abort(PSTRING() << "received data from shard block " << block_id.to_str()
                     << " that cannot contain requested account " << acc_c.addr.workchain << ":"
                     << acc_c.addr.addr.to_hex());
@@ -361,8 +361,8 @@ HttpAnswer& HttpAnswer::operator<<(AccountCell acc_c) {
     abort(PSTRING() << "account state proof must have exactly two roots");
     return *this;
   }
-  ton::LogicalTime last_trans_lt = 0;
-  ton::Bits256 last_trans_hash;
+  ion::LogicalTime last_trans_lt = 0;
+  ion::Bits256 last_trans_hash;
   last_trans_hash.set_zero();
   block::CurrencyCollection balance = block::CurrencyCollection::zero();
   try {
@@ -434,11 +434,11 @@ HttpAnswer& HttpAnswer::operator<<(AccountCell acc_c) {
         << "<input type=\"text\" class=\"form-control mr-2\" name=\"params\" placeholder=\"parameters\"></div>"
         << "<input type=\"hidden\" name=\"account\" value=\"" << acc_c.addr.rserialize(true) << "\">"
         << "<input type=\"hidden\" name=\"workchain\" value=\"" << block_id.id.workchain << "\">"
-        << "<input type=\"hidden\" name=\"shard\" value=\"" << ton::shard_to_str(block_id.id.shard) << "\">"
+        << "<input type=\"hidden\" name=\"shard\" value=\"" << ion::shard_to_str(block_id.id.shard) << "\">"
         << "<input type=\"hidden\" name=\"seqno\" value=\"" << block_id.id.seqno << "\">"
         << "<input type=\"hidden\" name=\"roothash\" value=\"" << block_id.root_hash.to_hex() << "\">"
         << "<input type=\"hidden\" name=\"filehash\" value=\"" << block_id.file_hash.to_hex() << "\">"
-        << "<div><button type=\"submit\" class=\"btn btn-primary mr-2\">Run!</button></div>"
+        << "<div><bution type=\"submit\" class=\"btn btn-primary mr-2\">Run!</bution></div>"
         << "</div></form>\n";
 
   *this << "<div class=\"table-responsive my-3\">\n"
@@ -479,9 +479,9 @@ HttpAnswer& HttpAnswer::operator<<(BlockHeaderCell head_c) {
       abort("invalid merkle proof");
       return *this;
     }
-    ton::RootHash vhash{virt_root->get_hash().bits()};
-    std::vector<ton::BlockIdExt> prev;
-    ton::BlockIdExt mc_blkid;
+    ion::RootHash vhash{virt_root->get_hash().bits()};
+    std::vector<ion::BlockIdExt> prev;
+    ion::BlockIdExt mc_blkid;
     bool after_split;
     auto res = block::unpack_block_prev_blk_ext(virt_root, block_id, prev, mc_blkid, after_split);
     if (res.is_error()) {
@@ -518,19 +518,19 @@ HttpAnswer& HttpAnswer::operator<<(BlockHeaderCell head_c) {
           << "<tr><th>vert_seqno</th><td>" << info.vert_seq_no << "</td></tr>\n"
           << "<tr><th>vert_seqno_incr</th><td>" << info.vert_seqno_incr << "</td></tr>\n"
           << "<tr><th>prev_key_block_seqno</th><td>"
-          << ton::BlockId{ton::masterchainId, ton::shardIdAll, info.prev_key_block_seqno} << "</td></tr>\n";
+          << ion::BlockId{ion::masterchainId, ion::shardIdAll, info.prev_key_block_seqno} << "</td></tr>\n";
     for (auto id : prev) {
       *this << "<tr><th>prev block</th><td>" << id << "</td></tr>\n";
     }
     if (!before_split) {
       *this << "<tr><th>next block</th><td>"
-            << ton::BlockId{block_id.id.workchain, block_id.id.shard, block_id.id.seqno + 1} << "</td></tr>\n";
+            << ion::BlockId{block_id.id.workchain, block_id.id.shard, block_id.id.seqno + 1} << "</td></tr>\n";
     } else {
       *this << "<tr><th>next block</th><td>"
-            << ton::BlockId{block_id.id.workchain, ton::shard_child(block_id.id.shard, true), block_id.id.seqno + 1}
+            << ion::BlockId{block_id.id.workchain, ion::shard_child(block_id.id.shard, true), block_id.id.seqno + 1}
             << "</td></tr>\n";
       *this << "<tr><th>next block</th><td>"
-            << ton::BlockId{block_id.id.workchain, ton::shard_child(block_id.id.shard, false), block_id.id.seqno + 1}
+            << ion::BlockId{block_id.id.workchain, ion::shard_child(block_id.id.shard, false), block_id.id.seqno + 1}
             << "</td></tr>\n";
     }
     *this << "<tr><th>masterchain block</th><td>" << mc_blkid << "</td></tr>\n"
@@ -560,7 +560,7 @@ HttpAnswer& HttpAnswer::operator<<(BlockShardsCell shards_c) {
   } else {
     auto ids = sh_conf.get_shard_hash_ids(true);
 
-    auto workchain = ton::masterchainId;
+    auto workchain = ion::masterchainId;
     *this << "<div class=\"table-responsive my-3\">\n"
           << "<table class=\"table\">\n<tbody>\n"
           << "<thead>\n"
@@ -575,16 +575,16 @@ HttpAnswer& HttpAnswer::operator<<(BlockShardsCell shards_c) {
           << "</tr>\n"
           << "</thead>\n";
     for (auto id : ids) {
-      auto ref = sh_conf.get_shard_hash(ton::ShardIdFull(id));
+      auto ref = sh_conf.get_shard_hash(ion::ShardIdFull(id));
 
       if (id.workchain != workchain) {
-        if (workchain != ton::masterchainId) {
+        if (workchain != ion::masterchainId) {
           *this << "<tr></tr>\n";
         }
         workchain = id.workchain;
       }
       *this << "<tr>";
-      ton::ShardIdFull shard{id.workchain, id.shard};
+      ion::ShardIdFull shard{id.workchain, id.shard};
       if (ref.not_null()) {
         *this << "<td>" << shard.to_str() << "</td><td><a href=\"" << HttpAnswer::BlockLink{ref->top_block_id()}
               << "\">" << ref->top_block_id().id.seqno << "</a></td><td><span title=\""
@@ -699,8 +699,8 @@ HttpAnswer& HttpAnswer::operator<<(Notification n) {
   return *this << "<div class=\"alert alert-success\">" << n.text << "</div>";
 }
 
-void HttpAnswer::block_id_link(ton::BlockIdExt block_id) {
-  *this << "workchain=" << block_id.id.workchain << "&shard=" << ton::shard_to_str(block_id.id.shard)
+void HttpAnswer::block_id_link(ion::BlockIdExt block_id) {
+  *this << "workchain=" << block_id.id.workchain << "&shard=" << ion::shard_to_str(block_id.id.shard)
         << "&seqno=" << block_id.id.seqno << "&roothash=" << block_id.root_hash << "&filehash=" << block_id.file_hash;
 }
 
@@ -745,21 +745,21 @@ std::string HttpAnswer::header() {
         << "<div class=\"input-group ml-auto\" style=\"max-width:540px;\">"
         << "<input class=\"form-control mr-2 rounded\" type=\"search\" placeholder=\"account\" aria-label=\"account\" "
         << "name=\"account\">";
-  *this << "<div class=\"input-group-append\"><button class=\"btn btn-outline-primary rounded\" "
-           "type=\"submit\">view</button></div>"
+  *this << "<div class=\"input-group-append\"><bution class=\"btn btn-outline-primary rounded\" "
+           "type=\"submit\">view</bution></div>"
         << "</div></form>"
         << "</nav>\n";
 
   *this << "<p>\n"
-        << "<a class=\"btn btn-primary mt-1\" data-toggle=\"collapse\" href=\"#blocksearch\" role=\"button\" "
+        << "<a class=\"btn btn-primary mt-1\" data-toggle=\"collapse\" href=\"#blocksearch\" role=\"bution\" "
            "aria-expanded=\"false\" aria-controls=\"blocksearch\">\n"
         << "Search block\n"
         << "</a>\n"
-        << "<a class=\"btn btn-primary mt-1\" data-toggle=\"collapse\" href=\"#accountsearch\" role=\"button\" "
+        << "<a class=\"btn btn-primary mt-1\" data-toggle=\"collapse\" href=\"#accountsearch\" role=\"bution\" "
            "aria-expanded=\"false\" aria-controls=\"accountsearch\">\n"
         << "Search account\n"
         << "</a>\n"
-        << "<a class=\"btn btn-primary mt-1\" data-toggle=\"collapse\" href=\"#transactionsearch\" role=\"button\" "
+        << "<a class=\"btn btn-primary mt-1\" data-toggle=\"collapse\" href=\"#transactionsearch\" role=\"bution\" "
            "aria-expanded=\"false\" aria-controls=\"transactionsearch\">\n"
         << "Search transaction\n"
         << "</a>\n"
@@ -774,7 +774,7 @@ std::string HttpAnswer::header() {
         << AccountSearch{block_id_, account_id_} << "</div></div>\n";
   *this << "<div class=\"collapse\" data-parent=\"#searchgroup\" id=\"transactionsearch\">\n"
         << "<div class=\"card card-body\">\n"
-        << TransactionSearch{block_id_, account_id_, 0, ton::Bits256::zero()} << "</div></div></div>\n";
+        << TransactionSearch{block_id_, account_id_, 0, ion::Bits256::zero()} << "</div></div></div>\n";
 
   return sb_->as_cslice().c_str();
 }

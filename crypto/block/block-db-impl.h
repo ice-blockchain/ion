@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -70,11 +70,11 @@ class BlockDbImpl final : public BlockDb {
   std::string base_dir;
   std::string binlog_name;
   BinlogBuffer bb;
-  ton::Bits256 zstate_rhash, zstate_fhash;
+  ion::Bits256 zstate_rhash, zstate_fhash;
   unsigned created_at;
-  std::map<ton::FileHash, td::BufferSlice> file_cache;
-  std::map<ton::BlockId, Ref<FileInfo>> block_info;
-  std::map<ton::BlockId, Ref<FileInfo>> state_info;
+  std::map<ion::FileHash, td::BufferSlice> file_cache;
+  std::map<ion::BlockId, Ref<FileInfo>> block_info;
+  std::map<ion::BlockId, Ref<FileInfo>> state_info;
   //
   td::Result<int> do_init();
 
@@ -116,18 +116,18 @@ class BlockDbImpl final : public BlockDb {
   td::Status save_db_file(const FileHash& file_hash, const td::BufferSlice& data, int fmode = 0);
   td::Status load_data(FileInfo& file_info, bool force = false);
   // actor BlockDb implementation
-  void get_top_block_id(ton::ShardIdFull shard, int authority, td::Promise<ton::BlockIdExt> promise) override;
-  void get_top_block_state_id(ton::ShardIdFull shard, int authority, td::Promise<ton::BlockIdExt> promise) override;
-  void get_block_by_id(ton::BlockId blk_id, bool need_data, td::Promise<td::Ref<FileInfo>> promise) override;
-  void get_state_by_id(ton::BlockId blk_id, bool need_data, td::Promise<td::Ref<FileInfo>> promise) override;
-  void get_out_queue_info_by_id(ton::BlockId blk_id, td::Promise<td::Ref<OutputQueueInfoDescr>> promise) override;
+  void get_top_block_id(ion::ShardIdFull shard, int authority, td::Promise<ion::BlockIdExt> promise) override;
+  void get_top_block_state_id(ion::ShardIdFull shard, int authority, td::Promise<ion::BlockIdExt> promise) override;
+  void get_block_by_id(ion::BlockId blk_id, bool need_data, td::Promise<td::Ref<FileInfo>> promise) override;
+  void get_state_by_id(ion::BlockId blk_id, bool need_data, td::Promise<td::Ref<FileInfo>> promise) override;
+  void get_out_queue_info_by_id(ion::BlockId blk_id, td::Promise<td::Ref<OutputQueueInfoDescr>> promise) override;
   void get_object_by_file_hash(FileHash file_hash, bool need_data, bool force_file_load,
                                td::Promise<td::Ref<FileInfo>> promise) override;
   void get_object_by_root_hash(RootHash root_hash, bool need_data, bool force_file_load,
                                td::Promise<td::Ref<FileInfo>> promise) override;
-  void save_new_block(ton::BlockIdExt blk_id, td::BufferSlice data, int authority,
+  void save_new_block(ion::BlockIdExt blk_id, td::BufferSlice data, int authority,
                       td::Promise<td::Unit> promise) override;
-  void save_new_state(ton::BlockIdExt state_id, td::BufferSlice data, int authority,
+  void save_new_state(ion::BlockIdExt state_id, td::BufferSlice data, int authority,
                       td::Promise<td::Unit> promise) override;
   bool file_cache_insert(const FileHash& file_hash, const td::BufferSlice& data, int mode = 0);
 };

@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -20,7 +20,7 @@
 
 #include "td/utils/int_types.h"
 #include "td/utils/buffer.h"
-#include "auto/tl/ton_api.h"
+#include "auto/tl/ion_api.h"
 #include "td/utils/UInt.h"
 #include "td/utils/Variant.h"
 #include "td/actor/actor.h"
@@ -28,7 +28,7 @@
 #include "crypto/Ed25519.h"
 #include "common/errorcode.h"
 
-namespace ton {
+namespace ion {
 
 class Encryptor;
 class EncryptorAsync;
@@ -39,7 +39,7 @@ class PublicKeyHash {
  public:
   explicit PublicKeyHash(td::Bits256 value) : value_(value) {
   }
-  explicit PublicKeyHash(const tl_object_ptr<ton_api::PublicKey> &value);
+  explicit PublicKeyHash(const tl_object_ptr<ion_api::PublicKey> &value);
   PublicKeyHash() {
   }
   static PublicKeyHash zero() {
@@ -89,7 +89,7 @@ class Ed25519 {
   td::Bits256 data_;
 
  public:
-  Ed25519(const ton_api::pub_ed25519 &obj) {
+  Ed25519(const ion_api::pub_ed25519 &obj) {
     data_ = obj.key_;
   }
   Ed25519(td::Bits256 id) : data_(id) {
@@ -107,8 +107,8 @@ class Ed25519 {
   td::uint32 serialized_size() const {
     return 36;
   }
-  tl_object_ptr<ton_api::pub_ed25519> tl() const {
-    return create_tl_object<ton_api::pub_ed25519>(data_);
+  tl_object_ptr<ion_api::pub_ed25519> tl() const {
+    return create_tl_object<ion_api::pub_ed25519>(data_);
   }
   td::Result<std::unique_ptr<Encryptor>> create_encryptor() const;
   bool operator==(const Ed25519 &with) const {
@@ -127,7 +127,7 @@ class AES {
   ~AES() {
     data_.set_zero_s();
   }
-  AES(const ton_api::pub_aes &obj) {
+  AES(const ion_api::pub_aes &obj) {
     data_ = obj.key_;
   }
   AES(td::Slice data) {
@@ -139,8 +139,8 @@ class AES {
   td::uint32 serialized_size() const {
     return 36;
   }
-  tl_object_ptr<ton_api::pub_aes> tl() const {
-    return create_tl_object<ton_api::pub_aes>(data_);
+  tl_object_ptr<ion_api::pub_aes> tl() const {
+    return create_tl_object<ion_api::pub_aes>(data_);
   }
   td::Result<std::unique_ptr<Encryptor>> create_encryptor() const;
   bool operator==(const AES &with) const {
@@ -156,7 +156,7 @@ class Unenc {
   td::SharedSlice data_;
 
  public:
-  Unenc(const ton_api::pub_unenc &obj) {
+  Unenc(const ion_api::pub_unenc &obj) {
     data_ = td::SharedSlice{obj.data_.as_slice()};
   }
   Unenc(const Unenc &obj) {
@@ -171,8 +171,8 @@ class Unenc {
   td::uint32 serialized_size() const {
     return static_cast<td::uint32>(data_.size()) + 8;
   }
-  tl_object_ptr<ton_api::pub_unenc> tl() const {
-    return create_tl_object<ton_api::pub_unenc>(data_.clone_as_buffer_slice());
+  tl_object_ptr<ion_api::pub_unenc> tl() const {
+    return create_tl_object<ion_api::pub_unenc>(data_.clone_as_buffer_slice());
   }
   td::Result<std::unique_ptr<Encryptor>> create_encryptor() const;
   bool operator==(const Unenc &with) const {
@@ -188,7 +188,7 @@ class Overlay {
   td::SharedSlice data_;
 
  public:
-  Overlay(const ton_api::pub_overlay &obj) {
+  Overlay(const ion_api::pub_overlay &obj) {
     data_ = td::SharedSlice{obj.name_.as_slice()};
   }
   Overlay(const Overlay &obj) {
@@ -203,8 +203,8 @@ class Overlay {
   td::uint32 serialized_size() const {
     return static_cast<td::uint32>(data_.size()) + 8;
   }
-  tl_object_ptr<ton_api::pub_overlay> tl() const {
-    return create_tl_object<ton_api::pub_overlay>(data_.clone_as_buffer_slice());
+  tl_object_ptr<ion_api::pub_overlay> tl() const {
+    return create_tl_object<ion_api::pub_overlay>(data_.clone_as_buffer_slice());
   }
   td::Result<std::unique_ptr<Encryptor>> create_encryptor() const;
   bool operator==(const Overlay &with) const {
@@ -221,7 +221,7 @@ class PublicKey {
  private:
   class Empty {
    public:
-    tl_object_ptr<ton_api::PublicKey> tl() const {
+    tl_object_ptr<ion_api::PublicKey> tl() const {
       UNREACHABLE();
     }
     td::uint32 serialized_size() const {
@@ -240,7 +240,7 @@ class PublicKey {
   td::Variant<Empty, pubkeys::Ed25519, pubkeys::AES, pubkeys::Unenc, pubkeys::Overlay> pub_key_{Empty{}};
 
  public:
-  explicit PublicKey(const tl_object_ptr<ton_api::PublicKey> &id);
+  explicit PublicKey(const tl_object_ptr<ion_api::PublicKey> &id);
   PublicKey() {
   }
   PublicKey(pubkeys::Ed25519 pub) : pub_key_(std::move(pub)) {
@@ -256,7 +256,7 @@ class PublicKey {
 
   PublicKeyHash compute_short_id() const;
   td::uint32 serialized_size() const;
-  tl_object_ptr<ton_api::PublicKey> tl() const;
+  tl_object_ptr<ion_api::PublicKey> tl() const;
   td::BufferSlice export_as_slice() const;
   static td::Result<PublicKey> import(td::Slice s);
 
@@ -290,7 +290,7 @@ class Ed25519 {
   ~Ed25519() {
     data_.set_zero_s();
   }
-  Ed25519(const ton_api::pk_ed25519 &obj) {
+  Ed25519(const ion_api::pk_ed25519 &obj) {
     data_ = obj.key_;
   }
   Ed25519(td::Bits256 id) : data_(id) {
@@ -308,7 +308,7 @@ class Ed25519 {
   }
   td::SecureString export_as_slice() const {
     td::SecureString s{36};
-    auto id = ton_api::pk_ed25519::ID;
+    auto id = ion_api::pk_ed25519::ID;
     s.as_mutable_slice().copy_from(td::Slice{reinterpret_cast<const td::uint8 *>(&id), 4});
     s.as_mutable_slice().remove_prefix(4).copy_from(data_.as_slice());
     return s;
@@ -322,10 +322,10 @@ class Ed25519 {
     }
     return Ed25519{slice};
   }
-  tl_object_ptr<ton_api::pk_ed25519> tl() const {
-    return create_tl_object<ton_api::pk_ed25519>(data_);
+  tl_object_ptr<ion_api::pk_ed25519> tl() const {
+    return create_tl_object<ion_api::pk_ed25519>(data_);
   }
-  tl_object_ptr<ton_api::PublicKey> pub_tl() const;
+  tl_object_ptr<ion_api::PublicKey> pub_tl() const;
   pubkeys::Ed25519 pub() const;
   td::Result<std::unique_ptr<Decryptor>> create_decryptor() const;
   static Ed25519 random();
@@ -339,7 +339,7 @@ class AES {
   ~AES() {
     data_.set_zero_s();
   }
-  AES(const ton_api::pk_aes &obj) {
+  AES(const ion_api::pk_aes &obj) {
     data_ = obj.key_;
   }
   AES(td::Slice data) {
@@ -348,7 +348,7 @@ class AES {
   }
   td::SecureString export_as_slice() const {
     td::SecureString s{40};
-    auto id = ton_api::pk_aes::ID;
+    auto id = ion_api::pk_aes::ID;
     s.as_mutable_slice().copy_from(td::Slice{reinterpret_cast<const td::uint8 *>(&id), 4});
     s.as_mutable_slice().remove_prefix(4).copy_from(data_.as_slice());
     return s;
@@ -362,11 +362,11 @@ class AES {
     }
     return AES{slice};
   }
-  tl_object_ptr<ton_api::pk_aes> tl() const {
-    return create_tl_object<ton_api::pk_aes>(data_);
+  tl_object_ptr<ion_api::pk_aes> tl() const {
+    return create_tl_object<ion_api::pk_aes>(data_);
   }
-  tl_object_ptr<ton_api::PublicKey> pub_tl() const {
-    return create_tl_object<ton_api::pub_aes>(data_);
+  tl_object_ptr<ion_api::PublicKey> pub_tl() const {
+    return create_tl_object<ion_api::pub_aes>(data_);
   }
   pubkeys::AES pub() const {
     return pubkeys::AES{data_};
@@ -379,7 +379,7 @@ class Unenc {
   td::SharedSlice data_;
 
  public:
-  Unenc(const ton_api::pk_unenc &obj) {
+  Unenc(const ion_api::pk_unenc &obj) {
     data_ = td::SharedSlice{obj.data_.as_slice()};
   }
   Unenc(const Unenc &obj) {
@@ -397,11 +397,11 @@ class Unenc {
   bool exportable() const {
     return false;
   }
-  tl_object_ptr<ton_api::pk_unenc> tl() const {
-    return create_tl_object<ton_api::pk_unenc>(data_.clone_as_buffer_slice());
+  tl_object_ptr<ion_api::pk_unenc> tl() const {
+    return create_tl_object<ion_api::pk_unenc>(data_.clone_as_buffer_slice());
   }
-  tl_object_ptr<ton_api::PublicKey> pub_tl() const {
-    return create_tl_object<ton_api::pub_unenc>(data_.clone_as_buffer_slice());
+  tl_object_ptr<ion_api::PublicKey> pub_tl() const {
+    return create_tl_object<ion_api::pub_unenc>(data_.clone_as_buffer_slice());
   }
   pubkeys::Unenc pub() const {
     return pubkeys::Unenc{data_.clone()};
@@ -414,7 +414,7 @@ class Overlay {
   td::SharedSlice data_;
 
  public:
-  Overlay(const ton_api::pk_overlay &obj) {
+  Overlay(const ion_api::pk_overlay &obj) {
     data_ = td::SharedSlice{obj.name_.as_slice()};
   }
   Overlay(const Overlay &obj) {
@@ -432,11 +432,11 @@ class Overlay {
   bool exportable() const {
     return false;
   }
-  tl_object_ptr<ton_api::pk_overlay> tl() const {
-    return create_tl_object<ton_api::pk_overlay>(data_.clone_as_buffer_slice());
+  tl_object_ptr<ion_api::pk_overlay> tl() const {
+    return create_tl_object<ion_api::pk_overlay>(data_.clone_as_buffer_slice());
   }
-  tl_object_ptr<ton_api::PublicKey> pub_tl() const {
-    return create_tl_object<ton_api::pub_overlay>(data_.clone_as_buffer_slice());
+  tl_object_ptr<ion_api::PublicKey> pub_tl() const {
+    return create_tl_object<ion_api::pub_overlay>(data_.clone_as_buffer_slice());
   }
   pubkeys::Overlay pub() const {
     return pubkeys::Overlay{data_.clone()};
@@ -456,10 +456,10 @@ class PrivateKey {
     bool exportable() const {
       return false;
     }
-    tl_object_ptr<ton_api::PrivateKey> tl() const {
+    tl_object_ptr<ion_api::PrivateKey> tl() const {
       UNREACHABLE();
     }
-    tl_object_ptr<ton_api::PublicKey> pub_tl() const {
+    tl_object_ptr<ion_api::PublicKey> pub_tl() const {
       UNREACHABLE();
     }
     PublicKey pub() const {
@@ -472,7 +472,7 @@ class PrivateKey {
   td::Variant<Empty, privkeys::Ed25519, privkeys::AES, privkeys::Unenc, privkeys::Overlay> priv_key_{Empty{}};
 
  public:
-  explicit PrivateKey(const tl_object_ptr<ton_api::PrivateKey> &pk);
+  explicit PrivateKey(const tl_object_ptr<ion_api::PrivateKey> &pk);
   template <class T>
   PrivateKey(T key) : priv_key_(std::move(key)) {
   }
@@ -486,10 +486,10 @@ class PrivateKey {
   td::SecureString export_as_slice() const;
   static td::Result<PrivateKey> import(td::Slice s);
   bool exportable() const;
-  tl_object_ptr<ton_api::PrivateKey> tl() const;
+  tl_object_ptr<ion_api::PrivateKey> tl() const;
 
   td::Result<std::unique_ptr<Decryptor>> create_decryptor() const;
   td::Result<td::actor::ActorOwn<DecryptorAsync>> create_decryptor_async() const;
 };
 
-}  // namespace ton
+}  // namespace ion

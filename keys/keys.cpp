@@ -1,42 +1,42 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
 #include "keys.hpp"
-#include "auto/tl/ton_api.hpp"
+#include "auto/tl/ion_api.hpp"
 #include "td/utils/overloaded.h"
 #include "tl-utils/tl-utils.hpp"
 #include "encryptor.h"
 #include "encryptor.hpp"
 #include "crypto/Ed25519.h"
 
-namespace ton {
+namespace ion {
 
-PublicKeyHash::PublicKeyHash(const tl_object_ptr<ton_api::PublicKey> &value) {
+PublicKeyHash::PublicKeyHash(const tl_object_ptr<ion_api::PublicKey> &value) {
   value_ = get_tl_object_sha_bits256(value);
 }
 
-PublicKey::PublicKey(const tl_object_ptr<ton_api::PublicKey> &id) {
-  ton_api::downcast_call(
-      *const_cast<ton_api::PublicKey *>(id.get()),
-      td::overloaded([&](const ton_api::pub_ed25519 &obj) { this->pub_key_ = pubkeys::Ed25519{obj}; },
-                     [&](const ton_api::pub_aes &obj) { this->pub_key_ = pubkeys::AES{obj}; },
-                     [&](const ton_api::pub_unenc &obj) { this->pub_key_ = pubkeys::Unenc{obj}; },
-                     [&](const ton_api::pub_overlay &obj) { this->pub_key_ = pubkeys::Overlay{obj}; }));
+PublicKey::PublicKey(const tl_object_ptr<ion_api::PublicKey> &id) {
+  ion_api::downcast_call(
+      *const_cast<ion_api::PublicKey *>(id.get()),
+      td::overloaded([&](const ion_api::pub_ed25519 &obj) { this->pub_key_ = pubkeys::Ed25519{obj}; },
+                     [&](const ion_api::pub_aes &obj) { this->pub_key_ = pubkeys::AES{obj}; },
+                     [&](const ion_api::pub_unenc &obj) { this->pub_key_ = pubkeys::Unenc{obj}; },
+                     [&](const ion_api::pub_overlay &obj) { this->pub_key_ = pubkeys::Overlay{obj}; }));
 }
 
 PublicKeyHash PublicKey::compute_short_id() const {
@@ -49,8 +49,8 @@ td::uint32 PublicKey::serialized_size() const {
   return res;
 }
 
-tl_object_ptr<ton_api::PublicKey> PublicKey::tl() const {
-  tl_object_ptr<ton_api::PublicKey> res;
+tl_object_ptr<ion_api::PublicKey> PublicKey::tl() const {
+  tl_object_ptr<ion_api::PublicKey> res;
   pub_key_.visit([&](auto &obj) { res = obj.tl(); });
   return res;
 }
@@ -60,7 +60,7 @@ td::BufferSlice PublicKey::export_as_slice() const {
 }
 
 td::Result<PublicKey> PublicKey::import(td::Slice s) {
-  TRY_RESULT(x, fetch_tl_object<ton_api::PublicKey>(s, true));
+  TRY_RESULT(x, fetch_tl_object<ion_api::PublicKey>(s, true));
   return PublicKey{x};
 }
 
@@ -95,7 +95,7 @@ bool PublicKey::empty() const {
   return pub_key_.get_offset() == pub_key_.offset<Empty>();
 }
 
-tl_object_ptr<ton_api::PublicKey> privkeys::Ed25519::pub_tl() const {
+tl_object_ptr<ion_api::PublicKey> privkeys::Ed25519::pub_tl() const {
   td::Ed25519::PrivateKey pkey(td::SecureString(as_slice(data_)));
   auto r_public_key = pkey.get_public_key();
   if (r_public_key.is_error()) {
@@ -104,7 +104,7 @@ tl_object_ptr<ton_api::PublicKey> privkeys::Ed25519::pub_tl() const {
     auto public_key = r_public_key.ok().as_octet_string();
     td::Bits256 X;
     as_slice(X).copy_from(public_key);
-    return create_tl_object<ton_api::pub_ed25519>(X);
+    return create_tl_object<ion_api::pub_ed25519>(X);
   }
 }
 
@@ -151,13 +151,13 @@ pubkeys::Ed25519::Ed25519(td::Ed25519::PublicKey key) {
   data_.as_slice().copy_from(td::Slice(s));
 }
 
-PrivateKey::PrivateKey(const tl_object_ptr<ton_api::PrivateKey> &id) {
-  ton_api::downcast_call(
-      *const_cast<ton_api::PrivateKey *>(id.get()),
-      td::overloaded([&](const ton_api::pk_ed25519 &obj) { this->priv_key_ = privkeys::Ed25519{obj}; },
-                     [&](const ton_api::pk_aes &obj) { this->priv_key_ = privkeys::AES{obj}; },
-                     [&](const ton_api::pk_unenc &obj) { this->priv_key_ = privkeys::Unenc{obj}; },
-                     [&](const ton_api::pk_overlay &obj) { this->priv_key_ = privkeys::Overlay{obj}; }));
+PrivateKey::PrivateKey(const tl_object_ptr<ion_api::PrivateKey> &id) {
+  ion_api::downcast_call(
+      *const_cast<ion_api::PrivateKey *>(id.get()),
+      td::overloaded([&](const ion_api::pk_ed25519 &obj) { this->priv_key_ = privkeys::Ed25519{obj}; },
+                     [&](const ion_api::pk_aes &obj) { this->priv_key_ = privkeys::AES{obj}; },
+                     [&](const ion_api::pk_unenc &obj) { this->priv_key_ = privkeys::Unenc{obj}; },
+                     [&](const ion_api::pk_overlay &obj) { this->priv_key_ = privkeys::Overlay{obj}; }));
 }
 
 bool PrivateKey::empty() const {
@@ -171,7 +171,7 @@ PublicKey PrivateKey::compute_public_key() const {
 }
 
 PublicKeyHash PrivateKey::compute_short_id() const {
-  tl_object_ptr<ton_api::PublicKey> res;
+  tl_object_ptr<ion_api::PublicKey> res;
   priv_key_.visit([&](auto &obj) { res = obj.pub_tl(); });
   return PublicKeyHash{res};
 }
@@ -196,7 +196,7 @@ td::Result<PrivateKey> PrivateKey::import(td::Slice s) {
   td::MutableSlice{reinterpret_cast<char *>(&id), 4}.copy_from(s.copy().truncate(4));
   s.remove_prefix(4);
   switch (id) {
-    case ton_api::pk_ed25519::ID: {
+    case ion_api::pk_ed25519::ID: {
       auto R = privkeys::Ed25519::import(s);
       if (R.is_error()) {
         return R.move_as_error();
@@ -204,7 +204,7 @@ td::Result<PrivateKey> PrivateKey::import(td::Slice s) {
         return R.move_as_ok();
       }
     } break;
-    case ton_api::pk_aes::ID: {
+    case ion_api::pk_aes::ID: {
       auto R = privkeys::AES::import(s);
       if (R.is_error()) {
         return R.move_as_error();
@@ -217,8 +217,8 @@ td::Result<PrivateKey> PrivateKey::import(td::Slice s) {
   }
 }
 
-tl_object_ptr<ton_api::PrivateKey> PrivateKey::tl() const {
-  tl_object_ptr<ton_api::PrivateKey> res;
+tl_object_ptr<ion_api::PrivateKey> PrivateKey::tl() const {
+  tl_object_ptr<ion_api::PrivateKey> res;
   priv_key_.visit([&](auto &obj) { res = obj.tl(); });
   return res;
 }
@@ -234,4 +234,4 @@ td::Result<td::actor::ActorOwn<DecryptorAsync>> PrivateKey::create_decryptor_asy
   return td::actor::create_actor<DecryptorAsync>("decryptor", std::move(decryptor));
 }
 
-}  // namespace ton
+}  // namespace ion

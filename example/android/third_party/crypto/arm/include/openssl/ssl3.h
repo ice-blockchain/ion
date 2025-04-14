@@ -309,7 +309,7 @@ extern "C" {
 # define SSL3_MT_CERTIFICATE_STATUS              22
 # define SSL3_MT_SUPPLEMENTAL_DATA               23
 # define SSL3_MT_KEY_UPDATE                      24
-# ifndef OPENSSL_NO_NEXTPROTONEG
+# ifndef OPENSSL_NO_NEXTPROIONEG
 #  define SSL3_MT_NEXT_PROTO                     67
 # endif
 # define SSL3_MT_MESSAGE_HASH                    254

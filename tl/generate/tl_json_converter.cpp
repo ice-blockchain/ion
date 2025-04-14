@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -34,7 +34,7 @@ namespace td {
 using Mode = tl::TL_writer::Mode;
 
 namespace {
-std::string tl_name = "ton_api";
+std::string tl_name = "ion_api";
 }
 
 template <class T>
@@ -103,15 +103,15 @@ void gen_to_json(StringBuilder &sb, const tl::simple::Schema &schema, bool is_he
   }
 
   if (is_header) {
-    sb << "inline void to_json(JsonValueScope &jv, const ton::" << tl_name
+    sb << "inline void to_json(JsonValueScope &jv, const ion::" << tl_name
        << "::Object &object) {\n"
-          "  ton::"
-       << tl_name << "::downcast_call(const_cast<ton::" << tl_name
+          "  ion::"
+       << tl_name << "::downcast_call(const_cast<ion::" << tl_name
        << "::Object &>(object),[&jv](const auto &object) { "
           "to_json(jv, object); });\n"
        << "}\n";
-    sb << "inline void to_json(JsonValueScope &jv, const ton::" << tl_name << "::Function &object) {\n"
-       << "  ton::" << tl_name << "::downcast_call(const_cast<ton::" << tl_name
+    sb << "inline void to_json(JsonValueScope &jv, const ion::" << tl_name << "::Function &object) {\n"
+       << "  ion::" << tl_name << "::downcast_call(const_cast<ion::" << tl_name
        << "::Function &>(object), [&jv](const auto &object) { "
           "to_json(jv, object); });\n"
        << "}\n";
@@ -265,14 +265,14 @@ void gen_json_converter_file(const tl::simple::Schema &schema, const std::string
     sb << "#include <functional>\n";
     sb << "#include <unordered_map>\n\n";
   }
-  sb << "namespace ton {\n";
+  sb << "namespace ion {\n";
   sb << "namespace " << tl_name << "{\n";
   sb << "  using namespace td;\n";
   gen_tl_constructor_from_string(sb, schema, is_header, mode);
   gen_from_json(sb, schema, is_header, mode);
   gen_to_json(sb, schema, is_header);
   sb << "}  // namespace " << tl_name << "\n";
-  sb << "}  // namespace ton\n";
+  sb << "}  // namespace ion\n";
 
   CHECK(!sb.is_error());
   buf.resize(sb.as_cslice().size());

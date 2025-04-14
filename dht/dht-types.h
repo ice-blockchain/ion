@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -24,7 +24,7 @@
 #include "tl-utils/tl-utils.hpp"
 #include "common/io.hpp"
 
-namespace ton {
+namespace ion {
 
 namespace dht {
 
@@ -90,7 +90,7 @@ class DhtKey {
   DhtKey(PublicKeyHash id, DhtKeyName namestr, td::uint32 idx)
       : id_(std::move(id)), namestr_(std::move(namestr)), idx_(idx) {
   }
-  static td::Result<DhtKey> create(tl_object_ptr<ton_api::dht_key> key);
+  static td::Result<DhtKey> create(tl_object_ptr<ion_api::dht_key> key);
   td::Status check() const;
   const auto &public_key_hash() const {
     return id_;
@@ -101,7 +101,7 @@ class DhtKey {
   td::uint32 idx() const {
     return idx_;
   }
-  tl_object_ptr<ton_api::dht_key> tl() const;
+  tl_object_ptr<ion_api::dht_key> tl() const;
   DhtKeyId compute_key_id() const;
   DhtKey clone() const;
 
@@ -122,8 +122,8 @@ class DhtUpdateRule {
   virtual bool check_is_acceptable(const DhtValue &value) {
     return true;
   }
-  virtual tl_object_ptr<ton_api::dht_UpdateRule> tl() const = 0;
-  static td::Result<std::shared_ptr<DhtUpdateRule>> create(tl_object_ptr<ton_api::dht_UpdateRule> obj);
+  virtual tl_object_ptr<ion_api::dht_UpdateRule> tl() const = 0;
+  static td::Result<std::shared_ptr<DhtUpdateRule>> create(tl_object_ptr<ion_api::dht_UpdateRule> obj);
 };
 
 class DhtKeyDescription {
@@ -155,9 +155,9 @@ class DhtKeyDescription {
   void update_signature(td::SharedSlice signature);
   td::BufferSlice to_sign() const;
   td::Status check() const;
-  tl_object_ptr<ton_api::dht_keyDescription> tl() const;
+  tl_object_ptr<ion_api::dht_keyDescription> tl() const;
   DhtKeyDescription clone() const;
-  static td::Result<DhtKeyDescription> create(tl_object_ptr<ton_api::dht_keyDescription> desc, bool check_signature);
+  static td::Result<DhtKeyDescription> create(tl_object_ptr<ion_api::dht_keyDescription> desc, bool check_signature);
   static td::Result<DhtKeyDescription> create(DhtKey key, PublicKey public_key,
                                               std::shared_ptr<DhtUpdateRule> update_rule, td::BufferSlice signature);
   static td::Result<DhtKeyDescription> create(DhtKey key, PublicKey public_key,
@@ -183,7 +183,7 @@ class DhtValue {
       : key_(std::move(key)), value_(std::move(value)), ttl_(ttl), signature_(std::move(signature)) {
   }
 
-  static td::Result<DhtValue> create(tl_object_ptr<ton_api::dht_value> obj, bool check_signature);
+  static td::Result<DhtValue> create(tl_object_ptr<ion_api::dht_value> obj, bool check_signature);
   static td::Result<DhtValue> create(DhtKeyDescription key, td::BufferSlice value, td::uint32 ttl,
                                      td::BufferSlice signature);
   static td::Result<DhtValue> create(DhtKeyDescription key, td::SharedSlice value, td::uint32 ttl,
@@ -205,7 +205,7 @@ class DhtValue {
   }
   DhtValue clone() const;
 
-  tl_object_ptr<ton_api::dht_value> tl() const;
+  tl_object_ptr<ion_api::dht_value> tl() const;
   td::BufferSlice to_sign() const;
   td::Status update(DhtValue &&value);
   void set(td::BufferSlice value, td::uint32 ttl, td::BufferSlice signature);
@@ -231,7 +231,7 @@ class DhtUpdateRuleSignature : public DhtUpdateRule {
   bool need_republish() const override {
     return true;
   }
-  tl_object_ptr<ton_api::dht_UpdateRule> tl() const override;
+  tl_object_ptr<ion_api::dht_UpdateRule> tl() const override;
   static td::Result<std::shared_ptr<DhtUpdateRule>> create();
 };
 
@@ -242,7 +242,7 @@ class DhtUpdateRuleAnybody : public DhtUpdateRule {
   bool need_republish() const override {
     return false;
   }
-  tl_object_ptr<ton_api::dht_UpdateRule> tl() const override;
+  tl_object_ptr<ion_api::dht_UpdateRule> tl() const override;
   static td::Result<std::shared_ptr<DhtUpdateRule>> create();
 };
 
@@ -254,17 +254,17 @@ class DhtUpdateRuleOverlayNodes : public DhtUpdateRule {
     return false;
   }
   bool check_is_acceptable(const DhtValue &value) override;
-  tl_object_ptr<ton_api::dht_UpdateRule> tl() const override;
+  tl_object_ptr<ion_api::dht_UpdateRule> tl() const override;
   static td::Result<std::shared_ptr<DhtUpdateRule>> create();
 };
 
 }  // namespace dht
 
-}  // namespace ton
+}  // namespace ion
 
 namespace td {
 
-inline td::StringBuilder &operator<<(td::StringBuilder &sb, const ton::dht::DhtKeyId &dht) {
+inline td::StringBuilder &operator<<(td::StringBuilder &sb, const ion::dht::DhtKeyId &dht) {
   sb << dht.tl();
   return sb;
 }

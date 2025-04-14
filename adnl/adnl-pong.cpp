@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain source code.
+    This file is part of ION Blockchain source code.
 
-    TON Blockchain is free software; you can redistribute it and/or
+    ION Blockchain is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
     as published by the Free Software Foundation; either version 2
     of the License, or (at your option) any later version.
 
-    TON Blockchain is distributed in the hope that it will be useful,
+    ION Blockchain is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with TON Blockchain.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain.  If not, see <http://www.gnu.org/licenses/>.
 
     In addition, as a special exception, the copyright holders give permission
     to link the code of portions of this program with the OpenSSL library.
@@ -38,7 +38,7 @@
 #include "common/checksum.h"
 #include "common/errorcode.h"
 #include "tl-utils/tl-utils.hpp"
-#include "auto/tl/ton_api_json.h"
+#include "auto/tl/ion_api_json.h"
 #include "adnl/adnl.h"
 #include <map>
 #include "git.h"
@@ -47,7 +47,7 @@
 #include <unistd.h>
 #endif
 
-namespace ton {
+namespace ion {
 
 namespace adnl {
 
@@ -57,9 +57,9 @@ class Callback : public adnl::Adnl::Callback {
   }
   void receive_query(AdnlNodeIdShort src, AdnlNodeIdShort dst, td::BufferSlice data,
                      td::Promise<td::BufferSlice> promise) override {
-    TRY_RESULT_PROMISE_PREFIX(promise, f, fetch_tl_object<ton_api::adnl_ping>(std::move(data), true),
+    TRY_RESULT_PROMISE_PREFIX(promise, f, fetch_tl_object<ion_api::adnl_ping>(std::move(data), true),
                               "adnl.ping expected");
-    promise.set_value(create_serialize_tl_object<ton_api::adnl_pong>(f->value_));
+    promise.set_value(create_serialize_tl_object<ion_api::adnl_pong>(f->value_));
   }
 
   Callback() {
@@ -70,7 +70,7 @@ class Callback : public adnl::Adnl::Callback {
 
 }  // namespace adnl
 
-}  // namespace ton
+}  // namespace ion
 
 std::atomic<bool> rotate_logs_flags{false};
 void force_rotate_logs(int sig) {
@@ -80,7 +80,7 @@ void force_rotate_logs(int sig) {
 int main(int argc, char *argv[]) {
   SET_VERBOSITY_LEVEL(verbosity_INFO);
 
-  ton::PrivateKey pk;
+  ion::PrivateKey pk;
   td::IPAddress addr;
 
   td::set_default_failure_signal_handler().ensure();
@@ -90,7 +90,7 @@ int main(int argc, char *argv[]) {
     td::log_interface = td::default_log_interface;
   };
 
-  std::string config = "/var/ton-work/etc/adnl-proxy.conf.json";
+  std::string config = "/var/ion-work/etc/adnl-proxy.conf.json";
 
   td::OptionParser p;
   p.set_description("adnl pinger");
@@ -130,17 +130,17 @@ int main(int argc, char *argv[]) {
         try {
           v = std::stoi(fname.str());
         } catch (...) {
-          return td::Status::Error(ton::ErrorCode::error, "bad value for --threads: not a number");
+          return td::Status::Error(ion::ErrorCode::error, "bad value for --threads: not a number");
         }
         if (v < 1 || v > 256) {
-          return td::Status::Error(ton::ErrorCode::error, "bad value for --threads: should be in range [1..256]");
+          return td::Status::Error(ion::ErrorCode::error, "bad value for --threads: should be in range [1..256]");
         }
         threads = v;
         return td::Status::OK();
       });
   p.add_checked_option('u', "user", "change user", [&](td::Slice user) { return td::change_user(user.str()); });
   p.add_checked_option('k', "key", "private key", [&](td::Slice key) {
-    TRY_RESULT_ASSIGN(pk, ton::PrivateKey::import(key));
+    TRY_RESULT_ASSIGN(pk, ion::PrivateKey::import(key));
     return td::Status::OK();
   });
   p.add_checked_option('a', "addr", "ip:port of instance", [&](td::Slice key) {
@@ -159,37 +159,37 @@ int main(int argc, char *argv[]) {
 
   td::actor::Scheduler scheduler({threads});
 
-  td::actor::ActorOwn<ton::keyring::Keyring> keyring;
-  td::actor::ActorOwn<ton::adnl::Adnl> adnl;
-  td::actor::ActorOwn<ton::adnl::AdnlNetworkManager> network_manager;
+  td::actor::ActorOwn<ion::keyring::Keyring> keyring;
+  td::actor::ActorOwn<ion::adnl::Adnl> adnl;
+  td::actor::ActorOwn<ion::adnl::AdnlNetworkManager> network_manager;
 
   auto pub = pk.compute_public_key();
 
   scheduler.run_in_context([&]() {
-    keyring = ton::keyring::Keyring::create("");
-    td::actor::send_closure(keyring, &ton::keyring::Keyring::add_key, std::move(pk), true, [](td::Unit) {});
+    keyring = ion::keyring::Keyring::create("");
+    td::actor::send_closure(keyring, &ion::keyring::Keyring::add_key, std::move(pk), true, [](td::Unit) {});
 
-    adnl = ton::adnl::Adnl::create("", keyring.get());
+    adnl = ion::adnl::Adnl::create("", keyring.get());
 
-    network_manager = ton::adnl::AdnlNetworkManager::create(static_cast<td::uint16>(addr.get_port()));
+    network_manager = ion::adnl::AdnlNetworkManager::create(static_cast<td::uint16>(addr.get_port()));
 
-    ton::adnl::AdnlCategoryMask cat_mask;
+    ion::adnl::AdnlCategoryMask cat_mask;
     cat_mask[0] = true;
-    td::actor::send_closure(network_manager, &ton::adnl::AdnlNetworkManager::add_self_addr, addr, std::move(cat_mask),
+    td::actor::send_closure(network_manager, &ion::adnl::AdnlNetworkManager::add_self_addr, addr, std::move(cat_mask),
                             0);
 
-    auto tladdr = ton::create_tl_object<ton::ton_api::adnl_address_udp>(addr.get_ipv4(), addr.get_port());
-    auto addr_vec = std::vector<ton::tl_object_ptr<ton::ton_api::adnl_Address>>();
+    auto tladdr = ion::create_tl_object<ion::ion_api::adnl_address_udp>(addr.get_ipv4(), addr.get_port());
+    auto addr_vec = std::vector<ion::tl_object_ptr<ion::ion_api::adnl_Address>>();
     addr_vec.push_back(std::move(tladdr));
-    auto tladdrlist = ton::create_tl_object<ton::ton_api::adnl_addressList>(
-        std::move(addr_vec), ton::adnl::Adnl::adnl_start_time(), ton::adnl::Adnl::adnl_start_time(), 0, 2000000000);
-    auto addrlist = ton::adnl::AdnlAddressList::create(tladdrlist).move_as_ok();
+    auto tladdrlist = ion::create_tl_object<ion::ion_api::adnl_addressList>(
+        std::move(addr_vec), ion::adnl::Adnl::adnl_start_time(), ion::adnl::Adnl::adnl_start_time(), 0, 2000000000);
+    auto addrlist = ion::adnl::AdnlAddressList::create(tladdrlist).move_as_ok();
 
-    td::actor::send_closure(adnl, &ton::adnl::Adnl::add_id, ton::adnl::AdnlNodeIdFull{pub}, std::move(addrlist),
+    td::actor::send_closure(adnl, &ion::adnl::Adnl::add_id, ion::adnl::AdnlNodeIdFull{pub}, std::move(addrlist),
                             static_cast<td::uint8>(0));
-    td::actor::send_closure(adnl, &ton::adnl::Adnl::subscribe, ton::adnl::AdnlNodeIdShort{pub.compute_short_id()},
-                            ton::adnl::Adnl::int_to_bytestring(ton::ton_api::adnl_ping::ID),
-                            std::make_unique<ton::adnl::Callback>());
+    td::actor::send_closure(adnl, &ion::adnl::Adnl::subscribe, ion::adnl::AdnlNodeIdShort{pub.compute_short_id()},
+                            ion::adnl::Adnl::int_to_bytestring(ion::ion_api::adnl_ping::ID),
+                            std::make_unique<ion::adnl::Callback>());
   });
 
   while (scheduler.run(1)) {

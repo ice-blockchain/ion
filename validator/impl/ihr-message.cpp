@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -23,7 +23,7 @@
 #include "block/block-db.h"
 #include "vm/cells/MerkleProof.h"
 
-namespace ton {
+namespace ion {
 
 namespace validator {
 using td::Ref;
@@ -55,7 +55,7 @@ td::Result<Ref<IhrMessageQ>> IhrMessageQ::create_ihr_message(td::BufferSlice dat
   if (cs.prefetch_ulong(1) != 0) {  // int_msg_info$0
     return td::Status::Error("IHR message must begin with int_msg_info$0");
   }
-  ton::Bits256 hash{ihr_msg->get_hash().bits()};
+  ion::Bits256 hash{ihr_msg->get_hash().bits()};
   if (!block::gen::t_Message_Any.validate_ref(ihr_msg)) {
     return td::Status::Error("IHR message is not a (Message Any) according to automated checks");
   }
@@ -129,4 +129,4 @@ td::Result<Ref<IhrMessageQ>> IhrMessageQ::create_ihr_message(td::BufferSlice dat
 }
 
 }  // namespace validator
-}  // namespace ton
+}  // namespace ion

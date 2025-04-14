@@ -24,7 +24,7 @@ let
 
 in
 stdenv.mkDerivation {
-  pname = "ton";
+  pname = "ion";
   version = "dev-bin";
 
   src = ./.;
@@ -45,12 +45,12 @@ stdenv.mkDerivation {
     ];
 
   cmakeFlags = [
-    "-DTON_USE_ABSEIL=OFF"
+    "-DION_USE_ABSEIL=OFF"
     "-DNIX=ON"
     "-DBUILD_SHARED_LIBS=OFF"
     "-DCMAKE_LINK_SEARCH_START_STATIC=ON"
     "-DCMAKE_LINK_SEARCH_END_STATIC=ON"
-    "-DTON_USE_JEMALLOC=ON"
+    "-DION_USE_JEMALLOC=ON"
   ];
 
   makeStatic = true;

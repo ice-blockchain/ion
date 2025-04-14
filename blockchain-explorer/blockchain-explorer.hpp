@@ -1,18 +1,18 @@
 /* 
-    This file is part of TON Blockchain source code.
+    This file is part of ION Blockchain source code.
 
-    TON Blockchain is free software; you can redistribute it and/or
+    ION Blockchain is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
     as published by the Free Software Foundation; either version 2
     of the License, or (at your option) any later version.
 
-    TON Blockchain is distributed in the hope that it will be useful,
+    ION Blockchain is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with TON Blockchain.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain.  If not, see <http://www.gnu.org/licenses/>.
 
     In addition, as a special exception, the copyright holders give permission 
     to link the code of portions of this program with the OpenSSL library. 
@@ -29,7 +29,7 @@
 
 #include "td/actor/actor.h"
 #include "td/utils/buffer.h"
-#include "ton/ton-types.h"
+#include "ion/ion-types.h"
 #include "td/utils/port/IPAddress.h"
 #include <microhttpd.h>
 
@@ -51,7 +51,7 @@ extern bool local_scripts_;
 class CoreActorInterface : public td::actor::Actor {
  public:
   struct RemoteNodeStatus {
-    std::vector<ton::BlockIdExt> values_;
+    std::vector<ion::BlockIdExt> values_;
     td::Timestamp ts_;
     RemoteNodeStatus(size_t size, td::Timestamp ts) : ts_(ts) {
       values_.resize(size);

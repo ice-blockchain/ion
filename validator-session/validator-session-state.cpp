@@ -1,69 +1,69 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
 #include "validator-session-state.h"
 #include "td/utils/overloaded.h"
 #include "td/utils/Random.h"
-#include "auto/tl/ton_api.hpp"
+#include "auto/tl/ion_api.hpp"
 
 #include <set>
 
 namespace td {
 
-td::StringBuilder& operator<<(td::StringBuilder& sb, const ton::ton_api::validatorSession_round_Message& message) {
-  ton::ton_api::downcast_call(
-      const_cast<ton::ton_api::validatorSession_round_Message&>(message),
+td::StringBuilder& operator<<(td::StringBuilder& sb, const ion::ion_api::validatorSession_round_Message& message) {
+  ion::ion_api::downcast_call(
+      const_cast<ion::ion_api::validatorSession_round_Message&>(message),
       td::overloaded(
-          [&](const ton::ton_api::validatorSession_message_submittedBlock& obj) {
+          [&](const ion::ion_api::validatorSession_message_submittedBlock& obj) {
             sb << "SUBMIT(" << obj.round_ << "," << obj.root_hash_ << "," << obj.file_hash_
                << obj.collated_data_file_hash_ << ")";
           },
-          [&](const ton::ton_api::validatorSession_message_approvedBlock& obj) {
+          [&](const ion::ion_api::validatorSession_message_approvedBlock& obj) {
             sb << "APPROVE(" << obj.round_ << "," << obj.candidate_ << ")";
           },
-          [&](const ton::ton_api::validatorSession_message_rejectedBlock& obj) {
+          [&](const ion::ion_api::validatorSession_message_rejectedBlock& obj) {
             sb << "REJECT(" << obj.round_ << "," << obj.candidate_ << ")";
           },
-          [&](const ton::ton_api::validatorSession_message_commit& obj) {
+          [&](const ion::ion_api::validatorSession_message_commit& obj) {
             sb << "COMMIT(" << obj.round_ << "," << obj.candidate_ << ")";
           },
-          [&](const ton::ton_api::validatorSession_message_vote& obj) {
+          [&](const ion::ion_api::validatorSession_message_vote& obj) {
             sb << "VOTE(" << obj.round_ << "," << obj.attempt_ << "," << obj.candidate_ << ")";
           },
-          [&](const ton::ton_api::validatorSession_message_voteFor& obj) {
+          [&](const ion::ion_api::validatorSession_message_voteFor& obj) {
             sb << "VOTEFOR(" << obj.round_ << "," << obj.attempt_ << "," << obj.candidate_ << ")";
           },
-          [&](const ton::ton_api::validatorSession_message_precommit& obj) {
+          [&](const ion::ion_api::validatorSession_message_precommit& obj) {
             sb << "PRECOMMIT(" << obj.round_ << "," << obj.attempt_ << "," << obj.candidate_ << ")";
           },
-          [&](const ton::ton_api::validatorSession_message_empty& obj) {
+          [&](const ion::ion_api::validatorSession_message_empty& obj) {
             sb << "EMPTY(" << obj.round_ << "," << obj.attempt_ << ")";
           }));
   return sb;
 }
 
-td::StringBuilder& operator<<(td::StringBuilder& sb, const ton::ton_api::validatorSession_round_Message* message) {
+td::StringBuilder& operator<<(td::StringBuilder& sb, const ion::ion_api::validatorSession_round_Message* message) {
   return sb << *message;
 }
 
 }  // namespace td
 
-namespace ton {
+namespace ion {
 
 namespace validatorsession {
 
@@ -100,9 +100,9 @@ static const SessionBlockCandidate* get_candidate(const ApproveVector* vec, Vali
   return nullptr;
 }
 
-static td::uint32 get_round_id(const ton_api::validatorSession_round_Message* message) {
+static td::uint32 get_round_id(const ion_api::validatorSession_round_Message* message) {
   td::uint32 round = 0;
-  bool is_called = ton_api::downcast_call(*const_cast<ton_api::validatorSession_round_Message*>(message),
+  bool is_called = ion_api::downcast_call(*const_cast<ion_api::validatorSession_round_Message*>(message),
                                           [&](auto& obj) { round = obj.round_; });
   CHECK(is_called);
   return round;
@@ -179,7 +179,7 @@ const ValidatorSessionOldRoundState* ValidatorSessionOldRoundState::merge(Valida
 
 const ValidatorSessionOldRoundState* ValidatorSessionOldRoundState::action(
     ValidatorSessionDescription& desc, const ValidatorSessionOldRoundState* state, td::uint32 src_idx, td::uint32 att,
-    const ton_api::validatorSession_message_approvedBlock& act) {
+    const ion_api::validatorSession_message_approvedBlock& act) {
   if (act.candidate_ != state->get_block_id()) {
     VLOG(VALIDATOR_SESSION_WARNING) << "[validator session][node " << desc.get_source_id(src_idx) << "][" << act
                                     << "]: approved not committed block in old round. Ignoring";
@@ -215,7 +215,7 @@ const ValidatorSessionOldRoundState* ValidatorSessionOldRoundState::action(
 
 const ValidatorSessionOldRoundState* ValidatorSessionOldRoundState::action(
     ValidatorSessionDescription& desc, const ValidatorSessionOldRoundState* state, td::uint32 src_idx, td::uint32 att,
-    const ton_api::validatorSession_message_commit& act) {
+    const ion_api::validatorSession_message_commit& act) {
   auto block_id = state->get_block_id();
   if (act.candidate_ != block_id) {
     VLOG(VALIDATOR_SESSION_WARNING) << "[validator session][node " << desc.get_source_id(src_idx) << "][" << act
@@ -254,8 +254,8 @@ const ValidatorSessionOldRoundState* ValidatorSessionOldRoundState::action(
 
 const ValidatorSessionOldRoundState* ValidatorSessionOldRoundState::action(
     ValidatorSessionDescription& desc, const ValidatorSessionOldRoundState* state, td::uint32 src_idx, td::uint32 att,
-    const ton_api::validatorSession_round_Message* act) {
-  ton_api::downcast_call(*const_cast<ton_api::validatorSession_round_Message*>(act),
+    const ion_api::validatorSession_round_Message* act) {
+  ion_api::downcast_call(*const_cast<ion_api::validatorSession_round_Message*>(act),
                          [&](const auto& obj) { state = action(desc, state, src_idx, att, obj); });
   return state;
 }
@@ -379,7 +379,7 @@ const ValidatorSessionRoundState* ValidatorSessionRoundState::merge(ValidatorSes
 
 const ValidatorSessionRoundState* ValidatorSessionRoundState::action(
     ValidatorSessionDescription& desc, const ValidatorSessionRoundState* state, td::uint32 src_idx, td::uint32 att,
-    const ton_api::validatorSession_message_submittedBlock& act) {
+    const ion_api::validatorSession_message_submittedBlock& act) {
   if (desc.get_node_priority(src_idx, state->seqno_) < 0) {
     VLOG(VALIDATOR_SESSION_WARNING) << "[validator session][node " << desc.get_source_id(src_idx) << "][" << act
                                     << "]: invalid message: cannot propose blocks on this round";
@@ -404,7 +404,7 @@ const ValidatorSessionRoundState* ValidatorSessionRoundState::action(
 
 const ValidatorSessionRoundState* ValidatorSessionRoundState::action(
     ValidatorSessionDescription& desc, const ValidatorSessionRoundState* state, td::uint32 src_idx, td::uint32 att,
-    const ton_api::validatorSession_message_approvedBlock& act) {
+    const ion_api::validatorSession_message_approvedBlock& act) {
   auto sent_block = state->get_block(act.candidate_);
   if (act.candidate_ != skip_round_candidate_id() && !sent_block) {
     VLOG(VALIDATOR_SESSION_WARNING) << "[validator session][node " << desc.get_source_id(src_idx) << "][" << act
@@ -463,7 +463,7 @@ const ValidatorSessionRoundState* ValidatorSessionRoundState::action(
 
 const ValidatorSessionRoundState* ValidatorSessionRoundState::action(
     ValidatorSessionDescription& desc, const ValidatorSessionRoundState* state, td::uint32 src_idx, td::uint32 att,
-    const ton_api::validatorSession_message_rejectedBlock& act) {
+    const ion_api::validatorSession_message_rejectedBlock& act) {
   LOG(ERROR) << "VALIDATOR SESSION: NODE " << desc.get_source_id(src_idx) << " REJECTED CANDIDATE " << act.candidate_
              << " WITH REASON " << act.reason_.as_slice();
   return state;
@@ -471,7 +471,7 @@ const ValidatorSessionRoundState* ValidatorSessionRoundState::action(
 
 const ValidatorSessionRoundState* ValidatorSessionRoundState::action(
     ValidatorSessionDescription& desc, const ValidatorSessionRoundState* state, td::uint32 src_idx, td::uint32 att,
-    const ton_api::validatorSession_message_commit& act) {
+    const ion_api::validatorSession_message_commit& act) {
   if (!state->precommitted_) {
     VLOG(VALIDATOR_SESSION_WARNING) << "[validator session][node " << desc.get_source_id(src_idx) << "][" << act
                                     << "]: invalid message: committing not precommitted block";
@@ -516,9 +516,9 @@ const ValidatorSessionRoundState* ValidatorSessionRoundState::action(
 
 const ValidatorSessionRoundState* ValidatorSessionRoundState::forward_action_to_attempt(
     ValidatorSessionDescription& desc, const ValidatorSessionRoundState* state, td::uint32 src_idx, td::uint32 att,
-    const ton_api::validatorSession_round_Message* act) {
+    const ion_api::validatorSession_round_Message* act) {
   if (state->precommitted_) {
-    if (act->get_id() != ton_api::validatorSession_message_empty::ID) {
+    if (act->get_id() != ion_api::validatorSession_message_empty::ID) {
       VLOG(VALIDATOR_SESSION_WARNING) << "[validator session][node " << desc.get_source_id(src_idx) << "][" << *act
                                       << "]: invalid message in precommitted round: expected EMPTY";
     }
@@ -529,7 +529,7 @@ const ValidatorSessionRoundState* ValidatorSessionRoundState::forward_action_to_
     attempt = ValidatorSessionRoundAttemptState::create(desc, att);
   }
 
-  ton_api::downcast_call(*const_cast<ton_api::validatorSession_round_Message*>(act), [&](auto& obj) {
+  ion_api::downcast_call(*const_cast<ion_api::validatorSession_round_Message*>(act), [&](auto& obj) {
     attempt = ValidatorSessionRoundAttemptState::action(desc, attempt, src_idx, att, obj, state);
   });
 
@@ -586,7 +586,7 @@ const ValidatorSessionRoundState* ValidatorSessionRoundState::forward_action_to_
 
 const ValidatorSessionRoundState* ValidatorSessionRoundState::action(
     ValidatorSessionDescription& desc, const ValidatorSessionRoundState* state, td::uint32 src_idx, td::uint32 att,
-    const ton_api::validatorSession_round_Message* act) {
+    const ion_api::validatorSession_round_Message* act) {
   auto first_attempt = state->first_attempt_;
   if (first_attempt->at(src_idx) == 0 || first_attempt->at(src_idx) > att) {
     first_attempt = CntVector<td::uint32>::change(desc, first_attempt, src_idx, att);
@@ -595,7 +595,7 @@ const ValidatorSessionRoundState* ValidatorSessionRoundState::action(
                                                state->signatures_, state->attempts_);
   }
 
-  ton_api::downcast_call(*const_cast<ton_api::validatorSession_round_Message*>(act),
+  ion_api::downcast_call(*const_cast<ion_api::validatorSession_round_Message*>(act),
                          [&](auto& obj) { state = action(desc, state, src_idx, att, obj); });
   return state;
 }
@@ -664,7 +664,7 @@ bool ValidatorSessionRoundState::check_need_generate_vote_for(ValidatorSessionDe
   return false;
 }
 
-tl_object_ptr<ton_api::validatorSession_message_voteFor> ValidatorSessionRoundState::generate_vote_for(
+tl_object_ptr<ion_api::validatorSession_message_voteFor> ValidatorSessionRoundState::generate_vote_for(
     ValidatorSessionDescription& desc, td::uint32 src_idx, td::uint32 att) const {
   CHECK(src_idx == desc.get_vote_for_author(att));
   std::vector<ValidatorSessionCandidateId> v;
@@ -676,7 +676,7 @@ tl_object_ptr<ton_api::validatorSession_message_voteFor> ValidatorSessionRoundSt
   }
   CHECK(v.size() > 0);
   td::uint32 x = td::Random::secure_uint32();
-  return create_tl_object<ton_api::validatorSession_message_voteFor>(get_seqno(), static_cast<td::int32>(att),
+  return create_tl_object<ion_api::validatorSession_message_voteFor>(get_seqno(), static_cast<td::int32>(att),
                                                                      v[x % v.size()]);
 }
 
@@ -755,10 +755,10 @@ bool ValidatorSessionRoundState::check_block_is_approved_by(td::uint32 src_idx,
   return false;
 }
 
-tl_object_ptr<ton_api::validatorSession_round_Message> ValidatorSessionRoundState::create_action(
+tl_object_ptr<ion_api::validatorSession_round_Message> ValidatorSessionRoundState::create_action(
     ValidatorSessionDescription& desc, td::uint32 src_idx, td::uint32 att) const {
   if (precommitted_) {
-    return create_tl_object<ton_api::validatorSession_message_empty>(seqno_, att);
+    return create_tl_object<ion_api::validatorSession_message_empty>(seqno_, att);
   }
 
   auto attempt = get_attempt(attempts_, att);
@@ -769,11 +769,11 @@ tl_object_ptr<ton_api::validatorSession_round_Message> ValidatorSessionRoundStat
   bool found = false;
   auto block = choose_block_to_vote(desc, src_idx, att, nullptr, false, found);
   if (!found) {
-    return create_tl_object<ton_api::validatorSession_message_empty>(seqno_, att);
+    return create_tl_object<ion_api::validatorSession_message_empty>(seqno_, att);
   }
   auto block_id = SentBlock::get_block_id(block);
 
-  return create_tl_object<ton_api::validatorSession_message_vote>(seqno_, att, block_id);
+  return create_tl_object<ion_api::validatorSession_message_vote>(seqno_, att, block_id);
 }
 
 const SentBlock* ValidatorSessionRoundState::choose_block_to_sign(ValidatorSessionDescription& desc, td::uint32 src_idx,
@@ -961,7 +961,7 @@ const ValidatorSessionState* ValidatorSessionState::merge(ValidatorSessionDescri
 const ValidatorSessionState* ValidatorSessionState::action(ValidatorSessionDescription& desc,
                                                            const ValidatorSessionState* state, td::uint32 src_idx,
                                                            td::uint32 att,
-                                                           const ton_api::validatorSession_round_Message* action) {
+                                                           const ion_api::validatorSession_round_Message* action) {
   if (action) {
     VLOG(VALIDATOR_SESSION_DEBUG) << "[validator session][node " << desc.get_source_id(src_idx) << "][" << action
                                   << "]: applying message " << *action;
@@ -1007,7 +1007,7 @@ const ValidatorSessionState* ValidatorSessionState::action(ValidatorSessionDescr
   }
 }
 
-tl_object_ptr<ton_api::validatorSession_round_Message> ValidatorSessionState::create_action(
+tl_object_ptr<ion_api::validatorSession_round_Message> ValidatorSessionState::create_action(
     ValidatorSessionDescription& desc, td::uint32 src_idx, td::uint32 att) const {
   return cur_round_->create_action(desc, src_idx, att);
 }
@@ -1150,4 +1150,4 @@ void ValidatorSessionRoundState::dump(ValidatorSessionDescription& desc, td::Str
 
 }  // namespace validatorsession
 
-}  // namespace ton
+}  // namespace ion

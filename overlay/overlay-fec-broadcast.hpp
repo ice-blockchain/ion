@@ -1,24 +1,24 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
 #pragma once
 
-#include "auto/tl/ton_api.h"
+#include "auto/tl/ion_api.h"
 #include "overlay/overlay.h"
 #include "td/utils/List.h"
 #include "fec/fec.h"
@@ -26,7 +26,7 @@
 
 #include <set>
 
-namespace ton {
+namespace ion {
 
 namespace overlay {
 
@@ -306,8 +306,8 @@ class OverlayFecBroadcastPart : public td::ListNode {
   }
   void update_overlay(OverlayImpl *overlay);
 
-  tl_object_ptr<ton_api::overlay_broadcastFec> export_tl();
-  tl_object_ptr<ton_api::overlay_broadcastFecShort> export_tl_short();
+  tl_object_ptr<ion_api::overlay_broadcastFec> export_tl();
+  tl_object_ptr<ion_api::overlay_broadcastFecShort> export_tl_short();
   td::BufferSlice export_serialized();
   td::BufferSlice export_serialized_short();
   td::BufferSlice to_sign();
@@ -322,9 +322,9 @@ class OverlayFecBroadcastPart : public td::ListNode {
   }
 
   static td::Status create(OverlayImpl *overlay, adnl::AdnlNodeIdShort src_peer_id,
-                           tl_object_ptr<ton_api::overlay_broadcastFec> broadcast);
+                           tl_object_ptr<ion_api::overlay_broadcastFec> broadcast);
   static td::Status create(OverlayImpl *overlay, adnl::AdnlNodeIdShort src_peer_id,
-                           tl_object_ptr<ton_api::overlay_broadcastFecShort> broadcast);
+                           tl_object_ptr<ion_api::overlay_broadcastFecShort> broadcast);
   static td::Status create_new(OverlayImpl *overlay, td::actor::ActorId<OverlayImpl> overlay_actor_id,
                                PublicKeyHash local_id, Overlay::BroadcastDataHash data_hash, td::uint32 size,
                                td::uint32 flags, td::BufferSlice part, td::uint32 seqno, fec::FecType fec_type,
@@ -342,4 +342,4 @@ class OverlayFecBroadcastPart : public td::ListNode {
 
 }  // namespace overlay
 
-}  // namespace ton
+}  // namespace ion

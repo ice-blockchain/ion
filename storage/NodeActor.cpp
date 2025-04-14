@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -26,10 +26,10 @@
 #include "td/utils/tests.h"
 #include "td/utils/overloaded.h"
 #include "tl-utils/tl-utils.hpp"
-#include "auto/tl/ton_api.hpp"
+#include "auto/tl/ion_api.hpp"
 #include "td/actor/MultiPromise.h"
 
-namespace ton {
+namespace ion {
 NodeActor::NodeActor(PeerId self_id, Torrent torrent, td::unique_ptr<Callback> callback,
                      td::unique_ptr<NodeCallback> node_callback, std::shared_ptr<db::DbType> db,
                      SpeedLimiters speed_limiters, bool should_download, bool should_upload)
@@ -44,7 +44,7 @@ NodeActor::NodeActor(PeerId self_id, Torrent torrent, td::unique_ptr<Callback> c
     , speed_limiters_(std::move(speed_limiters)) {
 }
 
-NodeActor::NodeActor(PeerId self_id, ton::Torrent torrent, td::unique_ptr<Callback> callback,
+NodeActor::NodeActor(PeerId self_id, ion::Torrent torrent, td::unique_ptr<Callback> callback,
                      td::unique_ptr<NodeCallback> node_callback, std::shared_ptr<db::DbType> db,
                      SpeedLimiters speed_limiters, bool should_download, bool should_upload,
                      DbInitialData db_initial_data)
@@ -728,12 +728,12 @@ void NodeActor::db_store_torrent() {
   if (!db_) {
     return;
   }
-  auto obj = create_tl_object<ton_api::storage_db_torrentV2>();
+  auto obj = create_tl_object<ion_api::storage_db_torrentV2>();
   obj->active_download_ = should_download_;
   obj->active_upload_ = should_upload_;
   obj->root_dir_ = torrent_.get_root_dir();
   obj->added_at_ = added_at_;
-  db_->set(create_hash_tl_object<ton_api::storage_db_key_torrent>(torrent_.get_hash()), serialize_tl_object(obj, true),
+  db_->set(create_hash_tl_object<ion_api::storage_db_key_torrent>(torrent_.get_hash()), serialize_tl_object(obj, true),
            [](td::Result<td::Unit> R) {
              if (R.is_error()) {
                LOG(ERROR) << "Failed to save torrent to db: " << R.move_as_error();
@@ -745,18 +745,18 @@ void NodeActor::db_store_priorities() {
   if (!db_ || db_store_priorities_paused_) {
     return;
   }
-  auto obj = create_tl_object<ton_api::storage_db_priorities>();
+  auto obj = create_tl_object<ion_api::storage_db_priorities>();
   if (file_priority_.empty()) {
     for (auto &s : pending_set_file_priority_) {
       s.file.visit(td::overloaded(
           [&](const PendingSetFilePriority::All &) {
-            obj->actions_.push_back(create_tl_object<ton_api::storage_priorityAction_all>(s.priority));
+            obj->actions_.push_back(create_tl_object<ion_api::storage_priorityAction_all>(s.priority));
           },
           [&](const size_t &i) {
-            obj->actions_.push_back(create_tl_object<ton_api::storage_priorityAction_idx>(i, s.priority));
+            obj->actions_.push_back(create_tl_object<ion_api::storage_priorityAction_idx>(i, s.priority));
           },
           [&](const std::string &name) {
-            obj->actions_.push_back(create_tl_object<ton_api::storage_priorityAction_name>(name, s.priority));
+            obj->actions_.push_back(create_tl_object<ion_api::storage_priorityAction_name>(name, s.priority));
           }));
     }
   } else {
@@ -766,14 +766,14 @@ void NodeActor::db_store_priorities() {
       ++prior_cnt[p];
     }
     auto base_priority = (td::uint8)(std::max_element(prior_cnt, prior_cnt + 256) - prior_cnt);
-    obj->actions_.push_back(create_tl_object<ton_api::storage_priorityAction_all>(base_priority));
+    obj->actions_.push_back(create_tl_object<ion_api::storage_priorityAction_all>(base_priority));
     for (size_t i = 0; i < file_priority_.size(); ++i) {
       if (file_priority_[i] != base_priority) {
-        obj->actions_.push_back(create_tl_object<ton_api::storage_priorityAction_idx>(i, file_priority_[i]));
+        obj->actions_.push_back(create_tl_object<ion_api::storage_priorityAction_idx>(i, file_priority_[i]));
       }
     }
   }
-  db_->set(create_hash_tl_object<ton_api::storage_db_key_priorities>(torrent_.get_hash()),
+  db_->set(create_hash_tl_object<ion_api::storage_db_key_priorities>(torrent_.get_hash()),
            serialize_tl_object(obj, true), [](td::Result<td::Unit> R) {
              if (R.is_error()) {
                LOG(ERROR) << "Failed to save torrent priorities to db: " << R.move_as_error();
@@ -788,7 +788,7 @@ void NodeActor::db_store_torrent_meta() {
   }
   next_db_store_meta_at_ = td::Timestamp::never();
   auto meta = torrent_.get_meta_str();
-  db_->set(create_hash_tl_object<ton_api::storage_db_key_torrentMeta>(torrent_.get_hash()), td::BufferSlice(meta),
+  db_->set(create_hash_tl_object<ion_api::storage_db_key_torrentMeta>(torrent_.get_hash()), td::BufferSlice(meta),
            [new_count = (td::int64)torrent_.get_ready_parts_count(), SelfId = actor_id(this)](td::Result<td::Unit> R) {
              if (R.is_error()) {
                td::actor::send_closure(SelfId, &NodeActor::after_db_store_torrent_meta, R.move_as_error());
@@ -813,7 +813,7 @@ void NodeActor::db_store_piece(td::uint64 i, std::string s) {
   if (!db_) {
     return;
   }
-  db_->set(create_hash_tl_object<ton_api::storage_db_key_pieceInDb>(torrent_.get_hash(), i), td::BufferSlice(s),
+  db_->set(create_hash_tl_object<ion_api::storage_db_key_pieceInDb>(torrent_.get_hash(), i), td::BufferSlice(s),
            [](td::Result<td::Unit> R) {
              if (R.is_error()) {
                LOG(ERROR) << "Failed to store piece to db: " << R.move_as_error();
@@ -826,7 +826,7 @@ void NodeActor::db_erase_piece(td::uint64 i) {
   if (!db_) {
     return;
   }
-  db_->erase(create_hash_tl_object<ton_api::storage_db_key_pieceInDb>(torrent_.get_hash(), i),
+  db_->erase(create_hash_tl_object<ion_api::storage_db_key_pieceInDb>(torrent_.get_hash(), i),
              [](td::Result<td::Unit> R) {
                if (R.is_error()) {
                  LOG(ERROR) << "Failed to store piece to db: " << R.move_as_error();
@@ -838,11 +838,11 @@ void NodeActor::db_update_pieces_list() {
   if (!db_) {
     return;
   }
-  auto obj = create_tl_object<ton_api::storage_db_piecesInDb>();
+  auto obj = create_tl_object<ion_api::storage_db_piecesInDb>();
   for (td::uint64 p : pieces_in_db_) {
     obj->pieces_.push_back(p);
   }
-  db_->set(create_hash_tl_object<ton_api::storage_db_key_piecesInDb>(torrent_.get_hash()),
+  db_->set(create_hash_tl_object<ion_api::storage_db_key_piecesInDb>(torrent_.get_hash()),
            serialize_tl_object(obj, true), [](td::Result<td::Unit> R) {
              if (R.is_error()) {
                LOG(ERROR) << "Failed to store list of pieces to db: " << R.move_as_error();
@@ -872,9 +872,9 @@ void NodeActor::load_from_db(std::shared_ptr<db::DbType> db, td::Bits256 hash, t
     }
 
     void start_up() override {
-      db::db_get<ton_api::storage_db_TorrentShort>(
-          *db_, create_hash_tl_object<ton_api::storage_db_key_torrent>(hash_), false,
-          [SelfId = actor_id(this)](td::Result<tl_object_ptr<ton_api::storage_db_TorrentShort>> R) {
+      db::db_get<ion_api::storage_db_TorrentShort>(
+          *db_, create_hash_tl_object<ion_api::storage_db_key_torrent>(hash_), false,
+          [SelfId = actor_id(this)](td::Result<tl_object_ptr<ion_api::storage_db_TorrentShort>> R) {
             if (R.is_error()) {
               td::actor::send_closure(SelfId, &Loader::finish, R.move_as_error_prefix("Torrent: "));
             } else {
@@ -883,21 +883,21 @@ void NodeActor::load_from_db(std::shared_ptr<db::DbType> db, td::Bits256 hash, t
           });
     }
 
-    void got_torrent(tl_object_ptr<ton_api::storage_db_TorrentShort> obj) {
-      ton_api::downcast_call(*obj, td::overloaded(
-                                       [&](ton_api::storage_db_torrent &t) {
+    void got_torrent(tl_object_ptr<ion_api::storage_db_TorrentShort> obj) {
+      ion_api::downcast_call(*obj, td::overloaded(
+                                       [&](ion_api::storage_db_torrent &t) {
                                          root_dir_ = std::move(t.root_dir_);
                                          active_download_ = t.active_download_;
                                          active_upload_ = t.active_upload_;
                                          added_at_ = (td::uint32)td::Clocks::system();
                                        },
-                                       [&](ton_api::storage_db_torrentV2 &t) {
+                                       [&](ion_api::storage_db_torrentV2 &t) {
                                          root_dir_ = std::move(t.root_dir_);
                                          active_download_ = t.active_download_;
                                          active_upload_ = t.active_upload_;
                                          added_at_ = t.added_at_;
                                        }));
-      db_->get(create_hash_tl_object<ton_api::storage_db_key_torrentMeta>(hash_),
+      db_->get(create_hash_tl_object<ion_api::storage_db_key_torrentMeta>(hash_),
                [SelfId = actor_id(this)](td::Result<db::DbType::GetResult> R) {
                  if (R.is_error()) {
                    td::actor::send_closure(SelfId, &Loader::finish, R.move_as_error_prefix("Meta: "));
@@ -932,9 +932,9 @@ void NodeActor::load_from_db(std::shared_ptr<db::DbType> db, td::Bits256 hash, t
       }
       torrent_ = r_torrent.move_as_ok();
 
-      db::db_get<ton_api::storage_db_priorities>(
-          *db_, create_hash_tl_object<ton_api::storage_db_key_priorities>(hash_), true,
-          [SelfId = actor_id(this)](td::Result<tl_object_ptr<ton_api::storage_db_priorities>> R) {
+      db::db_get<ion_api::storage_db_priorities>(
+          *db_, create_hash_tl_object<ion_api::storage_db_key_priorities>(hash_), true,
+          [SelfId = actor_id(this)](td::Result<tl_object_ptr<ion_api::storage_db_priorities>> R) {
             if (R.is_error()) {
               td::actor::send_closure(SelfId, &Loader::finish, R.move_as_error_prefix("Priorities: "));
             } else {
@@ -943,21 +943,21 @@ void NodeActor::load_from_db(std::shared_ptr<db::DbType> db, td::Bits256 hash, t
           });
     }
 
-    void got_priorities(tl_object_ptr<ton_api::storage_db_priorities> priorities) {
+    void got_priorities(tl_object_ptr<ion_api::storage_db_priorities> priorities) {
       if (priorities != nullptr) {
         for (auto &p : priorities->actions_) {
           td::Variant<PendingSetFilePriority::All, size_t, std::string> file;
           int priority = 0;
-          ton_api::downcast_call(*p, td::overloaded(
-                                         [&](ton_api::storage_priorityAction_all &obj) {
+          ion_api::downcast_call(*p, td::overloaded(
+                                         [&](ion_api::storage_priorityAction_all &obj) {
                                            file = PendingSetFilePriority::All();
                                            priority = obj.priority_;
                                          },
-                                         [&](ton_api::storage_priorityAction_idx &obj) {
+                                         [&](ion_api::storage_priorityAction_idx &obj) {
                                            file = (size_t)obj.idx_;
                                            priority = obj.priority_;
                                          },
-                                         [&](ton_api::storage_priorityAction_name &obj) {
+                                         [&](ion_api::storage_priorityAction_name &obj) {
                                            file = std::move(obj.name_);
                                            priority = obj.priority_;
                                          }));
@@ -970,9 +970,9 @@ void NodeActor::load_from_db(std::shared_ptr<db::DbType> db, td::Bits256 hash, t
         }
       }
 
-      db::db_get<ton_api::storage_db_piecesInDb>(
-          *db_, create_hash_tl_object<ton_api::storage_db_key_piecesInDb>(hash_), true,
-          [SelfId = actor_id(this)](td::Result<tl_object_ptr<ton_api::storage_db_piecesInDb>> R) {
+      db::db_get<ion_api::storage_db_piecesInDb>(
+          *db_, create_hash_tl_object<ion_api::storage_db_key_piecesInDb>(hash_), true,
+          [SelfId = actor_id(this)](td::Result<tl_object_ptr<ion_api::storage_db_piecesInDb>> R) {
             if (R.is_error()) {
               td::actor::send_closure(SelfId, &Loader::finish, R.move_as_error_prefix("Pieces in db: "));
             } else {
@@ -981,10 +981,10 @@ void NodeActor::load_from_db(std::shared_ptr<db::DbType> db, td::Bits256 hash, t
           });
     }
 
-    void got_pieces_in_db(tl_object_ptr<ton_api::storage_db_piecesInDb> list) {
+    void got_pieces_in_db(tl_object_ptr<ion_api::storage_db_piecesInDb> list) {
       for (auto idx : list == nullptr ? std::vector<td::int64>() : list->pieces_) {
         ++remaining_pieces_in_db_;
-        db_->get(create_hash_tl_object<ton_api::storage_db_key_pieceInDb>(hash_, idx),
+        db_->get(create_hash_tl_object<ion_api::storage_db_key_pieceInDb>(hash_, idx),
                  [SelfId = actor_id(this), idx](td::Result<db::DbType::GetResult> R) {
                    if (R.is_error()) {
                      td::actor::send_closure(SelfId, &Loader::finish, R.move_as_error_prefix("Piece in db: "));
@@ -1052,12 +1052,12 @@ void NodeActor::cleanup_db(std::shared_ptr<db::DbType> db, td::Bits256 hash, td:
   td::MultiPromise mp;
   auto ig = mp.init_guard();
   ig.add_promise(std::move(promise));
-  db->erase(create_hash_tl_object<ton_api::storage_db_key_torrent>(hash), ig.get_promise());
-  db->erase(create_hash_tl_object<ton_api::storage_db_key_torrentMeta>(hash), ig.get_promise());
-  db->erase(create_hash_tl_object<ton_api::storage_db_key_priorities>(hash), ig.get_promise());
-  db::db_get<ton_api::storage_db_piecesInDb>(
-      *db, create_hash_tl_object<ton_api::storage_db_key_piecesInDb>(hash), true,
-      [db, promise = ig.get_promise(), hash](td::Result<tl_object_ptr<ton_api::storage_db_piecesInDb>> R) mutable {
+  db->erase(create_hash_tl_object<ion_api::storage_db_key_torrent>(hash), ig.get_promise());
+  db->erase(create_hash_tl_object<ion_api::storage_db_key_torrentMeta>(hash), ig.get_promise());
+  db->erase(create_hash_tl_object<ion_api::storage_db_key_priorities>(hash), ig.get_promise());
+  db::db_get<ion_api::storage_db_piecesInDb>(
+      *db, create_hash_tl_object<ion_api::storage_db_key_piecesInDb>(hash), true,
+      [db, promise = ig.get_promise(), hash](td::Result<tl_object_ptr<ion_api::storage_db_piecesInDb>> R) mutable {
         if (R.is_error()) {
           promise.set_error(R.move_as_error());
           return;
@@ -1070,15 +1070,15 @@ void NodeActor::cleanup_db(std::shared_ptr<db::DbType> db, td::Bits256 hash, td:
         td::MultiPromise mp;
         auto ig = mp.init_guard();
         ig.add_promise(std::move(promise));
-        db->erase(create_hash_tl_object<ton_api::storage_db_key_piecesInDb>(hash), ig.get_promise());
+        db->erase(create_hash_tl_object<ion_api::storage_db_key_piecesInDb>(hash), ig.get_promise());
         for (auto idx : pieces->pieces_) {
-          db->erase(create_hash_tl_object<ton_api::storage_db_key_pieceInDb>(hash, idx), ig.get_promise());
+          db->erase(create_hash_tl_object<ion_api::storage_db_key_pieceInDb>(hash, idx), ig.get_promise());
         }
       });
 }
 
-void NodeActor::get_peers_info(td::Promise<tl_object_ptr<ton_api::storage_daemon_peerList>> promise) {
-  auto result = std::make_shared<std::vector<tl_object_ptr<ton_api::storage_daemon_peer>>>();
+void NodeActor::get_peers_info(td::Promise<tl_object_ptr<ion_api::storage_daemon_peerList>> promise) {
+  auto result = std::make_shared<std::vector<tl_object_ptr<ion_api::storage_daemon_peer>>>();
   td::MultiPromise mp;
   auto ig = mp.init_guard();
   ig.add_promise([result, promise = std::move(promise), download_speed = download_speed_.speed(),
@@ -1088,7 +1088,7 @@ void NodeActor::get_peers_info(td::Promise<tl_object_ptr<ton_api::storage_daemon
       return;
     }
     promise.set_result(
-        create_tl_object<ton_api::storage_daemon_peerList>(std::move(*result), download_speed, upload_speed, parts));
+        create_tl_object<ion_api::storage_daemon_peerList>(std::move(*result), download_speed, upload_speed, parts));
   });
 
   result->reserve(peers_.size());
@@ -1097,7 +1097,7 @@ void NodeActor::get_peers_info(td::Promise<tl_object_ptr<ton_api::storage_daemon
     if (!peer.second.state->peer_online_) {
       continue;
     }
-    result->push_back(create_tl_object<ton_api::storage_daemon_peer>());
+    result->push_back(create_tl_object<ion_api::storage_daemon_peer>());
     auto &obj = *result->back();
     obj.download_speed_ = peer.second.download_speed.speed();
     obj.upload_speed_ = peer.second.upload_speed.speed();
@@ -1114,4 +1114,4 @@ void NodeActor::get_peers_info(td::Promise<tl_object_ptr<ton_api::storage_daemon
   }
 }
 
-}  // namespace ton
+}  // namespace ion

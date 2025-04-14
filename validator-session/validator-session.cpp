@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -21,9 +21,9 @@
 #include "td/utils/crypto.h"
 #include "candidate-serializer.h"
 #include "td/utils/overloaded.h"
-#include "ton/ton-tl.hpp"
+#include "ion/ion-tl.hpp"
 
-namespace ton {
+namespace ion {
 
 namespace validatorsession {
 
@@ -45,7 +45,7 @@ void ValidatorSessionImpl::process_blocks(std::vector<catchain::CatChainBlock *>
   [[maybe_unused]] td::uint32 cnt = 0;
   auto ts = description().get_ts();
   auto att = description().get_attempt_seqno(ts);
-  std::vector<tl_object_ptr<ton_api::validatorSession_round_Message>> msgs;
+  std::vector<tl_object_ptr<ion_api::validatorSession_round_Message>> msgs;
 
   if (generated_ && !sent_generated_) {
     auto it = blocks_.find(generated_block_);
@@ -54,7 +54,7 @@ void ValidatorSessionImpl::process_blocks(std::vector<catchain::CatChainBlock *>
     auto &B = it->second;
     auto file_hash = sha256_bits256(B->data_);
     auto collated_data_file_hash = sha256_bits256(B->collated_data_);
-    msgs.emplace_back(create_tl_object<ton_api::validatorSession_message_submittedBlock>(
+    msgs.emplace_back(create_tl_object<ion_api::validatorSession_message_submittedBlock>(
         cur_round_, B->root_hash_, file_hash, collated_data_file_hash));
     cnt++;
     sent_generated_ = true;
@@ -64,14 +64,14 @@ void ValidatorSessionImpl::process_blocks(std::vector<catchain::CatChainBlock *>
   for (auto &block : to_approve) {
     auto id = SentBlock::get_block_id(block);
     if (approved_.count(id) && approved_[id].first <= td::Clocks::system()) {
-      msgs.emplace_back(create_tl_object<ton_api::validatorSession_message_approvedBlock>(
+      msgs.emplace_back(create_tl_object<ion_api::validatorSession_message_approvedBlock>(
           cur_round_, id, approved_[id].second.clone()));
       cnt++;
     }
   }
   for (auto &B : pending_reject_) {
     msgs.emplace_back(
-        create_tl_object<ton_api::validatorSession_message_rejectedBlock>(cur_round_, B.first, std::move(B.second)));
+        create_tl_object<ion_api::validatorSession_message_rejectedBlock>(cur_round_, B.first, std::move(B.second)));
   }
   pending_reject_.clear();
 
@@ -81,7 +81,7 @@ void ValidatorSessionImpl::process_blocks(std::vector<catchain::CatChainBlock *>
     if (found) {
       CHECK(SentBlock::get_block_id(B) == signed_block_);
       msgs.emplace_back(
-          create_tl_object<ton_api::validatorSession_message_commit>(cur_round_, signed_block_, std::move(signature_)));
+          create_tl_object<ion_api::validatorSession_message_commit>(cur_round_, signed_block_, std::move(signature_)));
       cnt++;
     }
   }
@@ -103,7 +103,7 @@ void ValidatorSessionImpl::process_blocks(std::vector<catchain::CatChainBlock *>
   while (true) {
     auto msg = real_state_->create_action(description(), local_idx(), att);
     bool stop = false;
-    if (msg->get_id() == ton_api::validatorSession_message_empty::ID) {
+    if (msg->get_id() == ion_api::validatorSession_message_empty::ID) {
       stop = true;
     }
     VLOG(VALIDATOR_SESSION_INFO) << this << ": applying action: " << msg.get();
@@ -119,7 +119,7 @@ void ValidatorSessionImpl::process_blocks(std::vector<catchain::CatChainBlock *>
 
   VLOG(VALIDATOR_SESSION_DEBUG) << this << ": created block: root_hash=" << real_state_->get_hash(description());
 
-  auto payload = create_tl_object<ton_api::validatorSession_blockUpdate>(ts, std::move(msgs),
+  auto payload = create_tl_object<ion_api::validatorSession_blockUpdate>(ts, std::move(msgs),
                                                                          real_state_->get_hash(description()));
   td::actor::send_closure(catchain_, &catchain::CatChain::processed_block, serialize_tl_object(payload, true));
 
@@ -163,7 +163,7 @@ void ValidatorSessionImpl::preprocess_block(catchain::CatChainBlock *block) {
   }
 
   if (block->payload().size() != 0 || deps.size() != 0) {
-    auto R = fetch_tl_object<ton_api::validatorSession_blockUpdate>(block->payload().clone(), true);
+    auto R = fetch_tl_object<ion_api::validatorSession_blockUpdate>(block->payload().clone(), true);
     if (!R.is_error()) {
       auto B = R.move_as_ok();
       auto att = description().get_attempt_seqno(B->ts_);
@@ -329,7 +329,7 @@ void ValidatorSessionImpl::process_query(PublicKeyHash src, td::BufferSlice data
     promise.set_error(td::Status::Error(ErrorCode::notready, "not started"));
     return;
   }
-  auto F = fetch_tl_object<ton_api::validatorSession_downloadCandidate>(std::move(data), true);
+  auto F = fetch_tl_object<ion_api::validatorSession_downloadCandidate>(std::move(data), true);
   if (F.is_error()) {
     promise.set_error(F.move_as_error_prefix("validator session: cannot parse query: "));
     return;
@@ -371,7 +371,7 @@ void ValidatorSessionImpl::process_query(PublicKeyHash src, td::BufferSlice data
       promise.set_error(R.move_as_error_prefix("failed to get candidate: "));
     } else {
       auto c = R.move_as_ok();
-      auto obj = create_tl_object<ton_api::validatorSession_candidate>(src, round_id, c.id.root_hash, std::move(c.data),
+      auto obj = create_tl_object<ion_api::validatorSession_candidate>(src, round_id, c.id.root_hash, std::move(c.data),
                                                                        std::move(c.collated_data));
       promise.set_result(serialize_candidate(obj, compress));
     }
@@ -422,7 +422,7 @@ void ValidatorSessionImpl::candidate_decision_ok(td::uint32 round, ValidatorSess
 
   LOG(INFO) << this << ": approved candidate " << hash;
 
-  auto obj = create_tl_object<ton_api::ton_blockIdApprove>(root_hash, file_hash);
+  auto obj = create_tl_object<ion_api::ton_blockIdApprove>(root_hash, file_hash);
   auto data = serialize_tl_object(obj, true);
 
   auto P = td::PromiseCreator::lambda([SelfId = actor_id(this), print_id = print_id(), hash, ok_from,
@@ -478,7 +478,7 @@ void ValidatorSessionImpl::generated_block(td::uint32 round, ValidatorSessionCan
     return;
   }
   td::Timer serialize_timer;
-  auto b = create_tl_object<ton_api::validatorSession_candidate>(local_id().tl(), round, root_hash, std::move(data),
+  auto b = create_tl_object<ion_api::validatorSession_candidate>(local_id().tl(), round, root_hash, std::move(data),
                                                                  std::move(collated_data));
   auto B = serialize_candidate(b, compress_block_candidates_).move_as_ok();
   if (stat) {
@@ -683,9 +683,9 @@ void ValidatorSessionImpl::get_broadcast_p2p(PublicKeyHash node, ValidatorSessio
     return;
   }
 
-  auto obj = create_tl_object<ton_api::validatorSession_downloadCandidate>(
+  auto obj = create_tl_object<ion_api::validatorSession_downloadCandidate>(
       round,
-      create_tl_object<ton_api::validatorSession_candidateId>(src.tl(), root_hash, file_hash, collated_data_file_hash));
+      create_tl_object<ion_api::validatorSession_candidateId>(src.tl(), root_hash, file_hash, collated_data_file_hash));
 
   td::actor::send_closure(
       catchain_, &catchain::CatChain::send_query_via, node, "download candidate", std::move(promise), timeout,
@@ -721,7 +721,7 @@ void ValidatorSessionImpl::check_sign_slot() {
     } else {
       pending_sign_ = true;
 
-      auto obj = create_tl_object<ton_api::ton_blockId>(B->get_root_hash(), B->get_file_hash());
+      auto obj = create_tl_object<ion_api::ton_blockId>(B->get_root_hash(), B->get_file_hash());
       auto data = serialize_tl_object(obj, true);
 
       auto P =
@@ -758,7 +758,7 @@ void ValidatorSessionImpl::check_action(td::uint32 att) {
   }
   if (!requested_new_block_) {
     auto action = virtual_state_->create_action(description(), local_idx(), att);
-    if (action && action->get_id() != ton_api::validatorSession_message_empty::ID) {
+    if (action && action->get_id() != ion_api::validatorSession_message_empty::ID) {
       request_new_block(false);
     }
   }
@@ -963,7 +963,7 @@ void ValidatorSessionImpl::on_catchain_started() {
           LOG(ERROR) << "failed to get candidate: " << R.move_as_error();
         } else {
           auto B = R.move_as_ok();
-          auto broadcast = create_tl_object<ton_api::validatorSession_candidate>(
+          auto broadcast = create_tl_object<ion_api::validatorSession_candidate>(
               src.tl(), round, root_hash, std::move(B.data), std::move(B.collated_data));
           td::actor::send_closure(SelfId, &ValidatorSessionImpl::process_broadcast, src,
                                   serialize_candidate(broadcast, compress).move_as_ok(), td::optional<ValidatorSessionCandidateId>(),
@@ -1218,9 +1218,9 @@ ValidatorSessionStats::Producer *ValidatorSessionImpl::stats_get_candidate_stat_
   return &*it;
 }
 
-void ValidatorSessionImpl::stats_process_action(td::uint32 node_id, ton_api::validatorSession_round_Message &action) {
-  ton_api::downcast_call(action, td::overloaded(
-                                     [&](const ton_api::validatorSession_message_submittedBlock &obj) {
+void ValidatorSessionImpl::stats_process_action(td::uint32 node_id, ion_api::validatorSession_round_Message &action) {
+  ion_api::downcast_call(action, td::overloaded(
+                                     [&](const ion_api::validatorSession_message_submittedBlock &obj) {
                                        auto candidate_id = description().candidate_id(
                                            node_id, obj.root_hash_, obj.file_hash_, obj.collated_data_file_hash_);
                                        auto stat = stats_get_candidate_stat(
@@ -1229,7 +1229,7 @@ void ValidatorSessionImpl::stats_process_action(td::uint32 node_id, ton_api::val
                                          stat->got_submit_at = td::Clocks::system();
                                        }
                                      },
-                                     [&](const ton_api::validatorSession_message_approvedBlock &obj) {
+                                     [&](const ion_api::validatorSession_message_approvedBlock &obj) {
                                        if (obj.candidate_ == skip_round_candidate_id()) {
                                          return;
                                        }
@@ -1241,7 +1241,7 @@ void ValidatorSessionImpl::stats_process_action(td::uint32 node_id, ton_api::val
                                          stats_pending_approve_[{obj.round_, obj.candidate_}].push_back(node_id);
                                        }
                                      },
-                                     [&](const ton_api::validatorSession_message_commit &obj) {
+                                     [&](const ion_api::validatorSession_message_commit &obj) {
                                        if (obj.candidate_ == skip_round_candidate_id()) {
                                          return;
                                        }
@@ -1270,21 +1270,21 @@ td::actor::ActorOwn<ValidatorSession> ValidatorSession::create(
 td::Bits256 ValidatorSessionOptions::get_hash() const {
   if (proto_version == 0) {
     if (!new_catchain_ids) {
-      return create_hash_tl_object<ton_api::validatorSession_config>(
+      return create_hash_tl_object<ion_api::validatorSession_config>(
           catchain_opts.idle_timeout, catchain_opts.max_deps, round_candidates, next_candidate_delay,
           round_attempt_duration, max_round_attempts, max_block_size, max_collated_data_size);
     } else {
-      return create_hash_tl_object<ton_api::validatorSession_configNew>(
+      return create_hash_tl_object<ion_api::validatorSession_configNew>(
           catchain_opts.idle_timeout, catchain_opts.max_deps, round_candidates, next_candidate_delay,
           round_attempt_duration, max_round_attempts, max_block_size, max_collated_data_size, new_catchain_ids);
     }
   } else if (proto_version == 1) {
-    return create_hash_tl_object<ton_api::validatorSession_configVersioned>(
+    return create_hash_tl_object<ion_api::validatorSession_configVersioned>(
         catchain_opts.idle_timeout, catchain_opts.max_deps, round_candidates, next_candidate_delay,
         round_attempt_duration, max_round_attempts, max_block_size, max_collated_data_size, proto_version);
   } else {
-    return create_hash_tl_object<ton_api::validatorSession_configVersionedV2>(
-        create_tl_object<ton_api::validatorSession_catchainOptions>(
+    return create_hash_tl_object<ion_api::validatorSession_configVersionedV2>(
+        create_tl_object<ion_api::validatorSession_catchainOptions>(
             catchain_opts.idle_timeout, catchain_opts.max_deps, catchain_opts.max_serialized_block_size,
             catchain_opts.block_hash_covers_data, catchain_opts.max_block_height_coeff, catchain_opts.debug_disable_db),
         round_candidates, next_candidate_delay, round_attempt_duration, max_round_attempts, max_block_size,
@@ -1306,4 +1306,4 @@ ValidatorSessionOptions::ValidatorSessionOptions(const ValidatorSessionConfig &c
 
 }  // namespace validatorsession
 
-}  // namespace ton
+}  // namespace ion

@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -20,8 +20,8 @@
 #include "full-node-master.hpp"
 #include "full-node-shard-queries.hpp"
 
-#include "ton/ton-shard.h"
-#include "ton/ton-tl.hpp"
+#include "ion/ion-shard.h"
+#include "ion/ion-tl.hpp"
 
 #include "adnl/utils.hpp"
 
@@ -30,25 +30,25 @@
 #include "auto/tl/lite_api.h"
 #include "tl-utils/lite-utils.hpp"
 
-namespace ton {
+namespace ion {
 
 namespace validator {
 
 namespace fullnode {
 
-void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::tonNode_getNextBlockDescription &query,
+void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ion_api::tonNode_getNextBlockDescription &query,
                                        td::Promise<td::BufferSlice> promise) {
   auto P = td::PromiseCreator::lambda([promise = std::move(promise)](td::Result<BlockHandle> R) mutable {
     if (R.is_error()) {
-      auto x = create_serialize_tl_object<ton_api::tonNode_blockDescriptionEmpty>();
+      auto x = create_serialize_tl_object<ion_api::tonNode_blockDescriptionEmpty>();
       promise.set_value(std::move(x));
     } else {
       auto B = R.move_as_ok();
       if (!B->received() || !B->inited_proof()) {
-        auto x = create_serialize_tl_object<ton_api::tonNode_blockDescriptionEmpty>();
+        auto x = create_serialize_tl_object<ion_api::tonNode_blockDescriptionEmpty>();
         promise.set_value(std::move(x));
       } else {
-        auto x = create_serialize_tl_object<ton_api::tonNode_blockDescription>(create_tl_block_id(B->id()));
+        auto x = create_serialize_tl_object<ion_api::tonNode_blockDescription>(create_tl_block_id(B->id()));
         promise.set_value(std::move(x));
       }
     }
@@ -57,19 +57,19 @@ void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::tonNo
                           create_block_id(query.prev_block_), std::move(P));
 }
 
-void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::tonNode_prepareBlock &query,
+void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ion_api::tonNode_prepareBlock &query,
                                        td::Promise<td::BufferSlice> promise) {
   auto P = td::PromiseCreator::lambda([promise = std::move(promise)](td::Result<BlockHandle> R) mutable {
     if (R.is_error()) {
-      auto x = create_serialize_tl_object<ton_api::tonNode_notFound>();
+      auto x = create_serialize_tl_object<ion_api::tonNode_notFound>();
       promise.set_value(std::move(x));
     } else {
       auto B = R.move_as_ok();
       if (!B->received()) {
-        auto x = create_serialize_tl_object<ton_api::tonNode_notFound>();
+        auto x = create_serialize_tl_object<ion_api::tonNode_notFound>();
         promise.set_value(std::move(x));
       } else {
-        auto x = create_serialize_tl_object<ton_api::tonNode_prepared>();
+        auto x = create_serialize_tl_object<ion_api::tonNode_prepared>();
         promise.set_value(std::move(x));
       }
     }
@@ -78,7 +78,7 @@ void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::tonNo
                           create_block_id(query.block_), false, std::move(P));
 }
 
-void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::tonNode_downloadBlock &query,
+void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ion_api::tonNode_downloadBlock &query,
                                        td::Promise<td::BufferSlice> promise) {
   auto P = td::PromiseCreator::lambda([validator_manager = validator_manager_,
                                        promise = std::move(promise)](td::Result<BlockHandle> R) mutable {
@@ -97,21 +97,21 @@ void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::tonNo
                           create_block_id(query.block_), false, std::move(P));
 }
 
-void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::tonNode_downloadBlockFull &query,
+void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ion_api::tonNode_downloadBlockFull &query,
                                        td::Promise<td::BufferSlice> promise) {
-  td::actor::create_actor<BlockFullSender>("sender", ton::create_block_id(query.block_), false, validator_manager_,
+  td::actor::create_actor<BlockFullSender>("sender", ion::create_block_id(query.block_), false, validator_manager_,
                                            std::move(promise))
       .release();
 }
 
-void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::tonNode_downloadNextBlockFull &query,
+void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ion_api::tonNode_downloadNextBlockFull &query,
                                        td::Promise<td::BufferSlice> promise) {
-  td::actor::create_actor<BlockFullSender>("sender", ton::create_block_id(query.prev_block_), true, validator_manager_,
+  td::actor::create_actor<BlockFullSender>("sender", ion::create_block_id(query.prev_block_), true, validator_manager_,
                                            std::move(promise))
       .release();
 }
 
-void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::tonNode_prepareBlockProof &query,
+void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ion_api::tonNode_prepareBlockProof &query,
                                        td::Promise<td::BufferSlice> promise) {
   if (query.block_->seqno_ == 0) {
     promise.set_error(td::Status::Error(ErrorCode::protoviolation, "cannot download proof for zero state"));
@@ -120,21 +120,21 @@ void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::tonNo
   auto P = td::PromiseCreator::lambda([allow_partial = query.allow_partial_, promise = std::move(promise),
                                        validator_manager = validator_manager_](td::Result<BlockHandle> R) mutable {
     if (R.is_error()) {
-      auto x = create_serialize_tl_object<ton_api::tonNode_preparedProofEmpty>();
+      auto x = create_serialize_tl_object<ion_api::tonNode_preparedProofEmpty>();
       promise.set_value(std::move(x));
       return;
     } else {
       auto handle = R.move_as_ok();
       if (!handle || (!handle->inited_proof() && (!allow_partial || !handle->inited_proof_link()))) {
-        auto x = create_serialize_tl_object<ton_api::tonNode_preparedProofEmpty>();
+        auto x = create_serialize_tl_object<ion_api::tonNode_preparedProofEmpty>();
         promise.set_value(std::move(x));
         return;
       }
       if (handle->inited_proof() && handle->id().is_masterchain()) {
-        auto x = create_serialize_tl_object<ton_api::tonNode_preparedProof>();
+        auto x = create_serialize_tl_object<ion_api::tonNode_preparedProof>();
         promise.set_value(std::move(x));
       } else {
-        auto x = create_serialize_tl_object<ton_api::tonNode_preparedProofLink>();
+        auto x = create_serialize_tl_object<ion_api::tonNode_preparedProofLink>();
         promise.set_value(std::move(x));
       }
     }
@@ -144,7 +144,7 @@ void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::tonNo
                           create_block_id(query.block_), false, std::move(P));
 }
 
-void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::tonNode_prepareKeyBlockProof &query,
+void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ion_api::tonNode_prepareKeyBlockProof &query,
                                        td::Promise<td::BufferSlice> promise) {
   if (query.block_->seqno_ == 0) {
     promise.set_error(td::Status::Error(ErrorCode::protoviolation, "cannot download proof for zero state"));
@@ -153,13 +153,13 @@ void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::tonNo
   auto P = td::PromiseCreator::lambda(
       [allow_partial = query.allow_partial_, promise = std::move(promise)](td::Result<td::BufferSlice> R) mutable {
         if (R.is_error()) {
-          auto x = create_serialize_tl_object<ton_api::tonNode_preparedProofEmpty>();
+          auto x = create_serialize_tl_object<ion_api::tonNode_preparedProofEmpty>();
           promise.set_value(std::move(x));
         } else if (allow_partial) {
-          auto x = create_serialize_tl_object<ton_api::tonNode_preparedProofLink>();
+          auto x = create_serialize_tl_object<ion_api::tonNode_preparedProofLink>();
           promise.set_value(std::move(x));
         } else {
-          auto x = create_serialize_tl_object<ton_api::tonNode_preparedProof>();
+          auto x = create_serialize_tl_object<ion_api::tonNode_preparedProof>();
           promise.set_value(std::move(x));
         }
       });
@@ -173,7 +173,7 @@ void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::tonNo
   }
 }
 
-void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::tonNode_downloadBlockProof &query,
+void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ion_api::tonNode_downloadBlockProof &query,
                                        td::Promise<td::BufferSlice> promise) {
   auto P = td::PromiseCreator::lambda(
       [promise = std::move(promise), validator_manager = validator_manager_](td::Result<BlockHandle> R) mutable {
@@ -196,7 +196,7 @@ void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::tonNo
                           create_block_id(query.block_), false, std::move(P));
 }
 
-void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::tonNode_downloadBlockProofLink &query,
+void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ion_api::tonNode_downloadBlockProofLink &query,
                                        td::Promise<td::BufferSlice> promise) {
   auto P = td::PromiseCreator::lambda(
       [promise = std::move(promise), validator_manager = validator_manager_](td::Result<BlockHandle> R) mutable {
@@ -219,7 +219,7 @@ void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::tonNo
                           create_block_id(query.block_), false, std::move(P));
 }
 
-void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::tonNode_downloadKeyBlockProof &query,
+void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ion_api::tonNode_downloadKeyBlockProof &query,
                                        td::Promise<td::BufferSlice> promise) {
   if (query.block_->seqno_ == 0) {
     promise.set_error(td::Status::Error(ErrorCode::protoviolation, "cannot download proof for zero state"));
@@ -237,7 +237,7 @@ void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::tonNo
                           create_block_id(query.block_), std::move(P));
 }
 
-void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::tonNode_downloadKeyBlockProofLink &query,
+void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ion_api::tonNode_downloadKeyBlockProofLink &query,
                                        td::Promise<td::BufferSlice> promise) {
   if (query.block_->seqno_ == 0) {
     promise.set_error(td::Status::Error(ErrorCode::protoviolation, "cannot download proof for zero state"));
@@ -255,17 +255,17 @@ void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::tonNo
                           create_block_id(query.block_), std::move(P));
 }
 
-void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::tonNode_prepareZeroState &query,
+void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ion_api::tonNode_prepareZeroState &query,
                                        td::Promise<td::BufferSlice> promise) {
   auto P =
       td::PromiseCreator::lambda([SelfId = actor_id(this), promise = std::move(promise)](td::Result<bool> R) mutable {
         if (R.is_error() || !R.move_as_ok()) {
-          auto x = create_serialize_tl_object<ton_api::tonNode_notFoundState>();
+          auto x = create_serialize_tl_object<ion_api::tonNode_notFoundState>();
           promise.set_value(std::move(x));
           return;
         }
 
-        auto x = create_serialize_tl_object<ton_api::tonNode_preparedState>();
+        auto x = create_serialize_tl_object<ion_api::tonNode_preparedState>();
         promise.set_value(std::move(x));
       });
   auto block_id = create_block_id(query.block_);
@@ -273,17 +273,17 @@ void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::tonNo
                           std::move(P));
 }
 
-void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::tonNode_preparePersistentState &query,
+void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ion_api::tonNode_preparePersistentState &query,
                                        td::Promise<td::BufferSlice> promise) {
   auto P =
       td::PromiseCreator::lambda([SelfId = actor_id(this), promise = std::move(promise)](td::Result<bool> R) mutable {
         if (R.is_error() || !R.move_as_ok()) {
-          auto x = create_serialize_tl_object<ton_api::tonNode_notFoundState>();
+          auto x = create_serialize_tl_object<ion_api::tonNode_notFoundState>();
           promise.set_value(std::move(x));
           return;
         }
 
-        auto x = create_serialize_tl_object<ton_api::tonNode_preparedState>();
+        auto x = create_serialize_tl_object<ion_api::tonNode_preparedState>();
         promise.set_value(std::move(x));
       });
   auto block_id = create_block_id(query.block_);
@@ -292,7 +292,7 @@ void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::tonNo
                           masterchain_block_id, std::move(P));
 }
 
-void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::tonNode_getNextKeyBlockIds &query,
+void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ion_api::tonNode_getNextKeyBlockIds &query,
                                        td::Promise<td::BufferSlice> promise) {
   auto cnt = static_cast<td::uint32>(query.max_size_);
   if (cnt > 8) {
@@ -302,17 +302,17 @@ void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::tonNo
       td::PromiseCreator::lambda([promise = std::move(promise), cnt](td::Result<std::vector<BlockIdExt>> R) mutable {
         if (R.is_error()) {
           LOG(WARNING) << "getnextkey: " << R.move_as_error();
-          auto x = create_serialize_tl_object<ton_api::tonNode_keyBlocks>(
-              std::vector<tl_object_ptr<ton_api::tonNode_blockIdExt>>{}, false, true);
+          auto x = create_serialize_tl_object<ion_api::tonNode_keyBlocks>(
+              std::vector<tl_object_ptr<ion_api::tonNode_blockIdExt>>{}, false, true);
           promise.set_value(std::move(x));
           return;
         }
         auto res = R.move_as_ok();
-        std::vector<tl_object_ptr<ton_api::tonNode_blockIdExt>> v;
+        std::vector<tl_object_ptr<ion_api::tonNode_blockIdExt>> v;
         for (auto &b : res) {
           v.emplace_back(create_tl_block_id(b));
         }
-        auto x = create_serialize_tl_object<ton_api::tonNode_keyBlocks>(std::move(v), res.size() < cnt, false);
+        auto x = create_serialize_tl_object<ion_api::tonNode_keyBlocks>(std::move(v), res.size() < cnt, false);
         promise.set_value(std::move(x));
       });
   auto block_id = create_block_id(query.block_);
@@ -320,7 +320,7 @@ void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::tonNo
                           std::move(P));
 }
 
-void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::tonNode_downloadZeroState &query,
+void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ion_api::tonNode_downloadZeroState &query,
                                        td::Promise<td::BufferSlice> promise) {
   auto P = td::PromiseCreator::lambda(
       [SelfId = actor_id(this), promise = std::move(promise)](td::Result<td::BufferSlice> R) mutable {
@@ -335,7 +335,7 @@ void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::tonNo
   td::actor::send_closure(validator_manager_, &ValidatorManagerInterface::get_zero_state, block_id, std::move(P));
 }
 
-void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::tonNode_downloadPersistentState &query,
+void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ion_api::tonNode_downloadPersistentState &query,
                                        td::Promise<td::BufferSlice> promise) {
   auto P = td::PromiseCreator::lambda(
       [SelfId = actor_id(this), promise = std::move(promise)](td::Result<td::BufferSlice> R) mutable {
@@ -352,7 +352,7 @@ void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::tonNo
                           masterchain_block_id, std::move(P));
 }
 
-void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::tonNode_downloadPersistentStateSlice &query,
+void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ion_api::tonNode_downloadPersistentStateSlice &query,
                                        td::Promise<td::BufferSlice> promise) {
   auto P = td::PromiseCreator::lambda(
       [SelfId = actor_id(this), promise = std::move(promise)](td::Result<td::BufferSlice> R) mutable {
@@ -369,55 +369,55 @@ void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::tonNo
                           masterchain_block_id, query.offset_, query.max_size_, std::move(P));
 }
 
-void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::tonNode_getCapabilities &query,
+void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ion_api::tonNode_getCapabilities &query,
                                        td::Promise<td::BufferSlice> promise) {
   promise.set_value(
-      create_serialize_tl_object<ton_api::tonNode_capabilities>(proto_version_major(), proto_version_minor(), 0));
+      create_serialize_tl_object<ion_api::tonNode_capabilities>(proto_version_major(), proto_version_minor(), 0));
 }
 
-void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::tonNode_getArchiveInfo &query,
+void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ion_api::tonNode_getArchiveInfo &query,
                                        td::Promise<td::BufferSlice> promise) {
   auto P = td::PromiseCreator::lambda(
       [SelfId = actor_id(this), promise = std::move(promise)](td::Result<td::uint64> R) mutable {
         if (R.is_error()) {
-          promise.set_value(create_serialize_tl_object<ton_api::tonNode_archiveNotFound>());
+          promise.set_value(create_serialize_tl_object<ion_api::tonNode_archiveNotFound>());
         } else {
-          promise.set_value(create_serialize_tl_object<ton_api::tonNode_archiveInfo>(R.move_as_ok()));
+          promise.set_value(create_serialize_tl_object<ion_api::tonNode_archiveInfo>(R.move_as_ok()));
         }
       });
   td::actor::send_closure(validator_manager_, &ValidatorManagerInterface::get_archive_id, query.masterchain_seqno_,
                           ShardIdFull{masterchainId}, std::move(P));
 }
 
-void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::tonNode_getArchiveSlice &query,
+void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ion_api::tonNode_getArchiveSlice &query,
                                        td::Promise<td::BufferSlice> promise) {
   td::actor::send_closure(validator_manager_, &ValidatorManagerInterface::get_archive_slice, query.archive_id_,
                           query.offset_, query.max_size_, std::move(promise));
 }
 
-void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::tonNode_slave_sendExtMessage &query,
+void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ion_api::tonNode_slave_sendExtMessage &query,
                                        td::Promise<td::BufferSlice> promise) {
   td::actor::send_closure(
       validator_manager_, &ValidatorManagerInterface::run_ext_query,
       create_serialize_tl_object<lite_api::liteServer_query>(
           create_serialize_tl_object<lite_api::liteServer_sendMessage>(std::move(query.message_->data_))),
       [&](td::Result<td::BufferSlice>) {});
-  promise.set_value(create_serialize_tl_object<ton_api::tonNode_success>());
+  promise.set_value(create_serialize_tl_object<ion_api::tonNode_success>());
 }
 
 void FullNodeMasterImpl::receive_query(adnl::AdnlNodeIdShort src, td::BufferSlice query,
                                        td::Promise<td::BufferSlice> promise) {
-  auto BX = fetch_tl_prefix<ton_api::tonNode_query>(query, true);
+  auto BX = fetch_tl_prefix<ion_api::tonNode_query>(query, true);
   if (BX.is_error()) {
-    promise.set_error(td::Status::Error(ErrorCode::protoviolation, "cannot parse tonnode query"));
+    promise.set_error(td::Status::Error(ErrorCode::protoviolation, "cannot parse ionnode query"));
     return;
   }
-  auto B = fetch_tl_object<ton_api::Function>(std::move(query), true);
+  auto B = fetch_tl_object<ion_api::Function>(std::move(query), true);
   if (B.is_error()) {
-    promise.set_error(td::Status::Error(ErrorCode::protoviolation, "cannot parse tonnode query"));
+    promise.set_error(td::Status::Error(ErrorCode::protoviolation, "cannot parse ionnode query"));
     return;
   }
-  ton_api::downcast_call(*B.move_as_ok().get(), [&](auto &obj) { this->process_query(src, obj, std::move(promise)); });
+  ion_api::downcast_call(*B.move_as_ok().get(), [&](auto &obj) { this->process_query(src, obj, std::move(promise)); });
 }
 
 void FullNodeMasterImpl::start_up() {
@@ -437,7 +437,7 @@ void FullNodeMasterImpl::start_up() {
   };
 
   td::actor::send_closure(adnl_, &adnl::Adnl::subscribe, adnl_id_,
-                          adnl::Adnl::int_to_bytestring(ton_api::tonNode_query::ID),
+                          adnl::Adnl::int_to_bytestring(ion_api::tonNode_query::ID),
                           std::make_unique<Cb>(actor_id(this)));
 
   auto P =
@@ -465,7 +465,7 @@ td::actor::ActorOwn<FullNodeMaster> FullNodeMaster::create(
     adnl::AdnlNodeIdShort adnl_id, td::uint16 port, FileHash zero_state_file_hash,
     td::actor::ActorId<keyring::Keyring> keyring, td::actor::ActorId<adnl::Adnl> adnl,
     td::actor::ActorId<ValidatorManagerInterface> validator_manager) {
-  return td::actor::create_actor<FullNodeMasterImpl>("tonnode", adnl_id, port, zero_state_file_hash, keyring, adnl,
+  return td::actor::create_actor<FullNodeMasterImpl>("ionnode", adnl_id, port, zero_state_file_hash, keyring, adnl,
                                                      validator_manager);
 }
 
@@ -473,4 +473,4 @@ td::actor::ActorOwn<FullNodeMaster> FullNodeMaster::create(
 
 }  // namespace validator
 
-}  // namespace ton
+}  // namespace ion

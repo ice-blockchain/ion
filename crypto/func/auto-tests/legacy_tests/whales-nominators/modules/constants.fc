@@ -77,20 +77,20 @@ int coins::100() asm "100000000000 PUSHINT";
 ;; Fees
 ;;
 
-int fees::storage_reserve() asm "1000000000 PUSHINT"; ;; 1 TON
-int fees::receipt() asm "100000000 PUSHINT"; ;; 0.1 TON
-int fees::op() asm "100000000 PUSHINT"; ;; 0.1 TON
-int fees::deploy() asm "5000000000 PUSHINT"; ;; 5 TON
-int fees::stake_fees() asm "2000000000 PUSHINT"; ;; 2 TON
+int fees::storage_reserve() asm "1000000000 PUSHINT"; ;; 1 ION
+int fees::receipt() asm "100000000 PUSHINT"; ;; 0.1 ION
+int fees::op() asm "100000000 PUSHINT"; ;; 0.1 ION
+int fees::deploy() asm "5000000000 PUSHINT"; ;; 5 ION
+int fees::stake_fees() asm "2000000000 PUSHINT"; ;; 2 ION
 
 ;;
 ;; Parameters
 ;;
 
-int params::min_op() asm "100000000 PUSHINT"; ;; 0.1 TON
-int params::min_stake() asm "1000000000 PUSHINT"; ;; 1 TON
-int params::min_fee() asm "1000000000 PUSHINT"; ;; 1 TON
-int params::pending_op() asm "5000000000 PUSHINT"; ;; 5 TON
+int params::min_op() asm "100000000 PUSHINT"; ;; 0.1 ION
+int params::min_stake() asm "1000000000 PUSHINT"; ;; 1 ION
+int params::min_fee() asm "1000000000 PUSHINT"; ;; 1 ION
+int params::pending_op() asm "5000000000 PUSHINT"; ;; 5 ION
 int params::ppc_precision() asm "10000000000000 PUSHINT"; ;; 10^13
 
 ;;

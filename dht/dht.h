@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -26,11 +26,11 @@
 
 #include "adnl/adnl.h"
 
-#include "auto/tl/ton_api.hpp"
+#include "auto/tl/ion_api.hpp"
 
 #include "dht-types.h"
 
-namespace ton {
+namespace ion {
 
 namespace dht {
 
@@ -47,7 +47,7 @@ class Dht : public td::actor::Actor {
                                                             td::actor::ActorId<keyring::Keyring> keyring,
                                                             td::actor::ActorId<adnl::Adnl> adnl);
   static td::Result<std::shared_ptr<DhtGlobalConfig>> create_global_config(
-      tl_object_ptr<ton_api::dht_config_Global> conf);
+      tl_object_ptr<ion_api::dht_config_Global> conf);
 
   virtual adnl::AdnlNodeIdShort get_id() const = 0;
 
@@ -66,4 +66,4 @@ class Dht : public td::actor::Actor {
 
 }  // namespace dht
 
-}  // namespace ton
+}  // namespace ion

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 
-project(TON VERSION 0.5 LANGUAGES C CXX)
+project(ION VERSION 0.5 LANGUAGES C CXX)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 #set(OPENSSL_USE_STATIC_LIBS TRUE)
 
@@ -15,11 +15,11 @@ target_include_directories(git PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 add_dependencies(git check_git)
 
 # Prevent in-source build
-get_filename_component(TON_REAL_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}" REALPATH)
-get_filename_component(TON_REAL_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}" REALPATH)
+get_filename_component(ION_REAL_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}" REALPATH)
+get_filename_component(ION_REAL_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}" REALPATH)
 
-if (TON_REAL_BINARY_DIR STREQUAL TON_REAL_SOURCE_DIR)
-  message("  Out-of-source build should be used to build TON.")
+if (ION_REAL_BINARY_DIR STREQUAL ION_REAL_SOURCE_DIR)
+  message("  Out-of-source build should be used to build ION.")
   message("  You need to remove the files already created by CMake and")
   message("  rerun CMake from a new directory:")
   message("  rm -rf CMakeFiles CMakeCache.txt")
@@ -86,36 +86,36 @@ set(CMAKE_CXX_EXTENSIONS FALSE)
 #BEGIN internal
 option(BUILD_SHARED_LIBS "Use \"ON\" to build shared libraries instead of static where it's not specified (not recommended)" OFF)
 option(USE_EMSCRIPTEN "Use \"ON\" for config building wasm." OFF)
-option(TON_ONLY_TONLIB "Use \"ON\" to build only tonlib." OFF)
+option(ION_ONLY_TONLIB "Use \"ON\" to build only tonlib." OFF)
 if (USE_EMSCRIPTEN)
-  set(TON_ONLY_TONLIB true)
+  set(ION_ONLY_TONLIB true)
 endif()
-if (TON_ONLY_TONLIB)
-  set(NOT_TON_ONLY_TONLIB false)
+if (ION_ONLY_TONLIB)
+  set(NOT_ION_ONLY_TONLIB false)
 else()
-  set(NOT_TON_ONLY_TONLIB true)
+  set(NOT_ION_ONLY_TONLIB true)
 endif()
-option(TON_USE_ROCKSDB "Use \"ON\" to enable RocksDb." ${NOT_TON_ONLY_TONLIB})
-option(TON_USE_ABSEIL "Use \"ON\" to enable Abseil." ${NOT_TON_ONLY_TONLIB})
-option(TON_USE_JEMALLOC "Use \"ON\" to enable JeMalloc." OFF)
+option(ION_USE_ROCKSDB "Use \"ON\" to enable RocksDb." ${NOT_ION_ONLY_TONLIB})
+option(ION_USE_ABSEIL "Use \"ON\" to enable Abseil." ${NOT_ION_ONLY_TONLIB})
+option(ION_USE_JEMALLOC "Use \"ON\" to enable JeMalloc." OFF)
 #END internal
 
 option(TONLIB_ENABLE_JNI "Use \"ON\" to enable JNI-compatible TonLib API.")
-option(TON_USE_ASAN "Use \"ON\" to enable AddressSanitizer." OFF)
-option(TON_USE_TSAN "Use \"ON\" to enable ThreadSanitizer." OFF)
-option(TON_USE_UBSAN "Use \"ON\" to enable UndefinedBehaviorSanitizer." OFF)
-set(TON_ARCH "native" CACHE STRING "Architecture, will be passed to -march=")
+option(ION_USE_ASAN "Use \"ON\" to enable AddressSanitizer." OFF)
+option(ION_USE_TSAN "Use \"ON\" to enable ThreadSanitizer." OFF)
+option(ION_USE_UBSAN "Use \"ON\" to enable UndefinedBehaviorSanitizer." OFF)
+set(ION_ARCH "native" CACHE STRING "Architecture, will be passed to -march=")
 
 #BEGIN M1 support
 EXECUTE_PROCESS( COMMAND uname -m COMMAND tr -d '\n' OUTPUT_VARIABLE ARCHITECTURE )
 
 if ((ARCHITECTURE MATCHES "arm64") AND (CMAKE_SYSTEM_NAME STREQUAL "Darwin") AND
     (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 13.0)) # only clang 13+ supports cpu=apple-m1
-    set(TON_ARCH "apple-m1")
+    set(ION_ARCH "apple-m1")
 endif()
 #END M1 support
 
-if (TON_USE_ABSEIL)
+if (ION_USE_ABSEIL)
   message("Add abseil-cpp")
   set(ABSL_PROPAGATE_CXX_STD TRUE)
   add_subdirectory(third-party/abseil-cpp EXCLUDE_FROM_ALL)
@@ -149,7 +149,7 @@ else()
 endif()
 set(CRC32C_FOUND 1)
 
-if (TON_USE_ROCKSDB)
+if (ION_USE_ROCKSDB)
   if (ANDROID)
     set(PORTABLE ON CACHE BOOL "portable")
   endif()
@@ -180,7 +180,7 @@ if (USE_LIBRAPTORQ)
   add_subdirectory(third-party/libraptorq EXCLUDE_FROM_ALL)
 endif()
 
-message("Add ton")
+message("Add ion")
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake" ${CMAKE_MODULE_PATH})
 
 include(BuildBLST)
@@ -221,21 +221,21 @@ else()
 endif()
 
 
-if (TON_ARCH AND NOT MSVC)
-  CHECK_CXX_COMPILER_FLAG( "-march=${TON_ARCH}" COMPILER_OPT_ARCH_SUPPORTED )
-  if (TON_ARCH STREQUAL "apple-m1")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mcpu=${TON_ARCH}")	
+if (ION_ARCH AND NOT MSVC)
+  CHECK_CXX_COMPILER_FLAG( "-march=${ION_ARCH}" COMPILER_OPT_ARCH_SUPPORTED )
+  if (ION_ARCH STREQUAL "apple-m1")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mcpu=${ION_ARCH}")	
   elseif(COMPILER_OPT_ARCH_SUPPORTED)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=${TON_ARCH}")
-  elseif(NOT TON_ARCH STREQUAL "native")
-    message(FATAL_ERROR "Compiler doesn't support arch ${TON_ARCH}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=${ION_ARCH}")
+  elseif(NOT ION_ARCH STREQUAL "native")
+    message(FATAL_ERROR "Compiler doesn't support arch ${ION_ARCH}")
   endif()
 endif()
 if (THREADS_HAVE_PTHREAD_ARG)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 endif()
 
-if (TON_USE_JEMALLOC)
+if (ION_USE_JEMALLOC)
   find_package(jemalloc REQUIRED)
 endif()
 
@@ -282,7 +282,7 @@ elseif (CLANG OR GCC)
       set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--gc-sections -Wl,--exclude-libs,ALL")
     endif()
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--gc-sections")
-    if (NOT TON_USE_ASAN AND NOT TON_USE_TSAN AND NOT MEMPROF)
+    if (NOT ION_USE_ASAN AND NOT ION_USE_TSAN AND NOT MEMPROF)
       if (NOT USE_EMSCRIPTEN)
         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--exclude-libs,ALL")
       endif()
@@ -350,20 +350,20 @@ add_cxx_compiler_flag("-Wno-redundant-move")
 if (CLANG)
   #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
 endif()
-if (TON_USE_ASAN)
+if (ION_USE_ASAN)
   if (CLANG)
     add_cxx_compiler_flag("-stdlib=libc++")
   endif()
   add_cxx_compiler_flag("-fsanitize=address")
   add_definitions(-DTD_USE_ASAN=1)
 endif()
-if (TON_USE_TSAN)
+if (ION_USE_TSAN)
   if (CLANG)
     add_cxx_compiler_flag("-stdlib=libc++")
   endif()
   add_cxx_compiler_flag("-fsanitize=thread")
 endif()
-if (TON_USE_UBSAN)
+if (ION_USE_UBSAN)
   if (CLANG)
     add_cxx_compiler_flag("-stdlib=libc++")
   endif()
@@ -382,9 +382,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 find_package(LATEX)
 if (LATEX_FOUND)
   include(UseLATEX)
-  add_latex_document(doc/ton.tex TARGET_NAME ton_white_paper)
-  add_latex_document(doc/tvm.tex TARGET_NAME ton_vm_description)
-  add_latex_document(doc/tblkch.tex TARGET_NAME ton_blockchain_description)
+  add_latex_document(doc/ion.tex TARGET_NAME ion_white_paper)
+  add_latex_document(doc/tvm.tex TARGET_NAME ion_vm_description)
+  add_latex_document(doc/tblkch.tex TARGET_NAME ice_blockchain_description)
   add_latex_document(doc/fiftbase.tex TARGET_NAME fift_basic_description)
   add_latex_document(doc/catchain.tex TARGET_NAME catchain_consensus_description)
 endif()
@@ -407,7 +407,7 @@ add_subdirectory(tdutils)
 add_subdirectory(memprof)
 add_subdirectory(tdactor)
 add_subdirectory(tdnet)
-if (TON_USE_ROCKSDB)
+if (ION_USE_ROCKSDB)
   option(TDDB_USE_ROCKSDB "Use rockdb" ON)
 endif()
 add_subdirectory(tddb)
@@ -427,7 +427,7 @@ add_subdirectory(tonlib)
 #END tonlib
 
 #BEGIN internal
-if (NOT TON_ONLY_TONLIB)
+if (NOT ION_ONLY_TONLIB)
 add_subdirectory(common)
 add_subdirectory(tdfec)
 add_subdirectory(keyring)
@@ -460,23 +460,23 @@ endif()
 
 #TESTS
 add_executable(test-ed25519 test/test-td-main.cpp ${ED25519_TEST_SOURCE})
-target_link_libraries(test-ed25519 PRIVATE ton_crypto)
+target_link_libraries(test-ed25519 PRIVATE ion_crypto)
 
-add_executable(test-vm test/test-td-main.cpp ${TONVM_TEST_SOURCE})
-target_link_libraries(test-vm PRIVATE ton_crypto fift-lib)
+add_executable(test-vm test/test-td-main.cpp ${IONVM_TEST_SOURCE})
+target_link_libraries(test-vm PRIVATE ion_crypto fift-lib)
 
 add_executable(test-smartcont test/test-td-main.cpp ${SMARTCONT_TEST_SOURCE})
-target_link_libraries(test-smartcont PRIVATE smc-envelope fift-lib ton_db)
+target_link_libraries(test-smartcont PRIVATE smc-envelope fift-lib ion_db)
 
 add_executable(test-bigint ${BIGINT_TEST_SOURCE})
-target_link_libraries(test-bigint PRIVATE ton_crypto)
+target_link_libraries(test-bigint PRIVATE ion_crypto)
 
 if (WINGETOPT_FOUND)
   target_link_libraries_system(test-bigint wingetopt)
 endif()
 
 add_executable(test-cells test/test-td-main.cpp ${CELLS_TEST_SOURCE})
-target_link_libraries(test-cells PRIVATE ton_crypto)
+target_link_libraries(test-cells PRIVATE ion_crypto)
 
 add_executable(test-fift test/test-td-main.cpp ${FIFT_TEST_SOURCE})
 target_link_libraries(test-fift PRIVATE fift-lib)
@@ -496,10 +496,10 @@ target_link_libraries(test-net PRIVATE tdnet tdutils ${CMAKE_THREAD_LIBS_INIT})
 
 #BEGIN tonlib
 add_executable(test-tonlib ${TONLIB_ONLINE_TEST_SOURCE})
-target_link_libraries(test-tonlib tdactor adnllite tl_api ton_crypto tl_tonlib_api tonlib)
+target_link_libraries(test-tonlib tdactor adnllite tl_api ion_crypto tl_tonlib_api tonlib)
 
 add_executable(test-tonlib-offline test/test-td-main.cpp ${TONLIB_OFFLINE_TEST_SOURCE})
-target_link_libraries(test-tonlib-offline tdactor adnllite tl_api ton_crypto fift-lib tl_tonlib_api tonlib)
+target_link_libraries(test-tonlib-offline tdactor adnllite tl_api ion_crypto fift-lib tl_tonlib_api tonlib)
 
 if (NOT CMAKE_CROSSCOMPILING)
   add_dependencies(test-tonlib-offline gen_fif)
@@ -507,12 +507,12 @@ endif()
 #END tonlib
 
 #BEGIN internal
-if (NOT TON_ONLY_TONLIB)
-add_executable(test-db test/test-td-main.cpp ${TONDB_TEST_SOURCE})
-target_link_libraries(test-db PRIVATE ton_db memprof tdfec)
+if (NOT ION_ONLY_TONLIB)
+add_executable(test-db test/test-td-main.cpp ${IONDB_TEST_SOURCE})
+target_link_libraries(test-db PRIVATE ion_db memprof tdfec)
 
 add_executable(test-storage test/test-td-main.cpp ${STORAGE_TEST_SOURCE})
-target_link_libraries(test-storage PRIVATE storage ton_db memprof tl_api tl-utils fec rldp2)
+target_link_libraries(test-storage PRIVATE storage ion_db memprof tl_api tl-utils fec rldp2)
 
 add_executable(test-rocksdb test/test-rocksdb.cpp)
 target_link_libraries(test-rocksdb PRIVATE memprof tddb tdutils)
@@ -528,7 +528,7 @@ if (USE_LIBRAPTORQ)
 endif()
 
 add_executable(test-hello-world test/test-hello-world.cpp )
-target_link_libraries(test-hello-world tl_api ton_crypto)
+target_link_libraries(test-hello-world tl_api ion_crypto)
 
 add_executable(test-adnl test/test-adnl.cpp)
 target_link_libraries(test-adnl adnl adnltest dht tl_api)
@@ -546,12 +546,12 @@ target_link_libraries(test-overlay overlay tdutils tdactor adnl adnltest tl_api 
 add_executable(test-catchain test/test-catchain.cpp)
 target_link_libraries(test-catchain overlay tdutils tdactor adnl adnltest rldp tl_api dht
   catchain )
-add_executable(test-ton-collator test/test-ton-collator.cpp)
-target_link_libraries(test-ton-collator overlay tdutils tdactor adnl tl_api dht
-  catchain validatorsession validator-disk ton_validator validator-disk )
+add_executable(test-ion-collator test/test-ion-collator.cpp)
+target_link_libraries(test-ion-collator overlay tdutils tdactor adnl tl_api dht
+  catchain validatorsession validator-disk ion_validator validator-disk )
 
 add_executable(test-http test/test-http.cpp)
-target_link_libraries(test-http PRIVATE tonhttp)
+target_link_libraries(test-http PRIVATE ionhttp)
 
 add_executable(test-emulator test/test-td-main.cpp emulator/test/emulator-tests.cpp)
 target_link_libraries(test-emulator PRIVATE emulator)
@@ -565,13 +565,13 @@ if (HAS_PARENT)
           ${TDDB_TEST_SOURCE}
           ${FEC_TEST_SOURCE}
           ${ED25519_TEST_SOURCE}
-          ${TONDB_TEST_SOURCE}
+          ${IONDB_TEST_SOURCE}
           ${BIGNUM_TEST_SOURCE}
-          ${CELLS_TEST_SOURCE} # ${TONVM_TEST_SOURCE} ${FIFT_TEST_SOURCE} ${TONLIB_ONLINE_TEST_SOURCE}
+          ${CELLS_TEST_SOURCE} # ${IONVM_TEST_SOURCE} ${FIFT_TEST_SOURCE} ${TONLIB_ONLINE_TEST_SOURCE}
           PARENT_SCOPE)
 endif()
 add_library(all_tests INTERFACE)
-target_link_libraries(all_tests INTERFACE tdutils tdactor tdnet tdfec ton_db ton_crypto fift-lib)
+target_link_libraries(all_tests INTERFACE tdutils tdactor tdnet tdfec ion_db ion_crypto fift-lib)
 endif()
 #END internal
 
@@ -659,7 +659,7 @@ if (NOT NIX)
 endif()
 
 #BEGIN internal
-if (NOT TON_ONLY_TONLIB)
+if (NOT ION_ONLY_TONLIB)
 add_test(test-adnl test-adnl)
 add_test(test-dht test-dht)
 add_test(test-rldp test-rldp)

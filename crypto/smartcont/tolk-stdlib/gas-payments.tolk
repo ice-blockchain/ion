@@ -13,7 +13,7 @@ fun getGasConsumedAtTheMoment(): int
 /// and "accept" it to blockchain.
 /// Without calling this function, an external message would be discarded.
 /// As an effect, the current smart contract agrees to buy some gas to finish the current transaction.
-/// For more details, check [accept_message effects](https://ton.org/docs/#/smart-contracts/accept).
+/// For more details, check [accept_message effects](https://docs.ice.io/#/smart-contracts/accept).
 fun acceptExternalMessage(): void
     asm "ACCEPT";
 
@@ -32,24 +32,24 @@ fun setGasLimitToMaximum(): void
 fun setGasLimit(limit: int): void
     asm "SETGASLIMIT";
 
-/// Calculates fee (amount in nanotoncoins to be paid) for a transaction which consumed [gasUsed] gas units.
+/// Calculates fee (amount in nanoioncoins to be paid) for a transaction which consumed [gasUsed] gas units.
 fun calculateGasFee(workchain: int, gasUsed: int): int
     asm(gasUsed workchain) "GETGASFEE";
 
-/// Same as [calculateGasFee], but without flat price (you have supposed to read https://docs.ton.org/develop/howto/fees-low-level)
+/// Same as [calculateGasFee], but without flat price (you have supposed to read https://docs.ion.org/develop/howto/fees-low-level)
 fun calculateGasFeeWithoutFlatPrice(workchain: int, gasUsed: int): int
     asm(gasUsed workchain) "GETGASFEESIMPLE";
 
-/// Calculates amount of nanotoncoins you should pay for storing a contract of provided size for [seconds].
+/// Calculates amount of nanoioncoins you should pay for storing a contract of provided size for [seconds].
 /// [bits] and [cells] represent contract state (code + data).
 fun calculateStorageFee(workchain: int, seconds: int, bits: int, cells: int): int
     asm(cells bits seconds workchain) "GETSTORAGEFEE";
 
-/// Calculates amount of nanotoncoins you should pay to send a message of specified size.
+/// Calculates amount of nanoioncoins you should pay to send a message of specified size.
 fun calculateMessageFee(workchain: int, bits: int, cells: int): int
     asm(cells bits workchain) "GETFORWARDFEE";
 
-/// Same as [calculateMessageFee], but without lump price (you have supposed to read https://docs.ton.org/develop/howto/fees-low-level)
+/// Same as [calculateMessageFee], but without lump price (you have supposed to read https://docs.ion.org/develop/howto/fees-low-level)
 fun calculateMessageFeeWithoutLumpPrice(workchain: int, bits: int, cells: int): int
     asm(cells bits workchain) "GETFORWARDFEESIMPLE";
 
@@ -57,12 +57,12 @@ fun calculateMessageFeeWithoutLumpPrice(workchain: int, bits: int, cells: int): 
 fun calculateOriginalMessageFee(workchain: int, incomingFwdFee: int): int
     asm(incomingFwdFee workchain) "GETORIGINALFWDFEE";
 
-/// Returns the amount of nanotoncoins current contract debts for storage. ("due" and "debt" are synonyms)
+/// Returns the amount of nanoioncoins current contract debts for storage. ("due" and "debt" are synonyms)
 /// If it has no debt, `0` is returned.
 fun getMyStorageDuePayment(): int
     asm "DUEPAYMENT";
 
-/// Returns the amount of nanotoncoins charged for storage.
+/// Returns the amount of nanoioncoins charged for storage.
 /// (during storage phase preceeding to current computation phase)
 @pure
 fun getMyStoragePaidPayment(): int

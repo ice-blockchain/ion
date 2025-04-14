@@ -1,28 +1,28 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
 #include "rldp-in.hpp"
-#include "auto/tl/ton_api.h"
-#include "auto/tl/ton_api.hpp"
+#include "auto/tl/ion_api.h"
+#include "auto/tl/ion_api.hpp"
 #include "td/utils/Random.h"
 #include "fec/fec.h"
 
-namespace ton {
+namespace ion {
 
 namespace rldp {
 
@@ -44,7 +44,7 @@ void RldpIn::send_message(adnl::AdnlNodeIdShort src, adnl::AdnlNodeIdShort dst, 
   td::Bits256 id;
   td::Random::secure_bytes(id.as_slice());
 
-  auto B = serialize_tl_object(create_tl_object<ton_api::rldp_message>(id, std::move(data)), true);
+  auto B = serialize_tl_object(create_tl_object<ion_api::rldp_message>(id, std::move(data)), true);
 
   transfer(src, dst, td::Timestamp::in(10.0), std::move(B));
 }
@@ -54,7 +54,7 @@ void RldpIn::send_message_ex(adnl::AdnlNodeIdShort src, adnl::AdnlNodeIdShort ds
   td::Bits256 id;
   td::Random::secure_bytes(id.as_slice());
 
-  auto B = serialize_tl_object(create_tl_object<ton_api::rldp_message>(id, std::move(data)), true);
+  auto B = serialize_tl_object(create_tl_object<ion_api::rldp_message>(id, std::move(data)), true);
 
   transfer(src, dst, timeout, std::move(B));
 }
@@ -65,7 +65,7 @@ void RldpIn::send_query_ex(adnl::AdnlNodeIdShort src, adnl::AdnlNodeIdShort dst,
   auto query_id = adnl::AdnlQuery::random_query_id();
 
   auto date = static_cast<td::uint32>(timeout.at_unix()) + 1;
-  auto B = serialize_tl_object(create_tl_object<ton_api::rldp_query>(query_id, max_answer_size, date, std::move(data)),
+  auto B = serialize_tl_object(create_tl_object<ion_api::rldp_query>(query_id, max_answer_size, date, std::move(data)),
                                true);
 
   auto transfer_id = transfer(src, dst, timeout, std::move(B));
@@ -82,7 +82,7 @@ void RldpIn::send_query_ex(adnl::AdnlNodeIdShort src, adnl::AdnlNodeIdShort dst,
 
 void RldpIn::answer_query(adnl::AdnlNodeIdShort src, adnl::AdnlNodeIdShort dst, td::Timestamp timeout,
                           adnl::AdnlQueryId query_id, TransferId transfer_id, td::BufferSlice data) {
-  auto B = serialize_tl_object(create_tl_object<ton_api::rldp_answer>(query_id, std::move(data)), true);
+  auto B = serialize_tl_object(create_tl_object<ion_api::rldp_answer>(query_id, std::move(data)), true);
 
   transfer(src, dst, timeout, std::move(B), transfer_id);
 }
@@ -93,17 +93,17 @@ void RldpIn::alarm_query(adnl::AdnlQueryId query_id, TransferId transfer_id) {
 }
 
 void RldpIn::receive_message_part(adnl::AdnlNodeIdShort source, adnl::AdnlNodeIdShort local_id, td::BufferSlice data) {
-  auto F = fetch_tl_object<ton_api::rldp_MessagePart>(std::move(data), true);
+  auto F = fetch_tl_object<ion_api::rldp_MessagePart>(std::move(data), true);
   if (F.is_error()) {
     VLOG(RLDP_INFO) << "failed to parse rldp packet [" << source << "->" << local_id << "]: " << F.move_as_error();
     return;
   }
 
-  ton_api::downcast_call(*F.move_as_ok().get(), [&](auto &obj) { this->process_message_part(source, local_id, obj); });
+  ion_api::downcast_call(*F.move_as_ok().get(), [&](auto &obj) { this->process_message_part(source, local_id, obj); });
 }
 
 void RldpIn::process_message_part(adnl::AdnlNodeIdShort source, adnl::AdnlNodeIdShort local_id,
-                                  ton_api::rldp_messagePart &part) {
+                                  ion_api::rldp_messagePart &part) {
   auto it = receivers_.find(part.transfer_id_);
   if (it == receivers_.end()) {
     if (part.part_ != 0) {
@@ -128,7 +128,7 @@ void RldpIn::process_message_part(adnl::AdnlNodeIdShort source, adnl::AdnlNodeId
       }
     }
     if (lru_set_.count(part.transfer_id_) == 1) {
-      auto obj = create_tl_object<ton_api::rldp_complete>(part.transfer_id_, part.part_);
+      auto obj = create_tl_object<ion_api::rldp_complete>(part.transfer_id_, part.part_);
       td::actor::send_closure(adnl_, &adnl::Adnl::send_message, local_id, source, serialize_tl_object(obj, true));
       return;
     }
@@ -157,7 +157,7 @@ void RldpIn::process_message_part(adnl::AdnlNodeIdShort source, adnl::AdnlNodeId
 }
 
 void RldpIn::process_message_part(adnl::AdnlNodeIdShort source, adnl::AdnlNodeIdShort local_id,
-                                  ton_api::rldp_confirm &part) {
+                                  ion_api::rldp_confirm &part) {
   auto it = senders_.find(part.transfer_id_);
   if (it != senders_.end()) {
     td::actor::send_closure(it->second, &RldpTransferSender::confirm, part.part_, part.seqno_);
@@ -165,7 +165,7 @@ void RldpIn::process_message_part(adnl::AdnlNodeIdShort source, adnl::AdnlNodeId
 }
 
 void RldpIn::process_message_part(adnl::AdnlNodeIdShort source, adnl::AdnlNodeIdShort local_id,
-                                  ton_api::rldp_complete &part) {
+                                  ion_api::rldp_complete &part) {
   auto it = senders_.find(part.transfer_id_);
   if (it != senders_.end()) {
     td::actor::send_closure(it->second, &RldpTransferSender::complete, part.part_);
@@ -174,23 +174,23 @@ void RldpIn::process_message_part(adnl::AdnlNodeIdShort source, adnl::AdnlNodeId
 
 void RldpIn::receive_message(adnl::AdnlNodeIdShort source, adnl::AdnlNodeIdShort local_id, TransferId transfer_id,
                              td::BufferSlice data) {
-  auto F = fetch_tl_object<ton_api::rldp_Message>(std::move(data), true);
+  auto F = fetch_tl_object<ion_api::rldp_Message>(std::move(data), true);
   if (F.is_error()) {
     VLOG(RLDP_INFO) << "failed to parse rldp packet [" << source << "->" << local_id << "]: " << F.move_as_error();
     return;
   }
 
-  ton_api::downcast_call(*F.move_as_ok().get(),
+  ion_api::downcast_call(*F.move_as_ok().get(),
                          [&](auto &obj) { this->process_message(source, local_id, transfer_id, obj); });
 }
 
 void RldpIn::process_message(adnl::AdnlNodeIdShort source, adnl::AdnlNodeIdShort local_id, TransferId transfer_id,
-                             ton_api::rldp_message &message) {
+                             ion_api::rldp_message &message) {
   td::actor::send_closure(adnl_, &adnl::AdnlPeerTable::deliver, source, local_id, std::move(message.data_));
 }
 
 void RldpIn::process_message(adnl::AdnlNodeIdShort source, adnl::AdnlNodeIdShort local_id, TransferId transfer_id,
-                             ton_api::rldp_query &message) {
+                             ion_api::rldp_query &message) {
   auto P = td::PromiseCreator::lambda([SelfId = actor_id(this), source, local_id,
                                        timeout = td::Timestamp::at_unix(message.timeout_), query_id = message.query_id_,
                                        max_answer_size = static_cast<td::uint64>(message.max_answer_size_),
@@ -213,7 +213,7 @@ void RldpIn::process_message(adnl::AdnlNodeIdShort source, adnl::AdnlNodeIdShort
 }
 
 void RldpIn::process_message(adnl::AdnlNodeIdShort source, adnl::AdnlNodeIdShort local_id, TransferId transfer_id,
-                             ton_api::rldp_answer &message) {
+                             ion_api::rldp_answer &message) {
   auto it = queries_.find(message.query_id_);
   if (it != queries_.end()) {
     td::actor::send_closure(it->second, &adnl::AdnlQuery::result, std::move(message.data_));
@@ -250,9 +250,9 @@ void RldpIn::add_id(adnl::AdnlNodeIdShort local_id) {
     return;
   }
 
-  std::vector<std::string> X{adnl::Adnl::int_to_bytestring(ton_api::rldp_messagePart::ID),
-                             adnl::Adnl::int_to_bytestring(ton_api::rldp_confirm::ID),
-                             adnl::Adnl::int_to_bytestring(ton_api::rldp_complete::ID)};
+  std::vector<std::string> X{adnl::Adnl::int_to_bytestring(ion_api::rldp_messagePart::ID),
+                             adnl::Adnl::int_to_bytestring(ion_api::rldp_confirm::ID),
+                             adnl::Adnl::int_to_bytestring(ion_api::rldp_complete::ID)};
   for (auto &x : X) {
     td::actor::send_closure(adnl_, &adnl::Adnl::subscribe, local_id, x, make_adnl_callback());
   }
@@ -290,4 +290,4 @@ td::actor::ActorOwn<Rldp> Rldp::create(td::actor::ActorId<adnl::Adnl> adnl) {
 
 }  // namespace rldp
 
-}  // namespace ton
+}  // namespace ion

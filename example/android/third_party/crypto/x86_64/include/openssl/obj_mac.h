@@ -1491,9 +1491,9 @@
 #define NID_sbgp_ipAddrBlock            290
 #define OBJ_sbgp_ipAddrBlock            OBJ_id_pe,7L
 
-#define SN_sbgp_autonomousSysNum                "sbgp-autonomousSysNum"
-#define NID_sbgp_autonomousSysNum               291
-#define OBJ_sbgp_autonomousSysNum               OBJ_id_pe,8L
+#define SN_sbgp_auionomousSysNum                "sbgp-auionomousSysNum"
+#define NID_sbgp_auionomousSysNum               291
+#define OBJ_sbgp_auionomousSysNum               OBJ_id_pe,8L
 
 #define SN_sbgp_routerIdentifier                "sbgp-routerIdentifier"
 #define NID_sbgp_routerIdentifier               292

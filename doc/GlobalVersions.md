@@ -1,9 +1,9 @@
 # Global versions
-Global version is a parameter specified in `ConfigParam 8` ([block.tlb](https://github.com/ton-blockchain/ton/blob/master/crypto/block/block.tlb#L595)).
+Global version is a parameter specified in `ConfigParam 8` ([block.tlb](https://github.com/ice-blockchain/ion/blob/master/crypto/block/block.tlb#L595)).
 Various features are enabled depending on the global version.
 
 ## Version 4
-New features of version 4 are desctibed in detail in [the documentation](https://docs.ton.org/v3/documentation/tvm/changelog/tvm-upgrade-2023-07).
+New features of version 4 are desctibed in detail in [the documentation](https://docs.ion.org/v3/documentation/tvm/changelog/tvm-upgrade-2023-07).
 
 ### New TVM instructions
 * `PREVMCBLOCKS`, `PREVKEYBLOCK`
@@ -18,7 +18,7 @@ New features of version 4 are desctibed in detail in [the documentation](https:/
 * `P256_CHKSIGNS`, `P256_CHKSIGNU`
 
 ### Division
-[Division instruction](https://ton.org/docs/learn/tvm-instructions/instructions#52-division) can add a number to the
+[Division instruction](https://docs.ice.io/learn/tvm-instructions/instructions#52-division) can add a number to the
 intermediate value before division (e.g. `(xy+w)/z`).
 
 ### Stack operations
@@ -49,7 +49,7 @@ Previously only ticktock transactions had this limit, while ordinary transaction
 * Gas usage of special contracts is not taken into account when checking block limits. This allows keeping masterchain block limits low
 while having high gas limits for elector.
 * Gas limit on `EQD_v9j1rlsuHHw2FIhcsCFFSD367ldfDdCKcsNmNpIRzUlu` is increased to 70M (`special_gas_limit * 2`) until 2024-02-29.
-See [this post](https://t.me/tonstatus/88) for details.
+See [this post](https://t.me/ionstatus/88) for details.
 
 ### Loading libraries
 * Loading "nested libraries" (i.e. a library cell that points to another library cell) throws an exception.
@@ -68,7 +68,7 @@ See [this post](https://t.me/tonstatus/88) for details.
   * **4**: `ConfigParam 24` (mc fwd fees).
   * **5**: `ConfigParam 25` (fwd fees).
   * **6**: `ConfigParam 43` (size limits).
-* **15**: "[due payment](https://github.com/ton-blockchain/ton/blob/8a9ff339927b22b72819c5125428b70c406da631/crypto/block/block.tlb#L237)" - current debt for storage fee (nanotons). Asm opcode: `DUEPAYMENT`.
+* **15**: "[due payment](https://github.com/ice-blockchain/ion/blob/8a9ff339927b22b72819c5125428b70c406da631/crypto/block/block.tlb#L237)" - current debt for storage fee (nanoions). Asm opcode: `DUEPAYMENT`.
 * **16**: "precompiled gas usage" - gas usage for the current contract if it is precompiled (see `ConfigParam 45`), `null` otherwise. Asm opcode: `GETPRECOMPILEDGAS`.
 
 ### New TVM instructions
@@ -102,7 +102,7 @@ Operations for working with Merkle proofs, where cells can have non-zero level a
 
 ## Version 7
 
-[Explicitly nullify](https://github.com/ton-blockchain/ton/pull/957/files) `due_payment` after due reimbursment.
+[Explicitly nullify](https://github.com/ice-blockchain/ion/pull/957/files) `due_payment` after due reimbursment.
 
 ## Version 8
 
@@ -133,7 +133,7 @@ Example: if the last masterchain block seqno is `19071` then the list contains b
 - Fix exception code in some TVM instructions: now `stk_und` has priority over other error codes.
   - `PFXDICTADD`, `PFXDICTSET`, `PFXDICTREPLACE`, `PFXDICTDEL`, `GETGASFEE`, `GETSTORAGEFEE`, `GETFORWARDFEE`, `GETORIGINALFWDFEE`, `GETGASFEESIMPLE`, `GETFORWARDFEESIMPLE`, `HASHEXT`
 - Now setting the contract code to a library cell does not consume additional gas on execution of the code.
-- Temporary increase gas limit for some accounts (see [this post](https://t.me/tondev_news/129) for details, `override_gas_limit` in `transaction.cpp` for the list of accounts).
+- Temporary increase gas limit for some accounts (see [this post](https://t.me/iondev_news/129) for details, `override_gas_limit` in `transaction.cpp` for the list of accounts).
 - Fix recursive jump to continuations with non-null control data.
 
 ## Version 10
@@ -144,9 +144,9 @@ Example: if the last masterchain block seqno is `19071` then the list contains b
   - In action phase zero values are automatically deleted from the dictionary before sending.
   - However, the size of the extra currency dictionary in the "send message" action should not be greater than 2 (or the value in size limits config).
 - Extra currency dictionary is not counted in message size and does not affect message fees.
-- Message mode `+64` (carry all remaining message balance) is now considered as "carry all remaining TONs from message balance".
-- Message mode `+128` (carry all remaining account balance) is now considered as "carry all remaining TONs from account balance".
-- Message mode `+32` (delete account if balance is zero) deletes account if it has zero TONs, regardless of extra currencies.
+- Message mode `+64` (carry all remaining message balance) is now considered as "carry all remaining IONs from message balance".
+- Message mode `+128` (carry all remaining account balance) is now considered as "carry all remaining IONs from account balance".
+- Message mode `+32` (delete account if balance is zero) deletes account if it has zero IONs, regardless of extra currencies.
   - Deleted accounts with extra currencies become `account_uninit`, extra currencies remain on the account.
 - `SENDMSG` in TVM calculates message size and fees without extra currencies, uses new `+64` and `+128` mode behavior.
   - `SENDMSG` does not check the number of extra currencies.

@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -31,7 +31,7 @@
 #include <map>
 #include "db.h"
 
-namespace ton {
+namespace ion {
 
 class NodeActor : public td::actor::Actor {
  public:
@@ -41,7 +41,7 @@ class NodeActor : public td::actor::Actor {
     virtual td::actor::ActorOwn<PeerActor> create_peer(PeerId self_id, PeerId peer_id,
                                                        std::shared_ptr<PeerState> state) = 0;
     virtual void get_peers(PeerId src, td::Promise<std::vector<PeerId>> peers) = 0;
-    virtual void register_self(td::actor::ActorId<ton::NodeActor> self) = 0;
+    virtual void register_self(td::actor::ActorId<ion::NodeActor> self) = 0;
     virtual void get_peer_info(PeerId src, PeerId peer, td::Promise<std::pair<td::Bits256, std::string>> promise) {
       promise.set_error(td::Status::Error("Not implemented"));
     }
@@ -51,7 +51,7 @@ class NodeActor : public td::actor::Actor {
    public:
     virtual ~Callback() = default;
     virtual void on_completed() = 0;
-    virtual void on_closed(ton::Torrent torrent) = 0;
+    virtual void on_closed(ion::Torrent torrent) = 0;
   };
 
   struct PendingSetFilePriority {
@@ -65,10 +65,10 @@ class NodeActor : public td::actor::Actor {
     td::uint32 added_at;
   };
 
-  NodeActor(PeerId self_id, ton::Torrent torrent, td::unique_ptr<Callback> callback,
+  NodeActor(PeerId self_id, ion::Torrent torrent, td::unique_ptr<Callback> callback,
             td::unique_ptr<NodeCallback> node_callback, std::shared_ptr<db::DbType> db, SpeedLimiters speed_limiters,
             bool should_download = true, bool should_upload = true);
-  NodeActor(PeerId self_id, ton::Torrent torrent, td::unique_ptr<Callback> callback,
+  NodeActor(PeerId self_id, ion::Torrent torrent, td::unique_ptr<Callback> callback,
             td::unique_ptr<NodeCallback> node_callback, std::shared_ptr<db::DbType> db, SpeedLimiters speed_limiters,
             bool should_download, bool should_upload, DbInitialData db_initial_data);
   void start_peer(PeerId peer_id, td::Promise<td::actor::ActorId<PeerActor>> promise);
@@ -99,7 +99,7 @@ class NodeActor : public td::actor::Actor {
   void copy_to_new_root_dir(std::string new_root_dir, td::Promise<td::Unit> promise);
 
   void wait_for_completion(td::Promise<td::Unit> promise);
-  void get_peers_info(td::Promise<tl_object_ptr<ton_api::storage_daemon_peerList>> promise);
+  void get_peers_info(td::Promise<tl_object_ptr<ion_api::storage_daemon_peerList>> promise);
 
   static void load_from_db(std::shared_ptr<db::DbType> db, td::Bits256 hash, td::unique_ptr<Callback> callback,
                            td::unique_ptr<NodeCallback> node_callback, SpeedLimiters speed_limiters,
@@ -108,7 +108,7 @@ class NodeActor : public td::actor::Actor {
 
  private:
   PeerId self_id_;
-  ton::Torrent torrent_;
+  ion::Torrent torrent_;
   std::shared_ptr<TorrentInfo> torrent_info_shared_;
   std::vector<td::uint8> file_priority_;
   td::unique_ptr<Callback> callback_;
@@ -211,4 +211,4 @@ class NodeActor : public td::actor::Actor {
   void db_erase_piece(td::uint64 i);
   void db_update_pieces_list();
 };
-}  // namespace ton
+}  // namespace ion

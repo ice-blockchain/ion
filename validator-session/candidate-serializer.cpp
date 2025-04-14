@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "candidate-serializer.h"
 #include "tl-utils/tl-utils.hpp"
@@ -20,31 +20,31 @@
 #include "td/utils/lz4.h"
 #include "validator-session-types.h"
 
-namespace ton::validatorsession {
+namespace ion::validatorsession {
 
-td::Result<td::BufferSlice> serialize_candidate(const tl_object_ptr<ton_api::validatorSession_candidate>& block,
+td::Result<td::BufferSlice> serialize_candidate(const tl_object_ptr<ion_api::validatorSession_candidate>& block,
                                                 bool compression_enabled) {
   if (!compression_enabled) {
     return serialize_tl_object(block, true);
   }
   size_t decompressed_size;
   TRY_RESULT(compressed, compress_candidate_data(block->data_, block->collated_data_, decompressed_size))
-  return create_serialize_tl_object<ton_api::validatorSession_compressedCandidate>(
+  return create_serialize_tl_object<ion_api::validatorSession_compressedCandidate>(
       0, block->src_, block->round_, block->root_hash_, (int)decompressed_size, std::move(compressed));
 }
 
-td::Result<tl_object_ptr<ton_api::validatorSession_candidate>> deserialize_candidate(td::Slice data,
+td::Result<tl_object_ptr<ion_api::validatorSession_candidate>> deserialize_candidate(td::Slice data,
                                                                                      bool compression_enabled,
                                                                                      int max_decompressed_data_size) {
   if (!compression_enabled) {
-    return fetch_tl_object<ton_api::validatorSession_candidate>(data, true);
+    return fetch_tl_object<ion_api::validatorSession_candidate>(data, true);
   }
-  TRY_RESULT(f, fetch_tl_object<ton_api::validatorSession_compressedCandidate>(data, true));
+  TRY_RESULT(f, fetch_tl_object<ion_api::validatorSession_compressedCandidate>(data, true));
   if (f->decompressed_size_ > max_decompressed_data_size) {
     return td::Status::Error("decompressed size is too big");
   }
   TRY_RESULT(p, decompress_candidate_data(f->data_, f->decompressed_size_));
-  return create_tl_object<ton_api::validatorSession_candidate>(f->src_, f->round_, f->root_hash_, std::move(p.first),
+  return create_tl_object<ion_api::validatorSession_candidate>(f->src_, f->round_, f->root_hash_, std::move(p.first),
                                                                std::move(p.second));
 }
 
@@ -85,4 +85,4 @@ td::Result<std::pair<td::BufferSlice, td::BufferSlice>> decompress_candidate_dat
   return std::make_pair(std::move(block_data), std::move(collated_data));
 }
 
-}  // namespace ton::validatorsession
+}  // namespace ion::validatorsession

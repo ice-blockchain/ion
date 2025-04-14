@@ -1,29 +1,29 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
 #include "adnl-address-list.hpp"
 #include "adnl-peer-table.h"
-#include "auto/tl/ton_api.hpp"
+#include "auto/tl/ion_api.hpp"
 #include "td/utils/overloaded.h"
 #include "td/net/UdpServer.h"
 #include "keys/encryptor.h"
 
-namespace ton {
+namespace ion {
 
 namespace adnl {
 
@@ -152,7 +152,7 @@ td::actor::ActorOwn<AdnlNetworkConnection> AdnlAddressUdp::create_connection(
   return td::actor::create_actor<AdnlNetworkConnectionUdp>("udpconn", network_manager, ip_, port_, std::move(callback));
 }
 
-AdnlAddressUdp::AdnlAddressUdp(const ton_api::adnl_address_udp &obj) {
+AdnlAddressUdp::AdnlAddressUdp(const ion_api::adnl_address_udp &obj) {
   ip_ = obj.ip_;
   port_ = static_cast<td::uint16>(obj.port_);
 }
@@ -163,7 +163,7 @@ td::actor::ActorOwn<AdnlNetworkConnection> AdnlAddressUdp6::create_connection(
   return td::actor::create_actor<AdnlNetworkConnectionUdp>("udpconn", network_manager, ip_, port_, std::move(callback));
 }
 
-AdnlAddressUdp6::AdnlAddressUdp6(const ton_api::adnl_address_udp6 &obj) {
+AdnlAddressUdp6::AdnlAddressUdp6(const ion_api::adnl_address_udp6 &obj) {
   ip_ = obj.ip_;
   port_ = static_cast<td::uint16>(obj.port_);
 }
@@ -174,19 +174,19 @@ td::actor::ActorOwn<AdnlNetworkConnection> AdnlAddressTunnel::create_connection(
   return td::actor::create_actor<AdnlNetworkConnectionTunnel>("tunnelconn", network_manager, adnl, adnl_id_, pub_key_,
                                                               std::move(callback));
 }
-AdnlAddressTunnel::AdnlAddressTunnel(const ton_api::adnl_address_tunnel &obj) {
+AdnlAddressTunnel::AdnlAddressTunnel(const ion_api::adnl_address_tunnel &obj) {
   adnl_id_ = AdnlNodeIdShort{obj.to_};
-  pub_key_ = ton::PublicKey{obj.pubkey_};
+  pub_key_ = ion::PublicKey{obj.pubkey_};
 }
 
-td::Ref<AdnlAddressImpl> AdnlAddressImpl::create(const tl_object_ptr<ton_api::adnl_Address> &addr) {
+td::Ref<AdnlAddressImpl> AdnlAddressImpl::create(const tl_object_ptr<ion_api::adnl_Address> &addr) {
   td::Ref<AdnlAddressImpl> res = td::Ref<AdnlAddressImpl>{};
-  ton_api::downcast_call(
-      *const_cast<ton_api::adnl_Address *>(addr.get()),
-      td::overloaded([&](const ton_api::adnl_address_udp &obj) { res = td::make_ref<AdnlAddressUdp>(obj); },
-                     [&](const ton_api::adnl_address_udp6 &obj) { res = td::make_ref<AdnlAddressUdp6>(obj); },
-                     [&](const ton_api::adnl_address_tunnel &obj) { res = td::make_ref<AdnlAddressTunnel>(obj); },
-                     [&](const ton_api::adnl_address_reverse &obj) { res = td::make_ref<AdnlAddressReverse>(); }));
+  ion_api::downcast_call(
+      *const_cast<ion_api::adnl_Address *>(addr.get()),
+      td::overloaded([&](const ion_api::adnl_address_udp &obj) { res = td::make_ref<AdnlAddressUdp>(obj); },
+                     [&](const ion_api::adnl_address_udp6 &obj) { res = td::make_ref<AdnlAddressUdp6>(obj); },
+                     [&](const ion_api::adnl_address_tunnel &obj) { res = td::make_ref<AdnlAddressTunnel>(obj); },
+                     [&](const ion_api::adnl_address_reverse &obj) { res = td::make_ref<AdnlAddressReverse>(); }));
   return res;
 }
 
@@ -199,7 +199,7 @@ bool AdnlAddressList::public_only() const {
   return true;
 }
 
-AdnlAddressList::AdnlAddressList(const tl_object_ptr<ton_api::adnl_addressList> &addrs) {
+AdnlAddressList::AdnlAddressList(const tl_object_ptr<ion_api::adnl_addressList> &addrs) {
   version_ = static_cast<td::uint32>(addrs->version_);
   std::vector<td::Ref<AdnlAddressImpl>> vec;
   for (auto &addr : addrs->addrs_) {
@@ -216,15 +216,15 @@ AdnlAddressList::AdnlAddressList(const tl_object_ptr<ton_api::adnl_addressList> 
   expire_at_ = addrs->expire_at_;
 }
 
-tl_object_ptr<ton_api::adnl_addressList> AdnlAddressList::tl() const {
-  std::vector<tl_object_ptr<ton_api::adnl_Address>> addrs;
+tl_object_ptr<ion_api::adnl_addressList> AdnlAddressList::tl() const {
+  std::vector<tl_object_ptr<ion_api::adnl_Address>> addrs;
   for (auto &v : addrs_) {
     addrs.emplace_back(v->tl());
   }
   if (has_reverse_) {
-    addrs.push_back(create_tl_object<ton_api::adnl_address_reverse>());
+    addrs.push_back(create_tl_object<ion_api::adnl_address_reverse>());
   }
-  return create_tl_object<ton_api::adnl_addressList>(std::move(addrs), version_, reinit_date_, priority_, expire_at_);
+  return create_tl_object<ion_api::adnl_addressList>(std::move(addrs), version_, reinit_date_, priority_, expire_at_);
 }
 
 td::uint32 AdnlAddressList::serialized_size() const {
@@ -235,7 +235,7 @@ td::uint32 AdnlAddressList::serialized_size() const {
   return res;
 }
 
-td::Result<AdnlAddressList> AdnlAddressList::create(const tl_object_ptr<ton_api::adnl_addressList> &addr_list) {
+td::Result<AdnlAddressList> AdnlAddressList::create(const tl_object_ptr<ion_api::adnl_addressList> &addr_list) {
   auto A = AdnlAddressList{addr_list};
   if (A.serialized_size() > max_serialized_size()) {
     return td::Status::Error(ErrorCode::protoviolation, PSTRING() << "too big addr list: size=" << A.serialized_size());
@@ -255,4 +255,4 @@ td::Status AdnlAddressList::add_udp_address(td::IPAddress addr) {
 
 }  // namespace adnl
 
-}  // namespace ton
+}  // namespace ion

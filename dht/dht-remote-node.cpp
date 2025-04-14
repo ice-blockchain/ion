@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -24,11 +24,11 @@
 
 #include "td/utils/format.h"
 
-#include "auto/tl/ton_api.hpp"
+#include "auto/tl/ion_api.hpp"
 
 #include "dht-remote-node.hpp"
 
-namespace ton {
+namespace ion {
 
 namespace dht {
 
@@ -101,7 +101,7 @@ void DhtRemoteNode::send_ping(bool client_only, td::actor::ActorId<adnl::Adnl> a
         VLOG(DHT_INFO) << "[dht]: received error for query to " << key << ": " << R.move_as_error();
         return;
       }
-      auto F = fetch_tl_object<ton_api::dht_node>(R.move_as_ok(), true);
+      auto F = fetch_tl_object<ion_api::dht_node>(R.move_as_ok(), true);
 
       if (F.is_ok()) {
         auto N = DhtNode::create(F.move_as_ok(), our_network_id);
@@ -116,12 +116,12 @@ void DhtRemoteNode::send_ping(bool client_only, td::actor::ActorId<adnl::Adnl> a
                           << ": dropping invalid getSignedAddressList() query answer: " << F.move_as_error();
       }
     });
-    auto Q = create_serialize_tl_object<ton_api::dht_getSignedAddressList>();
+    auto Q = create_serialize_tl_object<ion_api::dht_getSignedAddressList>();
     td::BufferSlice B;
     if (client_only) {
       B = std::move(Q);
     } else {
-      B = create_serialize_tl_object_suffix<ton_api::dht_query>(Q.as_slice(), R.move_as_ok().tl());
+      B = create_serialize_tl_object_suffix<ion_api::dht_query>(Q.as_slice(), R.move_as_ok().tl());
     }
     td::actor::send_closure(adnl, &adnl::Adnl::send_query, src, id, "dht ping", std::move(P),
                             td::Timestamp::in(10.0 + td::Random::fast(0, 100) * 0.1), std::move(B));
@@ -146,4 +146,4 @@ td::Result<std::unique_ptr<DhtRemoteNode>> DhtRemoteNode::create(DhtNode node, t
 
 }  // namespace dht
 
-}  // namespace ton
+}  // namespace ion

@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -23,11 +23,11 @@
 
 #include <set>
 
-namespace ton {
+namespace ion {
 
 namespace adnl {
 
-class TestLoopbackNetworkManager : public ton::adnl::AdnlNetworkManager {
+class TestLoopbackNetworkManager : public ion::adnl::AdnlNetworkManager {
  public:
   void install_callback(std::unique_ptr<Callback> callback) override {
     CHECK(!callback_);
@@ -39,7 +39,7 @@ class TestLoopbackNetworkManager : public ton::adnl::AdnlNetworkManager {
   void add_proxy_addr(td::IPAddress addr, td::uint16 local_port, std::shared_ptr<AdnlProxy> proxy,
                       AdnlCategoryMask cat_mask, td::uint32 priority) override {
   }
-  void send_udp_packet(ton::adnl::AdnlNodeIdShort src_id, ton::adnl::AdnlNodeIdShort dst_id, td::IPAddress dst_addr,
+  void send_udp_packet(ion::adnl::AdnlNodeIdShort src_id, ion::adnl::AdnlNodeIdShort dst_id, td::IPAddress dst_addr,
                        td::uint32 priority, td::BufferSlice data) override {
     if (allowed_sources_.count(src_id) == 0 || allowed_destinations_.count(dst_id) == 0) {
       // just drop
@@ -88,4 +88,4 @@ class TestLoopbackNetworkManager : public ton::adnl::AdnlNetworkManager {
 
 }  // namespace adnl
 
-}  // namespace ton
+}  // namespace ion

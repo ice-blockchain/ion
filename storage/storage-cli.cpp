@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -42,7 +42,7 @@
 #include "TorrentCreator.h"
 #include "PeerManager.h"
 
-#include "auto/tl/ton_api_json.h"
+#include "auto/tl/ion_api_json.h"
 
 #include <iostream>
 #include <limits>
@@ -72,16 +72,16 @@ class StorageCli : public td::actor::Actor {
   td::actor::ActorOwn<td::TerminalIO> io_;
   //td::actor::ActorOwn<DhtServer> dht_server_;
 
-  std::shared_ptr<ton::dht::DhtGlobalConfig> dht_config_;
+  std::shared_ptr<ion::dht::DhtGlobalConfig> dht_config_;
 
-  td::actor::ActorOwn<ton::keyring::Keyring> keyring_;
-  td::actor::ActorOwn<ton::adnl::AdnlNetworkManager> adnl_network_manager_;
-  td::actor::ActorOwn<ton::adnl::Adnl> adnl_;
-  td::actor::ActorOwn<ton::dht::Dht> dht_;
-  td::actor::ActorOwn<ton::overlay::Overlays> overlays_;
-  td::actor::ActorOwn<ton_rldp::Rldp> rldp_;
-  //ton::PublicKeyHash default_dht_node_ = ton::PublicKeyHash::zero();
-  ton::PublicKey public_key_;
+  td::actor::ActorOwn<ion::keyring::Keyring> keyring_;
+  td::actor::ActorOwn<ion::adnl::AdnlNetworkManager> adnl_network_manager_;
+  td::actor::ActorOwn<ion::adnl::Adnl> adnl_;
+  td::actor::ActorOwn<ion::dht::Dht> dht_;
+  td::actor::ActorOwn<ion::overlay::Overlays> overlays_;
+  td::actor::ActorOwn<ion_rldp::Rldp> rldp_;
+  //ion::PublicKeyHash default_dht_node_ = ion::PublicKeyHash::zero();
+  ion::PublicKey public_key_;
 
   bool one_shot_{false};
   bool is_closing_{false};
@@ -91,20 +91,20 @@ class StorageCli : public td::actor::Actor {
     TRY_RESULT_PREFIX(conf_data, td::read_file(options_.config), "failed to read: ");
     TRY_RESULT_PREFIX(conf_json, td::json_decode(conf_data.as_slice()), "failed to parse json: ");
 
-    ton::ton_api::config_global conf;
-    TRY_STATUS_PREFIX(ton::ton_api::from_json(conf, conf_json.get_object()), "json does not fit TL scheme: ");
+    ion::ion_api::config_global conf;
+    TRY_STATUS_PREFIX(ion::ion_api::from_json(conf, conf_json.get_object()), "json does not fit TL scheme: ");
 
     // TODO
     // add adnl static nodes
     //if (conf.adnl_) {
-    //  td::actor::send_closure(adnl_, &ton::adnl::Adnl::add_static_nodes_from_config,
+    //  td::actor::send_closure(adnl_, &ion::adnl::Adnl::add_static_nodes_from_config,
     //                          std::move(conf.adnl_->static_nodes_));
     //}
     if (!conf.dht_) {
-      return td::Status::Error(ton::ErrorCode::error, "does not contain [dht] section");
+      return td::Status::Error(ion::ErrorCode::error, "does not contain [dht] section");
     }
 
-    TRY_RESULT_PREFIX(dht, ton::dht::Dht::create_global_config(std::move(conf.dht_)), "bad [dht] section: ");
+    TRY_RESULT_PREFIX(dht, ion::dht::Dht::create_global_config(std::move(conf.dht_)), "bad [dht] section: ");
     dht_config_ = std::move(dht);
     return td::Status::OK();
   }
@@ -139,20 +139,20 @@ class StorageCli : public td::actor::Actor {
     load_global_config().ensure();
 
     td::mkdir(options_.db_root).ignore();
-    keyring_ = ton::keyring::Keyring::create(options_.db_root + "/keyring");
+    keyring_ = ion::keyring::Keyring::create(options_.db_root + "/keyring");
     adnl_network_manager_ =
-        ton::adnl::AdnlNetworkManager::create(td::narrow_cast<td::uint16>(options_.addr.get_port()));
-    adnl_ = ton::adnl::Adnl::create(options_.db_root, keyring_.get());
-    td::actor::send_closure(adnl_, &ton::adnl::Adnl::register_network_manager, adnl_network_manager_.get());
-    rldp_ = ton_rldp::Rldp::create(adnl_.get());
+        ion::adnl::AdnlNetworkManager::create(td::narrow_cast<td::uint16>(options_.addr.get_port()));
+    adnl_ = ion::adnl::Adnl::create(options_.db_root, keyring_.get());
+    td::actor::send_closure(adnl_, &ion::adnl::Adnl::register_network_manager, adnl_network_manager_.get());
+    rldp_ = ion_rldp::Rldp::create(adnl_.get());
 
     auto key_path = options_.db_root + "/key.pub";
-    auto r_public_key = td::read_file(key_path).move_fmap([](auto raw) { return ton::PublicKey::import(raw); });
+    auto r_public_key = td::read_file(key_path).move_fmap([](auto raw) { return ion::PublicKey::import(raw); });
     ;
     if (r_public_key.is_error()) {
-      auto private_key = ton::PrivateKey(ton::privkeys::Ed25519::random());
+      auto private_key = ion::PrivateKey(ion::privkeys::Ed25519::random());
       public_key_ = private_key.compute_public_key();
-      td::actor::send_closure(keyring_, &ton::keyring::Keyring::add_key, std::move(private_key), false,
+      td::actor::send_closure(keyring_, &ion::keyring::Keyring::add_key, std::move(private_key), false,
                               td::Promise<td::Unit>([key_path, str = public_key_.export_as_slice()](auto) {
                                 td::write_file(key_path, str.as_slice()).ensure();
                                 LOG(INFO) << "New key was saved";
@@ -165,39 +165,39 @@ class StorageCli : public td::actor::Actor {
 
     std::set<AdnlCategory> cats;
     cats = {0, 1, 2, 3};
-    ton::adnl::AdnlCategoryMask cat_mask;
+    ion::adnl::AdnlCategoryMask cat_mask;
     for (auto cat : cats) {
       cat_mask[cat] = true;
     }
-    td::actor::send_closure(adnl_network_manager_, &ton::adnl::AdnlNetworkManager::add_self_addr, options_.addr,
+    td::actor::send_closure(adnl_network_manager_, &ion::adnl::AdnlNetworkManager::add_self_addr, options_.addr,
                             std::move(cat_mask), cats.size() ? 0 : 1);
 
     td::uint32 ts = static_cast<td::uint32>(td::Clocks::system());
 
-    std::map<td::uint32, ton::adnl::AdnlAddressList> addr_lists_;
+    std::map<td::uint32, ion::adnl::AdnlAddressList> addr_lists_;
     for (auto cat : cats) {
       CHECK(cat >= 0);
-      ton::adnl::AdnlAddress x = ton::adnl::AdnlAddressImpl::create(
-          ton::create_tl_object<ton::ton_api::adnl_address_udp>(options_.addr.get_ipv4(), options_.addr.get_port()));
+      ion::adnl::AdnlAddress x = ion::adnl::AdnlAddressImpl::create(
+          ion::create_tl_object<ion::ion_api::adnl_address_udp>(options_.addr.get_ipv4(), options_.addr.get_port()));
       addr_lists_[cat].add_addr(std::move(x));
       addr_lists_[cat].set_version(ts);
-      addr_lists_[cat].set_reinit_date(ton::adnl::Adnl::adnl_start_time());
+      addr_lists_[cat].set_reinit_date(ion::adnl::Adnl::adnl_start_time());
     }
 
     for (auto cat : cats) {
-      td::actor::send_closure(adnl_, &ton::adnl::Adnl::add_id, ton::adnl::AdnlNodeIdFull{public_key_}, addr_lists_[cat],
+      td::actor::send_closure(adnl_, &ion::adnl::Adnl::add_id, ion::adnl::AdnlNodeIdFull{public_key_}, addr_lists_[cat],
                               static_cast<td::uint8>(cat));
-      td::actor::send_closure(rldp_, &ton_rldp::Rldp::add_id,
-                              ton::adnl::AdnlNodeIdFull{public_key_}.compute_short_id());
+      td::actor::send_closure(rldp_, &ion_rldp::Rldp::add_id,
+                              ion::adnl::AdnlNodeIdFull{public_key_}.compute_short_id());
     }
 
     dht_ =
-        ton::dht::Dht::create(ton::adnl::AdnlNodeIdShort{short_id}, "" /*NO db for dht! No wrong cache - no problems*/,
+        ion::dht::Dht::create(ion::adnl::AdnlNodeIdShort{short_id}, "" /*NO db for dht! No wrong cache - no problems*/,
                               dht_config_, keyring_.get(), adnl_.get())
             .move_as_ok();
 
-    send_closure(adnl_, &ton::Adnl::register_dht_node, dht_.get());
-    overlays_ = ton::overlay::Overlays::create(options_.db_root, keyring_.get(), adnl_.get(), dht_.get());
+    send_closure(adnl_, &ion::Adnl::register_dht_node, dht_.get());
+    overlays_ = ion::overlay::Overlays::create(options_.db_root, keyring_.get(), adnl_.get(), dht_.get());
   }
 
   void exit(td::Result<td::Unit> res) {
@@ -284,8 +284,8 @@ class StorageCli : public td::actor::Actor {
       torrent_set_priority(parser, std::move(cmd_promise));
     } else if (cmd == "get") {
       auto name = parser.read_word().str();
-      auto key = ton::dht::DhtKey(public_key_.compute_short_id(), name, 0);
-      send_closure(dht_, &ton::dht::Dht::get_value, std::move(key), cmd_promise.wrap([](auto &&res) {
+      auto key = ion::dht::DhtKey(public_key_.compute_short_id(), name, 0);
+      send_closure(dht_, &ion::dht::Dht::get_value, std::move(key), cmd_promise.wrap([](auto &&res) {
         LOG(ERROR) << to_string(res.tl());
         return td::Unit();
       }));
@@ -295,12 +295,12 @@ class StorageCli : public td::actor::Actor {
       parser.skip_whitespaces();
       auto value = parser.read_all().str();
 
-      auto key = ton::dht::DhtKey(public_key_.compute_short_id(), name, 0);
-      auto dht_update_rule = ton::dht::DhtUpdateRuleSignature::create().move_as_ok();
-      ton::dht::DhtKeyDescription dht_key_description{key.clone(), public_key_, dht_update_rule, td::BufferSlice()};
+      auto key = ion::dht::DhtKey(public_key_.compute_short_id(), name, 0);
+      auto dht_update_rule = ion::dht::DhtUpdateRuleSignature::create().move_as_ok();
+      ion::dht::DhtKeyDescription dht_key_description{key.clone(), public_key_, dht_update_rule, td::BufferSlice()};
 
       auto to_sing = dht_key_description.to_sign();
-      send_closure(keyring_, &ton::keyring::Keyring::sign_message, public_key_.compute_short_id(), std::move(to_sing),
+      send_closure(keyring_, &ion::keyring::Keyring::sign_message, public_key_.compute_short_id(), std::move(to_sing),
                    cmd_promise.send_closure(actor_id(this), &StorageCli::dht_set1, std::move(dht_key_description),
                                             td::BufferSlice(value)));
     } else {
@@ -311,25 +311,25 @@ class StorageCli : public td::actor::Actor {
     }
   }
 
-  void dht_set1(ton::dht::DhtKeyDescription dht_key_description, td::BufferSlice value,
+  void dht_set1(ion::dht::DhtKeyDescription dht_key_description, td::BufferSlice value,
                 td::Result<td::BufferSlice> r_signature, td::Promise<td::Unit> promise) {
     TRY_RESULT_PROMISE(promise, signature, std::move(r_signature));
     dht_key_description.update_signature(std::move(signature));
     dht_key_description.check().ensure();
 
     auto ttl = static_cast<td::uint32>(td::Clocks::system() + 3600);
-    ton::dht::DhtValue dht_value{dht_key_description.clone(), std::move(value), ttl, td::BufferSlice("")};
+    ion::dht::DhtValue dht_value{dht_key_description.clone(), std::move(value), ttl, td::BufferSlice("")};
     auto to_sign = dht_value.to_sign();
-    send_closure(keyring_, &ton::keyring::Keyring::sign_message, public_key_.compute_short_id(), std::move(to_sign),
+    send_closure(keyring_, &ion::keyring::Keyring::sign_message, public_key_.compute_short_id(), std::move(to_sign),
                  promise.send_closure(actor_id(this), &StorageCli::dht_set2, std::move(dht_value)));
   }
 
-  void dht_set2(ton::dht::DhtValue dht_value, td::Result<td::BufferSlice> r_signature, td::Promise<td::Unit> promise) {
+  void dht_set2(ion::dht::DhtValue dht_value, td::Result<td::BufferSlice> r_signature, td::Promise<td::Unit> promise) {
     TRY_RESULT_PROMISE(promise, signature, std::move(r_signature));
     dht_value.update_signature(std::move(signature));
     dht_value.check().ensure();
 
-    send_closure(dht_, &ton::dht::Dht::set_value, std::move(dht_value), promise.wrap([](auto &&res) {
+    send_closure(dht_, &ion::dht::Dht::set_value, std::move(dht_value), promise.wrap([](auto &&res) {
       LOG(ERROR) << "OK";
       return td::Unit();
     }));
@@ -339,17 +339,17 @@ class StorageCli : public td::actor::Actor {
   struct Info {
     td::uint32 id;
     td::Bits256 hash;
-    td::optional<ton::Torrent> torrent;
+    td::optional<ion::Torrent> torrent;
     td::actor::ActorOwn<PeerManager> peer_manager;
-    td::actor::ActorOwn<ton::NodeActor> node;
+    td::actor::ActorOwn<ion::NodeActor> node;
   };
   std::map<td::uint32, Info> infos_;
 
   void torrent_create(td::Slice path_raw, td::Promise<td::Unit> promise) {
     auto path = td::trim(path_raw).str();
-    ton::Torrent::Creator::Options options;
+    ion::Torrent::Creator::Options options;
     options.piece_size = 128 * 1024;
-    TRY_RESULT_PROMISE(promise, torrent, ton::Torrent::Creator::create_from_path(options, path));
+    TRY_RESULT_PROMISE(promise, torrent, ion::Torrent::Creator::create_from_path(options, path));
     auto hash = torrent.get_hash();
     for (auto &it : infos_) {
       if (it.second.hash == hash) {
@@ -360,13 +360,13 @@ class StorageCli : public td::actor::Actor {
     td::TerminalIO::out() << "Torrent #" << torrent_id_ << " created\n";
     td::TerminalIO::out() << "Torrent hash: " << torrent.get_hash().to_hex() << "\n";
     infos_.emplace(torrent_id_, Info{torrent_id_, hash, std::move(torrent), td::actor::ActorOwn<PeerManager>(),
-                                     td::actor::ActorOwn<ton::NodeActor>()});
+                                     td::actor::ActorOwn<ion::NodeActor>()});
     torrent_id_++;
 
     promise.set_value(td::Unit());
   }
 
-  td::Result<ton::Torrent *> to_torrent(td::Slice id_raw) {
+  td::Result<ion::Torrent *> to_torrent(td::Slice id_raw) {
     TRY_RESULT(id, td::to_integer_safe<td::uint32>(td::trim(id_raw)));
     auto it = infos_.find(id);
     if (it == infos_.end()) {
@@ -400,7 +400,7 @@ class StorageCli : public td::actor::Actor {
       td::TerminalIO::out() << info->torrent.value().get_stats_str();
       promise.set_value(td::Unit());
     } else {
-      send_closure(info->node, &ton::NodeActor::get_stats_str, promise.wrap([](std::string stats) {
+      send_closure(info->node, &ion::NodeActor::get_stats_str, promise.wrap([](std::string stats) {
         td::TerminalIO::out() << stats;
         return td::Unit();
       }));
@@ -410,8 +410,8 @@ class StorageCli : public td::actor::Actor {
   td::actor::ActorOwn<PeerManager> create_peer_manager(td::Bits256 hash) {
     // create overlay network
     td::BufferSlice hash_str(hash.as_slice());
-    ton::overlay::OverlayIdFull overlay_id(std::move(hash_str));
-    auto adnl_id = ton::adnl::AdnlNodeIdShort{public_key_.compute_short_id()};
+    ion::overlay::OverlayIdFull overlay_id(std::move(hash_str));
+    auto adnl_id = ion::adnl::AdnlNodeIdShort{public_key_.compute_short_id()};
     return td::actor::create_actor<PeerManager>("PeerManager", adnl_id, std::move(overlay_id), false, overlays_.get(),
                                                 adnl_.get(), rldp_.get());
   }
@@ -425,9 +425,9 @@ class StorageCli : public td::actor::Actor {
     if (ptr->peer_manager.empty()) {
       ptr->peer_manager = create_peer_manager(ptr->torrent.value().get_hash());
     }
-    ton::PeerId self_id = 1;
+    ion::PeerId self_id = 1;
 
-    class Callback : public ton::NodeActor::Callback {
+    class Callback : public ion::NodeActor::Callback {
      public:
       Callback(td::actor::ActorId<StorageCli> storage_cli, td::uint32 torrent_id, td::Promise<td::Unit> on_completed)
           : storage_cli_(std::move(storage_cli))
@@ -442,7 +442,7 @@ class StorageCli : public td::actor::Actor {
         td::TerminalIO::out() << "Torrent #" << torrent_id_ << " completed\n";
       }
 
-      void on_closed(ton::Torrent torrent) override {
+      void on_closed(ion::Torrent torrent) override {
         send_closure(storage_cli_, &StorageCli::got_torrent, torrent_id_, std::move(torrent));
       }
 
@@ -458,9 +458,9 @@ class StorageCli : public td::actor::Actor {
     }
     auto callback = td::make_unique<Callback>(actor_id(this), ptr->id, std::move(on_completed));
     auto context = PeerManager::create_callback(ptr->peer_manager.get());
-    ptr->node = td::actor::create_actor<ton::NodeActor>(PSLICE() << "Node#" << self_id, self_id, ptr->torrent.unwrap(),
+    ptr->node = td::actor::create_actor<ion::NodeActor>(PSLICE() << "Node#" << self_id, self_id, ptr->torrent.unwrap(),
                                                         std::move(callback), std::move(context), nullptr,
-                                                        ton::SpeedLimiters{}, should_download);
+                                                        ion::SpeedLimiters{}, should_download);
     td::TerminalIO::out() << "Torrent #" << ptr->id << " started\n";
     promise.release().release();
     if (promise) {
@@ -471,7 +471,7 @@ class StorageCli : public td::actor::Actor {
   void on_torrent_completed(td::uint32 torrent_id) {
     td::TerminalIO::out() << "Torrent #" << torrent_id << " completed\n";
   }
-  void got_torrent(td::uint32 torrent_id, ton::Torrent &&torrent) {
+  void got_torrent(td::uint32 torrent_id, ion::Torrent &&torrent) {
     infos_[torrent_id].torrent = std::move(torrent);
     td::TerminalIO::out() << "Torrent #" << torrent_id << " ready to start again\n";
   }
@@ -490,7 +490,7 @@ class StorageCli : public td::actor::Actor {
       promise.set_error(td::Status::Error("Torrent is not active"));
       return;
     }
-    send_closure(ptr->node, &ton::NodeActor::set_should_download, should_download);
+    send_closure(ptr->node, &ion::NodeActor::set_should_download, should_download);
     promise.set_value(td::Unit());
   }
 
@@ -514,10 +514,10 @@ class StorageCli : public td::actor::Actor {
       return;
     }
     if (all) {
-      send_closure(ptr->node, &ton::NodeActor::set_all_files_priority, priority,
+      send_closure(ptr->node, &ion::NodeActor::set_all_files_priority, priority,
                    promise.wrap([](bool) { return td::Unit(); }));
     } else {
-      send_closure(ptr->node, &ton::NodeActor::set_file_priority_by_idx, file_id, priority,
+      send_closure(ptr->node, &ion::NodeActor::set_file_priority_by_idx, file_id, priority,
                    promise.wrap([](bool) { return td::Unit(); }));
     }
     promise.set_value(td::Unit());
@@ -525,7 +525,7 @@ class StorageCli : public td::actor::Actor {
 
   void torrent_save(td::Slice id_raw, td::Slice path, td::Promise<td::Unit> promise) {
     TRY_RESULT_PROMISE(promise, ptr, to_torrent(id_raw));
-    auto meta = ptr->get_meta(ton::Torrent::GetMetaOptions().with_proof_depth_limit(10));
+    auto meta = ptr->get_meta(ion::Torrent::GetMetaOptions().with_proof_depth_limit(10));
     TRY_STATUS_PROMISE(promise, td::write_file(path.str(), meta.serialize()));
     promise.set_value(td::Unit());
     td::TerminalIO::out() << "Torrent #" << id_raw << " saved\n";
@@ -533,13 +533,13 @@ class StorageCli : public td::actor::Actor {
 
   td::Result<Info *> torrent_load(td::Slice path) {
     TRY_RESULT(data, td::read_file(PSLICE() << td::trim(path)));
-    TRY_RESULT(meta, ton::TorrentMeta::deserialize(data));
-    ton::Torrent::Options options;
+    TRY_RESULT(meta, ion::TorrentMeta::deserialize(data));
+    ion::Torrent::Options options;
     options.in_memory = false;
     options.root_dir = ".";
     options.validate = true;
 
-    TRY_RESULT(torrent, ton::Torrent::open(options, data));
+    TRY_RESULT(torrent, ion::Torrent::open(options, data));
 
     auto hash = torrent.get_hash();
     for (auto &it : infos_) {
@@ -551,7 +551,7 @@ class StorageCli : public td::actor::Actor {
     td::TerminalIO::out() << "Torrent hash: " << torrent.get_hash().to_hex() << "\n";
     auto res =
         infos_.emplace(torrent_id_, Info{torrent_id_, hash, std::move(torrent), td::actor::ActorOwn<PeerManager>(),
-                                         td::actor::ActorOwn<ton::NodeActor>()});
+                                         td::actor::ActorOwn<ion::NodeActor>()});
     torrent_id_++;
     return &res.first->second;
   }
@@ -561,12 +561,12 @@ class StorageCli : public td::actor::Actor {
     if (hash.from_hex(hash_hex) != 256) {
       return td::Status::Error("Failed to parse torrent hash");
     }
-    ton::Torrent::Options options;
+    ion::Torrent::Options options;
     options.in_memory = false;
     options.root_dir = ".";
     options.validate = false;
 
-    TRY_RESULT(torrent, ton::Torrent::open(options, hash));
+    TRY_RESULT(torrent, ion::Torrent::open(options, hash));
 
     for (auto &it : infos_) {
       if (it.second.hash == hash) {
@@ -577,7 +577,7 @@ class StorageCli : public td::actor::Actor {
     td::TerminalIO::out() << "Torrent hash: " << torrent.get_hash().to_hex() << "\n";
     auto res =
         infos_.emplace(torrent_id_, Info{torrent_id_, hash, std::move(torrent), td::actor::ActorOwn<PeerManager>(),
-                                         td::actor::ActorOwn<ton::NodeActor>()});
+                                         td::actor::ActorOwn<ion::NodeActor>()});
     torrent_id_++;
     return &res.first->second;
   }
@@ -617,7 +617,7 @@ int main(int argc, char *argv[]) {
 
   StorageCliOptions options;
   td::OptionParser p;
-  p.set_description("experimental cli for ton storage");
+  p.set_description("experimental cli for ion storage");
   p.add_option('h', "help", "prints_help", [&]() {
     std::cout << (PSLICE() << p).c_str();
     std::exit(2);
@@ -632,7 +632,7 @@ int main(int argc, char *argv[]) {
               << ", Date: " << GitMetadata::CommitDate() << "]\n";
     std::exit(0);
   });
-  p.add_option('C', "config", "set ton config", [&](td::Slice arg) { options.config = arg.str(); });
+  p.add_option('C', "config", "set ion config", [&](td::Slice arg) { options.config = arg.str(); });
   p.add_option('D', "db", "root for dbs", [&](td::Slice fname) { options.db_root = fname.str(); });
   p.add_checked_option('I', "ip", "set ip:port", [&](td::Slice arg) {
     td::IPAddress addr;

@@ -11,4 +11,4 @@ set(KEYS_SOURCE
 add_library(keys STATIC ${KEYS_SOURCE})
 
 target_include_directories(keys PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>)
-target_link_libraries(keys PUBLIC tdactor ton_crypto tl_api tl-utils )
+target_link_libraries(keys PUBLIC tdactor ion_crypto tl_api tl-utils )

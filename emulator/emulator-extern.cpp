@@ -75,7 +75,7 @@ td::Result<block::Config> decode_config(const char* config_boc) {
   if (config_addr_cs.size() != 0x100) {
     return td::Status::Error(PSLICE() << "configuration parameter 0 with config address has wrong size");
   }
-  ton::StdSmcAddress config_addr;
+  ion::StdSmcAddress config_addr;
   config_addr_cs.fetch_bits_to(config_addr);
   auto global_config = block::Config(config_params_cell, std::move(config_addr), block::Config::needWorkchainInfo | block::Config::needSpecialSmc | block::Config::needCapabilities);
   TRY_STATUS_PREFIX(global_config.unpack(), "Can't unpack config params: ");
@@ -151,18 +151,18 @@ const char *transaction_emulator_emulate_transaction(void *transaction_emulator,
   } else {
     ERROR_RESPONSE(PSTRING() << "Can't parse account cell");
   }
-  ton::WorkchainId wc;
-  ton::StdSmcAddress addr;
+  ion::WorkchainId wc;
+  ion::StdSmcAddress addr;
   if (!block::tlb::t_MsgAddressInt.extract_std_address(addr_slice, wc, addr)) {
     ERROR_RESPONSE(PSTRING() << "Can't extract account address");
   }
 
   auto account = block::Account(wc, addr.bits());
-  ton::UnixTime now = emulator->get_unixtime();
+  ion::UnixTime now = emulator->get_unixtime();
   if (!now) {
     now = (unsigned)std::time(nullptr);
   }
-  bool is_special = wc == ton::masterchainId && emulator->get_config().is_special_smartcontract(addr);
+  bool is_special = wc == ion::masterchainId && emulator->get_config().is_special_smartcontract(addr);
   if (account_exists) {
     if (!account.unpack(vm::load_cell_slice_ref(shard_account_cell.move_as_ok()), now, is_special)) {
       ERROR_RESPONSE(PSTRING() << "Can't unpack shard account");
@@ -237,18 +237,18 @@ const char *transaction_emulator_emulate_tick_tock_transaction(void *transaction
     ERROR_RESPONSE(PSTRING() << "Can't unpack account cell");
   }
   addr_slice = std::move(account_record.addr);
-  ton::WorkchainId wc;
-  ton::StdSmcAddress addr;
+  ion::WorkchainId wc;
+  ion::StdSmcAddress addr;
   if (!block::tlb::t_MsgAddressInt.extract_std_address(addr_slice, wc, addr)) {
     ERROR_RESPONSE(PSTRING() << "Can't extract account address");
   }
 
   auto account = block::Account(wc, addr.bits());
-  ton::UnixTime now = emulator->get_unixtime();
+  ion::UnixTime now = emulator->get_unixtime();
   if (!now) {
     now = (unsigned)std::time(nullptr);
   }
-  bool is_special = wc == ton::masterchainId && emulator->get_config().is_special_smartcontract(addr);
+  bool is_special = wc == ion::masterchainId && emulator->get_config().is_special_smartcontract(addr);
   if (!account.unpack(vm::load_cell_slice_ref(shard_account_cell.move_as_ok()), now, is_special)) {
     ERROR_RESPONSE(PSTRING() << "Can't unpack shard account");
   }

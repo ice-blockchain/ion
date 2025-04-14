@@ -1,32 +1,32 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2019-2020 Telegram Systems LLP
 */
 #pragma once
 
 #include "td/utils/buffer.h"
-#include "auto/tl/ton_api.h"
+#include "auto/tl/ion_api.h"
 #include "td/actor/PromiseFuture.h"
 
 #include <map>
 #include <list>
 #include <mutex>
 
-namespace ton {
+namespace ion {
 
 namespace http {
 
@@ -43,7 +43,7 @@ struct HttpHeader {
   std::string name;
   std::string value;
   void store_http(td::ChainBufferWriter &output);
-  tl_object_ptr<ton_api::http_header> store_tl();
+  tl_object_ptr<ion_api::http_header> store_tl();
 
   size_t size() const {
     return 2 + name.size() + value.size();
@@ -135,7 +135,7 @@ class HttpPayload {
   HttpHeader get_header();
 
   bool store_http(td::ChainBufferWriter &output, size_t max_size, HttpPayload::PayloadType store_type);
-  tl_object_ptr<ton_api::http_payloadPart> store_tl(size_t max_size);
+  tl_object_ptr<ion_api::http_payloadPart> store_tl(size_t max_size);
 
   bool written() const {
     return ready_bytes_ == 0 && parse_completed() && written_zero_chunk_ && written_trailer_;
@@ -222,7 +222,7 @@ class HttpRequest {
   }
 
   void store_http(td::ChainBufferWriter &output);
-  tl_object_ptr<ton_api::http_request> store_tl(td::Bits256 req_id);
+  tl_object_ptr<ion_api::http_request> store_tl(td::Bits256 req_id);
 
   static td::Result<std::unique_ptr<HttpRequest>> parse(std::unique_ptr<HttpRequest> request, std::string &cur_line,
                                                         bool &exit_loop, td::ChainBufferReader &input);
@@ -292,7 +292,7 @@ class HttpResponse {
   }
 
   void store_http(td::ChainBufferWriter &output);
-  tl_object_ptr<ton_api::http_response> store_tl();
+  tl_object_ptr<ion_api::http_response> store_tl();
 
   static td::Result<std::unique_ptr<HttpResponse>> parse(std::unique_ptr<HttpResponse> request, std::string &cur_line,
                                                          bool force_no_payload, bool keep_alive, bool &exit_loop,
@@ -331,4 +331,4 @@ void answer_error(HttpStatusCode code, std::string reason,
 
 }  // namespace http
 
-}  // namespace ton
+}  // namespace ion

@@ -1,18 +1,18 @@
 /* 
-    This file is part of TON Blockchain source code.
+    This file is part of ION Blockchain source code.
 
-    TON Blockchain is free software; you can redistribute it and/or
+    ION Blockchain is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
     as published by the Free Software Foundation; either version 2
     of the License, or (at your option) any later version.
 
-    TON Blockchain is distributed in the hope that it will be useful,
+    ION Blockchain is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with TON Blockchain.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain.  If not, see <http://www.gnu.org/licenses/>.
 
     In addition, as a special exception, the copyright holders give permission 
     to link the code of portions of this program with the OpenSSL library. 
@@ -49,8 +49,8 @@ class AdnlNode : public td::actor::Actor {
  private:
   std::vector<td::UInt256> ping_ids_;
 
-  td::actor::ActorOwn<ton::AdnlNetworkManager> network_manager_;
-  td::actor::ActorOwn<ton::AdnlPeerTable> peer_table_;
+  td::actor::ActorOwn<ion::AdnlNetworkManager> network_manager_;
+  td::actor::ActorOwn<ion::AdnlPeerTable> peer_table_;
 
   td::UInt256 local_id_;
   bool local_id_set_ = false;
@@ -66,12 +66,12 @@ class AdnlNode : public td::actor::Actor {
   void receive_query(td::UInt256 src, td::UInt256 dst, td::uint64 query_id, td::BufferSlice data) {
     std::cout << "QUERY " << std::to_string(query_id) << " FROM " << src << " to " << dst << " of size "
               << std::to_string(data.size()) << "\n";
-    td::actor::send_closure(peer_table_, &ton::AdnlPeerTable::answer_query, dst, src, query_id,
-                            ton::create_tl_object<ton::ton_api::testObject>());
+    td::actor::send_closure(peer_table_, &ion::AdnlPeerTable::answer_query, dst, src, query_id,
+                            ion::create_tl_object<ion::ion_api::testObject>());
   }
 
-  std::unique_ptr<ton::AdnlPeerTable::Callback> make_callback() {
-    class Callback : public ton::AdnlPeerTable::Callback {
+  std::unique_ptr<ion::AdnlPeerTable::Callback> make_callback() {
+    class Callback : public ion::AdnlPeerTable::Callback {
      public:
       void receive_message(td::UInt256 src, td::UInt256 dst, td::BufferSlice data) override {
         td::actor::send_closure(id_, &AdnlNode::receive_message, src, dst, std::move(data));
@@ -94,13 +94,13 @@ class AdnlNode : public td::actor::Actor {
     alarm_timestamp() = td::Timestamp::in(1);
   }
   AdnlNode() {
-    network_manager_ = ton::AdnlNetworkManager::create();
-    peer_table_ = ton::AdnlPeerTable::create();
-    td::actor::send_closure(network_manager_, &ton::AdnlNetworkManager::register_peer_table, peer_table_.get());
-    td::actor::send_closure(peer_table_, &ton::AdnlPeerTable::register_network_manager, network_manager_.get());
+    network_manager_ = ion::AdnlNetworkManager::create();
+    peer_table_ = ion::AdnlPeerTable::create();
+    td::actor::send_closure(network_manager_, &ion::AdnlNetworkManager::register_peer_table, peer_table_.get());
+    td::actor::send_closure(peer_table_, &ion::AdnlPeerTable::register_network_manager, network_manager_.get());
   }
   void listen_udp(td::uint16 port) {
-    td::actor::send_closure(network_manager_, &ton::AdnlNetworkManager::add_listening_udp_port, "0.0.0.0", port);
+    td::actor::send_closure(network_manager_, &ion::AdnlNetworkManager::add_listening_udp_port, "0.0.0.0", port);
     port_ = port;
   }
   void set_host(td::IPAddress ip, std::string host) {
@@ -111,26 +111,26 @@ class AdnlNode : public td::actor::Actor {
     std::cout << "send pings to " << id << "\n";
     ping_ids_.push_back(id);
   }
-  void add_local_id(ton::tl_object_ptr<ton::ton_api::adnl_id_Pk> pk_) {
-    auto pub_ = ton::get_public_key(pk_);
-    local_id_ = ton::adnl_short_id(pub_);
+  void add_local_id(ion::tl_object_ptr<ion::ion_api::adnl_id_Pk> pk_) {
+    auto pub_ = ion::get_public_key(pk_);
+    local_id_ = ion::adnl_short_id(pub_);
     std::cout << "local_id = '" << local_id_ << "'\n";
-    auto x = ton::create_tl_object<ton::ton_api::adnl_address_udp>(ip_, port_);
-    auto v = std::vector<ton::tl_object_ptr<ton::ton_api::adnl_Address>>();
-    v.push_back(ton::move_tl_object_as<ton::ton_api::adnl_Address>(x));
+    auto x = ion::create_tl_object<ion::ion_api::adnl_address_udp>(ip_, port_);
+    auto v = std::vector<ion::tl_object_ptr<ion::ion_api::adnl_Address>>();
+    v.push_back(ion::move_tl_object_as<ion::ion_api::adnl_Address>(x));
     auto y =
-        ton::create_tl_object<ton::ton_api::adnl_addressList>(std::move(v), static_cast<td::int32>(td::Time::now()));
+        ion::create_tl_object<ion::ion_api::adnl_addressList>(std::move(v), static_cast<td::int32>(td::Time::now()));
 
-    LOG(INFO) << "local_addr_list: " << ton::ton_api::to_string(y);
-    td::actor::send_closure(peer_table_, &ton::AdnlPeerTable::add_id, std::move(pk_), std::move(y));
-    td::actor::send_closure(peer_table_, &ton::AdnlPeerTable::subscribe, local_id_, "", make_callback());
+    LOG(INFO) << "local_addr_list: " << ion::ion_api::to_string(y);
+    td::actor::send_closure(peer_table_, &ion::AdnlPeerTable::add_id, std::move(pk_), std::move(y));
+    td::actor::send_closure(peer_table_, &ion::AdnlPeerTable::subscribe, local_id_, "", make_callback());
     local_id_set_ = true;
   }
 
-  void add_foreign(ton::tl_object_ptr<ton::ton_api::adnl_id_Full> id,
-                   ton::tl_object_ptr<ton::ton_api::adnl_addressList> addr_list) {
-    std::cout << ton::adnl_short_id(id) << "\n";
-    td::actor::send_closure(peer_table_, &ton::AdnlPeerTable::add_peer, std::move(id), std::move(addr_list));
+  void add_foreign(ion::tl_object_ptr<ion::ion_api::adnl_id_Full> id,
+                   ion::tl_object_ptr<ion::ion_api::adnl_addressList> addr_list) {
+    std::cout << ion::adnl_short_id(id) << "\n";
+    td::actor::send_closure(peer_table_, &ion::AdnlPeerTable::add_peer, std::move(id), std::move(addr_list));
   }
 
   void alarm() override {
@@ -145,8 +145,8 @@ class AdnlNode : public td::actor::Actor {
             std::cout << "received answer to query\n";
           }
         });
-        td::actor::send_closure(peer_table_, &ton::AdnlPeerTable::send_query, local_id_, *it, std::move(P),
-                                td::Timestamp::in(5), ton::create_tl_object<ton::ton_api::getTestObject>());
+        td::actor::send_closure(peer_table_, &ion::AdnlPeerTable::send_query, local_id_, *it, std::move(P),
+                                td::Timestamp::in(5), ion::create_tl_object<ion::ion_api::getTestObject>());
       }
     }
 
@@ -193,7 +193,7 @@ int main(int argc, char *argv[]) {
   });
   p.add_option('i', "id", "sets local id", [&](td::Slice id) {
     td::actor::send_closure(x, &AdnlNode::add_local_id,
-                            ton::create_tl_object<ton::ton_api::adnl_id_pk_unenc>(id.str()));
+                            ion::create_tl_object<ion::ion_api::adnl_id_pk_unenc>(id.str()));
     return td::Status::OK();
   });
   p.add_option('P', "peer", "adds peer id@host:port", [&](td::Slice id) {
@@ -202,21 +202,21 @@ int main(int argc, char *argv[]) {
       return td::Status::Error("--peer expected randomtag@host:port as argument");
     }
     auto s1 = id.substr(0, pos);
-    auto f_id = ton::create_tl_object<ton::ton_api::adnl_id_unenc>(s1.str());
+    auto f_id = ion::create_tl_object<ion::ion_api::adnl_id_unenc>(s1.str());
     td::IPAddress addr;
     auto R = addr.init_host_port(td::CSlice(id.substr(pos + 1).str()));
     if (R.is_error()) {
       return R.move_as_error();
     }
 
-    auto f_addr = ton::create_tl_object<ton::ton_api::adnl_address_udp>(addr.get_ipv4(), addr.get_port());
-    std::vector<ton::tl_object_ptr<ton::ton_api::adnl_Address>> vv;
-    vv.push_back(ton::move_tl_object_as<ton::ton_api::adnl_Address>(f_addr));
+    auto f_addr = ion::create_tl_object<ion::ion_api::adnl_address_udp>(addr.get_ipv4(), addr.get_port());
+    std::vector<ion::tl_object_ptr<ion::ion_api::adnl_Address>> vv;
+    vv.push_back(ion::move_tl_object_as<ion::ion_api::adnl_Address>(f_addr));
 
     auto f_addr_list =
-        ton::create_tl_object<ton::ton_api::adnl_addressList>(std::move(vv), static_cast<int>(td::Time::now()));
+        ion::create_tl_object<ion::ion_api::adnl_addressList>(std::move(vv), static_cast<int>(td::Time::now()));
 
-    td::actor::send_closure(x, &AdnlNode::add_foreign, ton::move_tl_object_as<ton::ton_api::adnl_id_Full>(f_id),
+    td::actor::send_closure(x, &AdnlNode::add_foreign, ion::move_tl_object_as<ion::ion_api::adnl_id_Full>(f_id),
                             std::move(f_addr_list));
 
     return td::Status::OK();

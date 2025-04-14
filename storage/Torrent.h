@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -27,7 +27,7 @@
 #include <map>
 #include <set>
 
-namespace ton {
+namespace ion {
 class Torrent {
  public:
   class Creator;
@@ -180,7 +180,7 @@ class Torrent {
   };
   std::map<td::uint64, InMemoryPiece> in_memory_pieces_;  // Pieces that overlap excluded files
 
-  ton::MerkleTree merkle_tree_;
+  ion::MerkleTree merkle_tree_;
 
   std::vector<bool> piece_is_ready_;
   size_t not_ready_piece_count_{0};
@@ -223,7 +223,7 @@ class Torrent {
   td::uint64 included_ready_size_{0};
 
   explicit Torrent(td::Bits256 hash);
-  explicit Torrent(Info info, td::optional<TorrentHeader> header, ton::MerkleTree tree, std::vector<ChunkState> chunk,
+  explicit Torrent(Info info, td::optional<TorrentHeader> header, ion::MerkleTree tree, std::vector<ChunkState> chunk,
                    std::string root_dir);
   void set_root_dir(std::string root_dir) {
     root_dir_ = std::move(root_dir);
@@ -239,4 +239,4 @@ class Torrent {
   td::Status add_validated_piece(td::uint64 piece_i, td::Slice data);
 };
 
-}  // namespace ton
+}  // namespace ion

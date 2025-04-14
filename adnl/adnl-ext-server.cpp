@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -20,12 +20,12 @@
 #include "keys/encryptor.h"
 #include "utils.hpp"
 
-namespace ton {
+namespace ion {
 
 namespace adnl {
 
 td::Status AdnlInboundConnection::process_packet(td::BufferSlice data) {
-  TRY_RESULT(f, fetch_tl_object<ton_api::adnl_message_query>(std::move(data), true));
+  TRY_RESULT(f, fetch_tl_object<ion_api::adnl_message_query>(std::move(data), true));
 
   auto P =
       td::PromiseCreator::lambda([SelfId = actor_id(this), query_id = f->query_id_](td::Result<td::BufferSlice> R) {
@@ -33,7 +33,7 @@ td::Status AdnlInboundConnection::process_packet(td::BufferSlice data) {
           auto S = R.move_as_error();
           LOG(WARNING) << "failed ext query: " << S;
         } else {
-          auto B = create_tl_object<ton_api::adnl_message_answer>(query_id, R.move_as_ok());
+          auto B = create_tl_object<ion_api::adnl_message_answer>(query_id, R.move_as_ok());
           td::actor::send_closure(SelfId, &AdnlInboundConnection::send, serialize_tl_object(B, true));
         }
       });
@@ -78,17 +78,17 @@ void AdnlInboundConnection::inited_crypto(td::Result<td::BufferSlice> R) {
 
 td::Status AdnlInboundConnection::process_custom_packet(td::BufferSlice &data, bool &processed) {
   if (data.size() == 12) {
-    auto F = fetch_tl_object<ton_api::tcp_ping>(data.clone(), true);
+    auto F = fetch_tl_object<ion_api::tcp_ping>(data.clone(), true);
     if (F.is_ok()) {
       auto f = F.move_as_ok();
-      auto obj = create_tl_object<ton_api::tcp_pong>(f->random_id_);
+      auto obj = create_tl_object<ion_api::tcp_pong>(f->random_id_);
       send(serialize_tl_object(obj, true));
       processed = true;
       return td::Status::OK();
     }
   }
   if (1) {
-    auto F = fetch_tl_object<ton_api::tcp_authentificate>(data.clone(), true);
+    auto F = fetch_tl_object<ion_api::tcp_authentificate>(data.clone(), true);
     if (F.is_ok()) {
       if (nonce_.size() > 0 || !remote_id_.is_zero()) {
         return td::Status::Error(ErrorCode::protoviolation, "duplicate authenticate");
@@ -98,7 +98,7 @@ td::Status AdnlInboundConnection::process_custom_packet(td::BufferSlice &data, b
       nonce_.as_mutable_slice().truncate(f->nonce_.size()).copy_from(f->nonce_.as_slice());
       td::Random::secure_bytes(nonce_.as_mutable_slice().remove_prefix(f->nonce_.size()));
 
-      auto obj = create_tl_object<ton_api::tcp_authentificationNonce>(
+      auto obj = create_tl_object<ion_api::tcp_authentificationNonce>(
           td::BufferSlice{nonce_.as_slice().remove_prefix(f->nonce_.size())});
       send(serialize_tl_object(obj, true));
       processed = true;
@@ -107,7 +107,7 @@ td::Status AdnlInboundConnection::process_custom_packet(td::BufferSlice &data, b
   }
 
   if (nonce_.size() != 0) {
-    auto F = fetch_tl_object<ton_api::tcp_authentificationComplete>(data.clone(), true);
+    auto F = fetch_tl_object<ion_api::tcp_authentificationComplete>(data.clone(), true);
     if (F.is_ok()) {
       auto f = F.move_as_ok();
       if (nonce_.size() == 0 || !remote_id_.is_zero()) {
@@ -179,4 +179,4 @@ td::actor::ActorOwn<AdnlExtServer> AdnlExtServerCreator::create(td::actor::Actor
 
 }  // namespace adnl
 
-}  // namespace ton
+}  // namespace ion

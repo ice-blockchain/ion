@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "query-utils.hpp"
 
@@ -24,14 +24,14 @@
 #include "auto/tl/lite_api.hpp"
 #include "overlay/overlay-broadcast.hpp"
 #include "tl-utils/lite-utils.hpp"
-#include "ton/lite-tl.hpp"
-#include "ton/ton-shard.h"
+#include "ion/lite-tl.hpp"
+#include "ion/ion-shard.h"
 
-#include <ton/ton-tl.hpp>
+#include <ion/ion-tl.hpp>
 
 namespace liteclient {
 
-using namespace ton;
+using namespace ion;
 
 std::string QueryInfo::to_str() const {
   td::StringBuilder sb;
@@ -316,7 +316,7 @@ bool LiteServerConfig::Slice::accepts_query(const QueryInfo& query_info) const {
 }
 
 td::Result<std::vector<LiteServerConfig>> LiteServerConfig::parse_global_config(
-    const ton_api::liteclient_config_global& config) {
+    const ion_api::liteclient_config_global& config) {
   std::vector<LiteServerConfig> servers;
   for (const auto& f : config.liteservers_) {
     LiteServerConfig server;
@@ -335,7 +335,7 @@ td::Result<std::vector<LiteServerConfig>> LiteServerConfig::parse_global_config(
       td::Status S = td::Status::OK();
       downcast_call(*slice_obj,
                     td::overloaded(
-                        [&](const ton_api::liteserver_descV2_sliceSimple& s) {
+                        [&](const ion_api::liteserver_descV2_sliceSimple& s) {
                           slice.unlimited = true;
                           slice.shards_from.push_back({ShardIdFull{masterchainId}, 0, 0, 0});
                           for (const auto& shard_obj : s.shards_) {
@@ -349,9 +349,9 @@ td::Result<std::vector<LiteServerConfig>> LiteServerConfig::parse_global_config(
                             }
                           }
                         },
-                        [&](const ton_api::liteserver_descV2_sliceTimed& s) {
+                        [&](const ion_api::liteserver_descV2_sliceTimed& s) {
                           auto parse_shards =
-                              [](const std::vector<tl_object_ptr<ton_api::liteserver_descV2_shardInfo>>& shard_objs,
+                              [](const std::vector<tl_object_ptr<ion_api::liteserver_descV2_shardInfo>>& shard_objs,
                                  std::vector<ShardInfo>& shards) -> td::Status {
                             if (shard_objs.empty()) {
                               return td::Status::OK();

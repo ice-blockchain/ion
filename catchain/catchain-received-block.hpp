@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -20,7 +20,7 @@
 
 #include "catchain/catchain-received-block.h"
 
-namespace ton {
+namespace ion {
 
 namespace catchain {
 
@@ -63,8 +63,8 @@ class CatChainReceivedBlockImpl final : public CatChainReceivedBlock {
     return source_id_;
   }
 
-  tl_object_ptr<ton_api::catchain_block> export_tl() const override;
-  tl_object_ptr<ton_api::catchain_block_dep> export_tl_dep() const override;
+  tl_object_ptr<ion_api::catchain_block> export_tl() const override;
+  tl_object_ptr<ion_api::catchain_block_dep> export_tl_dep() const override;
 
   void find_pending_deps(std::vector<CatChainBlockHash> &vec, td::uint32 max_size) const override;
 
@@ -90,12 +90,12 @@ class CatChainReceivedBlockImpl final : public CatChainReceivedBlock {
   }
 
  public:
-  void initialize(tl_object_ptr<ton_api::catchain_block> block, td::SharedSlice payload) override;
+  void initialize(tl_object_ptr<ion_api::catchain_block> block, td::SharedSlice payload) override;
 
   void run() override;
-  void pre_deliver(ton_api::catchain_block_data_fork &b);
-  void pre_deliver(ton_api::catchain_block_data_badBlock &b);
-  void pre_deliver(ton_api::catchain_block_data_nop &b);
+  void pre_deliver(ion_api::catchain_block_data_fork &b);
+  void pre_deliver(ion_api::catchain_block_data_badBlock &b);
+  void pre_deliver(ion_api::catchain_block_data_nop &b);
   template <class T>
   void pre_deliver(T &b) {
     // do nothing, it is custom block
@@ -113,9 +113,9 @@ class CatChainReceivedBlockImpl final : public CatChainReceivedBlock {
   void written() override;
 
  public:
-  CatChainReceivedBlockImpl(tl_object_ptr<ton_api::catchain_block> block, td::SharedSlice payload,
+  CatChainReceivedBlockImpl(tl_object_ptr<ion_api::catchain_block> block, td::SharedSlice payload,
                             CatChainReceiver *chain);
-  CatChainReceivedBlockImpl(tl_object_ptr<ton_api::catchain_block_dep> block, CatChainReceiver *chain);
+  CatChainReceivedBlockImpl(tl_object_ptr<ion_api::catchain_block_dep> block, CatChainReceiver *chain);
 
   CatChainReceivedBlockImpl(td::uint32 source_id, const CatChainSessionId &hash, CatChainReceiver *chain);
 
@@ -162,16 +162,16 @@ class CatChainReceivedBlockImpl final : public CatChainReceivedBlock {
 
 }  // namespace catchain
 
-}  // namespace ton
+}  // namespace ion
 
 namespace td {
 
-inline td::StringBuilder &operator<<(td::StringBuilder &sb, const ton::catchain::CatChainReceivedBlockImpl &block) {
+inline td::StringBuilder &operator<<(td::StringBuilder &sb, const ion::catchain::CatChainReceivedBlockImpl &block) {
   sb << "[block " << block.get_chain()->get_incarnation() << " " << block.get_source_id() << " " << block.get_fork_id()
      << " " << block.get_hash() << "]";
   return sb;
 }
-inline td::StringBuilder &operator<<(td::StringBuilder &sb, const ton::catchain::CatChainReceivedBlockImpl *block) {
+inline td::StringBuilder &operator<<(td::StringBuilder &sb, const ion::catchain::CatChainReceivedBlockImpl *block) {
   sb << *block;
   return sb;
 }

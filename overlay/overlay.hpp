@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -45,17 +45,17 @@
 #include "adnl/utils.hpp"
 #include "keys/encryptor.h"
 
-#include "auto/tl/ton_api.h"
-#include "auto/tl/ton_api.hpp"
+#include "auto/tl/ion_api.h"
+#include "auto/tl/ion_api.hpp"
 #include "td/utils/port/signals.h"
 #include "tl-utils/common-utils.hpp"
 
-namespace ton {
+namespace ion {
 
 namespace overlay {
 
-//using OverlayNode = tl_object_ptr<ton_api::overlay_node>;
-//using OverlayNodesList = tl_object_ptr<ton_api::overlay_nodes>;
+//using OverlayNode = tl_object_ptr<ion_api::overlay_node>;
+//using OverlayNodesList = tl_object_ptr<ion_api::overlay_nodes>;
 
 class OverlayImpl;
 
@@ -68,7 +68,7 @@ struct TrafficStats {
 
   void add_packet(td::uint64 size, bool in);
   void normalize(double elapsed);
-  tl_object_ptr<ton_api::engine_validator_overlayStatsTraffic> tl() const;
+  tl_object_ptr<ion_api::engine_validator_overlayStatsTraffic> tl() const;
 };
 
 class OverlayPeer {
@@ -172,15 +172,15 @@ class OverlayImpl : public Overlay {
     dht_node_ = dht;
   }
 
-  void receive_message(adnl::AdnlNodeIdShort src, tl_object_ptr<ton_api::overlay_messageExtra> extra,
+  void receive_message(adnl::AdnlNodeIdShort src, tl_object_ptr<ion_api::overlay_messageExtra> extra,
                        td::BufferSlice data) override;
-  void receive_query(adnl::AdnlNodeIdShort src, tl_object_ptr<ton_api::overlay_messageExtra> extra,
+  void receive_query(adnl::AdnlNodeIdShort src, tl_object_ptr<ion_api::overlay_messageExtra> extra,
                      td::BufferSlice data, td::Promise<td::BufferSlice> promise) override;
   void send_message_to_neighbours(td::BufferSlice data) override;
   void send_broadcast(PublicKeyHash send_as, td::uint32 flags, td::BufferSlice data) override;
   void send_broadcast_fec(PublicKeyHash send_as, td::uint32 flags, td::BufferSlice data) override;
-  void receive_nodes_from_db(tl_object_ptr<ton_api::overlay_nodes> nodes) override;
-  void receive_nodes_from_db_v2(tl_object_ptr<ton_api::overlay_nodesV2> nodes) override;
+  void receive_nodes_from_db(tl_object_ptr<ion_api::overlay_nodes> nodes) override;
+  void receive_nodes_from_db_v2(tl_object_ptr<ion_api::overlay_nodesV2> nodes) override;
 
   void get_self_node(td::Promise<OverlayNode> promise);
 
@@ -270,7 +270,7 @@ class OverlayImpl : public Overlay {
   std::shared_ptr<Certificate> get_certificate(PublicKeyHash local_id);
   td::Result<Encryptor *> get_encryptor(PublicKey source);
 
-  void get_stats(td::Promise<tl_object_ptr<ton_api::engine_validator_overlayStats>> promise) override;
+  void get_stats(td::Promise<tl_object_ptr<ion_api::engine_validator_overlayStats>> promise) override;
 
   void update_throughput_out_ctr(adnl::AdnlNodeIdShort peer_id, td::uint64 msg_size, bool is_query,
                                  bool is_response) override;
@@ -283,7 +283,7 @@ class OverlayImpl : public Overlay {
   void update_root_member_list(std::vector<adnl::AdnlNodeIdShort> ids, std::vector<PublicKeyHash> root_public_keys,
                                OverlayMemberCertificate cert) override;
 
-  bool is_valid_peer(const adnl::AdnlNodeIdShort &id, const ton_api::overlay_MemberCertificate *certificate);
+  bool is_valid_peer(const adnl::AdnlNodeIdShort &id, const ion_api::overlay_MemberCertificate *certificate);
   bool is_persistent_node(const adnl::AdnlNodeIdShort &id);
 
   td::uint32 max_data_bcasts() const {
@@ -331,33 +331,33 @@ class OverlayImpl : public Overlay {
     callback_->receive_query(src, overlay_id_, serialize_tl_object(&query, true), std::move(promise));
   }
 
-  void process_query(adnl::AdnlNodeIdShort src, ton_api::overlay_getRandomPeers &query,
+  void process_query(adnl::AdnlNodeIdShort src, ion_api::overlay_getRandomPeers &query,
                      td::Promise<td::BufferSlice> promise);
-  void process_query(adnl::AdnlNodeIdShort src, ton_api::overlay_getRandomPeersV2 &query,
+  void process_query(adnl::AdnlNodeIdShort src, ion_api::overlay_getRandomPeersV2 &query,
                      td::Promise<td::BufferSlice> promise);
-  void process_query(adnl::AdnlNodeIdShort src, ton_api::overlay_getBroadcast &query,
+  void process_query(adnl::AdnlNodeIdShort src, ion_api::overlay_getBroadcast &query,
                      td::Promise<td::BufferSlice> promise);
-  void process_query(adnl::AdnlNodeIdShort src, ton_api::overlay_getBroadcastList &query,
+  void process_query(adnl::AdnlNodeIdShort src, ion_api::overlay_getBroadcastList &query,
                      td::Promise<td::BufferSlice> promise);
-  //void process_query(adnl::AdnlNodeIdShort src, adnl::AdnlQueryId query_id, ton_api::overlay_customQuery &query);
+  //void process_query(adnl::AdnlNodeIdShort src, adnl::AdnlQueryId query_id, ion_api::overlay_customQuery &query);
 
-  td::Status process_broadcast(adnl::AdnlNodeIdShort message_from, tl_object_ptr<ton_api::overlay_broadcast> bcast);
-  td::Status process_broadcast(adnl::AdnlNodeIdShort message_from, tl_object_ptr<ton_api::overlay_broadcastFec> bcast);
+  td::Status process_broadcast(adnl::AdnlNodeIdShort message_from, tl_object_ptr<ion_api::overlay_broadcast> bcast);
+  td::Status process_broadcast(adnl::AdnlNodeIdShort message_from, tl_object_ptr<ion_api::overlay_broadcastFec> bcast);
   td::Status process_broadcast(adnl::AdnlNodeIdShort message_from,
-                               tl_object_ptr<ton_api::overlay_broadcastFecShort> bcast);
+                               tl_object_ptr<ion_api::overlay_broadcastFecShort> bcast);
   td::Status process_broadcast(adnl::AdnlNodeIdShort message_from,
-                               tl_object_ptr<ton_api::overlay_broadcastNotFound> bcast);
-  td::Status process_broadcast(adnl::AdnlNodeIdShort message_from, tl_object_ptr<ton_api::overlay_fec_received> msg);
-  td::Status process_broadcast(adnl::AdnlNodeIdShort message_from, tl_object_ptr<ton_api::overlay_fec_completed> msg);
-  td::Status process_broadcast(adnl::AdnlNodeIdShort message_from, tl_object_ptr<ton_api::overlay_unicast> msg);
+                               tl_object_ptr<ion_api::overlay_broadcastNotFound> bcast);
+  td::Status process_broadcast(adnl::AdnlNodeIdShort message_from, tl_object_ptr<ion_api::overlay_fec_received> msg);
+  td::Status process_broadcast(adnl::AdnlNodeIdShort message_from, tl_object_ptr<ion_api::overlay_fec_completed> msg);
+  td::Status process_broadcast(adnl::AdnlNodeIdShort message_from, tl_object_ptr<ion_api::overlay_unicast> msg);
 
   td::Status validate_peer_certificate(const adnl::AdnlNodeIdShort &node, const OverlayMemberCertificate &cert);
   td::Status validate_peer_certificate(const adnl::AdnlNodeIdShort &node, const OverlayMemberCertificate *cert);
-  td::Status validate_peer_certificate(const adnl::AdnlNodeIdShort &node, ton_api::overlay_MemberCertificate *cert);
+  td::Status validate_peer_certificate(const adnl::AdnlNodeIdShort &node, ion_api::overlay_MemberCertificate *cert);
   void add_peer(OverlayNode node);
   void add_peers(std::vector<OverlayNode> nodes);
-  void add_peers(const tl_object_ptr<ton_api::overlay_nodes> &nodes);
-  void add_peers(const tl_object_ptr<ton_api::overlay_nodesV2> &nodes);
+  void add_peers(const tl_object_ptr<ion_api::overlay_nodes> &nodes);
+  void add_peers(const tl_object_ptr<ion_api::overlay_nodesV2> &nodes);
   void del_some_peers();
   void del_peer(const adnl::AdnlNodeIdShort &id);
   void del_from_neighbour_list(OverlayPeer *P);
@@ -484,21 +484,21 @@ class OverlayImpl : public Overlay {
 
 }  // namespace overlay
 
-}  // namespace ton
+}  // namespace ion
 
 namespace td {
 
-inline td::StringBuilder &operator<<(td::StringBuilder &sb, const ton::overlay::OverlayImpl::PrintId &id) {
+inline td::StringBuilder &operator<<(td::StringBuilder &sb, const ion::overlay::OverlayImpl::PrintId &id) {
   sb << "[overlay " << id.overlay_id << "@" << id.local_id << "]";
   return sb;
 }
 
-inline td::StringBuilder &operator<<(td::StringBuilder &sb, const ton::overlay::OverlayImpl &overlay) {
+inline td::StringBuilder &operator<<(td::StringBuilder &sb, const ion::overlay::OverlayImpl &overlay) {
   sb << overlay.print_id();
   return sb;
 }
 
-inline td::StringBuilder &operator<<(td::StringBuilder &sb, const ton::overlay::OverlayImpl *overlay) {
+inline td::StringBuilder &operator<<(td::StringBuilder &sb, const ion::overlay::OverlayImpl *overlay) {
   sb << overlay->print_id();
   return sb;
 }

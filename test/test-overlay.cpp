@@ -1,18 +1,18 @@
 /* 
-    This file is part of TON Blockchain source code.
+    This file is part of ION Blockchain source code.
 
-    TON Blockchain is free software; you can redistribute it and/or
+    ION Blockchain is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
     as published by the Free Software Foundation; either version 2
     of the License, or (at your option) any later version.
 
-    TON Blockchain is distributed in the hope that it will be useful,
+    ION Blockchain is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with TON Blockchain.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain.  If not, see <http://www.gnu.org/licenses/>.
 
     In addition, as a special exception, the copyright holders give permission 
     to link the code of portions of this program with the OpenSSL library. 
@@ -29,7 +29,7 @@
 #include "adnl/adnl.h"
 #include "adnl/utils.hpp"
 #include "adnl/adnl-test-loopback-implementation.h"
-#include "auto/tl/ton_api.h"
+#include "auto/tl/ion_api.h"
 #include "checksum.h"
 #include "common/bitstring.h"
 #include "dht/dht.h"
@@ -67,11 +67,11 @@
 #include <set>
 
 struct Node {
-  ton::PrivateKey pk;
-  ton::PublicKeyHash id;
-  ton::PublicKey id_full;
-  ton::adnl::AdnlNodeIdShort adnl_id;
-  ton::adnl::AdnlNodeIdFull adnl_id_full;
+  ion::PrivateKey pk;
+  ion::PublicKeyHash id;
+  ion::PublicKey id_full;
+  ion::adnl::AdnlNodeIdShort adnl_id;
+  ion::adnl::AdnlNodeIdFull adnl_id_full;
   bool can_receive;
 };
 
@@ -83,19 +83,19 @@ static td::int32 node_slaves_cnt = 3;
 static size_t remaining = 0;
 static td::Bits256 bcast_hash;
 
-class Callback : public ton::overlay::Overlays::Callback {
+class Callback : public ion::overlay::Overlays::Callback {
  public:
   Callback(bool can_receive) : can_receive_(can_receive) {
   }
-  void receive_message(ton::adnl::AdnlNodeIdShort src, ton::overlay::OverlayIdShort overlay_id,
+  void receive_message(ion::adnl::AdnlNodeIdShort src, ion::overlay::OverlayIdShort overlay_id,
                        td::BufferSlice data) override {
     UNREACHABLE();
   }
-  void receive_query(ton::adnl::AdnlNodeIdShort src, ton::overlay::OverlayIdShort overlay_id, td::BufferSlice data,
+  void receive_query(ion::adnl::AdnlNodeIdShort src, ion::overlay::OverlayIdShort overlay_id, td::BufferSlice data,
                      td::Promise<td::BufferSlice> promise) override {
     UNREACHABLE();
   }
-  void receive_broadcast(ton::PublicKeyHash src, ton::overlay::OverlayIdShort overlay_id,
+  void receive_broadcast(ion::PublicKeyHash src, ion::overlay::OverlayIdShort overlay_id,
                          td::BufferSlice data) override {
     CHECK(can_receive_);
     CHECK(td::sha256_bits256(data.as_slice()) == bcast_hash);
@@ -117,20 +117,20 @@ int main(int argc, char *argv[]) {
 
   td::set_default_failure_signal_handler().ensure();
 
-  td::actor::ActorOwn<ton::keyring::Keyring> keyring;
-  td::actor::ActorOwn<ton::adnl::TestLoopbackNetworkManager> network_manager;
-  td::actor::ActorOwn<ton::adnl::Adnl> adnl;
-  td::actor::ActorOwn<ton::overlay::Overlays> overlay_manager;
+  td::actor::ActorOwn<ion::keyring::Keyring> keyring;
+  td::actor::ActorOwn<ion::adnl::TestLoopbackNetworkManager> network_manager;
+  td::actor::ActorOwn<ion::adnl::Adnl> adnl;
+  td::actor::ActorOwn<ion::overlay::Overlays> overlay_manager;
 
   td::actor::Scheduler scheduler({7});
   scheduler.run_in_context([&] {
-    ton::errorlog::ErrorLog::create(db_root_);
-    keyring = ton::keyring::Keyring::create(db_root_);
-    network_manager = td::actor::create_actor<ton::adnl::TestLoopbackNetworkManager>("test net");
-    adnl = ton::adnl::Adnl::create(db_root_, keyring.get());
+    ion::errorlog::ErrorLog::create(db_root_);
+    keyring = ion::keyring::Keyring::create(db_root_);
+    network_manager = td::actor::create_actor<ion::adnl::TestLoopbackNetworkManager>("test net");
+    adnl = ion::adnl::Adnl::create(db_root_, keyring.get());
     overlay_manager =
-        ton::overlay::Overlays::create(db_root_, keyring.get(), adnl.get(), td::actor::ActorId<ton::dht::Dht>{});
-    td::actor::send_closure(adnl, &ton::adnl::Adnl::register_network_manager, network_manager.get());
+        ion::overlay::Overlays::create(db_root_, keyring.get(), adnl.get(), td::actor::ActorId<ion::dht::Dht>{});
+    td::actor::send_closure(adnl, &ion::adnl::Adnl::register_network_manager, network_manager.get());
   });
 
   td::uint32 att = 0;
@@ -140,24 +140,24 @@ int main(int argc, char *argv[]) {
     slave_nodes.resize(total_nodes * node_slaves_cnt);
 
     auto overlay_id_full =
-        ton::create_serialize_tl_object<ton::ton_api::pub_overlay>(td::BufferSlice(PSTRING() << "TEST" << att));
-    ton::overlay::OverlayIdFull overlay_id(overlay_id_full.clone());
+        ion::create_serialize_tl_object<ion::ion_api::pub_overlay>(td::BufferSlice(PSTRING() << "TEST" << att));
+    ion::overlay::OverlayIdFull overlay_id(overlay_id_full.clone());
     auto overlay_id_short = overlay_id.compute_short_id();
 
-    ton::overlay::OverlayOptions opts;
+    ion::overlay::OverlayOptions opts;
     opts.max_slaves_in_semiprivate_overlay_ = node_slaves_cnt;
-    opts.default_permanent_members_flags_ = ton::overlay::OverlayMemberFlags::DoNotReceiveBroadcasts;
+    opts.default_permanent_members_flags_ = ion::overlay::OverlayMemberFlags::DoNotReceiveBroadcasts;
 
-    ton::overlay::OverlayPrivacyRules rules(
-        20 << 20, ton::overlay::CertificateFlags::AllowFec | ton::overlay::CertificateFlags::Trusted, {});
+    ion::overlay::OverlayPrivacyRules rules(
+        20 << 20, ion::overlay::CertificateFlags::AllowFec | ion::overlay::CertificateFlags::Trusted, {});
 
-    std::vector<ton::PublicKeyHash> root_keys;
-    std::vector<ton::adnl::AdnlNodeIdShort> root_adnl;
+    std::vector<ion::PublicKeyHash> root_keys;
+    std::vector<ion::adnl::AdnlNodeIdShort> root_adnl;
 
     size_t real_members = 0;
 
     scheduler.run_in_context([&] {
-      auto addr = ton::adnl::TestLoopbackNetworkManager::generate_dummy_addr_list();
+      auto addr = ion::adnl::TestLoopbackNetworkManager::generate_dummy_addr_list();
 
       for (auto &n : root_nodes) {
         bool receive_bcasts = (real_members == 0) ? true : (td::Random::fast_uint32() & 1);
@@ -166,22 +166,22 @@ int main(int argc, char *argv[]) {
         }
         n.can_receive = receive_bcasts;
 
-        auto pk1 = ton::PrivateKey{ton::privkeys::Ed25519::random()};
+        auto pk1 = ion::PrivateKey{ion::privkeys::Ed25519::random()};
         auto pub1 = pk1.compute_public_key();
-        n.adnl_id_full = ton::adnl::AdnlNodeIdFull{pub1};
-        n.adnl_id = ton::adnl::AdnlNodeIdShort{pub1.compute_short_id()};
-        td::actor::send_closure(keyring, &ton::keyring::Keyring::add_key, std::move(pk1), true, [](td::Unit) {});
-        td::actor::send_closure(adnl, &ton::adnl::Adnl::add_id, ton::adnl::AdnlNodeIdFull{pub1}, addr,
+        n.adnl_id_full = ion::adnl::AdnlNodeIdFull{pub1};
+        n.adnl_id = ion::adnl::AdnlNodeIdShort{pub1.compute_short_id()};
+        td::actor::send_closure(keyring, &ion::keyring::Keyring::add_key, std::move(pk1), true, [](td::Unit) {});
+        td::actor::send_closure(adnl, &ion::adnl::Adnl::add_id, ion::adnl::AdnlNodeIdFull{pub1}, addr,
                                 static_cast<td::uint8>(0));
-        td::actor::send_closure(network_manager, &ton::adnl::TestLoopbackNetworkManager::add_node_id, n.adnl_id, true,
+        td::actor::send_closure(network_manager, &ion::adnl::TestLoopbackNetworkManager::add_node_id, n.adnl_id, true,
                                 true);
 
-        auto pk2 = ton::PrivateKey{ton::privkeys::Ed25519::random()};
+        auto pk2 = ion::PrivateKey{ion::privkeys::Ed25519::random()};
         auto pub2 = pk2.compute_public_key();
         n.id_full = pub2;
         n.id = pub2.compute_short_id();
         n.pk = pk2;
-        td::actor::send_closure(keyring, &ton::keyring::Keyring::add_key, std::move(pk2), true, [](td::Unit) {});
+        td::actor::send_closure(keyring, &ion::keyring::Keyring::add_key, std::move(pk2), true, [](td::Unit) {});
 
         LOG(DEBUG) << "created node " << n.adnl_id << " " << n.id;
 
@@ -197,22 +197,22 @@ int main(int argc, char *argv[]) {
         }
         n.can_receive = receive_bcasts;
 
-        auto pk1 = ton::PrivateKey{ton::privkeys::Ed25519::random()};
+        auto pk1 = ion::PrivateKey{ion::privkeys::Ed25519::random()};
         auto pub1 = pk1.compute_public_key();
-        n.adnl_id_full = ton::adnl::AdnlNodeIdFull{pub1};
-        n.adnl_id = ton::adnl::AdnlNodeIdShort{pub1.compute_short_id()};
-        td::actor::send_closure(keyring, &ton::keyring::Keyring::add_key, std::move(pk1), true, [](td::Unit) {});
-        td::actor::send_closure(adnl, &ton::adnl::Adnl::add_id, ton::adnl::AdnlNodeIdFull{pub1}, addr,
+        n.adnl_id_full = ion::adnl::AdnlNodeIdFull{pub1};
+        n.adnl_id = ion::adnl::AdnlNodeIdShort{pub1.compute_short_id()};
+        td::actor::send_closure(keyring, &ion::keyring::Keyring::add_key, std::move(pk1), true, [](td::Unit) {});
+        td::actor::send_closure(adnl, &ion::adnl::Adnl::add_id, ion::adnl::AdnlNodeIdFull{pub1}, addr,
                                 static_cast<td::uint8>(0));
-        td::actor::send_closure(network_manager, &ton::adnl::TestLoopbackNetworkManager::add_node_id, n.adnl_id, true,
+        td::actor::send_closure(network_manager, &ion::adnl::TestLoopbackNetworkManager::add_node_id, n.adnl_id, true,
                                 true);
 
-        auto pk2 = ton::PrivateKey{ton::privkeys::Ed25519::random()};
+        auto pk2 = ion::PrivateKey{ion::privkeys::Ed25519::random()};
         auto pub2 = pk2.compute_public_key();
         n.id_full = pub2;
         n.id = pub2.compute_short_id();
         n.pk = pk2;
-        td::actor::send_closure(keyring, &ton::keyring::Keyring::add_key, std::move(pk2), true, [](td::Unit) {});
+        td::actor::send_closure(keyring, &ion::keyring::Keyring::add_key, std::move(pk2), true, [](td::Unit) {});
 
         LOG(DEBUG) << "created node " << n.adnl_id << " " << n.id;
         all_nodes.push_back(&n);
@@ -220,24 +220,24 @@ int main(int argc, char *argv[]) {
 
       for (auto &n1 : all_nodes) {
         for (auto &n2 : all_nodes) {
-          td::actor::send_closure(adnl, &ton::adnl::Adnl::add_peer, n1->adnl_id, n2->adnl_id_full, addr);
+          td::actor::send_closure(adnl, &ion::adnl::Adnl::add_peer, n1->adnl_id, n2->adnl_id_full, addr);
         }
       }
 
       for (auto &n1 : root_nodes) {
         opts.local_overlay_member_flags_ =
-            (n1.can_receive ? 0 : ton::overlay::OverlayMemberFlags::DoNotReceiveBroadcasts);
-        td::actor::send_closure(overlay_manager, &ton::overlay::Overlays::create_semiprivate_overlay, n1.adnl_id,
-                                ton::overlay::OverlayIdFull(overlay_id_full.clone()), root_adnl, root_keys,
-                                ton::overlay::OverlayMemberCertificate{}, std::make_unique<Callback>(n1.can_receive),
+            (n1.can_receive ? 0 : ion::overlay::OverlayMemberFlags::DoNotReceiveBroadcasts);
+        td::actor::send_closure(overlay_manager, &ion::overlay::Overlays::create_semiprivate_overlay, n1.adnl_id,
+                                ion::overlay::OverlayIdFull(overlay_id_full.clone()), root_adnl, root_keys,
+                                ion::overlay::OverlayMemberCertificate{}, std::make_unique<Callback>(n1.can_receive),
                                 rules, "", opts);
       }
       for (size_t i = 0; i < slave_nodes.size(); i++) {
         auto &n1 = slave_nodes[i];
         opts.local_overlay_member_flags_ =
-            (n1.can_receive ? 0 : ton::overlay::OverlayMemberFlags::DoNotReceiveBroadcasts);
+            (n1.can_receive ? 0 : ion::overlay::OverlayMemberFlags::DoNotReceiveBroadcasts);
 
-        ton::overlay::OverlayMemberCertificate cert(root_nodes[i / node_slaves_cnt].id_full, 0, i % node_slaves_cnt,
+        ion::overlay::OverlayMemberCertificate cert(root_nodes[i / node_slaves_cnt].id_full, 0, i % node_slaves_cnt,
                                                   2000000000, td::BufferSlice());
         auto buf = cert.to_sign_data(n1.adnl_id);
         auto dec = root_nodes[i / node_slaves_cnt].pk.create_decryptor().move_as_ok();
@@ -246,8 +246,8 @@ int main(int argc, char *argv[]) {
         auto enc = root_nodes[i / node_slaves_cnt].id_full.create_encryptor().move_as_ok();
         enc->check_signature(cert.to_sign_data(n1.adnl_id), cert.signature()).ensure();
 
-        td::actor::send_closure(overlay_manager, &ton::overlay::Overlays::create_semiprivate_overlay, n1.adnl_id,
-                                ton::overlay::OverlayIdFull(overlay_id_full.clone()), root_adnl, root_keys, cert,
+        td::actor::send_closure(overlay_manager, &ion::overlay::Overlays::create_semiprivate_overlay, n1.adnl_id,
+                                ion::overlay::OverlayIdFull(overlay_id_full.clone()), root_adnl, root_keys, cert,
                                 std::make_unique<Callback>(n1.can_receive), rules, "", opts);
       }
     });
@@ -265,8 +265,8 @@ int main(int argc, char *argv[]) {
     }
 
     scheduler.run_in_context([&] {
-      /*td::actor::send_closure(overlay_manager, &ton::overlay::Overlays::get_stats,
-                              [&](td::Result<ton::tl_object_ptr<ton::ton_api::engine_validator_overlaysStats>> R) {
+      /*td::actor::send_closure(overlay_manager, &ion::overlay::Overlays::get_stats,
+                              [&](td::Result<ion::tl_object_ptr<ion::ion_api::engine_validator_overlaysStats>> R) {
                                 if (R.is_ok()) {
                                   auto res = R.move_as_ok();
                                   for (auto &o : res->overlays_) {
@@ -282,7 +282,7 @@ int main(int argc, char *argv[]) {
                                   }
                                 }
                               });*/
-      td::actor::send_closure(overlay_manager, &ton::overlay::Overlays::send_broadcast_fec_ex, root_nodes[0].adnl_id,
+      td::actor::send_closure(overlay_manager, &ion::overlay::Overlays::send_broadcast_fec_ex, root_nodes[0].adnl_id,
                               overlay_id_short, root_nodes[0].id, 0, std::move(broadcast));
     });
 
@@ -303,7 +303,7 @@ int main(int argc, char *argv[]) {
     remaining = real_members;
     bcast_hash = td::sha256_bits256(broadcast.as_slice());
     scheduler.run_in_context([&] {
-      td::actor::send_closure(overlay_manager, &ton::overlay::Overlays::send_broadcast_ex, root_nodes[0].adnl_id,
+      td::actor::send_closure(overlay_manager, &ion::overlay::Overlays::send_broadcast_ex, root_nodes[0].adnl_id,
                               overlay_id_short, root_nodes[0].id, 0, std::move(broadcast));
     });
 
@@ -331,41 +331,41 @@ int main(int argc, char *argv[]) {
     root_nodes.resize(total_nodes);
 
     auto overlay_id_full =
-        ton::create_serialize_tl_object<ton::ton_api::pub_overlay>(td::BufferSlice(PSTRING() << "TEST" << att));
-    ton::overlay::OverlayIdFull overlay_id(overlay_id_full.clone());
+        ion::create_serialize_tl_object<ion::ion_api::pub_overlay>(td::BufferSlice(PSTRING() << "TEST" << att));
+    ion::overlay::OverlayIdFull overlay_id(overlay_id_full.clone());
     auto overlay_id_short = overlay_id.compute_short_id();
 
-    ton::overlay::OverlayOptions opts;
+    ion::overlay::OverlayOptions opts;
 
-    ton::overlay::OverlayPrivacyRules rules(
-        20 << 20, ton::overlay::CertificateFlags::AllowFec | ton::overlay::CertificateFlags::Trusted, {});
+    ion::overlay::OverlayPrivacyRules rules(
+        20 << 20, ion::overlay::CertificateFlags::AllowFec | ion::overlay::CertificateFlags::Trusted, {});
 
-    std::vector<ton::PublicKeyHash> root_keys;
-    std::vector<ton::adnl::AdnlNodeIdShort> root_adnl;
+    std::vector<ion::PublicKeyHash> root_keys;
+    std::vector<ion::adnl::AdnlNodeIdShort> root_adnl;
 
     size_t real_members = 0;
 
     scheduler.run_in_context([&] {
-      auto addr = ton::adnl::TestLoopbackNetworkManager::generate_dummy_addr_list();
+      auto addr = ion::adnl::TestLoopbackNetworkManager::generate_dummy_addr_list();
 
       for (auto &n : root_nodes) {
         real_members++;
-        auto pk1 = ton::PrivateKey{ton::privkeys::Ed25519::random()};
+        auto pk1 = ion::PrivateKey{ion::privkeys::Ed25519::random()};
         auto pub1 = pk1.compute_public_key();
-        n.adnl_id_full = ton::adnl::AdnlNodeIdFull{pub1};
-        n.adnl_id = ton::adnl::AdnlNodeIdShort{pub1.compute_short_id()};
-        td::actor::send_closure(keyring, &ton::keyring::Keyring::add_key, std::move(pk1), true, [](td::Unit) {});
-        td::actor::send_closure(adnl, &ton::adnl::Adnl::add_id, ton::adnl::AdnlNodeIdFull{pub1}, addr,
+        n.adnl_id_full = ion::adnl::AdnlNodeIdFull{pub1};
+        n.adnl_id = ion::adnl::AdnlNodeIdShort{pub1.compute_short_id()};
+        td::actor::send_closure(keyring, &ion::keyring::Keyring::add_key, std::move(pk1), true, [](td::Unit) {});
+        td::actor::send_closure(adnl, &ion::adnl::Adnl::add_id, ion::adnl::AdnlNodeIdFull{pub1}, addr,
                                 static_cast<td::uint8>(0));
-        td::actor::send_closure(network_manager, &ton::adnl::TestLoopbackNetworkManager::add_node_id, n.adnl_id, true,
+        td::actor::send_closure(network_manager, &ion::adnl::TestLoopbackNetworkManager::add_node_id, n.adnl_id, true,
                                 true);
 
-        auto pk2 = ton::PrivateKey{ton::privkeys::Ed25519::random()};
+        auto pk2 = ion::PrivateKey{ion::privkeys::Ed25519::random()};
         auto pub2 = pk2.compute_public_key();
         n.id_full = pub2;
         n.id = pub2.compute_short_id();
         n.pk = pk2;
-        td::actor::send_closure(keyring, &ton::keyring::Keyring::add_key, std::move(pk2), true, [](td::Unit) {});
+        td::actor::send_closure(keyring, &ion::keyring::Keyring::add_key, std::move(pk2), true, [](td::Unit) {});
 
         LOG(DEBUG) << "created node " << n.adnl_id << " " << n.id;
 
@@ -376,13 +376,13 @@ int main(int argc, char *argv[]) {
 
       for (auto &n1 : all_nodes) {
         for (auto &n2 : all_nodes) {
-          td::actor::send_closure(adnl, &ton::adnl::Adnl::add_peer, n1->adnl_id, n2->adnl_id_full, addr);
+          td::actor::send_closure(adnl, &ion::adnl::Adnl::add_peer, n1->adnl_id, n2->adnl_id_full, addr);
         }
       }
 
       for (auto &n1 : root_nodes) {
-        td::actor::send_closure(overlay_manager, &ton::overlay::Overlays::create_private_overlay_ex, n1.adnl_id,
-                                ton::overlay::OverlayIdFull(overlay_id_full.clone()), root_adnl,
+        td::actor::send_closure(overlay_manager, &ion::overlay::Overlays::create_private_overlay_ex, n1.adnl_id,
+                                ion::overlay::OverlayIdFull(overlay_id_full.clone()), root_adnl,
                                 std::make_unique<Callback>(true), rules, "", opts);
       }
     });
@@ -400,7 +400,7 @@ int main(int argc, char *argv[]) {
     bcast_hash = td::sha256_bits256(broadcast.as_slice());
 
     scheduler.run_in_context([&] {
-      td::actor::send_closure(overlay_manager, &ton::overlay::Overlays::send_broadcast_fec_ex, root_nodes[0].adnl_id,
+      td::actor::send_closure(overlay_manager, &ion::overlay::Overlays::send_broadcast_fec_ex, root_nodes[0].adnl_id,
                               overlay_id_short, root_nodes[0].id, 0, std::move(broadcast));
     });
 
@@ -421,7 +421,7 @@ int main(int argc, char *argv[]) {
     remaining = real_members;
     bcast_hash = td::sha256_bits256(broadcast.as_slice());
     scheduler.run_in_context([&] {
-      td::actor::send_closure(overlay_manager, &ton::overlay::Overlays::send_broadcast_ex, root_nodes[0].adnl_id,
+      td::actor::send_closure(overlay_manager, &ion::overlay::Overlays::send_broadcast_ex, root_nodes[0].adnl_id,
                               overlay_id_short, root_nodes[0].id, 0, std::move(broadcast));
     });
 

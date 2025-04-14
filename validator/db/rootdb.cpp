@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -21,13 +21,13 @@
 #include "archiver.hpp"
 
 #include "td/db/RocksDb.h"
-#include "ton/ton-tl.hpp"
+#include "ion/ion-tl.hpp"
 #include "td/utils/overloaded.h"
 #include "common/checksum.h"
 #include "validator/stats-merger.h"
 #include "td/actor/MultiPromise.h"
 
-namespace ton {
+namespace ion {
 
 namespace validator {
 
@@ -178,14 +178,14 @@ void RootDb::get_block_proof_link(ConstBlockHandle handle, td::Promise<td::Ref<P
 
 void RootDb::store_block_candidate(BlockCandidate candidate, td::Promise<td::Unit> promise) {
   auto source = PublicKey{pubkeys::Ed25519{candidate.pubkey.as_bits256()}};
-  auto obj = create_serialize_tl_object<ton_api::db_candidate>(
+  auto obj = create_serialize_tl_object<ion_api::db_candidate>(
       source.tl(), create_tl_block_id(candidate.id), std::move(candidate.data), std::move(candidate.collated_data));
   auto P = td::PromiseCreator::lambda(
       [archive_db = archive_db_.get(), promise = std::move(promise), block_id = candidate.id, source,
        collated_file_hash = candidate.collated_file_hash](td::Result<td::Unit> R) mutable {
         TRY_RESULT_PROMISE(promise, _, std::move(R));
         td::actor::send_closure(archive_db, &ArchiveManager::add_temp_file_short, fileref::CandidateRef{block_id},
-                                create_serialize_tl_object<ton_api::db_candidate_id>(
+                                create_serialize_tl_object<ion_api::db_candidate_id>(
                                     source.tl(), create_tl_block_id(block_id), collated_file_hash),
                                 std::move(promise));
       });
@@ -200,12 +200,12 @@ void RootDb::get_block_candidate(PublicKey source, BlockIdExt id, FileHash colla
     if (R.is_error()) {
       promise.set_error(R.move_as_error());
     } else {
-      auto f = fetch_tl_object<ton_api::db_candidate>(R.move_as_ok(), true);
+      auto f = fetch_tl_object<ion_api::db_candidate>(R.move_as_ok(), true);
       f.ensure();
       auto val = f.move_as_ok();
       auto hash = sha256_bits256(val->collated_data_);
 
-      auto key = ton::PublicKey{val->source_};
+      auto key = ion::PublicKey{val->source_};
       auto e_key = Ed25519_PublicKey{key.ed25519_value().raw()};
       promise.set_value(BlockCandidate{e_key, create_block_id(val->id_), hash, std::move(val->data_),
                                        std::move(val->collated_data_)});
@@ -220,7 +220,7 @@ void RootDb::get_block_candidate_by_block_id(BlockIdExt id, td::Promise<BlockCan
       archive_db_, &ArchiveManager::get_temp_file_short, fileref::CandidateRef{id},
       [SelfId = actor_id(this), promise = std::move(promise)](td::Result<td::BufferSlice> R) mutable {
         TRY_RESULT_PROMISE(promise, data, std::move(R));
-        TRY_RESULT_PROMISE(promise, f, fetch_tl_object<ton_api::db_candidate_id>(data, true));
+        TRY_RESULT_PROMISE(promise, f, fetch_tl_object<ion_api::db_candidate_id>(data, true));
         td::actor::send_closure(SelfId, &RootDb::get_block_candidate, PublicKey{f->source_}, create_block_id(f->id_),
                                 f->collated_data_file_hash_, std::move(promise));
       });
@@ -533,4 +533,4 @@ void RootDb::get_persistent_state_descriptions(td::Promise<std::vector<td::Ref<P
 
 }  // namespace validator
 
-}  // namespace ton
+}  // namespace ion

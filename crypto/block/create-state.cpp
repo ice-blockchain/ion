@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain source code.
+    This file is part of ION Blockchain source code.
 
-    TON Blockchain is free software; you can redistribute it and/or
+    ION Blockchain is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
     as published by the Free Software Foundation; either version 2
     of the License, or (at your option) any later version.
 
-    TON Blockchain is distributed in the hope that it will be useful,
+    ION Blockchain is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with TON Blockchain.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain.  If not, see <http://www.gnu.org/licenses/>.
 
     In addition, as a special exception, the copyright holders give permission
     to link the code of portions of this program with the OpenSSL library.
@@ -120,7 +120,7 @@ Ref<vm::Cell> config_param_root;
 bool config_addr_set;
 vm::Dictionary config_dict{32};
 
-ton::UnixTime now;
+ion::UnixTime now;
 
 bool set_config_smc(const SmcDescr& smc) {
   if (config_addr_set || smc.preinit_only || workchain_id != wc_master || smc.split_depth) {
@@ -425,7 +425,7 @@ bool store_validator_list_hash(vm::CellBuilder& cb) {
   auto vset = res.move_as_ok();
   LOG_CHECK(vset) << "unpacked validator set is empty";
   auto ccvc = block::Config::unpack_catchain_validators_config(config_dict.lookup_ref(td::BitArray<32>{28}));
-  ton::ShardIdFull shard{ton::masterchainId};
+  ion::ShardIdFull shard{ion::masterchainId};
   auto nodes = block::Config::do_compute_validator_set(ccvc, shard, *vset, 0);
   LOG_CHECK(!nodes.empty()) << "validator node list in unpacked validator set is empty";
   auto vset_hash = block::compute_validator_set_hash(0, shard, std::move(nodes));
@@ -458,7 +458,7 @@ bool store_custom(vm::CellBuilder& cb) {
 
 Ref<vm::Cell> create_state() {
   vm::CellBuilder cb, cb2;
-  now = static_cast<ton::UnixTime>(time(0));
+  now = static_cast<ion::UnixTime>(time(0));
   bool ok = true;
   PDO(workchain_id != wc_undef);
   THRERR("workchain_id is unset, cannot generate state");
@@ -797,7 +797,7 @@ void init_words_tlb(fift::Dictionary& d) {
 
 void usage(const char* progname) {
   std::cerr
-      << "Creates initial state for a TON blockchain, using configuration defined by Fift-language source files\n";
+      << "Creates initial state for a ION blockchain, using configuration defined by Fift-language source files\n";
   std::cerr
       << "usage: " << progname
       << " [-i] [-n] [-I <source-include-path>] {-L <library-fif-file>} <source-file1-fif> <source-file2-fif> ...\n";
@@ -844,7 +844,7 @@ int main(int argc, char* const argv[]) {
   bool fift_preload = true, no_env = false, script_mode = false;
   std::vector<std::string> library_source_files, source_list;
   std::vector<std::string> source_include_path;
-  std::string ton_db_path;
+  std::string ion_db_path;
 
   fift::Fift::Config config;
 
@@ -910,7 +910,7 @@ int main(int argc, char* const argv[]) {
 
   fift::init_words_common(config.dictionary);
   fift::init_words_vm(config.dictionary);
-  fift::init_words_ton(config.dictionary);
+  fift::init_words_ion(config.dictionary);
   init_words_custom(config.dictionary);
   init_words_tlb(config.dictionary);
 

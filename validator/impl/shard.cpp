@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -30,7 +30,7 @@
 
 #define LAZY_STATE_DESERIALIZE 1
 
-namespace ton {
+namespace ion {
 
 namespace validator {
 using td::Ref;
@@ -125,8 +125,8 @@ td::Status ShardStateQ::init() {
   global_id_ = info.global_id;
   before_split_ = info.before_split;
   block::ShardId id{info.shard_id};
-  ton::BlockId hdr_id{ton::ShardIdFull(id), info.seq_no};
-  if (!id.is_valid() || get_shard() != ton::ShardIdFull(id) || get_seqno() != info.seq_no) {
+  ion::BlockId hdr_id{ion::ShardIdFull(id), info.seq_no};
+  if (!id.is_valid() || get_shard() != ion::ShardIdFull(id) || get_seqno() != info.seq_no) {
     return td::Status::Error(-668, "header of unpacked shardchain state for block "s + blkid.id.to_str() +
                                        " contains BlockId " + hdr_id.to_str() +
                                        " different from the one originally required");
@@ -222,8 +222,8 @@ td::Status ShardStateQ::apply_block(BlockIdExt newid, td::Ref<BlockData> block) 
   before_split_ = info.before_split;
   fake_split_ = fake_merge_ = false;
   block::ShardId id{info.shard_id};
-  ton::BlockId hdr_id{ton::ShardIdFull(id), info.seq_no};
-  if (!id.is_valid() || get_shard() != ton::ShardIdFull(id) || get_seqno() != info.seq_no) {
+  ion::BlockId hdr_id{ion::ShardIdFull(id), info.seq_no};
+  if (!id.is_valid() || get_shard() != ion::ShardIdFull(id) || get_seqno() != info.seq_no) {
     return td::Status::Error(-668, "header of newly-computed shardchain state for block "s + blkid.id.to_str() +
                                        " contains a BlockId " + hdr_id.to_str() +
                                        " different from the one originally required");
@@ -243,7 +243,7 @@ td::Result<td::Ref<ShardState>> ShardStateQ::merge_with(const ShardState& with) 
     return td::Status::Error(-666, "cannot merge masterchain states");
   }
   auto shard1 = blkid.shard_full(), shard2 = other.blkid.shard_full();
-  if (shard1 == shard2 || !ton::shard_is_sibling(shard1, shard2)) {
+  if (shard1 == shard2 || !ion::shard_is_sibling(shard1, shard2)) {
     return td::Status::Error(-666, PSTRING() << "cannot merge states of shards " << shard1.to_str() << " and "
                                              << shard2.to_str() << " that are not siblings");
   }
@@ -256,8 +256,8 @@ td::Result<td::Ref<ShardState>> ShardStateQ::merge_with(const ShardState& with) 
   }
   auto m = Ref<ShardStateQ>{
       true,
-      ton::BlockIdExt{blkid.id.workchain, ton::shard_parent(blkid.id.shard),
-                      std::max(blkid.seqno(), other.blkid.seqno()), ton::Bits256::zero(), ton::Bits256::zero()},
+      ion::BlockIdExt{blkid.id.workchain, ion::shard_parent(blkid.id.shard),
+                      std::max(blkid.seqno(), other.blkid.seqno()), ion::Bits256::zero(), ion::Bits256::zero()},
       root};
   auto& ms = m.unique_write();
   ms.fake_merge_ = true;
@@ -284,8 +284,8 @@ td::Result<std::pair<td::Ref<ShardState>, td::Ref<ShardState>>> ShardStateQ::spl
   auto& ls = l.unique_write();
   auto& rs = r.unique_write();
   ls.fake_split_ = rs.fake_split_ = true;
-  ls.blkid.id.shard = ton::shard_child(blkid.id.shard, true);
-  rs.blkid.id.shard = ton::shard_child(blkid.id.shard, false);
+  ls.blkid.id.shard = ion::shard_child(blkid.id.shard, true);
+  rs.blkid.id.shard = ion::shard_child(blkid.id.shard, false);
   return std::make_pair<Ref<ShardState>, Ref<ShardState>>(std::move(l), std::move(r));
 }
 
@@ -467,7 +467,7 @@ Ref<ValidatorSet> MasterchainStateQ::get_total_validator_set(int next) const {
   if (nodes.empty()) {
     return {};
   }
-  return Ref<ValidatorSetQ>{true, 0, ton::ShardIdFull{}, std::move(nodes)};
+  return Ref<ValidatorSetQ>{true, 0, ion::ShardIdFull{}, std::move(nodes)};
 }
 
 Ref<ValidatorSet> MasterchainStateQ::get_next_validator_set(ShardIdFull shard) const {
@@ -492,10 +492,10 @@ std::vector<Ref<McShardHash>> MasterchainStateQ::get_shards() const {
   if (!config_) {
     return {};
   }
-  std::vector<ton::BlockId> shard_ids = config_->get_shard_hash_ids(true);
+  std::vector<ion::BlockId> shard_ids = config_->get_shard_hash_ids(true);
   std::vector<Ref<McShardHash>> v;
   for (const auto& b : shard_ids) {
-    v.emplace_back(config_->get_shard_hash(ton::ShardIdFull(b)));
+    v.emplace_back(config_->get_shard_hash(ion::ShardIdFull(b)));
     CHECK(v.back().not_null());
   }
   return v;
@@ -515,12 +515,12 @@ bool MasterchainStateQ::rotated_all_shards() const {
   return config_->rotated_all_shards();
 }
 
-bool MasterchainStateQ::get_old_mc_block_id(ton::BlockSeqno seqno, ton::BlockIdExt& blkid,
-                                            ton::LogicalTime* end_lt) const {
+bool MasterchainStateQ::get_old_mc_block_id(ion::BlockSeqno seqno, ion::BlockIdExt& blkid,
+                                            ion::LogicalTime* end_lt) const {
   return config_ && config_->get_old_mc_block_id(seqno, blkid, end_lt);
 }
 
-bool MasterchainStateQ::check_old_mc_block_id(const ton::BlockIdExt& blkid, bool strict) const {
+bool MasterchainStateQ::check_old_mc_block_id(const ion::BlockIdExt& blkid, bool strict) const {
   return config_ && config_->check_old_mc_block_id(blkid, strict);
 }
 
@@ -574,4 +574,4 @@ bool MasterchainStateQ::is_key_state() const {
 }
 
 }  // namespace validator
-}  // namespace ton
+}  // namespace ion

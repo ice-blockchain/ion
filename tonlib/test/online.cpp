@@ -1,18 +1,18 @@
 /* 
-    This file is part of TON Blockchain source code.
+    This file is part of ION Blockchain source code.
 
-    TON Blockchain is free software; you can redistribute it and/or
+    ION Blockchain is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
     as published by the Free Software Foundation; either version 2
     of the License, or (at your option) any later version.
 
-    TON Blockchain is distributed in the hope that it will be useful,
+    ION Blockchain is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with TON Blockchain.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain.  If not, see <http://www.gnu.org/licenses/>.
 
     In addition, as a special exception, the copyright holders give permission 
     to link the code of portions of this program with the OpenSSL library. 
@@ -27,11 +27,11 @@
 */
 #include "adnl/adnl-ext-client.h"
 #include "tl-utils/tl-utils.hpp"
-#include "auto/tl/ton_api_json.h"
+#include "auto/tl/ion_api_json.h"
 #include "auto/tl/tonlib_api_json.h"
 #include "tl/tl_json.h"
-#include "ton/ton-types.h"
-#include "ton/ton-tl.hpp"
+#include "ion/ion-types.h"
+#include "ion/ion-tl.hpp"
 #include "block/block.h"
 #include "block/block-auto.h"
 #include "Ed25519.h"
@@ -277,7 +277,7 @@ td::Result<QueryId> create_send_grams_query(Client& client, const Wallet& source
 
 td::Result<QueryId> create_update_dns_query(Client& client, const Wallet& dns,
                                             std::vector<tonlib_api::object_ptr<tonlib_api::dns_Action>> entries) {
-  using namespace ton::tonlib_api;
+  using namespace ion::tonlib_api;
   auto r_id = sync_send(client, make_object<createQuery>(dns.key.get_input_key(), dns.get_address(), 60,
                                                          make_object<actionDns>(std::move(entries)), nullptr));
   TRY_RESULT(id, std::move(r_id));
@@ -553,13 +553,13 @@ void test_multisig(Client& client, const Wallet& giver_wallet) {
     private_keys.push_back(td::Ed25519::generate_private_key().move_as_ok());
   }
 
-  auto ms = ton::MultisigWallet::create();
+  auto ms = ion::MultisigWallet::create();
   auto init_data = ms->create_init_data(
       wallet_id,
       td::transform(private_keys, [](const auto& pk) { return pk.get_public_key().move_as_ok().as_octet_string(); }),
       k);
-  ms = ton::MultisigWallet::create(init_data);
-  auto raw_address = ms->get_address(ton::basechainId);
+  ms = ion::MultisigWallet::create(init_data);
+  auto raw_address = ms->get_address(ion::basechainId);
   auto address = raw_address.rserialize();
   transfer_grams(client, giver_wallet, address, 1 * Gramm).ensure();
   auto init_state = ms->get_init_state();
@@ -567,10 +567,10 @@ void test_multisig(Client& client, const Wallet& giver_wallet) {
   for (int i = 0; i < 2; i++) {
     // Just transfer all (some) money back in one query
     vm::CellBuilder icb;
-    ton::GenericAccount::store_int_message(icb, block::StdAddress::parse(giver_wallet.address).move_as_ok(), 1, {});
+    ion::GenericAccount::store_int_message(icb, block::StdAddress::parse(giver_wallet.address).move_as_ok(), 1, {});
     icb.store_bytes("\0\0\0\0", 4);
     vm::CellString::store(icb, "Greatings from multisig", 35 * 8).ensure();
-    ton::MultisigWallet::QueryBuilder qb(wallet_id, -1 - i, icb.finalize());
+    ion::MultisigWallet::QueryBuilder qb(wallet_id, -1 - i, icb.finalize());
     for (int i = 0; i < k - 1; i++) {
       qb.sign(i, private_keys[i]);
     }
@@ -592,10 +592,10 @@ void test_multisig(Client& client, const Wallet& giver_wallet) {
 }
 
 void dns_resolve(Client& client, const Wallet& dns, std::string name) {
-  using namespace ton::tonlib_api;
+  using namespace ion::tonlib_api;
   auto address = dns.get_address();
   auto resolved =
-      sync_send(client, make_object<::ton::tonlib_api::dns_resolve>(
+      sync_send(client, make_object<::ion::tonlib_api::dns_resolve>(
                             std::move(address), name, td::sha256_bits256(td::Slice("cat", 3)), 4)).move_as_ok();
   CHECK(resolved->entries_.size() == 1);
   LOG(INFO) << to_string(resolved);
@@ -607,7 +607,7 @@ void test_paychan(Client& client, const Wallet& giver_wallet) {
   auto alice = create_empty_wallet(client);
   auto bob = create_empty_wallet(client);
 
-  using namespace ton::tonlib_api;
+  using namespace ion::tonlib_api;
   int init_timeout = 10;
   int close_timeout = 10;
   int64 channel_id = static_cast<td::int64>(td::Random::fast_uint64());
@@ -745,15 +745,15 @@ void test_dns(Client& client, const Wallet& giver_wallet) {
   transfer_grams(client, giver_wallet, A_B.address, 1 * Gramm, true).ensure();
   transfer_grams(client, giver_wallet, A_B_C.address, 1 * Gramm, true).ensure();
 
-  using namespace ton::tonlib_api;
+  using namespace ion::tonlib_api;
   std::vector<object_ptr<dns_Action>> actions;
 
   actions.push_back(make_object<dns_actionSet>(
-      make_object<dns_entry>("A", ton::DNS_NEXT_RESOLVER_CATEGORY,
+      make_object<dns_entry>("A", ion::DNS_NEXT_RESOLVER_CATEGORY,
                              make_object<dns_entryDataNextResolver>(A_B.get_address()))));
   auto init_A = create_update_dns_query(client, A, std::move(actions)).move_as_ok();
   actions.push_back(make_object<dns_actionSet>(
-      make_object<dns_entry>("B", ton::DNS_NEXT_RESOLVER_CATEGORY,
+      make_object<dns_entry>("B", ion::DNS_NEXT_RESOLVER_CATEGORY,
                              make_object<dns_entryDataNextResolver>(A_B_C.get_address()))));
   auto init_A_B = create_update_dns_query(client, A_B, std::move(actions)).move_as_ok();
   actions.push_back(

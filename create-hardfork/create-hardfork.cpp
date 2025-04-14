@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain source code.
+    This file is part of ION Blockchain source code.
 
-    TON Blockchain is free software; you can redistribute it and/or
+    ION Blockchain is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
     as published by the Free Software Foundation; either version 2
     of the License, or (at your option) any later version.
 
-    TON Blockchain is distributed in the hope that it will be useful,
+    ION Blockchain is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with TON Blockchain.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain.  If not, see <http://www.gnu.org/licenses/>.
 
     In addition, as a special exception, the copyright holders give permission
     to link the code of portions of this program with the OpenSSL library.
@@ -27,7 +27,7 @@
 */
 #include "adnl/adnl.h"
 #include "adnl/utils.hpp"
-#include "auto/tl/ton_api_json.h"
+#include "auto/tl/ion_api_json.h"
 #include "dht/dht.h"
 #include "overlay/overlays.h"
 #include "td/utils/OptionParser.h"
@@ -43,9 +43,9 @@
 #include "td/utils/filesystem.h"
 #include "td/utils/port/path.h"
 
-#include "ton/ton-types.h"
-#include "ton/ton-tl.hpp"
-#include "ton/ton-io.hpp"
+#include "ion/ion-types.h"
+#include "ion/ion-tl.hpp"
+#include "ion/ion-io.hpp"
 
 #include "validator/fabric.h"
 #include "validator/impl/collator.h"
@@ -78,20 +78,20 @@ struct IntError {
 
 class HardforkCreator : public td::actor::Actor {
  private:
-  td::actor::ActorOwn<ton::validator::ValidatorManagerInterface> validator_manager_;
+  td::actor::ActorOwn<ion::validator::ValidatorManagerInterface> validator_manager_;
 
-  std::string db_root_ = "/var/ton-work/db/";
+  std::string db_root_ = "/var/ion-work/db/";
   std::string global_config_;
-  td::Ref<ton::validator::ValidatorManagerOptions> opts_;
+  td::Ref<ion::validator::ValidatorManagerOptions> opts_;
   td::BufferSlice bs_;
   std::vector<td::BufferSlice> ext_msgs_;
   std::vector<td::BufferSlice> top_shard_descrs_;
   bool need_save_file_{false};
   bool tdescr_save_{false};
   std::string tdescr_pfx_;
-  ton::BlockIdExt shard_top_block_id_;
+  ion::BlockIdExt shard_top_block_id_;
 
-  ton::ShardIdFull shard_{ton::masterchainId};
+  ion::ShardIdFull shard_{ion::masterchainId};
 
  public:
   void set_db_root(std::string db_root) {
@@ -100,11 +100,11 @@ class HardforkCreator : public td::actor::Actor {
   void set_global_config_path(std::string path) {
     global_config_ = path;
   }
-  void set_shard(ton::ShardIdFull shard) {
+  void set_shard(ion::ShardIdFull shard) {
     LOG(DEBUG) << "setting shard to " << shard.to_str();
     shard_ = shard;
   }
-  void set_shard_top_block(ton::BlockIdExt block_id) {
+  void set_shard_top_block(ion::BlockIdExt block_id) {
     shard_top_block_id_ = block_id;
   }
   void set_top_descr_prefix(std::string tdescr_pfx) {
@@ -112,7 +112,7 @@ class HardforkCreator : public td::actor::Actor {
     tdescr_save_ = true;
   }
   void set_collator_flags(int flags) {
-    ton::collator_settings |= flags;
+    ion::collator_settings |= flags;
   }
   void start_up() override {
   }
@@ -152,35 +152,35 @@ class HardforkCreator : public td::actor::Actor {
 
   td::Status create_validator_options() {
     if(!global_config_.length()) {
-      opts_ = ton::validator::ValidatorManagerOptions::create(
-        ton::BlockIdExt{ton::masterchainId, ton::shardIdAll, 0, ton::RootHash::zero(), ton::FileHash::zero()},
-        ton::BlockIdExt{ton::masterchainId, ton::shardIdAll, 0, ton::RootHash::zero(), ton::FileHash::zero()});
+      opts_ = ion::validator::ValidatorManagerOptions::create(
+        ion::BlockIdExt{ion::masterchainId, ion::shardIdAll, 0, ion::RootHash::zero(), ion::FileHash::zero()},
+        ion::BlockIdExt{ion::masterchainId, ion::shardIdAll, 0, ion::RootHash::zero(), ion::FileHash::zero()});
      return td::Status::OK();
     }
     TRY_RESULT_PREFIX(conf_data, td::read_file(global_config_), "failed to read: ");
     TRY_RESULT_PREFIX(conf_json, td::json_decode(conf_data.as_slice()), "failed to parse json: ");
 
-    ton::ton_api::config_global conf;
-    TRY_STATUS_PREFIX(ton::ton_api::from_json(conf, conf_json.get_object()), "json does not fit TL scheme: ");
+    ion::ion_api::config_global conf;
+    TRY_STATUS_PREFIX(ion::ion_api::from_json(conf, conf_json.get_object()), "json does not fit TL scheme: ");
 
-    auto zero_state = ton::create_block_id(conf.validator_->zero_state_);
-    ton::BlockIdExt init_block;
+    auto zero_state = ion::create_block_id(conf.validator_->zero_state_);
+    ion::BlockIdExt init_block;
     if (!conf.validator_->init_block_) {
       LOG(INFO) << "no init block in config. using zero state";
       init_block = zero_state;
     } else {
-      init_block = ton::create_block_id(conf.validator_->init_block_);
+      init_block = ion::create_block_id(conf.validator_->init_block_);
     }
-    opts_ = ton::validator::ValidatorManagerOptions::create(zero_state, init_block);
-    std::vector<ton::BlockIdExt> h;
+    opts_ = ion::validator::ValidatorManagerOptions::create(zero_state, init_block);
+    std::vector<ion::BlockIdExt> h;
     for (auto &x : conf.validator_->hardforks_) {
-      auto b = ton::create_block_id(x);
+      auto b = ion::create_block_id(x);
        if (!b.is_masterchain()) {
-        return td::Status::Error(ton::ErrorCode::error,
+        return td::Status::Error(ion::ErrorCode::error,
                                  "[validator/hardforks] section contains not masterchain block id");
       }
       if (!b.is_valid_full()) {
-        return td::Status::Error(ton::ErrorCode::error, "[validator/hardforks] section contains invalid block_id");
+        return td::Status::Error(ion::ErrorCode::error, "[validator/hardforks] section contains invalid block_id");
       }
       for (auto &y : h) {
         if (y.is_valid() && y.seqno() >= b.seqno()) {
@@ -195,7 +195,7 @@ class HardforkCreator : public td::actor::Actor {
 
   void run() {
     td::mkdir(db_root_).ensure();
-    ton::errorlog::ErrorLog::create(db_root_);
+    ion::errorlog::ErrorLog::create(db_root_);
     if (!shard_.is_masterchain() && need_save_file_) {
       td::mkdir(db_root_ + "/static").ensure();
       do_save_file();
@@ -210,81 +210,81 @@ class HardforkCreator : public td::actor::Actor {
     auto opts = opts_;
     opts.write().set_initial_sync_disabled(true);
     validator_manager_ =
-        ton::validator::ValidatorManagerHardforkFactory::create(opts, shard_, shard_top_block_id_, db_root_);
+        ion::validator::ValidatorManagerHardforkFactory::create(opts, shard_, shard_top_block_id_, db_root_);
     for (auto &msg : ext_msgs_) {
-      td::actor::send_closure(validator_manager_, &ton::validator::ValidatorManager::new_external_message,
+      td::actor::send_closure(validator_manager_, &ion::validator::ValidatorManager::new_external_message,
                               std::move(msg), 0);
     }
     for (auto &topmsg : top_shard_descrs_) {
-      td::actor::send_closure(validator_manager_, &ton::validator::ValidatorManager::new_shard_block, ton::BlockIdExt{},
+      td::actor::send_closure(validator_manager_, &ion::validator::ValidatorManager::new_shard_block, ion::BlockIdExt{},
                               0, std::move(topmsg));
     }
-    class Callback : public ton::validator::ValidatorManagerInterface::Callback {
+    class Callback : public ion::validator::ValidatorManagerInterface::Callback {
      private:
-      td::actor::ActorId<ton::validator::ValidatorManagerInterface> id_;
+      td::actor::ActorId<ion::validator::ValidatorManagerInterface> id_;
       bool tdescr_save_;
       std::string tdescr_pfx_;
       int tdescr_cnt_ = 0;
 
      public:
-      Callback(td::actor::ActorId<ton::validator::ValidatorManagerInterface> id, bool tdescr_save = false,
+      Callback(td::actor::ActorId<ion::validator::ValidatorManagerInterface> id, bool tdescr_save = false,
                std::string tdescr_pfx = "")
           : id_(id), tdescr_save_(tdescr_save), tdescr_pfx_(tdescr_pfx) {
       }
 
-      void initial_read_complete(ton::validator::BlockHandle handle) override {
-        td::actor::send_closure(id_, &ton::validator::ValidatorManager::sync_complete,
+      void initial_read_complete(ion::validator::BlockHandle handle) override {
+        td::actor::send_closure(id_, &ion::validator::ValidatorManager::sync_complete,
                                 td::PromiseCreator::lambda([](td::Unit) {}));
       }
-      void on_new_masterchain_block(td::Ref<ton::validator::MasterchainState> state,
-                                    std::set<ton::ShardIdFull> shards_to_monitor) override {
+      void on_new_masterchain_block(td::Ref<ion::validator::MasterchainState> state,
+                                    std::set<ion::ShardIdFull> shards_to_monitor) override {
       }
-      void send_ihr_message(ton::AccountIdPrefixFull dst, td::BufferSlice data) override {
+      void send_ihr_message(ion::AccountIdPrefixFull dst, td::BufferSlice data) override {
       }
-      void send_ext_message(ton::AccountIdPrefixFull dst, td::BufferSlice data) override {
+      void send_ext_message(ion::AccountIdPrefixFull dst, td::BufferSlice data) override {
       }
-      void send_shard_block_info(ton::BlockIdExt block_id, ton::CatchainSeqno cc_seqno, td::BufferSlice data) override {
+      void send_shard_block_info(ion::BlockIdExt block_id, ion::CatchainSeqno cc_seqno, td::BufferSlice data) override {
       }
-      void send_block_candidate(ton::BlockIdExt block_id, ton::CatchainSeqno cc_seqno, td::uint32 validator_set_hash,
+      void send_block_candidate(ion::BlockIdExt block_id, ion::CatchainSeqno cc_seqno, td::uint32 validator_set_hash,
                                 td::BufferSlice data) override {
       }
-      void send_broadcast(ton::BlockBroadcast broadcast, int mode) override {
+      void send_broadcast(ion::BlockBroadcast broadcast, int mode) override {
       }
-      void download_block(ton::BlockIdExt block_id, td::uint32 priority, td::Timestamp timeout,
-                          td::Promise<ton::ReceivedBlock> promise) override {
+      void download_block(ion::BlockIdExt block_id, td::uint32 priority, td::Timestamp timeout,
+                          td::Promise<ion::ReceivedBlock> promise) override {
       }
-      void download_zero_state(ton::BlockIdExt block_id, td::uint32 priority, td::Timestamp timeout,
+      void download_zero_state(ion::BlockIdExt block_id, td::uint32 priority, td::Timestamp timeout,
                                td::Promise<td::BufferSlice> promise) override {
       }
-      void download_persistent_state(ton::BlockIdExt block_id, ton::BlockIdExt masterchain_block_id,
+      void download_persistent_state(ion::BlockIdExt block_id, ion::BlockIdExt masterchain_block_id,
                                      td::uint32 priority, td::Timestamp timeout,
                                      td::Promise<td::BufferSlice> promise) override {
       }
-      void download_block_proof(ton::BlockIdExt block_id, td::uint32 priority, td::Timestamp timeout,
+      void download_block_proof(ion::BlockIdExt block_id, td::uint32 priority, td::Timestamp timeout,
                                 td::Promise<td::BufferSlice> promise) override {
       }
-      void download_block_proof_link(ton::BlockIdExt block_id, td::uint32 priority, td::Timestamp timeout,
+      void download_block_proof_link(ion::BlockIdExt block_id, td::uint32 priority, td::Timestamp timeout,
                                      td::Promise<td::BufferSlice> promise) override {
       }
-      void get_next_key_blocks(ton::BlockIdExt block_id, td::Timestamp timeout,
-                               td::Promise<std::vector<ton::BlockIdExt>> promise) override {
+      void get_next_key_blocks(ion::BlockIdExt block_id, td::Timestamp timeout,
+                               td::Promise<std::vector<ion::BlockIdExt>> promise) override {
       }
-      void download_archive(ton::BlockSeqno masterchain_seqno, ton::ShardIdFull shard_prefix, std::string tmp_dir,
+      void download_archive(ion::BlockSeqno masterchain_seqno, ion::ShardIdFull shard_prefix, std::string tmp_dir,
                             td::Timestamp timeout, td::Promise<std::string> promise) override {
       }
       void download_out_msg_queue_proof(
-          ton::ShardIdFull dst_shard, std::vector<ton::BlockIdExt> blocks, block::ImportedMsgQueueLimits limits,
-          td::Timestamp timeout, td::Promise<std::vector<td::Ref<ton::validator::OutMsgQueueProof>>> promise) override {
+          ion::ShardIdFull dst_shard, std::vector<ion::BlockIdExt> blocks, block::ImportedMsgQueueLimits limits,
+          td::Timestamp timeout, td::Promise<std::vector<td::Ref<ion::validator::OutMsgQueueProof>>> promise) override {
       }
 
-      void new_key_block(ton::validator::BlockHandle handle) override {
+      void new_key_block(ion::validator::BlockHandle handle) override {
       }
-      void send_validator_telemetry(ton::PublicKeyHash key,
-                                    ton::tl_object_ptr<ton::ton_api::validator_telemetry> telemetry) override {
+      void send_validator_telemetry(ion::PublicKeyHash key,
+                                    ion::tl_object_ptr<ion::ion_api::validator_telemetry> telemetry) override {
       }
     };
 
-    td::actor::send_closure(validator_manager_, &ton::validator::ValidatorManagerInterface::install_callback,
+    td::actor::send_closure(validator_manager_, &ion::validator::ValidatorManagerInterface::install_callback,
                             std::make_unique<Callback>(validator_manager_.get(), tdescr_save_, tdescr_pfx_),
                             td::PromiseCreator::lambda([](td::Unit) {}));
   }
@@ -346,7 +346,7 @@ int main(int argc, char *argv[]) {
     SET_VERBOSITY_LEVEL(v);
   });
   p.add_checked_option('w', "workchain", "<workchain>[:<shard>]\tcollate block in this workchain", [&](td::Slice arg) {
-    ton::ShardId shard = 0;
+    ion::ShardId shard = 0;
     auto pos = std::min(arg.find(':'), arg.size());
     TRY_RESULT(workchain, td::to_integer_safe<int>(arg.substr(0, pos)));
     int s = 60;
@@ -355,16 +355,16 @@ int main(int argc, char *argv[]) {
       if (x < 0 || s < 0) {
         return td::Status::Error("cannot parse hexadecimal shard id (prefix)");
       }
-      shard |= (ton::ShardId(x) << s);
+      shard |= (ion::ShardId(x) << s);
       s -= 4;
     }
     td::actor::send_closure(x, &HardforkCreator::set_shard,
-                            ton::ShardIdFull{workchain, shard ? shard : ton::shardIdAll});
+                            ion::ShardIdFull{workchain, shard ? shard : ion::shardIdAll});
     return td::Status::OK();
   });
   p.add_checked_option('T', "top-block", "BlockIdExt of top block (new block will be generated atop of it)",
                        [&](td::Slice arg) {
-                         ton::BlockIdExt block_id;
+                         ion::BlockIdExt block_id;
                          if (block::parse_block_id_ext(arg, block_id)) {
                            LOG(INFO) << "setting previous block to " << block_id.to_str();
                            td::actor::send_closure(x, &HardforkCreator::set_shard_top_block, block_id);

@@ -21,7 +21,7 @@ let
   });
 in
 pkgs.llvmPackages_16.stdenv.mkDerivation {
-  pname = "ton";
+  pname = "ion";
   version = "dev-lib";
 
   src = ./.;
@@ -46,9 +46,9 @@ pkgs.llvmPackages_16.stdenv.mkDerivation {
   doInstallCheck = false;
 
   cmakeFlags = [
-    "-DTON_USE_ABSEIL=ON"
+    "-DION_USE_ABSEIL=ON"
     "-DNIX=ON"
-    "-DTON_ONLY_TONLIB=ON"
+    "-DION_ONLY_TONLIB=ON"
   ];
 
   LDFLAGS = [

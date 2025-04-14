@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -2147,7 +2147,7 @@ TEST(TonDb, CompactArrayOld) {
   //auto kv = std::make_unique<MemoryKeyValue>();
   td::RocksDb::destroy("ttt").ensure();
 
-  auto ton_db = vm::TonDbImpl::open("ttt").move_as_ok();
+  auto ion_db = vm::TonDbImpl::open("ttt").move_as_ok();
 
   //auto storage = std::make_unique<CellStorage>(kv.get());
 
@@ -2156,9 +2156,9 @@ TEST(TonDb, CompactArrayOld) {
   td::Random::Xorshift128plus rnd(123);
   FastCompactArray fast_array(array_size);
   {
-    auto txn = ton_db->begin_transaction();
+    auto txn = ion_db->begin_transaction();
     SCOPE_EXIT {
-      ton_db->commit_transaction(std::move(txn));
+      ion_db->commit_transaction(std::move(txn));
     };
     auto smart = txn->begin_smartcontract();
     SCOPE_EXIT {
@@ -2179,13 +2179,13 @@ TEST(TonDb, CompactArrayOld) {
 
   for (int i = 0; i < 100; i++) {
     if (i % 10 == 9) {
-      //LOG(ERROR) << ton_db->stat();
-      ton_db.reset();
-      ton_db = vm::TonDbImpl::open("ttt").move_as_ok();
+      //LOG(ERROR) << ion_db->stat();
+      ion_db.reset();
+      ion_db = vm::TonDbImpl::open("ttt").move_as_ok();
     }
-    auto txn = ton_db->begin_transaction();
+    auto txn = ion_db->begin_transaction();
     SCOPE_EXIT {
-      ton_db->commit_transaction(std::move(txn));
+      ion_db->commit_transaction(std::move(txn));
     };
     auto smart = txn->begin_smartcontract();
     //smart->validate_meta();
@@ -2204,9 +2204,9 @@ TEST(TonDb, CompactArrayOld) {
     //LOG(ERROR) << storage->size();
   }
   {
-    auto txn = ton_db->begin_transaction();
+    auto txn = ion_db->begin_transaction();
     SCOPE_EXIT {
-      ton_db->abort_transaction(std::move(txn));
+      ion_db->abort_transaction(std::move(txn));
     };
     auto smart = txn->begin_smartcontract();
     SCOPE_EXIT {

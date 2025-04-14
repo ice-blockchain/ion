@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "out-msg-queue-proof.hpp"
 #include "interfaces/proof.h"
@@ -24,7 +24,7 @@
 #include "block/block-auto.h"
 #include "output-queue-merger.h"
 
-namespace ton {
+namespace ion {
 
 namespace validator {
 
@@ -104,13 +104,13 @@ static td::Result<std::vector<td::int32>> process_queue(
   return msg_count;
 }
 
-td::Result<tl_object_ptr<ton_api::tonNode_outMsgQueueProof>> OutMsgQueueProof::build(
+td::Result<tl_object_ptr<ion_api::tonNode_outMsgQueueProof>> OutMsgQueueProof::build(
     ShardIdFull dst_shard, std::vector<OneBlock> blocks, block::ImportedMsgQueueLimits limits) {
   if (!dst_shard.is_valid_ext()) {
     return td::Status::Error("invalid shard");
   }
   if (blocks.empty()) {
-    return create_tl_object<ton_api::tonNode_outMsgQueueProof>(td::BufferSlice{}, td::BufferSlice{},
+    return create_tl_object<ion_api::tonNode_outMsgQueueProof>(td::BufferSlice{}, td::BufferSlice{},
                                                                std::vector<td::int32>{});
   }
 
@@ -160,14 +160,14 @@ td::Result<tl_object_ptr<ton_api::tonNode_outMsgQueueProof>> OutMsgQueueProof::b
     state_proofs.push_back(vm::CellBuilder::create_merkle_proof(proof_raw));
   }
   TRY_RESULT(queue_proof, vm::std_boc_serialize_multi(state_proofs));
-  return create_tl_object<ton_api::tonNode_outMsgQueueProof>(std::move(queue_proof), std::move(block_state_proof),
+  return create_tl_object<ion_api::tonNode_outMsgQueueProof>(std::move(queue_proof), std::move(block_state_proof),
                                                              std::move(msg_count));
 }
 
 td::Result<std::vector<td::Ref<OutMsgQueueProof>>> OutMsgQueueProof::fetch(ShardIdFull dst_shard,
                                                                            std::vector<BlockIdExt> blocks,
                                                                            block::ImportedMsgQueueLimits limits,
-                                                                           const ton_api::tonNode_outMsgQueueProof& f) {
+                                                                           const ion_api::tonNode_outMsgQueueProof& f) {
   try {
     std::vector<td::Ref<OutMsgQueueProof>> res;
     TRY_RESULT(queue_proofs, vm::std_boc_deserialize_multi(f.queue_proofs_, (int)blocks.size()));
@@ -291,4 +291,4 @@ void BuildOutMsgQueueProof::build_proof() {
 }
 
 }  // namespace validator
-}  // namespace ton
+}  // namespace ion

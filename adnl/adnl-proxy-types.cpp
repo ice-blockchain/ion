@@ -1,29 +1,29 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
 #include "adnl-proxy-types.hpp"
 #include "tl-utils/tl-utils.hpp"
-#include "auto/tl/ton_api.hpp"
+#include "auto/tl/ion_api.hpp"
 #include "td/utils/overloaded.h"
 #include "td/utils/Time.h"
 #include "common/errorcode.h"
 
-namespace ton {
+namespace ion {
 
 namespace adnl {
 
@@ -51,7 +51,7 @@ td::BufferSlice AdnlProxyFast::encrypt(Packet packet) const {
     packet.date = static_cast<td::int32>(td::Clocks::system());
     packet.flags |= 8;
   }
-  auto obj = create_tl_object<ton_api::adnl_proxyPacketHeader>(id_, packet.flags, packet.ip, packet.port,
+  auto obj = create_tl_object<ion_api::adnl_proxyPacketHeader>(id_, packet.flags, packet.ip, packet.port,
                                                                packet.adnl_start_time, packet.seqno, packet.date,
                                                                td::sha256_bits256(packet.data.as_slice()));
   char data[64];
@@ -66,7 +66,7 @@ td::BufferSlice AdnlProxyFast::encrypt(Packet packet) const {
 }
 
 td::Result<AdnlProxy::Packet> AdnlProxyFast::decrypt(td::BufferSlice packet) const {
-  TRY_RESULT(obj, fetch_tl_prefix<ton_api::adnl_proxyPacketHeader>(packet, false));
+  TRY_RESULT(obj, fetch_tl_prefix<ion_api::adnl_proxyPacketHeader>(packet, false));
   if (obj->proxy_id_ != id_) {
     return td::Status::Error(ErrorCode::protoviolation, "bad proxy id");
   }
@@ -96,12 +96,12 @@ td::Result<AdnlProxy::Packet> AdnlProxyFast::decrypt(td::BufferSlice packet) con
   return std::move(p);
 }
 
-td::Result<std::shared_ptr<AdnlProxy>> AdnlProxy::create(const ton_api::adnl_Proxy &proxy_type) {
+td::Result<std::shared_ptr<AdnlProxy>> AdnlProxy::create(const ion_api::adnl_Proxy &proxy_type) {
   std::shared_ptr<AdnlProxy> R;
-  ton_api::downcast_call(
-      const_cast<ton_api::adnl_Proxy &>(proxy_type),
-      td::overloaded([&](const ton_api::adnl_proxy_none &x) { R = std::make_shared<AdnlProxyNone>(x.id_); },
-                     [&](const ton_api::adnl_proxy_fast &x) {
+  ion_api::downcast_call(
+      const_cast<ion_api::adnl_Proxy &>(proxy_type),
+      td::overloaded([&](const ion_api::adnl_proxy_none &x) { R = std::make_shared<AdnlProxyNone>(x.id_); },
+                     [&](const ion_api::adnl_proxy_fast &x) {
                        R = std::make_shared<AdnlProxyFast>(x.id_, x.shared_secret_.as_slice());
                      }));
   return std::move(R);
@@ -109,4 +109,4 @@ td::Result<std::shared_ptr<AdnlProxy>> AdnlProxy::create(const ton_api::adnl_Pro
 
 }  // namespace adnl
 
-}  // namespace ton
+}  // namespace ion

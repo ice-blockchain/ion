@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -20,10 +20,10 @@
 
 #include "encryptor.h"
 #include "crypto/Ed25519.h"
-#include "auto/tl/ton_api.h"
+#include "auto/tl/ion_api.h"
 #include "tl-utils/tl-utils.hpp"
 
-namespace ton {
+namespace ion {
 
 class EncryptorNone : public Encryptor {
  public:
@@ -106,7 +106,7 @@ class EncryptorOverlay : public Encryptor {
     return td::Status::Error("overlay id can not be used for encryption");
   }
   td::Status check_signature(td::Slice message, td::Slice signature) override {
-    auto R = fetch_tl_object<ton_api::dht_keyDescription>(message, true);
+    auto R = fetch_tl_object<ion_api::dht_keyDescription>(message, true);
     if (R.is_error()) {
       return R.move_as_error();
     }
@@ -114,7 +114,7 @@ class EncryptorOverlay : public Encryptor {
       return td::Status::Error("overlay signature must be empty");
     }
     auto G = R.move_as_ok();
-    if (G->update_rule_->get_id() != ton_api::dht_updateRule_overlayNodes::ID) {
+    if (G->update_rule_->get_id() != ion_api::dht_updateRule_overlayNodes::ID) {
       return td::Status::Error("overlay update rule should be 'overlayNodes'");
     }
     if (G->signature_.size() > 0) {
@@ -157,4 +157,4 @@ class DecryptorAES : public Decryptor {
   }
 };
 
-}  // namespace ton
+}  // namespace ion

@@ -1,24 +1,24 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
 #pragma once
 
-#include "auto/tl/ton_api.h"
+#include "auto/tl/ion_api.h"
 #include "adnl/adnl-node-id.hpp"
 #include "overlay/overlays.h"
 #include "td/utils/SharedSlice.h"
@@ -30,7 +30,7 @@
 #include <limits>
 #include <memory>
 
-namespace ton {
+namespace ion {
 
 namespace overlay {
 
@@ -42,11 +42,11 @@ class OverlayNode {
     flags_ = flags;
     version_ = static_cast<td::int32>(td::Clocks::system());
   }
-  static td::Result<OverlayNode> create(const tl_object_ptr<ton_api::overlay_node> &node) {
+  static td::Result<OverlayNode> create(const tl_object_ptr<ion_api::overlay_node> &node) {
     TRY_RESULT(source, adnl::AdnlNodeIdFull::create(node->id_));
     return OverlayNode{source, OverlayIdShort{node->overlay_}, 0, node->version_, node->signature_.as_slice()};
   }
-  static td::Result<OverlayNode> create(const tl_object_ptr<ton_api::overlay_nodeV2> &node) {
+  static td::Result<OverlayNode> create(const tl_object_ptr<ion_api::overlay_nodeV2> &node) {
     TRY_RESULT(source, adnl::AdnlNodeIdFull::create(node->id_));
     auto res = OverlayNode{source, OverlayIdShort{node->overlay_}, (td::uint32)node->flags_, node->version_,
                            node->signature_.as_slice()};
@@ -83,12 +83,12 @@ class OverlayNode {
 
   td::BufferSlice to_sign() const {
     if (flags_ == 0) {
-      auto obj = create_tl_object<ton_api::overlay_node_toSign>(nullptr, overlay_.tl(), version_);
+      auto obj = create_tl_object<ion_api::overlay_node_toSign>(nullptr, overlay_.tl(), version_);
       source_.visit(td::overloaded([&](const adnl::AdnlNodeIdShort &id) { obj->id_ = id.tl(); },
                                    [&](const adnl::AdnlNodeIdFull &id) { obj->id_ = id.compute_short_id().tl(); }));
       return serialize_tl_object(obj, true);
     } else {
-      auto obj = create_tl_object<ton_api::overlay_node_toSignEx>(nullptr, overlay_.tl(), flags_, version_);
+      auto obj = create_tl_object<ion_api::overlay_node_toSignEx>(nullptr, overlay_.tl(), flags_, version_);
       source_.visit(td::overloaded([&](const adnl::AdnlNodeIdShort &id) { obj->id_ = id.tl(); },
                                    [&](const adnl::AdnlNodeIdFull &id) { obj->id_ = id.compute_short_id().tl(); }));
       return serialize_tl_object(obj, true);
@@ -124,21 +124,21 @@ class OverlayNode {
                                  [&](const adnl::AdnlNodeIdFull &id) { res = id; }));
     return res;
   };
-  tl_object_ptr<ton_api::overlay_node> tl() const {
+  tl_object_ptr<ion_api::overlay_node> tl() const {
     auto obj =
-        create_tl_object<ton_api::overlay_node>(nullptr, overlay_.tl(), version_, signature_.clone_as_buffer_slice());
+        create_tl_object<ion_api::overlay_node>(nullptr, overlay_.tl(), version_, signature_.clone_as_buffer_slice());
     source_.visit(td::overloaded([&](const adnl::AdnlNodeIdShort &id) { UNREACHABLE(); },
                                  [&](const adnl::AdnlNodeIdFull &id) { obj->id_ = id.tl(); }));
     return obj;
   }
-  tl_object_ptr<ton_api::overlay_nodeV2> tl_v2() const {
-    tl_object_ptr<ton_api::overlay_MemberCertificate> cert;
+  tl_object_ptr<ion_api::overlay_nodeV2> tl_v2() const {
+    tl_object_ptr<ion_api::overlay_MemberCertificate> cert;
     if (cert_ && !cert_->empty()) {
       cert = cert_->tl();
     } else {
-      cert = create_tl_object<ton_api::overlay_emptyMemberCertificate>();
+      cert = create_tl_object<ion_api::overlay_emptyMemberCertificate>();
     }
-    auto obj = create_tl_object<ton_api::overlay_nodeV2>(nullptr, overlay_.tl(), flags_, version_,
+    auto obj = create_tl_object<ion_api::overlay_nodeV2>(nullptr, overlay_.tl(), flags_, version_,
                                                          signature_.clone_as_buffer_slice(), std::move(cert));
     source_.visit(td::overloaded([&](const adnl::AdnlNodeIdShort &id) { UNREACHABLE(); },
                                  [&](const adnl::AdnlNodeIdFull &id) { obj->id_ = id.tl(); }));
@@ -198,4 +198,4 @@ class OverlayNode {
 
 }  // namespace overlay
 
-}  // namespace ton
+}  // namespace ion

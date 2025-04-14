@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "StorageManager.h"
@@ -21,7 +21,7 @@
 #include "td/db/RocksDb.h"
 #include "td/actor/MultiPromise.h"
 
-namespace ton {
+namespace ion {
 
 static overlay::OverlayIdFull get_overlay_id(td::Bits256 hash) {
   td::BufferSlice hash_str(hash.as_slice());
@@ -30,7 +30,7 @@ static overlay::OverlayIdFull get_overlay_id(td::Bits256 hash) {
 
 StorageManager::StorageManager(adnl::AdnlNodeIdShort local_id, std::string db_root, td::unique_ptr<Callback> callback,
                                bool client_mode, td::actor::ActorId<adnl::Adnl> adnl,
-                               td::actor::ActorId<ton_rldp::Rldp> rldp, td::actor::ActorId<overlay::Overlays> overlays)
+                               td::actor::ActorId<ion_rldp::Rldp> rldp, td::actor::ActorId<overlay::Overlays> overlays)
     : local_id_(local_id)
     , db_root_(std::move(db_root))
     , callback_(std::move(callback))
@@ -51,9 +51,9 @@ void StorageManager::start_up() {
   db_ = std::make_shared<db::DbType>(
       std::make_shared<td::RocksDb>(td::RocksDb::open(db_root_ + "/torrent-db").move_as_ok()));
 
-  db::db_get<ton_api::storage_db_config>(
-      *db_, create_hash_tl_object<ton_api::storage_db_key_config>(), true,
-      [SelfId = actor_id(this)](td::Result<tl_object_ptr<ton_api::storage_db_config>> R) {
+  db::db_get<ion_api::storage_db_config>(
+      *db_, create_hash_tl_object<ion_api::storage_db_key_config>(), true,
+      [SelfId = actor_id(this)](td::Result<tl_object_ptr<ion_api::storage_db_config>> R) {
         if (R.is_error()) {
           LOG(ERROR) << "Failed to load config from db: " << R.move_as_error();
           td::actor::send_closure(SelfId, &StorageManager::loaded_config_from_db, nullptr);
@@ -63,7 +63,7 @@ void StorageManager::start_up() {
       });
 }
 
-void StorageManager::loaded_config_from_db(tl_object_ptr<ton_api::storage_db_config> config) {
+void StorageManager::loaded_config_from_db(tl_object_ptr<ion_api::storage_db_config> config) {
   if (config) {
     LOG(INFO) << "Loaded config from DB. Speed limits: download=" << config->download_speed_limit_
               << ", upload=" << config->upload_speed_limit_;
@@ -73,9 +73,9 @@ void StorageManager::loaded_config_from_db(tl_object_ptr<ton_api::storage_db_con
     td::actor::send_closure(upload_speed_limiter_, &SpeedLimiter::set_max_speed, upload_speed_limit_);
   }
 
-  db::db_get<ton_api::storage_db_torrentList>(
-      *db_, create_hash_tl_object<ton_api::storage_db_key_torrentList>(), true,
-      [SelfId = actor_id(this)](td::Result<tl_object_ptr<ton_api::storage_db_torrentList>> R) {
+  db::db_get<ion_api::storage_db_torrentList>(
+      *db_, create_hash_tl_object<ion_api::storage_db_key_torrentList>(), true,
+      [SelfId = actor_id(this)](td::Result<tl_object_ptr<ion_api::storage_db_torrentList>> R) {
         std::vector<td::Bits256> torrents;
         if (R.is_error()) {
           LOG(ERROR) << "Failed to load torrent list from db: " << R.move_as_error();
@@ -235,10 +235,10 @@ void StorageManager::get_all_torrents(td::Promise<std::vector<td::Bits256>> prom
 }
 
 void StorageManager::db_store_config() {
-  auto config = create_tl_object<ton_api::storage_db_config>();
+  auto config = create_tl_object<ion_api::storage_db_config>();
   config->download_speed_limit_ = download_speed_limit_;
   config->upload_speed_limit_ = upload_speed_limit_;
-  db_->set(create_hash_tl_object<ton_api::storage_db_key_config>(), serialize_tl_object(config, true),
+  db_->set(create_hash_tl_object<ion_api::storage_db_key_config>(), serialize_tl_object(config, true),
            [](td::Result<td::Unit> R) {
              if (R.is_error()) {
                LOG(ERROR) << "Failed to save config to db: " << R.move_as_error();
@@ -251,8 +251,8 @@ void StorageManager::db_store_torrent_list() {
   for (const auto& p : torrents_) {
     torrents.push_back(p.first);
   }
-  db_->set(create_hash_tl_object<ton_api::storage_db_key_torrentList>(),
-           create_serialize_tl_object<ton_api::storage_db_torrentList>(std::move(torrents)),
+  db_->set(create_hash_tl_object<ion_api::storage_db_key_torrentList>(),
+           create_serialize_tl_object<ion_api::storage_db_torrentList>(std::move(torrents)),
            [](td::Result<td::Unit> R) {
              if (R.is_error()) {
                LOG(ERROR) << "Failed to save torrent list to db: " << R.move_as_error();
@@ -359,7 +359,7 @@ void StorageManager::wait_for_completion(td::Bits256 hash, td::Promise<td::Unit>
 }
 
 void StorageManager::get_peers_info(td::Bits256 hash,
-                                    td::Promise<tl_object_ptr<ton_api::storage_daemon_peerList>> promise) {
+                                    td::Promise<tl_object_ptr<ion_api::storage_daemon_peerList>> promise) {
   TRY_RESULT_PROMISE(promise, entry, get_torrent(hash));
   td::actor::send_closure(entry->actor, &NodeActor::get_peers_info, std::move(promise));
 }
@@ -388,4 +388,4 @@ void StorageManager::set_upload_speed_limit(double max_speed) {
   db_store_config();
 }
 
-}  // namespace ton
+}  // namespace ion

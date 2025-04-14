@@ -1,7 +1,7 @@
 fun get_incoming_value() { return 3; }
 
 fun main() {
-    var incoming_ton: int = get_incoming_value().3();
+    var incoming_ion: int = get_incoming_value().3();
 }
 
 /**

@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -21,13 +21,13 @@
 #include "catchain-received-block.hpp"
 #include "catchain-receiver-source.h"
 
-#include "auto/tl/ton_api.hpp"
+#include "auto/tl/ion_api.hpp"
 
-namespace ton {
+namespace ion {
 
 namespace catchain {
 
-void CatChainReceivedBlockImpl::initialize(tl_object_ptr<ton_api::catchain_block> block, td::SharedSlice payload) {
+void CatChainReceivedBlockImpl::initialize(tl_object_ptr<ion_api::catchain_block> block, td::SharedSlice payload) {
   if (state_ != bs_none) {
     return;
   }
@@ -128,7 +128,7 @@ void CatChainReceivedBlockImpl::initialize_fork() {
   vt_[fork_id_] = height_;
 }
 
-void CatChainReceivedBlockImpl::pre_deliver(ton_api::catchain_block_data_fork &b) {
+void CatChainReceivedBlockImpl::pre_deliver(ion_api::catchain_block_data_fork &b) {
   {
     td::Status S;
     S = chain_->validate_block_sync(b.left_);
@@ -155,14 +155,14 @@ void CatChainReceivedBlockImpl::pre_deliver(ton_api::catchain_block_data_fork &b
 
   CatChainReceiverSource *S = chain_->get_source(b.left_->src_);
   S->on_found_fork_proof(
-      create_serialize_tl_object<ton_api::catchain_block_data_fork>(std::move(b.left_), std::move(b.right_)));
+      create_serialize_tl_object<ion_api::catchain_block_data_fork>(std::move(b.left_), std::move(b.right_)));
   S->blame(fork_id_, height_);
 }
 
-void CatChainReceivedBlockImpl::pre_deliver(ton_api::catchain_block_data_badBlock &b) {
+void CatChainReceivedBlockImpl::pre_deliver(ion_api::catchain_block_data_badBlock &b) {
 }
 
-void CatChainReceivedBlockImpl::pre_deliver(ton_api::catchain_block_data_nop &b) {
+void CatChainReceivedBlockImpl::pre_deliver(ion_api::catchain_block_data_nop &b) {
 }
 
 void CatChainReceivedBlockImpl::pre_deliver() {
@@ -216,11 +216,11 @@ void CatChainReceivedBlockImpl::pre_deliver() {
     }
   }
 
-  auto X = fetch_tl_object<ton_api::catchain_block_inner_Data>(payload_.as_slice(), true);
+  auto X = fetch_tl_object<ion_api::catchain_block_inner_Data>(payload_.as_slice(), true);
   if (X.is_error()) {
     is_custom_ = true;
   } else {
-    ton_api::downcast_call(*X.move_as_ok(), [Self = this](auto &obj) { Self->pre_deliver(obj); });
+    ion_api::downcast_call(*X.move_as_ok(), [Self = this](auto &obj) { Self->pre_deliver(obj); });
   }
 }
 
@@ -337,31 +337,31 @@ void CatChainReceivedBlockImpl::find_pending_deps(std::vector<CatChainBlockHash>
   }
 }
 
-tl_object_ptr<ton_api::catchain_block_id> CatChainReceivedBlock::block_id(
-    const CatChainReceiver *chain, const tl_object_ptr<ton_api::catchain_block> &block, const td::Slice &payload) {
+tl_object_ptr<ion_api::catchain_block_id> CatChainReceivedBlock::block_id(
+    const CatChainReceiver *chain, const tl_object_ptr<ion_api::catchain_block> &block, const td::Slice &payload) {
   td::Bits256 hash = data_payload_hash(chain, block->data_, payload);
-  return create_tl_object<ton_api::catchain_block_id>(block->incarnation_, chain->get_source_hash(block->src_).tl(),
+  return create_tl_object<ion_api::catchain_block_id>(block->incarnation_, chain->get_source_hash(block->src_).tl(),
                                                       block->height_, hash);
 }
-tl_object_ptr<ton_api::catchain_block_id> CatChainReceivedBlock::block_id(
-    const CatChainReceiver *chain, const tl_object_ptr<ton_api::catchain_block_dep> &block) {
-  return create_tl_object<ton_api::catchain_block_id>(
+tl_object_ptr<ion_api::catchain_block_id> CatChainReceivedBlock::block_id(
+    const CatChainReceiver *chain, const tl_object_ptr<ion_api::catchain_block_dep> &block) {
+  return create_tl_object<ion_api::catchain_block_id>(
       chain->get_incarnation(), chain->get_source_hash(block->src_).tl(), block->height_, block->data_hash_);
 }
 
 CatChainBlockHash CatChainReceivedBlock::block_hash(const CatChainReceiver *chain,
-                                                    const tl_object_ptr<ton_api::catchain_block> &block,
+                                                    const tl_object_ptr<ion_api::catchain_block> &block,
                                                     const td::Slice &payload) {
   return get_tl_object_sha_bits256(block_id(chain, block, payload));
 }
 
 CatChainBlockHash CatChainReceivedBlock::block_hash(const CatChainReceiver *chain,
-                                                    const tl_object_ptr<ton_api::catchain_block_dep> &block) {
+                                                    const tl_object_ptr<ion_api::catchain_block_dep> &block) {
   return get_tl_object_sha_bits256(block_id(chain, block));
 }
 
 td::Status CatChainReceivedBlock::pre_validate_block(const CatChainReceiver *chain,
-                                                     const tl_object_ptr<ton_api::catchain_block> &block,
+                                                     const tl_object_ptr<ion_api::catchain_block> &block,
                                                      const td::Slice &payload) {
   CHECK(block->incarnation_ == chain->get_incarnation());
   if (block->height_ <= 0) {
@@ -419,7 +419,7 @@ td::Status CatChainReceivedBlock::pre_validate_block(const CatChainReceiver *cha
 }
 
 td::Status CatChainReceivedBlock::pre_validate_block(const CatChainReceiver *chain,
-                                                     const tl_object_ptr<ton_api::catchain_block_dep> &block) {
+                                                     const tl_object_ptr<ion_api::catchain_block_dep> &block) {
   if (block->height_ < 0) {
     return td::Status::Error(ErrorCode::protoviolation, std::string("bad height ") + std::to_string(block->height_));
   }
@@ -440,24 +440,24 @@ td::Status CatChainReceivedBlock::pre_validate_block(const CatChainReceiver *cha
   return td::Status::OK();
 }
 
-tl_object_ptr<ton_api::catchain_block> CatChainReceivedBlockImpl::export_tl() const {
+tl_object_ptr<ion_api::catchain_block> CatChainReceivedBlockImpl::export_tl() const {
   CHECK(initialized());
   CHECK(height_ > 0);
-  std::vector<tl_object_ptr<ton_api::catchain_block_dep>> deps;
+  std::vector<tl_object_ptr<ion_api::catchain_block_dep>> deps;
 
   for (CatChainReceivedBlockImpl *B : block_deps_) {
     deps.push_back(B->export_tl_dep());
   }
   CHECK(deps.size() <= chain_->opts().max_deps)
 
-  return create_tl_object<ton_api::catchain_block>(
+  return create_tl_object<ion_api::catchain_block>(
       chain_->get_incarnation(), source_id_, height_,
-      create_tl_object<ton_api::catchain_block_data>(prev_->export_tl_dep(), std::move(deps)),
+      create_tl_object<ion_api::catchain_block_data>(prev_->export_tl_dep(), std::move(deps)),
       signature_.clone_as_buffer_slice());
 }
 
-tl_object_ptr<ton_api::catchain_block_dep> CatChainReceivedBlockImpl::export_tl_dep() const {
-  return create_tl_object<ton_api::catchain_block_dep>(source_id_, height_, data_payload_hash_,
+tl_object_ptr<ion_api::catchain_block_dep> CatChainReceivedBlockImpl::export_tl_dep() const {
+  return create_tl_object<ion_api::catchain_block_dep>(source_id_, height_, data_payload_hash_,
                                                        signature_.clone_as_buffer_slice());
 }
 
@@ -470,15 +470,15 @@ CatChainReceivedBlockImpl::CatChainReceivedBlockImpl(td::uint32 source_id, const
   height_ = 0;
 
   data_payload_hash_ = hash;
-  block_id_hash_ = get_tl_object_sha_bits256(create_tl_object<ton_api::catchain_block_id>(
+  block_id_hash_ = get_tl_object_sha_bits256(create_tl_object<ion_api::catchain_block_id>(
       chain->get_incarnation(), chain->get_incarnation(), height_, data_payload_hash_));
 }
 
-CatChainReceivedBlockImpl::CatChainReceivedBlockImpl(tl_object_ptr<ton_api::catchain_block> block,
+CatChainReceivedBlockImpl::CatChainReceivedBlockImpl(tl_object_ptr<ion_api::catchain_block> block,
                                                      td::SharedSlice payload, CatChainReceiver *chain) {
   chain_ = chain;
   data_payload_hash_ = data_payload_hash(chain, block->data_, payload);
-  block_id_hash_ = get_tl_object_sha_bits256(create_tl_object<ton_api::catchain_block_id>(
+  block_id_hash_ = get_tl_object_sha_bits256(create_tl_object<ion_api::catchain_block_id>(
       block->incarnation_, chain->get_source_hash(block->src_).tl(), block->height_, data_payload_hash_));
   height_ = block->height_;
   source_id_ = block->src_;
@@ -490,13 +490,13 @@ CatChainReceivedBlockImpl::CatChainReceivedBlockImpl(tl_object_ptr<ton_api::catc
   initialize(std::move(block), std::move(payload));
 }
 
-CatChainReceivedBlockImpl::CatChainReceivedBlockImpl(tl_object_ptr<ton_api::catchain_block_dep> block,
+CatChainReceivedBlockImpl::CatChainReceivedBlockImpl(tl_object_ptr<ion_api::catchain_block_dep> block,
                                                      CatChainReceiver *chain) {
   chain_ = chain;
   data_payload_hash_ = block->data_hash_;
   source_id_ = block->src_;
   signature_ = td::SharedSlice{block->signature_.as_slice()};
-  block_id_hash_ = get_tl_object_sha_bits256(create_tl_object<ton_api::catchain_block_id>(
+  block_id_hash_ = get_tl_object_sha_bits256(create_tl_object<ion_api::catchain_block_id>(
       chain_->get_incarnation(), chain_->get_source_hash(source_id_).tl(), block->height_, data_payload_hash_));
   height_ = block->height_;
 
@@ -504,12 +504,12 @@ CatChainReceivedBlockImpl::CatChainReceivedBlockImpl(tl_object_ptr<ton_api::catc
   S->on_new_block(this);
 }
 
-std::unique_ptr<CatChainReceivedBlock> CatChainReceivedBlock::create(tl_object_ptr<ton_api::catchain_block> block,
+std::unique_ptr<CatChainReceivedBlock> CatChainReceivedBlock::create(tl_object_ptr<ion_api::catchain_block> block,
                                                                      td::SharedSlice payload, CatChainReceiver *chain) {
   return std::make_unique<CatChainReceivedBlockImpl>(std::move(block), std::move(payload), chain);
 }
 
-std::unique_ptr<CatChainReceivedBlock> CatChainReceivedBlock::create(tl_object_ptr<ton_api::catchain_block_dep> block,
+std::unique_ptr<CatChainReceivedBlock> CatChainReceivedBlock::create(tl_object_ptr<ion_api::catchain_block_dep> block,
                                                                      CatChainReceiver *chain) {
   return std::make_unique<CatChainReceivedBlockImpl>(std::move(block), chain);
 }
@@ -521,7 +521,7 @@ std::unique_ptr<CatChainReceivedBlock> CatChainReceivedBlock::create_root(td::ui
 }
 
 CatChainBlockPayloadHash CatChainReceivedBlock::data_payload_hash(
-    const CatChainReceiver *chain, const tl_object_ptr<ton_api::catchain_block_data> &data, const td::Slice &payload) {
+    const CatChainReceiver *chain, const tl_object_ptr<ion_api::catchain_block_data> &data, const td::Slice &payload) {
   td::Bits256 hash = sha256_bits256(payload);
   if (chain->opts().block_hash_covers_data) {
     td::Bits256 data_hash = get_tl_object_sha_bits256(data);
@@ -537,4 +537,4 @@ CatChainBlockPayloadHash CatChainReceivedBlock::data_payload_hash(
 
 }  // namespace catchain
 
-}  // namespace ton
+}  // namespace ion

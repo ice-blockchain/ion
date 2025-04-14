@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -31,7 +31,7 @@
 #include "validator-session/validator-session-types.h"
 #include "auto/tl/lite_api.h"
 
-namespace ton {
+namespace ion {
 
 namespace validator {
 
@@ -145,7 +145,7 @@ class ValidatorManager : public ValidatorManagerInterface {
   virtual void send_ihr_message(td::Ref<IhrMessage> message) = 0;
   virtual void send_top_shard_block_description(td::Ref<ShardTopBlockDescription> desc) = 0;
   virtual void send_block_broadcast(BlockBroadcast broadcast, int mode) = 0;
-  virtual void send_validator_telemetry(PublicKeyHash key, tl_object_ptr<ton_api::validator_telemetry> telemetry) = 0;
+  virtual void send_validator_telemetry(PublicKeyHash key, tl_object_ptr<ion_api::validator_telemetry> telemetry) = 0;
   virtual void send_get_out_msg_queue_proof_request(ShardIdFull dst_shard, std::vector<BlockIdExt> blocks,
                                                     block::ImportedMsgQueueLimits limits,
                                                     td::Promise<std::vector<td::Ref<OutMsgQueueProof>>> promise) = 0;
@@ -229,4 +229,4 @@ class ValidatorManager : public ValidatorManagerInterface {
 
 }  // namespace validator
 
-}  // namespace ton
+}  // namespace ion
