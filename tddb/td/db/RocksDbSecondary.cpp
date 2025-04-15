@@ -116,13 +116,7 @@ std::string RocksDbSecondary::stats() const {
 
 Result<RocksDbSecondary::GetStatus> RocksDbSecondary::get(Slice key, std::string &value) {
   rocksdb::Status status;
-  if (snapshot_) {
-    rocksdb::ReadOptions options;
-    options.snapshot = snapshot_.get();
-    status = db_->Get(options, to_rocksdb(key), &value);
-  } else {
-    status = db_->Get({}, to_rocksdb(key), &value);
-  }
+  status = db_->Get({}, to_rocksdb(key), &value);
   if (status.ok()) {
     return GetStatus::Ok;
   }
@@ -180,9 +174,8 @@ Status RocksDbSecondary::erase(Slice key) {
 
 Result<size_t> RocksDbSecondary::count(Slice prefix) {
   rocksdb::ReadOptions options;
-  options.snapshot = snapshot_.get();
   std::unique_ptr<rocksdb::Iterator> iterator;
-  
+
   iterator.reset(db_->NewIterator(options));
 
   size_t res = 0;
@@ -196,6 +189,46 @@ Result<size_t> RocksDbSecondary::count(Slice prefix) {
     return from_rocksdb(iterator->status());
   }
   return res;
+}
+
+Status RocksDbSecondary::for_each(std::function<Status(Slice, Slice)> f) {
+  rocksdb::ReadOptions options;
+  options.auto_prefix_mode = true;
+  std::unique_ptr<rocksdb::Iterator> iterator;
+  iterator.reset(db_->NewIterator(options));
+
+  iterator->SeekToFirst();
+  for (; iterator->Valid(); iterator->Next()) {
+    auto key = from_rocksdb(iterator->key());
+    auto value = from_rocksdb(iterator->value());
+    TRY_STATUS(f(key, value));
+  }
+  if (!iterator->status().ok()) {
+    return from_rocksdb(iterator->status());
+  }
+  return Status::OK();
+}
+
+Status RocksDbSecondary::for_each_in_range(Slice begin, Slice end, std::function<Status(Slice, Slice)> f) {
+  rocksdb::ReadOptions options;
+  options.auto_prefix_mode = true;
+  std::unique_ptr<rocksdb::Iterator> iterator;
+  iterator.reset(db_->NewIterator(options));
+
+  auto comparator = rocksdb::BytewiseComparator();
+  iterator->Seek(to_rocksdb(begin));
+  for (; iterator->Valid(); iterator->Next()) {
+    auto key = from_rocksdb(iterator->key());
+    if (comparator->Compare(to_rocksdb(key), to_rocksdb(end)) >= 0) {
+      break;
+    }
+    auto value = from_rocksdb(iterator->value());
+    TRY_STATUS(f(key, value));
+  }
+  if (!iterator->status().ok()) {
+    return from_rocksdb(iterator->status());
+  }
+  return td::Status::OK();
 }
 
 Status RocksDbSecondary::begin_write_batch() {
@@ -227,14 +260,10 @@ Status RocksDbSecondary::flush() {
 }
 
 Status RocksDbSecondary::begin_snapshot() {
-  snapshot_.reset(db_->GetSnapshot());
   return td::Status::OK();
 }
 
 Status RocksDbSecondary::end_snapshot() {
-  if (snapshot_) {
-    db_->ReleaseSnapshot(snapshot_.release());
-  }
   return td::Status::OK();
 }
 
