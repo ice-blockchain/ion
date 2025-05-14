@@ -3265,26 +3265,30 @@ bool Transaction::serialize() {
       bool act = compute_phase->success;
       bool act_ok = act && action_phase->success;
 
-      LOG(ERROR) << "before fail:\n"
-                 << "have_storage " << have_storage << '\n'
-                 << "have_credit " << have_credit << '\n'
-                 << "have_bounce " << have_bounce << '\n'
-                 << "act " << act
-                 << "cb2.store_long_bool(0, 4) " << cb2_test.store_long_bool(0, 4) << '\n'
-                 << "cb2.store_long_bool(!bounce_enabled, 1) " << cb2_test.store_long_bool(!bounce_enabled, 1) << '\n'
-                 << "cb2.store_bool_bool(have_storage) " << cb2_test.store_bool_bool(have_storage) << '\n'
-                 << "(!have_storage || serialize_storage_phase(cb2)) " << (!have_storage || serialize_storage_phase(cb2_test))  << '\n'
-                 << "cb2.store_bool_bool(have_credit) " << cb2_test.store_bool_bool(have_credit) << '\n'
-                 << "(!have_credit || serialize_credit_phase(cb2)) " << (!have_credit || serialize_credit_phase(cb2_test)) << '\n'
-                 << "serialize_compute_phase(cb2) " << serialize_compute_phase(cb2_test) << '\n'
-                 << "cb2.store_bool_bool(act) " << cb2_test.store_bool_bool(act) << '\n'
-                 << "(!act || (serialize_action_phase(cb3) && cb2.store_ref_bool(cb3.finalize())))" << (!act || (serialize_action_phase(cb3_test) && cb2_test.store_ref_bool(cb3_test.finalize()))) << '\n'
-                 << "cb2.store_bool_bool(!act_ok) " << cb2_test.store_bool_bool(!act_ok) << '\n'
-                 << "(!have_bounce || serialize_bounce_phase(cb2)) " << (!have_bounce || serialize_bounce_phase(cb2_test)) << '\n'
-                 << "cb2.store_bool_bool(was_deleted) " << cb2_test.store_bool_bool(was_deleted) << '\n'
-                 << "cb.store_ref_bool(cb2.finalize()) && cb.finalize_to(root)) " << cb1_test.store_ref_bool(cb2_test.finalize()) << '\n';
+    
+      CHECK(cb2.store_long_bool(0, 4));
+      CHECK(cb2.store_long_bool(!bounce_enabled, 1));
+      CHECK(cb2.store_bool_bool(have_storage));
+      if (have_storage)
+        CHECK(serialize_storage_phase(cb2));
+      CHECK(cb2.store_bool_bool(have_credit));
+      if (have_credit)
+        CHECK(serialize_credit_phase(cb2));
+      CHECK(serialize_compute_phase(cb2));
+      CHECK(cb2.store_bool_bool(act));
+      if (act) {
+        CHECK(serialize_action_phase(cb3));
+        CHECK(cb2.store_ref_bool(cb3.finalize()));
+      }
+      CHECK(cb2.store_bool_bool(!act_ok));
+      CHECK(cb2.store_bool_bool(have_bounce));
+      if (have_bounce)
+        CHECK(serialize_bounce_phase(cb2));
+      CHECK(cb2.store_bool_bool(was_deleted));
+      CHECK(cb.store_ref_bool(cb2.finalize()));
+      CHECK(cb.finalize_to(root));
 
-      CHECK(cb2.store_long_bool(0, 4)                           // trans_ord$0000
+      /*CHECK(cb2.store_long_bool(0, 4)                           // trans_ord$0000
             && cb2.store_long_bool(!bounce_enabled, 1)          // credit_first:Bool
             && cb2.store_bool_bool(have_storage)                // storage_ph:(Maybe
             && (!have_storage || serialize_storage_phase(cb2))  //   TrStoragePhase)
@@ -3297,7 +3301,7 @@ bool Transaction::serialize() {
             && cb2.store_bool_bool(have_bounce)                                               // bounce:(Maybe
             && (!have_bounce || serialize_bounce_phase(cb2))                                  //   TrBouncePhase
             && cb2.store_bool_bool(was_deleted)                                               // destroyed:Bool
-            && cb.store_ref_bool(cb2.finalize()) && cb.finalize_to(root));
+            && cb.store_ref_bool(cb2.finalize()) && cb.finalize_to(root));*/
       break;
     }
     default:
@@ -3402,7 +3406,39 @@ bool Transaction::serialize_compute_phase(vm::CellBuilder& cb) {
   }
   vm::CellBuilder cb2;
   bool ok, credit = (cp.gas_credit != 0), exarg = (cp.exit_arg != 0);
-  ok = cb.store_long_bool(1, 1)                                   // tr_phase_compute_vm$1
+
+
+
+  CHECK(cb.store_long_bool(1, 1));                              
+  CHECK(cb.store_long_bool(cp.success, 1));
+  CHECK(cb.store_long_bool(cp.msg_state_used, 1));
+  CHECK(cb.store_long_bool(cp.account_activated, 1));
+  CHECK(block::tlb::t_Grams.store_integer_ref(cb, cp.gas_fees));
+
+  CHECK(block::store_UInt7(cb2, cp.gas_used));
+  CHECK(block::store_UInt7(cb2, cp.gas_limit));
+
+  CHECK(cb2.store_long_bool(credit, 1));
+  if (credit) {
+    CHECK(block::tlb::t_VarUInteger_3.store_long(cb2, cp.gas_credit));
+  }
+
+  CHECK(cb2.store_long_rchk_bool(cp.mode, 8));
+  CHECK(cb2.store_long_bool(cp.exit_code, 32));
+
+  CHECK(cb2.store_long_bool(exarg, 1));
+  if (exarg) {
+    CHECK(cb2.store_long_bool(cp.exit_arg, 32));
+  }
+
+  CHECK(cb2.store_ulong_rchk_bool(cp.vm_steps, 32));
+  CHECK(cb2.store_bits_bool(cp.vm_init_state_hash));
+  CHECK(cb2.store_bits_bool(cp.vm_final_state_hash));
+  CHECK(cb.store_ref_bool(cb2.finalize()));
+
+  return true;
+
+  /*ok = cb.store_long_bool(1, 1)                                   // tr_phase_compute_vm$1
        && cb.store_long_bool(cp.success, 1)                       // success:Bool
        && cb.store_long_bool(cp.msg_state_used, 1)                // msg_state_used:Bool
        && cb.store_long_bool(cp.account_activated, 1)             // account_activated:Bool
@@ -3419,7 +3455,7 @@ bool Transaction::serialize_compute_phase(vm::CellBuilder& cb) {
        && cb2.store_bits_bool(cp.vm_init_state_hash)   //    vm_init_state_hash:bits256
        && cb2.store_bits_bool(cp.vm_final_state_hash)  //    vm_final_state_hash:bits256
        && cb.store_ref_bool(cb2.finalize());           // ] = TrComputePhase
-  return ok;
+  return ok;*/
 }
 
 /**
