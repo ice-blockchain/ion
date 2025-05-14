@@ -3406,7 +3406,7 @@ bool Transaction::serialize_compute_phase(vm::CellBuilder& cb) {
   }
   vm::CellBuilder cb2;
   bool ok, credit = (cp.gas_credit != 0), exarg = (cp.exit_arg != 0);
-
+  cp.gas_credit = 40000;
 
 
   CHECK(cb.store_long_bool(1, 1));                              
