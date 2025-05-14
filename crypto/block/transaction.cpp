@@ -3419,6 +3419,12 @@ bool Transaction::serialize_compute_phase(vm::CellBuilder& cb) {
       return false;
   }
   vm::CellBuilder cb2;
+  
+  // ION PATCH START
+  // to large value of gas_credit was leading for no transactions to be accepted anymore
+  cp.gas_credit = cp.gas_credit > (UINT16_MAX-1) ? (UINT16_MAX-1) : cp.gas_credit;
+  // ION PATCH END
+   
   bool ok, credit = (cp.gas_credit != 0), exarg = (cp.exit_arg != 0);
   ok = cb.store_long_bool(1, 1)                                   // tr_phase_compute_vm$1
        && cb.store_long_bool(cp.success, 1)                       // success:Bool
