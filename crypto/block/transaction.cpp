@@ -3256,12 +3256,34 @@ bool Transaction::serialize() {
       break;
     }
     case tr_ord: {
-      vm::CellBuilder cb3;
+      vm::CellBuilder cb3, cb3_test, cb1_test, cb2_test;
+      cb1_test = cb;
+      cb2_test = cb2;
       bool have_storage = (bool)storage_phase;
       bool have_credit = (bool)credit_phase;
       bool have_bounce = (bool)bounce_phase;
       bool act = compute_phase->success;
       bool act_ok = act && action_phase->success;
+
+      LOG(ERROR) << "before fail:\n"
+                 << "have_storage " << have_storage << '\n'
+                 << "have_credit " << have_credit << '\n'
+                 << "have_bounce " << have_bounce << '\n'
+                 << "act " << act
+                 << "cb2.store_long_bool(0, 4) " << cb2_test.store_long_bool(0, 4) << '\n'
+                 << "cb2.store_long_bool(!bounce_enabled, 1) " << cb2_test.store_long_bool(!bounce_enabled, 1) << '\n'
+                 << "cb2.store_bool_bool(have_storage) " << cb2_test.store_bool_bool(have_storage) << '\n'
+                 << "(!have_storage || serialize_storage_phase(cb2)) " << (!have_storage || serialize_storage_phase(cb2_test))  << '\n'
+                 << "cb2.store_bool_bool(have_credit) " << cb2_test.store_bool_bool(have_credit) << '\n'
+                 << "(!have_credit || serialize_credit_phase(cb2)) " << (!have_credit || serialize_credit_phase(cb2_test)) << '\n'
+                 << "serialize_compute_phase(cb2) " << serialize_compute_phase(cb2_test) << '\n'
+                 << "cb2.store_bool_bool(act) " << cb2_test.store_bool_bool(act) << '\n'
+                 << "(!act || (serialize_action_phase(cb3) && cb2.store_ref_bool(cb3.finalize())))" << (!act || (serialize_action_phase(cb3_test) && cb2_test.store_ref_bool(cb3_test.finalize()))) << '\n'
+                 << "cb2.store_bool_bool(!act_ok) " << cb2_test.store_bool_bool(!act_ok) << '\n'
+                 << "(!have_bounce || serialize_bounce_phase(cb2)) " << (!have_bounce || serialize_bounce_phase(cb2_test)) << '\n'
+                 << "cb2.store_bool_bool(was_deleted) " << cb2_test.store_bool_bool(was_deleted) << '\n'
+                 << "cb.store_ref_bool(cb2.finalize()) && cb.finalize_to(root)) " << cb1_test.store_ref_bool(cb2_test.finalize()) << '\n';
+
       CHECK(cb2.store_long_bool(0, 4)                           // trans_ord$0000
             && cb2.store_long_bool(!bounce_enabled, 1)          // credit_first:Bool
             && cb2.store_bool_bool(have_storage)                // storage_ph:(Maybe
