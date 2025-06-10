@@ -1082,10 +1082,10 @@ void CatChainReceiverImpl::destroy() {
 }
 
 td::uint64 get_max_block_height(const CatChainOptions& opts, size_t sources_cnt) {
-  if (opts.max_block_height_coeff == 0) {
+//  if (opts.max_block_height_coeff == 0) {
     return std::numeric_limits<td::uint64>::max();
-  }
-  return opts.max_block_height_coeff * (1 + (sources_cnt + opts.max_deps - 1) / opts.max_deps) / 1000;
+//  }
+//  return opts.max_block_height_coeff * (1 + (sources_cnt + opts.max_deps - 1) / opts.max_deps) / 1000;
 }
 
 }  // namespace catchain

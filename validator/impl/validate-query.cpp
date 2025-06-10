@@ -1121,7 +1121,7 @@ bool ValidateQuery::check_this_shard_mc_info() {
           PSTRING() << "cannot generate new shardchain block for " << shard_.to_str()
                     << " after a supposed split or merge event because this event is not reflected in the masterchain");
     }
-    if (!check_prev_block(left->blk_, prev_blocks[0])) {
+    if (!check_prev_block(left->blk_, prev_blocks[0], false)) {
       return false;
     }
     if (left->before_split_) {
