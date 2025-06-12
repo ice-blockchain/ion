@@ -25,7 +25,7 @@ __Ice Open Network (ION)__ is a fast, secure, scalable blockchain focused on han
 - To learn more about different aspects of ION blockchain and its underlying ecosystem check [documentation](https://docs.ice.io)
 - To run node, validator or lite-server check [Participate section](https://docs.ice.io/ion-blockchain/validator)
 - To develop decentralised apps check TON Tutorials [Tutorials](https://docs.ton.org/v3/guidelines/smart-contracts/guidelines), [FunC docs](https://ton.org/docs/develop/func/overview) and [DApp tutorials](https://docs.ton.org/v3/guidelines/dapps/overview)
-- To interact with TON check APIs: [Indexer](https://api.mainnet.ice.io/indexer/v3/index.html) and [HTPP](https://api.mainnet.ice.io/http/v2/)
+- To interact with TON check APIs: [Indexer](https://api.mainnet.ice.io/indexer/v3/index.html) and [HTTP](https://api.mainnet.ice.io/http/v2/)
 
 ## Updates flow
 
