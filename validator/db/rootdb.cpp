@@ -317,6 +317,26 @@ void RootDb::get_block_state(ConstBlockHandle handle, td::Promise<td::Ref<ShardS
   }
 }
 
+void RootDb::get_block_state_root(ConstBlockHandle handle, td::Promise<td::Ref<vm::Cell>> promise) {
+  if (handle->inited_state_boc()) {
+    if (handle->deleted_state_boc()) {
+      promise.set_error(td::Status::Error(ErrorCode::error, "state already gc'd"));
+      return;
+    }
+    auto P =
+        td::PromiseCreator::lambda([handle, promise = std::move(promise)](td::Result<td::Ref<vm::DataCell>> R) mutable {
+          if (R.is_error()) {
+            promise.set_error(R.move_as_error());
+          } else {
+            promise.set_value(R.move_as_ok());
+          }
+        });
+    td::actor::send_closure(cell_db_, &CellDb::load_cell, handle->state(), std::move(P));
+  } else {
+    promise.set_error(td::Status::Error(ErrorCode::notready, "state not in db"));
+  }
+}
+
 void RootDb::store_block_state_part(BlockId effective_block, td::Ref<vm::Cell> cell,
                                     td::Promise<td::Ref<vm::DataCell>> promise) {
   td::actor::send_closure(cell_db_, &CellDb::store_cell, BlockIdExt{effective_block}, cell, std::move(promise));

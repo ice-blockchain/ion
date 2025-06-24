@@ -965,7 +965,6 @@ void ArchiveManager::start_up() {
           R = FileReferenceShort::create(newfname);
           R.ensure();
         }
-        register_perm_state(R.move_as_ok());
         if (!R.ok().is_state_like()) {
           LOG(ERROR) << "deleting file that is not state-like '" << fname << "'";
           td::unlink(db_root_ + "/archive/states/" + fname.str()).ignore();
