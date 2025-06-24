@@ -817,16 +817,16 @@ td::Status ArchiveSlice::try_catch_up_with_primary_impl() {
         }
         td::uint32 seqno;
         ShardIdFull shard_prefix;
-        if (shard_split_depth_ == 0) {
-          seqno = archive_id_ + slice_size_ * i;
-          shard_prefix = ShardIdFull{masterchainId};
-        } else {
+        if (shard_separated_) {
           R2 = kv_->get(PSTRING() << "info." << i, value);
           R2.ensure();
           CHECK(R2.move_as_ok() == td::KeyValue::GetStatus::Ok);
           unsigned long long shard;
           CHECK(sscanf(value.c_str(), "%u.%d:%016llx", &seqno, &shard_prefix.workchain, &shard) == 3);
           shard_prefix.shard = shard;
+        } else {
+          seqno = archive_id_ + slice_size_ * i;
+          shard_prefix = ShardIdFull{masterchainId};
         }
         add_package(seqno, shard_prefix, len, ver);
       }
