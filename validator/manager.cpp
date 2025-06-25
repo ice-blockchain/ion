@@ -2522,7 +2522,7 @@ void ValidatorManagerImpl::update_shards() {
   }
   if (!serializer_.empty()) {
     td::actor::send_closure(serializer_, &AsyncStateSerializer::auto_disable_serializer,
-                            is_validator() && last_masterchain_state_->get_global_id() == -239);  // mainnet only
+                            is_validator() && last_masterchain_state_->get_global_id() < 0);  // mainnet only
   }
   init_shard_block_verifier(mc_validator_adnl_id);
 }
@@ -3032,9 +3032,15 @@ void ValidatorManagerImpl::prepare_stats(td::Promise<std::vector<std::pair<std::
   if (last_masterchain_block_handle_) {
     vec.emplace_back("masterchainblock", last_masterchain_block_id_.to_str());
     vec.emplace_back("masterchainblocktime", td::to_string(last_masterchain_block_handle_->unix_time()));
-    vec.emplace_back("gcmasterchainblock", gc_masterchain_handle_->id().to_str());
-    vec.emplace_back("keymasterchainblock", last_key_block_handle_->id().to_str());
-    vec.emplace_back("knownkeymasterchainblock", last_known_key_block_handle_->id().to_str());
+    if (gc_masterchain_handle_) {
+      vec.emplace_back("gcmasterchainblock", gc_masterchain_handle_->id().to_str());
+    }
+    if (last_key_block_handle_) {
+      vec.emplace_back("keymasterchainblock", last_key_block_handle_->id().to_str());
+    }
+    if (last_known_key_block_handle_) {
+      vec.emplace_back("knownkeymasterchainblock", last_known_key_block_handle_->id().to_str());
+    }
     vec.emplace_back("rotatemasterchainblock", last_rotate_block_id_.to_str());
     //vec.emplace_back("shardclientmasterchainseqno", td::to_string(min_confirmed_masterchain_seqno_));
   }
@@ -3080,7 +3086,7 @@ void ValidatorManagerImpl::prepare_stats(td::Promise<std::vector<std::pair<std::
   }
 
   bool serializer_enabled = opts_->get_state_serializer_enabled();
-  if (is_validator() && last_masterchain_state_.not_null() && last_masterchain_state_->get_global_id() == -239) {
+  if (is_validator() && last_masterchain_state_.not_null() && last_masterchain_state_->get_global_id() < 0) {
     serializer_enabled = false;
   }
   vec.emplace_back("stateserializerenabled", serializer_enabled ? "true" : "false");
