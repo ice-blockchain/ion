@@ -220,7 +220,7 @@ void StateDb::get_hardforks(td::Promise<std::vector<BlockIdExt>> promise) {
   promise.set_value(std::move(vec));
 }
 
-StateDb::StateDb(td::actor::ActorId<RootDb> root_db, std::string db_path, td::DbOpenMode mode) : root_db_(root_db), db_path_(db_path), mode_(mode) {
+StateDb::StateDb(td::actor::ActorId<RootDb> root_db, std::string db_path, td::Ref<ValidatorManagerOptions> opts, td::DbOpenMode mode) : root_db_(root_db), db_path_(db_path), opts_(std::move(opts)), mode_(mode) {
 }
 
 void StateDb::start_up() {
@@ -228,9 +228,13 @@ void StateDb::start_up() {
     case td::DbOpenMode::db_primary:
       kv_ = std::make_shared<td::RocksDb>(td::RocksDb::open(db_path_).move_as_ok());
       break;
-    case td::DbOpenMode::db_secondary:
-      kv_ = std::make_shared<td::RocksDbSecondary>(td::RocksDbSecondary::open(db_path_).move_as_ok());
+    case td::DbOpenMode::db_secondary: {
+      auto secondary_working_dir = opts_->get_secondary_working_dir();
+      CHECK(secondary_working_dir);
+      td::RocksDbSecondaryOptions secondary_db_options{{}, std::move(secondary_working_dir.value())};
+      kv_ = std::make_shared<td::RocksDbSecondary>(td::RocksDbSecondary::open(db_path_, std::move(secondary_db_options)).move_as_ok());
       break;
+    }
     case td::DbOpenMode::db_readonly:
       kv_ = std::make_shared<td::RocksDbReadOnly>(td::RocksDbReadOnly::open(db_path_).move_as_ok());
       break;

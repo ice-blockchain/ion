@@ -52,7 +52,7 @@ class StateDb : public td::actor::Actor {
   void add_persistent_state_description(td::Ref<PersistentStateDescription> desc, td::Promise<td::Unit> promise);
   void get_persistent_state_descriptions(td::Promise<std::vector<td::Ref<PersistentStateDescription>>> promise);
 
-  StateDb(td::actor::ActorId<RootDb> root_db, std::string path, td::DbOpenMode mode);
+  StateDb(td::actor::ActorId<RootDb> root_db, std::string path, td::Ref<ValidatorManagerOptions> opts, td::DbOpenMode mode);
 
   void start_up() override;
   void truncate(BlockSeqno masterchain_seqno, ConstBlockHandle handle, td::Promise<td::Unit> promise);
@@ -66,6 +66,7 @@ class StateDb : public td::actor::Actor {
 
   td::actor::ActorId<RootDb> root_db_;
   std::string db_path_;
+  td::Ref<ValidatorManagerOptions> opts_;
   td::DbOpenMode mode_;
 };
 

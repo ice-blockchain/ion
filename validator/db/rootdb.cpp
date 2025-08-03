@@ -497,7 +497,7 @@ void RootDb::start_up() {
     td::mkdir(working_dir.value()).ensure();
   }
   cell_db_ = td::actor::create_actor<CellDb>("celldb", actor_id(this), root_path_ + "/celldb/", opts_, mode_);
-  state_db_ = td::actor::create_actor<StateDb>("statedb", actor_id(this), root_path_ + "/state/", mode_);
+  state_db_ = td::actor::create_actor<StateDb>("statedb", actor_id(this), root_path_ + "/state/", opts_, mode_);
   static_files_db_ = td::actor::create_actor<StaticFilesDb>("staticfilesdb", actor_id(this), root_path_ + "/static/");
   archive_db_ = td::actor::create_actor<ArchiveManager>("archive", actor_id(this), root_path_, opts_, mode_);
 }
