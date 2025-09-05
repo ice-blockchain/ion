@@ -2340,7 +2340,7 @@ void CppTypeCode::generate_print_cons_method(std::ostream& os, std::string nl, i
 
 void CppTypeCode::generate_print_method(std::ostream& os, int options) {
   bool ret_ext = options & 2;
-  os << "\nbool " << cpp_type_class_name << "::print_skip(PrettyPrinter& pp, vm::CellSlice& cs";
+  os << "\nbool " << cpp_type_class_name << "::print_skip(Printer& pp, vm::CellSlice& cs";
   if (ret_ext) {
     os << skip_extra_args;
   }
@@ -3124,9 +3124,9 @@ void CppTypeCode::generate_header(std::ostream& os, int options) {
     records[i].declare_record_pack(os, "  ", 18);
     records[i].declare_record_pack(os, "  ", 26);
   }
-  os << "  bool print_skip(PrettyPrinter& pp, vm::CellSlice& cs) const override;\n";
+  os << "  bool print_skip(Printer& pp, vm::CellSlice& cs) const override;\n";
   if (ret_params) {
-    os << "  bool print_skip(PrettyPrinter& pp, vm::CellSlice& cs" << skip_extra_args << ") const;\n";
+    os << "  bool print_skip(Printer& pp, vm::CellSlice& cs" << skip_extra_args << ") const;\n";
   }
   os << "  std::ostream& print_type(std::ostream& os) const override {";
   generate_print_type_body(os, "\n    ");

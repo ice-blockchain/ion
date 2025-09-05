@@ -155,11 +155,31 @@ bool TLB::print_skip(PrettyPrinter& pp, vm::CellSlice& cs) const {
          pp.fail("raw value too long");
 }
 
+bool TLB::print_skip(tlb::Printer& pp, vm::CellSlice& cs) const {
+  auto boc = vm::std_boc_serialize(cs.get_base_cell());
+  if (boc.is_ok()) {
+    auto hex = td::buffer_to_hex(boc.move_as_ok().as_slice());
+    return pp.out(hex);
+  } else {
+    return pp.fail("failed to serialize cell");
+  }
+}
+
 bool TLB::print_special(PrettyPrinter& pp, vm::CellSlice& cs) const {
   pp.open("raw@");
   pp << *this << ' ';
   pp.raw_nl();
   return (cs.print_rec(pp.os, &pp.limit, pp.indent) && pp.mkindent() && pp.close()) || pp.fail("raw value too long");
+}
+
+bool TLB::print_special(Printer& pp, vm::CellSlice& cs) const {
+  auto boc = vm::std_boc_serialize(cs.get_base_cell());
+  if (boc.is_ok()) {
+    auto hex = td::buffer_to_hex(boc.move_as_ok().as_slice());
+    return pp.out(hex);
+  } else {
+    return pp.fail("failed to serialize cell");
+  }
 }
 
 bool TLB::print_ref(PrettyPrinter& pp, Ref<vm::Cell> cell_ref) const {
@@ -175,6 +195,22 @@ bool TLB::print_ref(PrettyPrinter& pp, Ref<vm::Cell> cell_ref) const {
     return print_special(pp, cs);
   } else {
     return print_skip(pp, cs) && (cs.empty_ext() || pp.fail("extra data in cell"));
+  }
+}
+
+bool TLB::print_ref(Printer& pp, Ref<vm::Cell> cell_ref) const {
+  if (cell_ref.is_null()) {
+    return pp.fail("null cell reference");
+  }
+  if (!pp.register_recursive_call()) {
+    return pp.fail("too many recursive calls while printing a TL-B value");
+  }
+  bool is_special;
+  auto cs = load_cell_slice_special(std::move(cell_ref), is_special);
+  if (is_special) {
+    return print_special(pp, cs);
+  } else {
+    return print_skip(pp, cs);
   }
 }
 
@@ -395,6 +431,246 @@ const TLB* TypenameLookup::lookup(td::Slice str) const {
   auto it = std::lower_bound(types.begin(), types.end(), str,
                              [](const auto& x, const auto& y) { return td::Slice(x.first) < y; });
   return it != types.end() && td::Slice(it->first) == str ? it->second : nullptr;
+}
+
+std::string JsonPrinter::escape_string(const std::string& str) {
+  std::string result;
+  result.reserve(str.size() + 10);
+
+  for (char c : str) {
+    switch (c) {
+      case '"': result += "\\\""; break;
+      case '\\': result += "\\\\"; break;
+      case '\n': result += "\\n"; break;
+      case '\r': result += "\\r"; break;
+      case '\t': result += "\\t"; break;
+      case '\b': result += "\\b"; break;
+      case '\f': result += "\\f"; break;
+      default:
+        if (static_cast<unsigned char>(c) < 32 || c == 127) {
+          // escaping control chars and DEL
+          char buf[7];
+          snprintf(buf, sizeof(buf), "\\u%04x", static_cast<unsigned char>(c));
+          result += buf;
+        } else {
+          result += c;
+        }
+    }
+  }
+  return result;
+}
+
+bool JsonPrinter::open(std::string msg) {
+  if (buffer().empty() && level_ == 0) {
+    buffer() += "{";
+  }
+  if (msg.empty())
+    buffer() += "{";
+  else {
+    if (after_semicolon_) {
+      buffer() += "{\"type\":\"" + escape_string(msg) + "\",";
+    }
+    else {
+      if (!first_field_) buffer() += ",";
+      buffer() += "\"" + escape_string(msg) + "\":{";
+    }
+  }
+  level_++;
+  first_field_ = true;
+  after_semicolon_ = false;
+  return true;
+}
+
+bool JsonPrinter::close() {
+  return close("");
+}
+
+bool JsonPrinter::close(std::string msg) {
+  level_--;
+  if (level_ < 0) {
+    failed_ = true;
+    return false;
+  }
+
+  buffer() += "}";
+  first_field_ = false;
+  after_semicolon_ = false;
+  if (level_ == 0) { // last ever
+    buffer() += "}";
+  }
+  return true;
+}
+
+bool JsonPrinter::field(std::string name) {
+  if (!first_field_) buffer() += ",";
+  buffer() += "\"" + escape_string(name) + "\":";
+  first_field_ = false;
+  after_semicolon_ = true;
+  return true;
+}
+
+bool JsonPrinter::field() {
+  // return true;
+  return field("");
+}
+
+bool JsonPrinter::field_int(long long value) {
+  after_semicolon_ = false;
+  return field_int(value, "");
+}
+
+bool JsonPrinter::field_int(long long value, std::string name) {
+  after_semicolon_ = false;
+  if (!name.empty()) field(name);
+  buffer() += "\"" + std::to_string(value) + "\"";
+  return true;
+}
+
+bool JsonPrinter::field_uint(unsigned long long value) {
+  after_semicolon_ = false;
+  return field_uint(value, "");
+}
+
+bool JsonPrinter::field_uint(unsigned long long value, std::string name) {
+  after_semicolon_ = false;
+  if (!name.empty()) field(name);
+  buffer() += "\"" + std::to_string(value) + "\"";
+  return true;
+}
+
+bool JsonPrinter::fetch_bits_field(vm::CellSlice& cs, int n) {
+  after_semicolon_ = false;
+  if (!cs.have(n)) return false;
+  auto bits = cs.fetch_bits(n);
+  buffer() += "\"" + bits.to_hex() + "\"";
+  return true;
+}
+
+bool JsonPrinter::fetch_bits_field(vm::CellSlice& cs, int n, std::string name) {
+  after_semicolon_ = false;
+  if (!name.empty()) field(name);
+  return fetch_bits_field(cs, n);
+}
+
+bool JsonPrinter::fetch_int_field(vm::CellSlice& cs, int n) {
+  after_semicolon_ = false;
+  if (!cs.have(n)) return false;
+  long long value = cs.fetch_long(n);
+  return field_int(value);
+}
+
+bool JsonPrinter::fetch_int_field(vm::CellSlice& cs, int n, std::string name) {
+  after_semicolon_ = false;
+  if (!name.empty()) field(name);
+  return fetch_int_field(cs, n);
+}
+
+bool JsonPrinter::fetch_uint_field(vm::CellSlice& cs, int n) {
+  after_semicolon_ = false;
+  if (!cs.have(n)) return false;
+  unsigned long long value = cs.fetch_ulong(n);
+  return field_uint(value);
+}
+
+bool JsonPrinter::fetch_uint_field(vm::CellSlice& cs, int n, std::string name) {
+  after_semicolon_ = false;
+  if (!name.empty()) field(name);
+  return fetch_uint_field(cs, n);
+}
+
+bool JsonPrinter::fetch_int256_field(vm::CellSlice& cs, int n) {
+  after_semicolon_ = false;
+  if (!cs.have(n)) return false;
+  auto value = cs.prefetch_int256(n, true);
+  if (value.not_null()) {
+    std::ostringstream oss;
+    oss << value;
+    buffer() += "\"" + oss.str() + "\"";
+    cs.fetch_int256(n, true);
+    return true;
+  }
+  return false;
+}
+
+bool JsonPrinter::fetch_int256_field(vm::CellSlice& cs, int n, std::string name) {
+  after_semicolon_ = false;
+  if (!name.empty()) field(name);
+  return fetch_int256_field(cs, n);
+}
+
+bool JsonPrinter::fetch_uint256_field(vm::CellSlice& cs, int n) {
+  after_semicolon_ = false;
+  if (!cs.have(n)) return false;
+  auto value = cs.prefetch_int256(n, false);
+  if (value.not_null()) {
+    std::ostringstream oss;
+    oss << value;
+    buffer() += "\"" + oss.str() + "\"";
+    cs.fetch_int256(n, false);
+    return true;
+  }
+  return false;
+}
+
+bool JsonPrinter::fetch_uint256_field(vm::CellSlice& cs, int n, std::string name) {
+  after_semicolon_ = false;
+  if (!name.empty()) field(name);
+  return fetch_uint256_field(cs, n);
+}
+
+bool JsonPrinter::out(std::string str) {
+  after_semicolon_ = false;
+  buffer() += "\"" + escape_string(str) + "\"";
+  return true;
+}
+
+bool JsonPrinter::out_int(long long value) {
+  after_semicolon_ = false;
+  buffer() += "\"" + std::to_string(value) + "\"";
+  return true;
+}
+
+bool JsonPrinter::out_uint(unsigned long long value) {
+  after_semicolon_ = false;
+  buffer() += "\"" + std::to_string(value) + "\"";
+  return true;
+}
+
+bool JsonPrinter::out_integer(td::RefInt256 value) {
+  after_semicolon_ = false;
+  if (value.not_null()) {
+    std::ostringstream oss;
+    oss << value;
+    buffer() += "\"" + oss.str() + "\"";
+    return true;
+  }
+  return false;
+}
+
+bool JsonPrinter::cons(std::string str) {
+  return out(str);
+}
+
+bool JsonPrinter::register_recursive_call() {
+  return limit_--;
+}
+
+void JsonPrinter::set_limit(int new_limit) {
+  if (new_limit > 0) {
+    limit_ = new_limit;
+  }
+}
+
+bool JsonPrinter::fail_unless(bool res) {
+  if (!res) {
+    failed_ = true;
+  }
+  return res;
+}
+
+bool JsonPrinter::write_raw(const std::string& json) {
+  buffer() += json;
+  return true;
 }
 
 }  // namespace tlb

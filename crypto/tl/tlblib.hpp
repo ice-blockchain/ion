@@ -22,12 +22,16 @@
 #include <map>
 
 #include "vm/cellslice.h"
+#include "vm/boc.h"
+#include <functional>
+#include "td/utils/misc.h"
 
 namespace tlb {
 
 using td::Ref;
 using vm::CellSlice;
 
+class Printer;
 struct PrettyPrinter;
 
 class TLB {
@@ -233,12 +237,15 @@ class TLB {
   }
   std::string get_type_name() const;
   virtual bool print_skip(PrettyPrinter& pp, vm::CellSlice& cs) const;
+  virtual bool print_skip(Printer& pp, vm::CellSlice& cs) const;
   virtual bool print(PrettyPrinter& pp, const vm::CellSlice& cs) const {
     vm::CellSlice cs_copy{cs};
     return print_skip(pp, cs_copy);
   }
   bool print_special(PrettyPrinter& pp, vm::CellSlice& cs) const;
+  bool print_special(Printer& pp, vm::CellSlice& cs) const;
   bool print_ref(PrettyPrinter& pp, Ref<vm::Cell> cell_ref) const;
+  bool print_ref(Printer& pp, Ref<vm::Cell> cell_ref) const;
   bool print(PrettyPrinter& pp, Ref<vm::CellSlice> cs_ref) const {
     return print(pp, *cs_ref);
   }
@@ -499,7 +506,48 @@ bool store_from(vm::CellBuilder& cb, const T& tlb_type, Ref<vm::CellSlice> field
 
 namespace tlb {
 
-struct PrettyPrinter {
+class Printer {
+public:
+  virtual ~Printer() = default;
+
+  virtual bool open(std::string msg = "") = 0;
+  virtual bool close() = 0;
+  virtual bool close(std::string msg) = 0;
+  virtual bool field(std::string name) = 0;
+  virtual bool field() = 0;
+  virtual bool field_int(long long value) = 0;
+  virtual bool field_int(long long value, std::string name) = 0;
+  virtual bool field_uint(unsigned long long value) = 0;
+  virtual bool field_uint(unsigned long long value, std::string name) = 0;
+
+  virtual bool fetch_bits_field(vm::CellSlice& cs, int n) = 0;
+  virtual bool fetch_bits_field(vm::CellSlice& cs, int n, std::string name) = 0;
+  virtual bool fetch_int_field(vm::CellSlice& cs, int n) = 0;
+  virtual bool fetch_int_field(vm::CellSlice& cs, int n, std::string name) = 0;
+  virtual bool fetch_uint_field(vm::CellSlice& cs, int n) = 0;
+  virtual bool fetch_uint_field(vm::CellSlice& cs, int n, std::string name) = 0;
+  virtual bool fetch_int256_field(vm::CellSlice& cs, int n) = 0;
+  virtual bool fetch_int256_field(vm::CellSlice& cs, int n, std::string name) = 0;
+  virtual bool fetch_uint256_field(vm::CellSlice& cs, int n) = 0;
+  virtual bool fetch_uint256_field(vm::CellSlice& cs, int n, std::string name) = 0;
+
+  virtual bool out(std::string str) = 0;
+  virtual bool out_int(long long value) = 0;
+  virtual bool out_uint(unsigned long long value) = 0;
+  virtual bool out_integer(td::RefInt256 value) = 0;
+  virtual bool cons(std::string str) = 0;
+  virtual bool register_recursive_call() = 0;
+
+  virtual bool fail_unless(bool res) = 0;
+  virtual bool ok() const = 0;
+  virtual void set_limit(int new_limit) = 0;
+
+  virtual bool fail(std::string msg) = 0;
+  virtual bool print_ref(Ref<vm::Cell> cell_ref) = 0;
+  virtual bool print_special(vm::CellSlice& cs) = 0;
+};
+
+struct PrettyPrinter : public Printer {
   enum { default_print_limit = 4096 };
   std::ostream& os;
   int indent;
@@ -515,50 +563,50 @@ struct PrettyPrinter {
       : os(_os), indent(_indent), level(0), failed(false), nl_used(false), mode(_mode), limit(_limit) {
   }
   ~PrettyPrinter();
-  bool ok() const {
+  bool ok() const override {
     return !failed && !level;
   }
-  bool fail_unless(bool res) {
+  bool fail_unless(bool res) override {
     if (!res) {
       failed = true;
     }
     return res;
   }
-  bool fail(std::string msg);
+  bool fail(std::string msg) override;
   bool nl(int delta = 0);
   bool raw_nl(int delta = 0);
   bool mkindent(int delta = 0);
   bool mode_nl();
-  bool open(std::string msg = "");
-  bool close();
-  bool close(std::string msg);
-  bool field(std::string name);
-  bool field();
-  bool field_int(long long value);
-  bool field_int(long long value, std::string name);
-  bool field_uint(unsigned long long value);
-  bool field_uint(unsigned long long value, std::string name);
-  bool register_recursive_call() {
+  bool open(std::string msg = "") override;
+  bool close() override;
+  bool close(std::string msg) override;
+  bool field(std::string name) override;
+  bool field() override;
+  bool field_int(long long value) override;
+  bool field_int(long long value, std::string name) override;
+  bool field_uint(unsigned long long value) override;
+  bool field_uint(unsigned long long value, std::string name) override;
+  bool register_recursive_call() override {
     return limit--;
   }
-  void set_limit(int new_limit) {
+  void set_limit(int new_limit) override {
     if (new_limit > 0) {
       limit = new_limit;
     }
   }
-  bool out(std::string str) {
+  bool out(std::string str) override {
     os << str;
     return true;
   }
-  bool out_int(long long value) {
+  bool out_int(long long value) override {
     os << value;
     return true;
   }
-  bool out_uint(unsigned long long value) {
+  bool out_uint(unsigned long long value) override {
     os << value;
     return true;
   }
-  bool out_integer(td::RefInt256 value) {
+  bool out_integer(td::RefInt256 value) override {
     if (value.not_null()) {
       os << std::move(value);
       return true;
@@ -566,23 +614,129 @@ struct PrettyPrinter {
       return false;
     }
   }
-  bool cons(std::string str) {
+  bool cons(std::string str) override {
     return out(str);
   }
-  bool fetch_bits_field(vm::CellSlice& cs, int n);
-  bool fetch_bits_field(vm::CellSlice& cs, int n, std::string name);
-  bool fetch_int_field(vm::CellSlice& cs, int n);
-  bool fetch_int_field(vm::CellSlice& cs, int n, std::string name);
-  bool fetch_uint_field(vm::CellSlice& cs, int n);
-  bool fetch_uint_field(vm::CellSlice& cs, int n, std::string name);
-  bool fetch_int256_field(vm::CellSlice& cs, int n);
-  bool fetch_int256_field(vm::CellSlice& cs, int n, std::string name);
-  bool fetch_uint256_field(vm::CellSlice& cs, int n);
-  bool fetch_uint256_field(vm::CellSlice& cs, int n, std::string name);
+  bool fetch_bits_field(vm::CellSlice& cs, int n) override;
+  bool fetch_bits_field(vm::CellSlice& cs, int n, std::string name) override;
+  bool fetch_int_field(vm::CellSlice& cs, int n) override;
+  bool fetch_int_field(vm::CellSlice& cs, int n, std::string name) override;
+  bool fetch_uint_field(vm::CellSlice& cs, int n) override;
+  bool fetch_uint_field(vm::CellSlice& cs, int n, std::string name) override;
+  bool fetch_int256_field(vm::CellSlice& cs, int n) override;
+  bool fetch_int256_field(vm::CellSlice& cs, int n, std::string name) override;
+  bool fetch_uint256_field(vm::CellSlice& cs, int n) override;
+  bool fetch_uint256_field(vm::CellSlice& cs, int n, std::string name) override;
   template <typename T>
   PrettyPrinter& operator<<(const T& value) {
     os << value;
     return *this;
+  }
+
+  bool print_ref(Ref<vm::Cell> cell_ref) override {
+    PrettyPrinter temp_pp(os);
+    return temp_pp.print_ref(cell_ref);
+  }
+
+  bool print_special(vm::CellSlice& cs) override {
+    PrettyPrinter temp_pp(os);
+    return temp_pp.print_special(cs);
+  }
+};
+
+class JsonPrinter : public Printer {
+private:
+  std::string* output_;
+  std::string internal_buffer_;
+  int level_ = 0;
+  bool first_field_ = true;
+  bool after_semicolon_ = false;
+  bool failed_ = false;
+  int limit_ = default_print_limit;
+
+  static constexpr int default_print_limit = 4096;
+
+  std::string escape_string(const std::string& str);
+  char hex_digit(int x) const { return "0123456789abcdef"[x & 15]; }
+
+  std::string& buffer() {
+    return output_ ? *output_ : internal_buffer_;
+  }
+
+public:
+  JsonPrinter(std::string* output = nullptr) : output_(output) {}
+
+  bool open(std::string msg = "") override;
+  bool close() override;
+  bool close(std::string msg) override;
+  bool field(std::string name) override;
+  bool field() override;
+  bool field_int(long long value) override;
+  bool field_int(long long value, std::string name) override;
+  bool field_uint(unsigned long long value) override;
+  bool field_uint(unsigned long long value, std::string name) override;
+
+  bool fetch_bits_field(vm::CellSlice& cs, int n) override;
+  bool fetch_bits_field(vm::CellSlice& cs, int n, std::string name) override;
+  bool fetch_int_field(vm::CellSlice& cs, int n) override;
+  bool fetch_int_field(vm::CellSlice& cs, int n, std::string name) override;
+  bool fetch_uint_field(vm::CellSlice& cs, int n) override;
+  bool fetch_uint_field(vm::CellSlice& cs, int n, std::string name) override;
+  bool fetch_int256_field(vm::CellSlice& cs, int n) override;
+  bool fetch_int256_field(vm::CellSlice& cs, int n, std::string name) override;
+  bool fetch_uint256_field(vm::CellSlice& cs, int n) override;
+  bool fetch_uint256_field(vm::CellSlice& cs, int n, std::string name) override;
+
+  bool out(std::string str) override;
+  bool out_int(long long value) override;
+  bool out_uint(unsigned long long value) override;
+  bool out_integer(td::RefInt256 value) override;
+  bool cons(std::string str) override;
+  bool register_recursive_call() override;
+
+  bool fail_unless(bool res) override;
+  bool ok() const override { return !failed_; }
+  void set_limit(int new_limit) override;
+
+  std::string get_json() const { return output_ ? *output_ : internal_buffer_; }
+  bool write_raw(const std::string& json);
+
+  bool fail(std::string msg) override {
+    buffer() += "\"<FATAL: " + escape_string(msg) + ">\"";
+    failed_ = true;
+    return false;
+  }
+
+  bool print_ref(Ref<vm::Cell> cell_ref) override {
+    if (cell_ref.is_null()) {
+      buffer() += "\"<null cell reference>\"";
+      return true;
+    }
+
+    auto boc_result = vm::std_boc_serialize(cell_ref);
+    if (boc_result.is_error()) {
+      buffer() += "\"<failed to serialize cell: " + boc_result.error().to_string() + ">\"";
+      return true;
+    }
+
+    auto boc_data = boc_result.move_as_ok();
+    std::string hex_data = td::hex_encode(boc_data.as_slice());
+    buffer() += "\"boc:" + hex_data + "\"";
+    return true;
+  }
+
+  bool print_special(vm::CellSlice& cs) override {
+    std::string raw_data;
+    while (cs.have(8)) {
+      auto bits = cs.fetch_bits(8);
+      raw_data += bits.to_hex();
+    }
+    if (!raw_data.empty()) {
+      buffer() += "\"raw:" + raw_data + "\"";
+    } else {
+      buffer() += "\"<empty special cell>\"";
+    }
+    return true;
   }
 };
 
