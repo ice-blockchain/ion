@@ -741,6 +741,34 @@ void CppTypeCode::generate_cons_tag_array(std::ostream& os, std::string nl, int 
   os << " };\n";
 }
 
+void CppTypeCode::generate_cons_name_array(std::ostream& os, std::string nl, int options) {
+  bool f = (options & 2);
+  os << nl << (f ? "" : "static ") << "constexpr const char* ";
+  if (f) {
+    os << cpp_type_class_name << "::";
+  }
+  os << "cons_name[" << cons_num << "]";
+  if (f) {
+    os << ";\n";
+    return;
+  }
+  os << " = { ";
+  for (int i = 0; i < cons_num; i++) {
+    int k = cons_idx_by_enum.at(i);
+    const Constructor& constr = *type.constructors.at(k);
+    if (i > 0) {
+      os << ", ";
+    }
+    if (constr.constr_name) {
+      os << "\"" << sym::symbols.get_name(constr.constr_name) << "\"";
+    } else {
+      // for constructors without name use name from enum
+      os << "\"" << cons_enum_name.at(k) << "\"";
+    }
+  }
+  os << " };\n";
+}
+
 void CppTypeCode::generate_cons_tag_info(std::ostream& os, std::string nl, int options) {
   if (cons_num) {
     if (common_cons_len == -1) {
@@ -750,6 +778,7 @@ void CppTypeCode::generate_cons_tag_info(std::ostream& os, std::string nl, int o
     }
     if (common_cons_len != 0 && !incremental_cons_tags) {
       generate_cons_tag_array(os, nl, options);
+      generate_cons_name_array(os, nl, options);
     }
   }
 }

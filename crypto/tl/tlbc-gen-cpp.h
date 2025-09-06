@@ -205,6 +205,7 @@ class CppTypeCode {
   void generate_body(std::ostream& os, int options = 0);
   void generate_cons_len_array(std::ostream& os, std::string nl, int options = 0);
   void generate_cons_tag_array(std::ostream& os, std::string nl, int options = 0);
+  void generate_cons_name_array(std::ostream& os, std::string nl, int options = 0);
   void generate_cons_tag_info(std::ostream& os, std::string nl, int options = 0);
   void generate_skip_method(std::ostream& os, int options = 0);
   void generate_skip_cons_method(std::ostream& os, std::string nl, int cidx, int options);
