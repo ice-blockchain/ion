@@ -44,6 +44,11 @@ bool Bool::print_skip(PrettyPrinter& pp, vm::CellSlice& cs) const {
   return cs.advance(1) && pp.out(t ? "bool_true" : "bool_false");
 }
 
+bool Bool::print_skip(Printer& pp, vm::CellSlice& cs) const {
+  int t = get_tag(cs);
+  return cs.advance(1) && pp.out(t ? "bool_true" : "bool_false");
+}
+
 bool NatWidth::print_skip(PrettyPrinter& pp, vm::CellSlice& cs) const {
   long long value = (long long)cs.fetch_ulong(n);
   return value >= 0 && pp.out_int(value);
@@ -71,6 +76,18 @@ bool TupleT::print_skip(PrettyPrinter& pp, vm::CellSlice& cs) const {
     pp.mode_nl();
   }
   return pp.close("]");
+}
+
+bool TupleT::print_skip(Printer& pp, vm::CellSlice& cs) const {
+  pp.open("tuple");
+  for (int i = 0; i < n; i++) {
+    if (!pp.open(std::to_string(i)) ||
+        !X.print_skip(pp, cs) ||
+        !pp.close()) {
+      return false;
+    }
+  }
+  return pp.close();
 }
 
 bool CondT::print_skip(PrettyPrinter& pp, vm::CellSlice& cs) const {
