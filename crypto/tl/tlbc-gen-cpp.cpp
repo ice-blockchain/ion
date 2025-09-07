@@ -3097,6 +3097,7 @@ void CppTypeCode::generate_print_type_body(std::ostream& os, std::string nl) {
 
 void CppTypeCode::generate_header(std::ostream& os, int options) {
   os << "\nstruct " << cpp_type_class_name << " final : TLB_Complex {\n";
+  os << "  using TLB::print_skip;\n";
   generate_cons_enum(os);
   generate_cons_tag_info(os, "  ", 1);
   if (params) {
