@@ -813,7 +813,7 @@ CatchainValidatorsConfig Config::unpack_catchain_validators_config(Ref<vm::Cell>
     block::gen::CatchainConfig::Record_catchain_config_new cfg2;
     if (tlb::unpack_cell(std::move(cell), cfg2)) {
       return {cfg2.mc_catchain_lifetime, cfg2.shard_catchain_lifetime, cfg2.shard_validators_lifetime,
-              cfg2.shard_validators_num, cfg2.shuffle_mc_validators};
+              cfg2.shard_validators_num, cfg2.shuffle_mc_validators!=0};
     }
   }
   return {default_mc_catchain_lifetime, default_shard_catchain_lifetime, default_shard_validators_lifetime,

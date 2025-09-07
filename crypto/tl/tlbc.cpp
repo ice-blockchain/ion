@@ -2729,7 +2729,7 @@ void compute_any_bits() {
 void Type::detect_basic_types() {
   if (!arity && constr_num > 0 && size.is_fixed() && any_bits) {
     is_unit = !size.min_size();
-    is_bool = (size.min_size() == 0x100);
+    is_bool = is_builtin && (size.min_size() == 0x100);
   }
 }
 
