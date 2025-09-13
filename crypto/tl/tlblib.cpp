@@ -18,6 +18,8 @@
 */
 #include "td/utils/base64.h"
 #include "tl/tlblib.hpp"
+#include <iomanip>
+#include <vector>
 
 
 namespace tlb {
@@ -34,6 +36,8 @@ const NatWidth t_Nat{32};
 
 const Anything t_Anything;
 const RefAnything t_RefCell;
+
+const Text t_Text;
 
 std::string TLB::get_type_name() const {
   std::ostringstream os;
@@ -123,6 +127,179 @@ bool Bits::print_skip(PrettyPrinter& pp, vm::CellSlice& cs) const {
   }
 }
 
+// skip over snake-encoded text in cellslice
+bool Text::skip(vm::CellSlice& cs) const {
+  vm::CellSlice current = cs;
+  
+  while (true) {
+    // consume all bits in current cell
+    if (!current.advance(current.size())) {
+      return false;
+    }
+    
+    // check references
+    if (current.size_refs() > 1) {
+      return false;  // snake format can't have more than 1 ref
+    }
+    
+    if (current.size_refs() == 0) {
+      // end of snake chain
+      cs = current;
+      return true;
+    }
+    
+    // follow the reference to next cell
+    auto ref = current.fetch_ref();
+    if (ref.is_null()) {
+      return false;
+    }
+    
+    if (!current.load(vm::NoVm{}, ref)) {
+      return false;
+    }
+  }
+}
+
+// validate and skip snake-encoded text
+bool Text::validate_skip(int* ops, vm::CellSlice& cs, bool weak) const {
+  if (ops && *ops <= 0) {
+    return false;
+  }
+  
+  vm::CellSlice current = cs;
+  int cells_processed = 0;
+  
+  while (true) {
+    if (ops) {
+      (*ops)--;
+      if (*ops < 0) {
+        return false;
+      }
+    }
+    
+    cells_processed++;
+    if (cells_processed > 1000) {  // prevent infinite loops
+      return false;
+    }
+    
+    // consume all bits in current cell
+    if (!current.advance(current.size())) {
+      return false;
+    }
+    
+    // check references
+    if (current.size_refs() > 1) {
+      return false;  // snake format can't have more than 1 ref
+    }
+    
+    if (current.size_refs() == 0) {
+      // end of snake chain
+      cs = current;
+      return true;
+    }
+    
+    // follow the reference to next cell
+    auto ref = current.fetch_ref();
+    if (ref.is_null()) {
+      return false;
+    }
+    
+    if (!current.load(vm::NoVm{}, ref)) {
+      return false;
+    }
+  }
+}
+
+// load binary data from snake format
+std::vector<unsigned char> Text::load_snake_binary(vm::CellSlice& cs) const {
+  std::vector<unsigned char> data;
+  vm::CellSlice current = cs;
+  
+  while (true) {
+    // read all bits from current cell
+    unsigned bits_available = current.size();
+    if (bits_available > 0) {
+      // read bytes (8 bits at a time)
+      while (bits_available >= 8) {
+        int byte_val = current.fetch_octet();
+        if (byte_val < 0) {
+          return {};  // error
+        }
+        data.push_back(static_cast<unsigned char>(byte_val));
+        bits_available -= 8;
+      }
+      
+      // handle remaining bits if any
+      if (bits_available > 0) {
+        unsigned long long remaining = current.fetch_ulong(bits_available);
+        if (remaining == vm::CellSlice::fetch_ulong_eof) {
+          return {};
+        }
+        // shift remaining bits to form a byte
+        unsigned char byte_val = static_cast<unsigned char>(remaining << (8 - bits_available));
+        data.push_back(byte_val);
+      }
+    }
+    
+    // check references
+    if (current.size_refs() > 1) {
+      return {};  // invalid snake format
+    }
+    
+    if (current.size_refs() == 0) {
+      // end of snake chain
+      cs = current;
+      return data;
+    }
+    
+    // follow the reference to next cell
+    auto ref = current.fetch_ref();
+    if (ref.is_null()) {
+      return {};
+    }
+    
+    if (!current.load(vm::NoVm{}, ref)) {
+      return {};
+    }
+  }
+}
+
+// load string from snake format
+std::string Text::load_snake_string(vm::CellSlice& cs) const {
+  auto binary_data = load_snake_binary(cs);
+  return std::string(binary_data.begin(), binary_data.end());
+}
+
+bool Text::print_skip(PrettyPrinter& pp, vm::CellSlice& cs) const {
+  auto text = load_snake_string(cs);
+  if (text.empty() && cs.size() > 0) {
+    return pp.fail("invalid snake text format");
+  }
+  
+  // escape special characters for pretty printing
+  pp.os << '"';
+  for (char c : text) {
+    if (c == '"') {
+      pp.os << "\\\"";
+    } else if (c == '\\') {
+      pp.os << "\\\\";
+    } else if (c == '\n') {
+      pp.os << "\\n";
+    } else if (c == '\r') {
+      pp.os << "\\r";
+    } else if (c == '\t') {
+      pp.os << "\\t";
+    } else if (static_cast<unsigned char>(c) < 32 || static_cast<unsigned char>(c) >= 127) {
+      pp.os << "\\x" << std::hex << std::setfill('0') << std::setw(2) << static_cast<unsigned>(static_cast<unsigned char>(c)) << std::dec;
+    } else {
+      pp.os << c;
+    }
+  }
+  pp.os << '"';
+  return true;
+}
+
+
 bool TupleT::skip(vm::CellSlice& cs) const {
   int i = n;
   for (; i > 0; --i) {
@@ -159,6 +336,15 @@ bool TLB::validate_ref_internal(int* ops, Ref<vm::Cell> cell_ref, bool weak) con
     return false;
   }
   return validate_skip(ops, cs, weak) && cs.empty_ext();
+}
+
+bool Text::print_skip(Printer& pp, vm::CellSlice& cs) const {
+  auto text = load_snake_string(cs);
+  if (text.empty() && cs.size() > 0) {
+    return pp.fail("invalid snake text format");
+  }
+  
+  return pp.out(text);
 }
 
 bool TLB::print_skip(PrettyPrinter& pp, vm::CellSlice& cs) const {
