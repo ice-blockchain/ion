@@ -2513,7 +2513,15 @@ void define_builtins() {
   Int_type = define_builtin_type("int", "#", false, 257, 0, true, -1);
   UInt_type = define_builtin_type("uint", "#", false, 256, 0, true, 1);
   Bits_type = define_builtin_type("bits", "#", false, 1023, 0, true, 0);
-  Text_type = define_builtin_type("Text", "", false);
+  sym_idx_t text_name = sym::symbols.lookup_add("Text");
+  types.emplace_back(types_num++, text_name, false, 0, false, true);
+  Text_type = &types.back();
+  // set variable size like other non-final types
+  Text_type->size = MinMaxSize::Any;
+  Text_type->any_bits = true;
+  auto text_sym_def = sym::define_global_symbol(text_name, true);
+  assert(text_sym_def);
+  text_sym_def->value = new (AR) SymValType{Text_type};
   for (int i = 1; i <= 257; i++) {
     char buff[8];
     snprintf(buff, sizeof(buff), "uint%d", i);
