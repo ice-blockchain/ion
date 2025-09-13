@@ -127,7 +127,6 @@ bool Bits::print_skip(PrettyPrinter& pp, vm::CellSlice& cs) const {
   }
 }
 
-// skip over snake-encoded text in cellslice
 bool Text::skip(vm::CellSlice& cs) const {
   vm::CellSlice current = cs;
   
@@ -136,39 +135,30 @@ bool Text::skip(vm::CellSlice& cs) const {
     if (!current.advance(current.size())) {
       return false;
     }
-    
-    // check references
     if (current.size_refs() > 1) {
       return false;  // snake format can't have more than 1 ref
     }
-    
     if (current.size_refs() == 0) {
-      // end of snake chain
       cs = current;
       return true;
     }
-    
-    // follow the reference to next cell
+    // to next cell
     auto ref = current.fetch_ref();
     if (ref.is_null()) {
       return false;
     }
-    
     if (!current.load(vm::NoVm{}, ref)) {
       return false;
     }
   }
 }
 
-// validate and skip snake-encoded text
 bool Text::validate_skip(int* ops, vm::CellSlice& cs, bool weak) const {
   if (ops && *ops <= 0) {
     return false;
   }
-  
   vm::CellSlice current = cs;
   int cells_processed = 0;
-  
   while (true) {
     if (ops) {
       (*ops)--;
@@ -176,95 +166,72 @@ bool Text::validate_skip(int* ops, vm::CellSlice& cs, bool weak) const {
         return false;
       }
     }
-    
     cells_processed++;
-    if (cells_processed > 1000) {  // prevent infinite loops
+    if (cells_processed > 1000) {
       return false;
     }
-    
-    // consume all bits in current cell
     if (!current.advance(current.size())) {
       return false;
     }
-    
-    // check references
     if (current.size_refs() > 1) {
-      return false;  // snake format can't have more than 1 ref
+      return false;
     }
-    
     if (current.size_refs() == 0) {
-      // end of snake chain
       cs = current;
       return true;
     }
-    
-    // follow the reference to next cell
     auto ref = current.fetch_ref();
     if (ref.is_null()) {
       return false;
     }
-    
     if (!current.load(vm::NoVm{}, ref)) {
       return false;
     }
   }
 }
 
-// load binary data from snake format
 std::vector<unsigned char> Text::load_snake_binary(vm::CellSlice& cs) const {
   std::vector<unsigned char> data;
   vm::CellSlice current = cs;
   
   while (true) {
-    // read all bits from current cell
     unsigned bits_available = current.size();
     if (bits_available > 0) {
-      // read bytes (8 bits at a time)
       while (bits_available >= 8) {
         int byte_val = current.fetch_octet();
         if (byte_val < 0) {
-          return {};  // error
+          return {};
         }
         data.push_back(static_cast<unsigned char>(byte_val));
         bits_available -= 8;
       }
-      
-      // handle remaining bits if any
       if (bits_available > 0) {
         unsigned long long remaining = current.fetch_ulong(bits_available);
         if (remaining == vm::CellSlice::fetch_ulong_eof) {
           return {};
         }
-        // shift remaining bits to form a byte
+        // shift remaining to form a byte
         unsigned char byte_val = static_cast<unsigned char>(remaining << (8 - bits_available));
         data.push_back(byte_val);
       }
     }
-    
-    // check references
     if (current.size_refs() > 1) {
-      return {};  // invalid snake format
+      return {};
     }
-    
     if (current.size_refs() == 0) {
-      // end of snake chain
       cs = current;
       return data;
     }
-    
-    // follow the reference to next cell
     auto ref = current.fetch_ref();
     if (ref.is_null()) {
       return {};
     }
-    
     if (!current.load(vm::NoVm{}, ref)) {
       return {};
     }
   }
 }
 
-// load string from snake format
 std::string Text::load_snake_string(vm::CellSlice& cs) const {
   auto binary_data = load_snake_binary(cs);
   return std::string(binary_data.begin(), binary_data.end());
@@ -275,8 +242,6 @@ bool Text::print_skip(PrettyPrinter& pp, vm::CellSlice& cs) const {
   if (text.empty() && cs.size() > 0) {
     return pp.fail("invalid snake text format");
   }
-  
-  // escape special characters for pretty printing
   pp.os << '"';
   for (char c : text) {
     if (c == '"') {
@@ -299,6 +264,13 @@ bool Text::print_skip(PrettyPrinter& pp, vm::CellSlice& cs) const {
   return true;
 }
 
+bool Text::print_skip(Printer& pp, vm::CellSlice& cs) const {
+  auto text = load_snake_string(cs);
+  if (text.empty() && cs.size() > 0) {
+    return pp.fail("invalid snake text format");
+  }
+  return pp.out(text);
+}
 
 bool TupleT::skip(vm::CellSlice& cs) const {
   int i = n;
@@ -336,15 +308,6 @@ bool TLB::validate_ref_internal(int* ops, Ref<vm::Cell> cell_ref, bool weak) con
     return false;
   }
   return validate_skip(ops, cs, weak) && cs.empty_ext();
-}
-
-bool Text::print_skip(Printer& pp, vm::CellSlice& cs) const {
-  auto text = load_snake_string(cs);
-  if (text.empty() && cs.size() > 0) {
-    return pp.fail("invalid snake text format");
-  }
-  
-  return pp.out(text);
 }
 
 bool TLB::print_skip(PrettyPrinter& pp, vm::CellSlice& cs) const {

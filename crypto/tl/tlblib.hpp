@@ -1108,9 +1108,7 @@ struct Text final : TLB {
   std::ostream& print_type(std::ostream& os) const override {
     return os << "Text";
   }
-  // load snake string from cellslice
   std::string load_snake_string(vm::CellSlice& cs) const;
-  // load binary data from snake format
   std::vector<unsigned char> load_snake_binary(vm::CellSlice& cs) const;
   
   bool print_skip(PrettyPrinter& pp, vm::CellSlice& cs) const override;
