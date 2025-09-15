@@ -1171,6 +1171,24 @@ struct RefAnything final : TLB {
   int get_size(const vm::CellSlice& cs) const override {
     return 0x10000;
   }
+  bool validate(int* ops, const vm::CellSlice& cs, bool weak = false) const override {
+    return cs.size_refs() > 0;
+  }
+  bool validate_skip(int* ops, vm::CellSlice& cs, bool weak = false) const override {
+    return cs.size_refs() > 0 && cs.fetch_ref().not_null();
+  }
+  // redefine print_skip only for Printer because PrettyPrinter prints type as raw@^Cell in TLB::print_skip
+  bool print_skip(Printer& pp, vm::CellSlice& cs) const override {
+    struct TLBContent : TLB {
+      int get_size(const vm::CellSlice& cs) const override {
+        return cs.size(); // set size for validate_skip to work
+      }
+    } content;
+    auto ref_cs = vm::load_cell_slice(cs.prefetch_ref());
+    return pp.open() && pp.field("reference_any") && 
+    content.print_skip(pp, ref_cs) && 
+    pp.close();
+  }
   std::ostream& print_type(std::ostream& os) const override {
     return os << "^Cell";
   }
