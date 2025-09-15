@@ -1180,31 +1180,22 @@ struct RefAnything final : TLB {
   }
   // redefine print_skip only for Printer because PrettyPrinter prints type as raw@^Cell in TLB::print_skip
   bool print_skip(Printer& pp, vm::CellSlice& cs) const override {
-    std::cout << "RefAnything::print_skip: 1" << std::endl;
     if (cs.size_refs() == 0) {
       return pp.fail("no reference");
     }
-    std::cout << "RefAnything::print_skip: 2" << std::endl;
     auto cell_ref = cs.fetch_ref();
     if (cell_ref.is_null()) {
       return pp.fail("no reference");
     }
-    std::cout << "RefAnything::print_skip: 3" << std::endl;
     auto ref_cs = load_cell_slice(cell_ref);
-    std::cout << "RefAnything::print_skip: 4" << std::endl;
     vm::CellBuilder cb;
-    std::cout << "RefAnything::print_skip: 5" << std::endl;
     vm::cell_builder_add_slice_bool(cb, ref_cs);
     auto new_cell = cb.finalize();
-    std::cout << "RefAnything::print_skip: 6" << std::endl;
     auto boc = vm::std_boc_serialize(new_cell);
-    std::cout << "RefAnything::print_skip: 7" << std::endl;
     if (boc.is_error()) {
       return pp.fail("failed to serialize cell with reference");
     }
-    std::cout << "RefAnything::print_skip: 8" << std::endl;
     auto b64str = td::base64_encode(boc.move_as_ok().as_slice());
-    std::cout << "RefAnything::print_skip: b64str=" << b64str << std::endl;
     return pp.out(b64str);
   }
   std::ostream& print_type(std::ostream& os) const override {
