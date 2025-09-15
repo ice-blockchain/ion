@@ -17,6 +17,8 @@
     Copyright 2017-2020 Telegram Systems LLP
 */
 #include "td/utils/base64.h"
+#include "vm/cells/Cell.h"
+#include "vm/cells/CellBuilder.h"
 #include "tl/tlblib.hpp"
 #include <iomanip>
 #include <vector>
@@ -324,7 +326,15 @@ bool TLB::print_skip(PrettyPrinter& pp, vm::CellSlice& cs) const {
 }
 
 bool TLB::print_skip(tlb::Printer& pp, vm::CellSlice& cs) const {
-  auto boc = vm::std_boc_serialize(cs.get_base_cell());
+  // print base64 encoded boc, so other programs can parse it
+  vm::CellSlice cs_copy{cs};
+  if (!validate_skip(nullptr, cs) || !cs_copy.cut_tail(cs)) {
+    return pp.fail("invalid value");
+  }
+  vm::CellBuilder cb;
+  cell_builder_add_slice(cb, cs);
+  Ref<vm::Cell> new_cell = cb.finalize();
+  auto boc = vm::std_boc_serialize(new_cell);
   if (boc.is_ok()) {
     auto b64str = td::base64_encode(boc.move_as_ok().as_slice());
     return pp.out(b64str);
@@ -341,13 +351,7 @@ bool TLB::print_special(PrettyPrinter& pp, vm::CellSlice& cs) const {
 }
 
 bool TLB::print_special(Printer& pp, vm::CellSlice& cs) const {
-  auto boc = vm::std_boc_serialize(cs.get_base_cell());
-  if (boc.is_ok()) {
-    auto b64str = td::base64_encode(boc.move_as_ok().as_slice());
-    return pp.out(b64str);
-  } else {
-    return pp.fail("failed to serialize cell");
-  }
+  return print_skip(pp, cs);
 }
 
 bool TLB::print_ref(PrettyPrinter& pp, Ref<vm::Cell> cell_ref) const {
