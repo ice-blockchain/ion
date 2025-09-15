@@ -332,9 +332,10 @@ bool TLB::print_skip(tlb::Printer& pp, vm::CellSlice& cs) const {
     return pp.fail("invalid value");
   }
   vm::CellBuilder cb;
-  cell_builder_add_slice(cb, cs);
+  cell_builder_add_slice(cb, cs_copy);
   Ref<vm::Cell> new_cell = cb.finalize();
   auto boc = vm::std_boc_serialize(new_cell);
+
   if (boc.is_ok()) {
     auto b64str = td::base64_encode(boc.move_as_ok().as_slice());
     return pp.out(b64str);

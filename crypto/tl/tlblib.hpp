@@ -1258,7 +1258,6 @@ struct Either final : TLB_Complex {
     return os << "(Either " << left_type << ' ' << right_type << ')';
   }
   bool print_skip(PrettyPrinter& pp, vm::CellSlice& cs) const override;
-  bool print_skip(Printer& pp, vm::CellSlice& cs) const override;
 };
 
 template <class T1, class T2>
@@ -1267,15 +1266,6 @@ bool Either<T1, T2>::print_skip(PrettyPrinter& pp, vm::CellSlice& cs) const {
     return cs.advance(1) && pp.open("left ") && left_type.print_skip(pp, cs) && pp.close();
   } else {
     return cs.advance(1) && pp.open("right ") && right_type.print_skip(pp, cs) && pp.close();
-  }
-}
-
-template <class T1, class T2>
-bool Either<T1, T2>::print_skip(Printer& pp, vm::CellSlice& cs) const {
-  if (!get_tag(cs)) {
-    return cs.advance(1) && pp.open("first_from_either") && pp.field("value") && left_type.print_skip(pp, cs) && pp.close();
-  } else {
-    return cs.advance(1) && pp.open("second_from_either") && pp.field("value") && right_type.print_skip(pp, cs) && pp.close();
   }
 }
 
