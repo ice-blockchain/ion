@@ -2212,6 +2212,12 @@ bool CppTypeCode::output_print_simple_field(std::ostream& os, const Field& field
       os << ")";
       return true;
     case ct_bool:
+      os << "pp.fetch_bool_field(cs, ";
+      if (!field_name.empty()) {
+        os << "\"" << field_name << '"';
+      }
+      os << ")";
+      return true;
     case ct_int32:
     case ct_uint32:
     case ct_int64:

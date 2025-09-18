@@ -579,6 +579,16 @@ bool PrettyPrinter::fetch_uint256_field(vm::CellSlice& cs, int n, std::string na
   return out_integer(cs.fetch_int256(n, false));
 }
 
+bool PrettyPrinter::fetch_bool_field(vm::CellSlice& cs) {
+  os << ' ';
+  return cs.have(1) && out(cs.fetch_ulong(1) ? "true" : "false");
+}
+
+bool PrettyPrinter::fetch_bool_field(vm::CellSlice& cs, std::string name) {
+  os << ' ' << name << ':';
+  return cs.have(1) && out(cs.fetch_ulong(1) ? "true" : "false");
+}
+
 }  // namespace tlb
 
 namespace tlb {
@@ -789,6 +799,17 @@ bool JsonPrinter::fetch_uint256_field(vm::CellSlice& cs, int n, std::string name
   after_semicolon_ = false;
   if (!name.empty()) field(name);
   return fetch_uint256_field(cs, n);
+}
+
+bool JsonPrinter::fetch_bool_field(vm::CellSlice& cs) {
+  after_semicolon_ = false;
+  return cs.have(1) && out(cs.fetch_ulong(1) ? "true" : "false");
+}
+
+bool JsonPrinter::fetch_bool_field(vm::CellSlice& cs, std::string name) {
+  after_semicolon_ = false;
+  if (!name.empty()) field(name);
+  return fetch_bool_field(cs);
 }
 
 bool JsonPrinter::out(std::string str) {
