@@ -544,8 +544,6 @@ public:
   virtual void set_limit(int new_limit) = 0;
 
   virtual bool fail(std::string msg) = 0;
-  virtual bool print_ref(Ref<vm::Cell> cell_ref) = 0;
-  virtual bool print_special(vm::CellSlice& cs) = 0;
 };
 
 struct PrettyPrinter : public Printer {
@@ -633,16 +631,6 @@ struct PrettyPrinter : public Printer {
     os << value;
     return *this;
   }
-
-  bool print_ref(Ref<vm::Cell> cell_ref) override {
-    PrettyPrinter temp_pp(os);
-    return temp_pp.print_ref(cell_ref);
-  }
-
-  bool print_special(vm::CellSlice& cs) override {
-    PrettyPrinter temp_pp(os);
-    return temp_pp.print_special(cs);
-  }
 };
 
 class JsonPrinter : public Printer {
@@ -706,38 +694,6 @@ public:
     buffer() += "\"<FATAL: " + escape_string(msg) + ">\"";
     failed_ = true;
     return false;
-  }
-
-  bool print_ref(Ref<vm::Cell> cell_ref) override {
-    if (cell_ref.is_null()) {
-      buffer() += "\"<null cell reference>\"";
-      return true;
-    }
-
-    auto boc_result = vm::std_boc_serialize(cell_ref);
-    if (boc_result.is_error()) {
-      buffer() += "\"<failed to serialize cell: " + boc_result.error().to_string() + ">\"";
-      return true;
-    }
-
-    auto boc_data = boc_result.move_as_ok();
-    std::string hex_data = td::hex_encode(boc_data.as_slice());
-    buffer() += "\"boc:" + hex_data + "\"";
-    return true;
-  }
-
-  bool print_special(vm::CellSlice& cs) override {
-    std::string raw_data;
-    while (cs.have(8)) {
-      auto bits = cs.fetch_bits(8);
-      raw_data += bits.to_hex();
-    }
-    if (!raw_data.empty()) {
-      buffer() += "\"raw:" + raw_data + "\"";
-    } else {
-      buffer() += "\"<empty special cell>\"";
-    }
-    return true;
   }
 };
 
