@@ -1062,14 +1062,14 @@ struct Bits final : TLB {
   bool print_skip(PrettyPrinter& pp, vm::CellSlice& cs) const override;
 };
 
-struct Text final : TLB {
+struct SnakeString final : TLB {
   int get_size(const vm::CellSlice& cs) const override {
     return -1;  // snake format has variable size
   }
   bool skip(vm::CellSlice& cs) const override;
   bool validate_skip(int* ops, vm::CellSlice& cs, bool weak = false) const override;
   std::ostream& print_type(std::ostream& os) const override {
-    return os << "Text";
+    return os << "SnakeString";
   }
   std::string load_snake_string(vm::CellSlice& cs) const;
   std::vector<unsigned char> load_snake_binary(vm::CellSlice& cs) const;
@@ -1078,7 +1078,7 @@ struct Text final : TLB {
   bool print_skip(Printer& pp, vm::CellSlice& cs) const override;
 };
 
-extern const Text t_Text;
+extern const SnakeString t_SnakeString;
 
 template <class T>
 struct Maybe : TLB_Complex {

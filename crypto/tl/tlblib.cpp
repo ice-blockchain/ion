@@ -39,7 +39,7 @@ const NatWidth t_Nat{32};
 const Anything t_Anything;
 const RefAnything t_RefCell;
 
-const Text t_Text;
+const SnakeString t_SnakeString;
 
 std::string TLB::get_type_name() const {
   std::ostringstream os;
@@ -129,7 +129,7 @@ bool Bits::print_skip(PrettyPrinter& pp, vm::CellSlice& cs) const {
   }
 }
 
-bool Text::skip(vm::CellSlice& cs) const {
+bool SnakeString::skip(vm::CellSlice& cs) const {
   vm::CellSlice current = cs;
   
   while (true) {
@@ -155,7 +155,7 @@ bool Text::skip(vm::CellSlice& cs) const {
   }
 }
 
-bool Text::validate_skip(int* ops, vm::CellSlice& cs, bool weak) const {
+bool SnakeString::validate_skip(int* ops, vm::CellSlice& cs, bool weak) const {
   if (ops && *ops <= 0) {
     return false;
   }
@@ -192,7 +192,7 @@ bool Text::validate_skip(int* ops, vm::CellSlice& cs, bool weak) const {
   }
 }
 
-std::vector<unsigned char> Text::load_snake_binary(vm::CellSlice& cs) const {
+std::vector<unsigned char> SnakeString::load_snake_binary(vm::CellSlice& cs) const {
   std::vector<unsigned char> data;
   vm::CellSlice current = cs;
   
@@ -234,12 +234,12 @@ std::vector<unsigned char> Text::load_snake_binary(vm::CellSlice& cs) const {
   }
 }
 
-std::string Text::load_snake_string(vm::CellSlice& cs) const {
+std::string SnakeString::load_snake_string(vm::CellSlice& cs) const {
   auto binary_data = load_snake_binary(cs);
   return std::string(binary_data.begin(), binary_data.end());
 }
 
-bool Text::print_skip(PrettyPrinter& pp, vm::CellSlice& cs) const {
+bool SnakeString::print_skip(PrettyPrinter& pp, vm::CellSlice& cs) const {
   auto text = load_snake_string(cs);
   if (text.empty() && cs.size() > 0) {
     return pp.fail("invalid snake text format");
@@ -266,7 +266,7 @@ bool Text::print_skip(PrettyPrinter& pp, vm::CellSlice& cs) const {
   return true;
 }
 
-bool Text::print_skip(Printer& pp, vm::CellSlice& cs) const {
+bool SnakeString::print_skip(Printer& pp, vm::CellSlice& cs) const {
   auto text = load_snake_string(cs);
   if (text.empty() && cs.size() > 0) {
     return pp.fail("invalid snake text format");
