@@ -861,6 +861,18 @@ void JsonPrinter::set_limit(int new_limit) {
   }
 }
 
+bool JsonPrinter::fail(std::string msg) {
+  buffer() += "\"<FATAL: " + escape_string(msg) + ">\"";
+  level_++;
+  while (level_ > 0) {
+    buffer() += "}";
+    level_--;
+  }
+  failed_ = true;
+  return false;
+}
+
+
 bool JsonPrinter::fail_unless(bool res) {
   if (!res) {
     failed_ = true;
