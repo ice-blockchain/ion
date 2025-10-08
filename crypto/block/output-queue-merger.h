@@ -1,23 +1,23 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
 #pragma once
-#include "ton/ton-types.h"
+#include "ion/ion-types.h"
 #include "vm/cells/CellSlice.h"
 #include "block/mc-config.h"
 
@@ -46,7 +46,7 @@ struct OutputQueueMerger {
 
    protected:
     friend struct OutputQueueMerger;
-    static ton::LogicalTime get_node_lt(Ref<vm::Cell> node, int key_pfx_len);
+    static ion::LogicalTime get_node_lt(Ref<vm::Cell> node, int key_pfx_len);
     bool replace_with_child(bool child_idx);
     bool replace_by_prefix(td::ConstBitPtr req_pfx, int req_pfx_len);
     bool unpack_node(td::ConstBitPtr key_pfx, int key_pfx_len, Ref<vm::Cell> node);
@@ -57,17 +57,17 @@ struct OutputQueueMerger {
 
  public:
   struct Neighbor {
-    ton::BlockIdExt block_id_;
+    ion::BlockIdExt block_id_;
     td::Ref<vm::Cell> outmsg_root_;
     bool disabled_;
     td::int32 msg_limit_;  // -1 - unlimited
     Neighbor() = default;
-    Neighbor(ton::BlockIdExt block_id, td::Ref<vm::Cell> outmsg_root, bool disabled = false, td::int32 msg_limit = -1)
+    Neighbor(ion::BlockIdExt block_id, td::Ref<vm::Cell> outmsg_root, bool disabled = false, td::int32 msg_limit = -1)
         : block_id_(block_id), outmsg_root_(std::move(outmsg_root)), disabled_(disabled), msg_limit_(msg_limit) {
     }
   };
 
-  OutputQueueMerger(ton::ShardIdFull queue_for, std::vector<Neighbor> neighbors);
+  OutputQueueMerger(ion::ShardIdFull queue_for, std::vector<Neighbor> neighbors);
   bool is_eof() const {
     return eof;
   }

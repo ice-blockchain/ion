@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -21,7 +21,7 @@
 
 #include "common/errorcode.h"
 
-namespace ton {
+namespace ion {
 namespace rldp2 {
 size_t InboundTransfer::total_size() const {
   return data_.size();
@@ -35,7 +35,7 @@ bool InboundTransfer::is_part_completed(td::uint32 part_i) {
   return parts_.count(part_i) == 0 && part_i < next_part_;
 }
 
-td::Result<InboundTransfer::Part *> InboundTransfer::get_part(td::uint32 part_i, const ton::fec::FecType &fec_type) {
+td::Result<InboundTransfer::Part *> InboundTransfer::get_part(td::uint32 part_i, const ion::fec::FecType &fec_type) {
   auto it = parts_.find(part_i);
   if (it != parts_.end()) {
     return &it->second;
@@ -74,4 +74,4 @@ td::optional<td::Result<td::BufferSlice>> InboundTransfer::try_finish() {
 }
 
 }  // namespace rldp2
-}  // namespace ton
+}  // namespace ion

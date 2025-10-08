@@ -121,7 +121,7 @@ vm::Stack prepare_stack(td::Slice command) {
   try {
     vm::GasLimits gas_limit;
     int ret = vm::run_vm_code(vm::load_cell_slice_ref(cell), stack, 0 /*flags*/, nullptr /*data*/, vm::VmLog{}, nullptr,
-                              &gas_limit, {}, c7, nullptr, ton::SUPPORTED_VERSION);
+                              &gas_limit, {}, c7, nullptr, ion::SUPPORTED_VERSION);
     CHECK(ret == 0);
   } catch (...) {
     LOG(FATAL) << "catch unhandled exception";
@@ -136,7 +136,7 @@ runInfo time_run_vm(td::Slice command, td::Ref<vm::Stack> stack) {
   try {
     vm::GasLimits gas_limit;
     vm::VmState vm{
-        vm::load_cell_slice_ref(cell), ton::SUPPORTED_VERSION, std::move(stack), gas_limit, 0, {}, vm::VmLog{}, {}, c7};
+        vm::load_cell_slice_ref(cell), ion::SUPPORTED_VERSION, std::move(stack), gas_limit, 0, {}, vm::VmLog{}, {}, c7};
     std::clock_t cStart = std::clock();
     int ret = ~vm.run();
     std::clock_t cEnd = std::clock();

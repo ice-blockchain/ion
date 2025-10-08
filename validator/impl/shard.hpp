@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -22,7 +22,7 @@
 #include "block/mc-config.h"
 #include "config.hpp"
 
-namespace ton {
+namespace ion {
 
 namespace validator {
 using td::Ref;
@@ -155,9 +155,9 @@ class MasterchainStateQ : public MasterchainState, public ShardStateQ {
   static td::Result<Ref<MasterchainStateQ>> fetch(const BlockIdExt& _id, td::BufferSlice _data,
                                                   Ref<vm::Cell> _root = {});
 
-  bool get_old_mc_block_id(ton::BlockSeqno seqno, ton::BlockIdExt& blkid,
-                           ton::LogicalTime* end_lt = nullptr) const override;
-  bool check_old_mc_block_id(const ton::BlockIdExt& blkid, bool strict = false) const override;
+  bool get_old_mc_block_id(ion::BlockSeqno seqno, ion::BlockIdExt& blkid,
+                           ion::LogicalTime* end_lt = nullptr) const override;
+  bool check_old_mc_block_id(const ion::BlockIdExt& blkid, bool strict = false) const override;
   std::shared_ptr<block::ConfigInfo> get_config() const {
     return config_;
   }
@@ -187,4 +187,4 @@ class MasterchainStateQ : public MasterchainState, public ShardStateQ {
 #endif
 
 }  // namespace validator
-}  // namespace ton
+}  // namespace ion

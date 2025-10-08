@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain source code.
+    This file is part of ION Blockchain source code.
 
-    TON Blockchain is free software; you can redistribute it and/or
+    ION Blockchain is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
     as published by the Free Software Foundation; either version 2
     of the License, or (at your option) any later version.
 
-    TON Blockchain is distributed in the hope that it will be useful,
+    ION Blockchain is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with TON Blockchain.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "tolk.h"
 #include "ast.h"
@@ -111,7 +111,7 @@ class ConstantFoldingReplacer final : public ASTReplacerInFunctionBody {
   AnyExprV replace(V<ast_function_call> v) override {
     parent::replace(v);
 
-    // replace `ton("0.05")` with 50000000 / `stringCrc32("some_str")` with calculated value / etc.
+    // replace `ion("0.05")` with 50000000 / `stringCrc32("some_str")` with calculated value / etc.
     if (v->fun_maybe && v->fun_maybe->is_compile_time_const_val()) {
       CompileTimeFunctionResult value = eval_call_to_compile_time_function(v);
       if (std::holds_alternative<td::RefInt256>(value)) {
@@ -163,7 +163,7 @@ public:
     parent::replace(v_function->get_body());
   }
 
-  // used to replace `ton("0.05")` and other compile-time functions inside fields defaults, etc.
+  // used to replace `ion("0.05")` and other compile-time functions inside fields defaults, etc.
   AnyExprV replace_in_expression(AnyExprV init_value) {
     return parent::replace(init_value);
   }
@@ -174,7 +174,7 @@ void pipeline_constant_folding() {
 
   // here (after type inferring) check that `const a = 2 + 3` is a valid constant expression
   // non-constant expressions like `const a = foo()` fire an error here
-  // also, replace `const a = ton("0.05")` with `const a = 50000000`
+  // also, replace `const a = ion("0.05")` with `const a = 50000000`
   for (GlobalConstPtr const_ref : get_all_declared_constants()) {
     check_expression_is_constant(const_ref->init_value);
     AnyExprV replaced = replacer.replace_in_expression(const_ref->init_value);

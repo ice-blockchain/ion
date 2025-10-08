@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -81,13 +81,13 @@ class Benchmark {
 };
 
 inline std::pair<double, double> bench_n(Benchmark &b, int n) {
-  double total = -Clocks::monotonic();
+  double total = -Clocks::monoionic();
   b.start_up_n(n);
-  double t = -Clocks::monotonic();
+  double t = -Clocks::monoionic();
   b.run(n);
-  t += Clocks::monotonic();
+  t += Clocks::monoionic();
   b.tear_down();
-  total += Clocks::monotonic();
+  total += Clocks::monoionic();
 
   return std::make_pair(t, total);
 }

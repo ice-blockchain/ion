@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -27,17 +27,17 @@
 #include "vm/boc.h"
 #include "common/delay.h"
 
-namespace ton {
+namespace ion {
 
-PeerState::State from_ton_api(const ton::ton_api::storage_state &state) {
+PeerState::State from_ton_api(const ion::ton_api::storage_state &state) {
   PeerState::State res;
   res.want_download = state.want_download_;
   res.will_upload = state.will_upload_;
   return res;
 }
 
-ton::ton_api::object_ptr<ton::ton_api::storage_state> to_ton_api(const PeerState::State &state) {
-  return ton::ton_api::make_object<ton::ton_api::storage_state>(state.will_upload, state.want_download);
+ion::ton_api::object_ptr<ion::ton_api::storage_state> to_ton_api(const PeerState::State &state) {
+  return ion::ton_api::make_object<ion::ton_api::storage_state>(state.will_upload, state.want_download);
 }
 
 PeerActor::PeerActor(td::unique_ptr<Callback> callback, std::shared_ptr<PeerState> state)
@@ -47,7 +47,7 @@ PeerActor::PeerActor(td::unique_ptr<Callback> callback, std::shared_ptr<PeerStat
 
 template <class T, class... ArgsT>
 td::uint64 PeerActor::create_and_send_query(ArgsT &&...args) {
-  return send_query(ton::create_serialize_tl_object<T>(std::forward<ArgsT>(args)...));
+  return send_query(ion::create_serialize_tl_object<T>(std::forward<ArgsT>(args)...));
 }
 
 td::uint64 PeerActor::send_query(td::BufferSlice query) {
@@ -66,15 +66,15 @@ void PeerActor::notify_node() {
 
 void PeerActor::execute_query(td::BufferSlice query, td::Promise<td::BufferSlice> promise) {
   on_pong();
-  TRY_RESULT_PROMISE(promise, f, ton::fetch_tl_object<ton::ton_api::Function>(std::move(query), true));
-  ton::ton_api::downcast_call(
+  TRY_RESULT_PROMISE(promise, f, ion::fetch_tl_object<ion::ton_api::Function>(std::move(query), true));
+  ion::ton_api::downcast_call(
       *f, td::overloaded(
-              [&](ton::ton_api::storage_ping &ping) {
+              [&](ion::ton_api::storage_ping &ping) {
                 execute_ping(static_cast<td::uint64>(ping.session_id_), std::move(promise));
               },
-              [&](ton::ton_api::storage_addUpdate &add_update) { execute_add_update(add_update, std::move(promise)); },
-              [&](ton::ton_api::storage_getPiece &get_piece) { execute_get_piece(get_piece, std::move(promise)); },
-              [&](ton::ton_api::storage_getTorrentInfo &) { execute_get_torrent_info(std::move(promise)); },
+              [&](ion::ton_api::storage_addUpdate &add_update) { execute_add_update(add_update, std::move(promise)); },
+              [&](ion::ton_api::storage_getPiece &get_piece) { execute_get_piece(get_piece, std::move(promise)); },
+              [&](ion::ton_api::storage_getTorrentInfo &) { execute_get_torrent_info(std::move(promise)); },
               [&](auto &other) { promise.set_error(td::Status::Error("Unknown function")); }));
   schedule_loop();
 }
@@ -113,7 +113,7 @@ void PeerActor::on_get_piece_result(PartId piece_id, td::Result<td::BufferSlice>
   //TODO: handle errors ???
   auto res = [&]() -> td::Result<PeerState::Part> {
     TRY_RESULT(slice, std::move(r_answer));
-    TRY_RESULT(piece, ton::fetch_result<ton::ton_api::storage_getPiece>(slice.as_slice()));
+    TRY_RESULT(piece, ion::fetch_result<ion::ton_api::storage_getPiece>(slice.as_slice()));
     PeerState::Part res;
     res.data = std::move(piece->data_);
     res.proof = std::move(piece->proof_);
@@ -142,7 +142,7 @@ void PeerActor::on_get_info_result(td::Result<td::BufferSlice> r_answer) {
     LOG(DEBUG) << "getTorrentInfo query: " << r_answer.move_as_error();
     return;
   }
-  auto R = fetch_tl_object<ton::ton_api::storage_torrentInfo>(r_answer.move_as_ok(), true);
+  auto R = fetch_tl_object<ion::ton_api::storage_torrentInfo>(r_answer.move_as_ok(), true);
   if (R.is_error()) {
     LOG(DEBUG) << "getTorrentInfo query: " << R.move_as_error();
     return;
@@ -227,13 +227,13 @@ void PeerActor::loop_ping() {
 
   next_ping_at_ = td::Timestamp::in(2);
   alarm_timestamp().relax(next_ping_at_);
-  ping_query_id_ = create_and_send_query<ton::ton_api::storage_ping>(node_session_id_);
+  ping_query_id_ = create_and_send_query<ion::ton_api::storage_ping>(node_session_id_);
 }
 
-td::BufferSlice PeerActor::create_update_query(ton::tl_object_ptr<ton::ton_api::storage_Update> update) {
+td::BufferSlice PeerActor::create_update_query(ion::tl_object_ptr<ion::ton_api::storage_Update> update) {
   auto session_id = static_cast<td::int64>(peer_session_id_.value());
   auto seqno = static_cast<td::int32>(++node_seqno_);
-  return ton::create_serialize_tl_object<ton::ton_api::storage_addUpdate>(session_id, seqno, std::move(update));
+  return ion::create_serialize_tl_object<ion::ton_api::storage_addUpdate>(session_id, seqno, std::move(update));
 }
 
 void PeerActor::loop_update_init() {
@@ -250,7 +250,7 @@ void PeerActor::loop_update_init() {
     return;
   }
   s = s.substr(peer_init_offset_, UPDATE_INIT_BLOCK_SIZE);
-  auto query = create_update_query(ton::create_tl_object<ton::ton_api::storage_updateInit>(
+  auto query = create_update_query(ion::create_tl_object<ion::ton_api::storage_updateInit>(
       td::BufferSlice(s), (int)peer_init_offset_ * 8, to_ton_api(node_state)));
 
   // take care about update_state_query initial state
@@ -278,7 +278,7 @@ void PeerActor::loop_update_state() {
   }
 
   auto query = create_update_query(
-      ton::create_tl_object<ton::ton_api::storage_updateState>(to_ton_api(update_state_query_.state)));
+      ion::create_tl_object<ion::ton_api::storage_updateState>(to_ton_api(update_state_query_.state)));
   LOG(DEBUG) << "Sending updateState query (" << update_state_query_.state.want_download << ", "
              << update_state_query_.state.will_upload << ")";
   update_state_query_.query_id = send_query(std::move(query));
@@ -305,7 +305,7 @@ void PeerActor::loop_update_pieces() {
     size_t count = std::min<size_t>(have_pieces_list_.size(), 1500);
     sent_have_pieces_list_.assign(have_pieces_list_.end() - count, have_pieces_list_.end());
     have_pieces_list_.erase(have_pieces_list_.end() - count, have_pieces_list_.end());
-    auto query = create_update_query(ton::create_tl_object<ton::ton_api::storage_updateHavePieces>(
+    auto query = create_update_query(ion::create_tl_object<ion::ton_api::storage_updateHavePieces>(
         td::transform(sent_have_pieces_list_, [](auto x) { return static_cast<td::int32>(x); })));
     LOG(DEBUG) << "Sending updateHavePieces query (" << sent_have_pieces_list_.size() << " pieces)";
     update_query_id_ = send_query(std::move(query));
@@ -330,7 +330,7 @@ void PeerActor::loop_get_torrent_info() {
     return;
   }
   LOG(DEBUG) << "Sending getTorrentInfo query";
-  get_info_query_id_ = create_and_send_query<ton::ton_api::storage_getTorrentInfo>();
+  get_info_query_id_ = create_and_send_query<ion::ton_api::storage_getTorrentInfo>();
 }
 
 void PeerActor::loop_node_get_piece() {
@@ -368,7 +368,7 @@ void PeerActor::loop_node_get_piece() {
 
     LOG(DEBUG) << "Sending getPiece " << query_it.first << " query";
     query_it.second.query_id =
-        create_and_send_query<ton::ton_api::storage_getPiece>(static_cast<td::int32>(query_it.first));
+        create_and_send_query<ion::ton_api::storage_getPiece>(static_cast<td::int32>(query_it.first));
   }
 }
 
@@ -442,16 +442,16 @@ void PeerActor::execute_ping(td::uint64 session_id, td::Promise<td::BufferSlice>
     update_state_query_.query_id = {};
   }
 
-  promise.set_value(ton::create_serialize_tl_object<ton::ton_api::storage_pong>());
+  promise.set_value(ion::create_serialize_tl_object<ion::ton_api::storage_pong>());
 }
 
-void PeerActor::execute_add_update(ton::ton_api::storage_addUpdate &add_update, td::Promise<td::BufferSlice> promise) {
+void PeerActor::execute_add_update(ion::ton_api::storage_addUpdate &add_update, td::Promise<td::BufferSlice> promise) {
   auto session_id = static_cast<td::uint64>(add_update.session_id_);
   if (session_id != node_session_id_) {
     promise.set_error(td::Status::Error(404, "INVALID_SESSION"));
     return;
   }
-  promise.set_value(ton::create_serialize_tl_object<ton::ton_api::storage_ok>());
+  promise.set_value(ion::create_serialize_tl_object<ion::ton_api::storage_ok>());
 
   auto seqno = static_cast<td::uint32>(add_update.seqno_);
   auto update_peer_state = [&](PeerState::State peer_state) {
@@ -471,9 +471,9 @@ void PeerActor::execute_add_update(ton::ton_api::storage_addUpdate &add_update, 
   downcast_call(
       *add_update.update_,
       td::overloaded(
-          [&](const ton::ton_api::storage_updateHavePieces &have_pieces) {},
-          [&](const ton::ton_api::storage_updateState &state) { update_peer_state(from_ton_api(*state.state_)); },
-          [&](const ton::ton_api::storage_updateInit &init) { update_peer_state(from_ton_api(*init.state_)); }));
+          [&](const ion::ton_api::storage_updateHavePieces &have_pieces) {},
+          [&](const ion::ton_api::storage_updateState &state) { update_peer_state(from_ton_api(*state.state_)); },
+          [&](const ion::ton_api::storage_updateInit &init) { update_peer_state(from_ton_api(*init.state_)); }));
   if (torrent_info_) {
     process_update_peer_parts(add_update.update_);
   } else {
@@ -494,14 +494,14 @@ void PeerActor::process_update_peer_parts(const tl_object_ptr<ton_api::storage_U
   };
   downcast_call(*update,
                 td::overloaded(
-                    [&](const ton::ton_api::storage_updateHavePieces &have_pieces) {
+                    [&](const ion::ton_api::storage_updateHavePieces &have_pieces) {
                       LOG(DEBUG) << "Processing updateHavePieces query (" << have_pieces.piece_id_ << " pieces)";
                       for (auto id : have_pieces.piece_id_) {
                         add_piece(id);
                       }
                     },
-                    [&](const ton::ton_api::storage_updateState &state) {},
-                    [&](const ton::ton_api::storage_updateInit &init) {
+                    [&](const ion::ton_api::storage_updateState &state) {},
+                    [&](const ion::ton_api::storage_updateInit &init) {
                       LOG(DEBUG) << "Processing updateInit query (offset=" << init.have_pieces_offset_ << ")";
                       td::Bitset new_bitset;
                       new_bitset.set_raw(init.have_pieces_.as_slice().str());
@@ -515,7 +515,7 @@ void PeerActor::process_update_peer_parts(const tl_object_ptr<ton_api::storage_U
   state_->peer_ready_parts_.add_elements(std::move(new_peer_ready_parts));
 }
 
-void PeerActor::execute_get_piece(ton::ton_api::storage_getPiece &get_piece, td::Promise<td::BufferSlice> promise) {
+void PeerActor::execute_get_piece(ion::ton_api::storage_getPiece &get_piece, td::Promise<td::BufferSlice> promise) {
   PartId piece_id = get_piece.piece_id_;
   peer_get_piece_[piece_id] = {std::move(promise)};
 }
@@ -531,4 +531,4 @@ void PeerActor::execute_get_torrent_info(td::Promise<td::BufferSlice> promise) {
   }
   promise.set_result(std::move(result));
 }
-}  // namespace ton
+}  // namespace ion

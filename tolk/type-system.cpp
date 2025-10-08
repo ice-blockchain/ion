@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "type-system.h"
 #include "platform-utils.h"
@@ -128,34 +128,34 @@ std::unordered_map<uint64_t, TypePtr> TypeDataHasherForUnique::all_unique_occurr
 std::unordered_map<TypePtr, int> TypeIdCalculation::map_ptr_to_type_id;
 std::vector<StructPtr> TypeIdCalculation::instantiated_structs;
 
-TypePtr TypeDataInt::singleton;
-TypePtr TypeDataBool::singleton;
-TypePtr TypeDataCell::singleton;
-TypePtr TypeDataSlice::singleton;
-TypePtr TypeDataBuilder::singleton;
-TypePtr TypeDataTuple::singleton;
-TypePtr TypeDataContinuation::singleton;
-TypePtr TypeDataAddress::singleton;
-TypePtr TypeDataNullLiteral::singleton;
-TypePtr TypeDataCoins::singleton;
-TypePtr TypeDataUnknown::singleton;
-TypePtr TypeDataNever::singleton;
-TypePtr TypeDataVoid::singleton;
+TypePtr TypeDataInt::singleion;
+TypePtr TypeDataBool::singleion;
+TypePtr TypeDataCell::singleion;
+TypePtr TypeDataSlice::singleion;
+TypePtr TypeDataBuilder::singleion;
+TypePtr TypeDataTuple::singleion;
+TypePtr TypeDataContinuation::singleion;
+TypePtr TypeDataAddress::singleion;
+TypePtr TypeDataNullLiteral::singleion;
+TypePtr TypeDataCoins::singleion;
+TypePtr TypeDataUnknown::singleion;
+TypePtr TypeDataNever::singleion;
+TypePtr TypeDataVoid::singleion;
 
 void type_system_init() {
-  TypeDataInt::singleton = new TypeDataInt;
-  TypeDataBool::singleton = new TypeDataBool;
-  TypeDataCell::singleton = new TypeDataCell;
-  TypeDataSlice::singleton = new TypeDataSlice;
-  TypeDataBuilder::singleton = new TypeDataBuilder;
-  TypeDataTuple::singleton = new TypeDataTuple;
-  TypeDataContinuation::singleton = new TypeDataContinuation;
-  TypeDataAddress::singleton = new TypeDataAddress;
-  TypeDataNullLiteral::singleton = new TypeDataNullLiteral;
-  TypeDataCoins::singleton = new TypeDataCoins;
-  TypeDataUnknown::singleton = new TypeDataUnknown;
-  TypeDataNever::singleton = new TypeDataNever;
-  TypeDataVoid::singleton = new TypeDataVoid;
+  TypeDataInt::singleion = new TypeDataInt;
+  TypeDataBool::singleion = new TypeDataBool;
+  TypeDataCell::singleion = new TypeDataCell;
+  TypeDataSlice::singleion = new TypeDataSlice;
+  TypeDataBuilder::singleion = new TypeDataBuilder;
+  TypeDataTuple::singleion = new TypeDataTuple;
+  TypeDataContinuation::singleion = new TypeDataContinuation;
+  TypeDataAddress::singleion = new TypeDataAddress;
+  TypeDataNullLiteral::singleion = new TypeDataNullLiteral;
+  TypeDataCoins::singleion = new TypeDataCoins;
+  TypeDataUnknown::singleion = new TypeDataUnknown;
+  TypeDataNever::singleion = new TypeDataNever;
+  TypeDataVoid::singleion = new TypeDataVoid;
 }
 
 

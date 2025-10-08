@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -22,7 +22,7 @@
 #include "block/block-auto.h"
 #include "block/mc-config.h"
 
-#include "ton/ton-shard.h"
+#include "ion/ion-shard.h"
 
 #include "vm/cells/MerkleProof.h"
 #include "openssl/digest.hpp"
@@ -31,15 +31,15 @@
 namespace block {
 using namespace std::literals::string_literals;
 
-td::Status check_block_header_proof(td::Ref<vm::Cell> root, ton::BlockIdExt blkid, ton::Bits256* store_state_hash_to,
-                                    bool check_state_hash, td::uint32* save_utime, ton::LogicalTime* save_lt) {
-  ton::RootHash vhash{root->get_hash().bits()};
+td::Status check_block_header_proof(td::Ref<vm::Cell> root, ion::BlockIdExt blkid, ion::Bits256* store_state_hash_to,
+                                    bool check_state_hash, td::uint32* save_utime, ion::LogicalTime* save_lt) {
+  ion::RootHash vhash{root->get_hash().bits()};
   if (vhash != blkid.root_hash) {
     return td::Status::Error(PSTRING() << " block header for block " << blkid.to_str() << " has incorrect root hash "
                                        << vhash.to_hex() << " instead of " << blkid.root_hash.to_hex());
   }
-  std::vector<ton::BlockIdExt> prev;
-  ton::BlockIdExt mc_blkid;
+  std::vector<ion::BlockIdExt> prev;
+  ion::BlockIdExt mc_blkid;
   bool after_split;
   TRY_STATUS(block::unpack_block_prev_blk_try(root, blkid, prev, mc_blkid, after_split));
   block::gen::Block::Record blk;
@@ -71,7 +71,7 @@ td::Status check_block_header_proof(td::Ref<vm::Cell> root, ton::BlockIdExt blki
   return td::Status::OK();
 }
 
-td::Result<td::Bits256> check_state_proof(ton::BlockIdExt blkid, td::Slice proof) {
+td::Result<td::Bits256> check_state_proof(ion::BlockIdExt blkid, td::Slice proof) {
   TRY_RESULT(proof_root, vm::std_boc_deserialize(proof));
   auto virt_root = vm::MerkleProof::virtualize(std::move(proof_root), 1);
   if (virt_root.is_null()) {
@@ -82,7 +82,7 @@ td::Result<td::Bits256> check_state_proof(ton::BlockIdExt blkid, td::Slice proof
   return state_hash;
 }
 
-td::Result<Ref<vm::Cell>> check_extract_state_proof(ton::BlockIdExt blkid, td::Slice proof, td::Slice data) {
+td::Result<Ref<vm::Cell>> check_extract_state_proof(ion::BlockIdExt blkid, td::Slice proof, td::Slice data) {
   try {
     TRY_RESULT(state_hash, check_state_proof(blkid, proof));
     TRY_RESULT(state_root, vm::std_boc_deserialize(data));
@@ -101,7 +101,7 @@ td::Result<Ref<vm::Cell>> check_extract_state_proof(ton::BlockIdExt blkid, td::S
   }
 }
 
-td::Status check_shard_proof(ton::BlockIdExt blk, ton::BlockIdExt shard_blk, td::Slice shard_proof) {
+td::Status check_shard_proof(ion::BlockIdExt blk, ion::BlockIdExt shard_blk, td::Slice shard_proof) {
   if (blk == shard_blk) {
     if (!shard_proof.empty()) {
       LOG(WARNING) << "Unexpected non-empty shard proof";
@@ -122,7 +122,7 @@ td::Status check_shard_proof(ton::BlockIdExt blk, ton::BlockIdExt shard_blk, td:
     if (mc_state_root.is_null()) {
       return td::Status::Error("shard configuration proof is invalid");
     }
-    ton::Bits256 mc_state_hash = mc_state_root->get_hash().bits();
+    ion::Bits256 mc_state_hash = mc_state_root->get_hash().bits();
     TRY_STATUS_PREFIX(
         check_block_header_proof(vm::MerkleProof::virtualize(std::move(P_roots[0]), 1), blk, &mc_state_hash, true),
         "error in shard configuration block header proof :");
@@ -135,7 +135,7 @@ td::Status check_shard_proof(ton::BlockIdExt blk, ton::BlockIdExt shard_blk, td:
       return td::Status::Error("cannot extract shard configuration dictionary from proof");
     }
     vm::CellSlice cs;
-    ton::ShardIdFull true_shard;
+    ion::ShardIdFull true_shard;
     if (!block::ShardConfig::get_shard_hash_raw_from(*shards_dict, cs, shard_blk.shard_full(), true_shard)) {
       return td::Status::Error(PSLICE() << "masterchain state contains no information for shard "
                                         << shard_blk.shard_full().to_str());
@@ -158,9 +158,9 @@ td::Status check_shard_proof(ton::BlockIdExt blk, ton::BlockIdExt shard_blk, td:
   return td::Status::OK();
 }
 
-td::Status check_account_proof(td::Slice proof, ton::BlockIdExt shard_blk, const block::StdAddress& addr,
-                               td::Ref<vm::Cell> root, ton::LogicalTime* last_trans_lt, ton::Bits256* last_trans_hash,
-                               td::uint32* save_utime, ton::LogicalTime* save_lt) {
+td::Status check_account_proof(td::Slice proof, ion::BlockIdExt shard_blk, const block::StdAddress& addr,
+                               td::Ref<vm::Cell> root, ion::LogicalTime* last_trans_lt, ion::Bits256* last_trans_hash,
+                               td::uint32* save_utime, ion::LogicalTime* save_lt) {
   TRY_RESULT_PREFIX(Q_roots, vm::std_boc_deserialize_multi(std::move(proof)), "cannot deserialize account proof");
   if (Q_roots.size() != 2) {
     return td::Status::Error(PSLICE() << "account state proof must have exactly two roots");
@@ -175,7 +175,7 @@ td::Status check_account_proof(td::Slice proof, ton::BlockIdExt shard_blk, const
     if (state_root.is_null()) {
       return td::Status::Error("account state proof is invalid");
     }
-    ton::Bits256 state_hash = state_root->get_hash().bits();
+    ion::Bits256 state_hash = state_root->get_hash().bits();
     TRY_STATUS_PREFIX(check_block_header_proof(vm::MerkleProof::virtualize(std::move(Q_roots[0]), 1), shard_blk,
                                                &state_hash, true, save_utime, save_lt),
                       "error in account shard block header proof : ");
@@ -218,7 +218,7 @@ td::Status check_account_proof(td::Slice proof, ton::BlockIdExt shard_blk, const
   return td::Status::OK();
 }
 
-td::Result<AccountState::Info> AccountState::validate(ton::BlockIdExt ref_blk, block::StdAddress addr) const {
+td::Result<AccountState::Info> AccountState::validate(ion::BlockIdExt ref_blk, block::StdAddress addr) const {
   TRY_RESULT_PREFIX(true_root, vm::std_boc_deserialize(state.as_slice(), true), "cannot deserialize account state");
   Ref<vm::Cell> root;
 
@@ -240,7 +240,7 @@ td::Result<AccountState::Info> AccountState::validate(ton::BlockIdExt ref_blk, b
     return td::Status::Error(PSLICE() << "shard block id " << shard_blk.to_str() << " in answer is invalid");
   }
 
-  if (!ton::shard_contains(shard_blk.shard_full(), ton::extract_addr_prefix(addr.workchain, addr.addr))) {
+  if (!ion::shard_contains(shard_blk.shard_full(), ion::extract_addr_prefix(addr.workchain, addr.addr))) {
     return td::Status::Error(PSLICE() << "received data from shard block " << shard_blk.to_str()
                                       << " that cannot contain requested account");
   }
@@ -360,8 +360,8 @@ td::Result<BlockTransactionList::Info> BlockTransactionList::validate(bool check
                   block::tlb::aug_ShardAccountBlocks};
 
       bool eof = false;
-      ton::LogicalTime reverse = reverse_mode ? ~0ULL : 0;
-      ton::LogicalTime trans_lt = static_cast<ton::LogicalTime>(start_lt);
+      ion::LogicalTime reverse = reverse_mode ? ~0ULL : 0;
+      ion::LogicalTime trans_lt = static_cast<ion::LogicalTime>(start_lt);
       td::Bits256 cur_addr = start_addr;
       bool allow_same = true;
       int count = 0;
@@ -456,7 +456,7 @@ td::Status BlockProofLink::validate(td::uint32* save_utime) const {
     if (vs_root.is_null()) {
       return td::Status::Error("BlockProofLink contains an invalid Merkle proof for source block "s + from.to_str());
     }
-    ton::Bits256 state_hash;
+    ion::Bits256 state_hash;
     if (from.seqno()) {
       TRY_STATUS(check_block_header(vs_root, from, is_fwd ? nullptr : &state_hash));
     }
@@ -509,7 +509,7 @@ td::Status BlockProofLink::validate(td::uint32* save_utime) const {
       }
       auto config = cfg_res.move_as_ok();
       // compute validator set
-      ton::ShardIdFull shard{ton::masterchainId};
+      ion::ShardIdFull shard{ion::masterchainId};
       auto nodes = config->compute_validator_set(shard, info.gen_utime, info.gen_catchain_seqno);
       if (nodes.empty()) {
         return td::Status::Error(PSTRING()
@@ -560,7 +560,7 @@ td::Status BlockProofChain::validate(td::CancellationToken cancellation_token) {
     valid = true;
     return td::Status::OK();
   }
-  ton::BlockIdExt cur = from;
+  ion::BlockIdExt cur = from;
   int i = 0;
   for (const auto& link : links) {
     ++i;
@@ -604,8 +604,8 @@ td::Bits256 compute_node_id_short(td::Bits256 ed25519_pubkey) {
   return hash;
 }
 
-td::Status check_block_signatures(const std::vector<ton::ValidatorDescr>& nodes,
-                                  const std::vector<ton::BlockSignature>& signatures, const ton::BlockIdExt& blkid) {
+td::Status check_block_signatures(const std::vector<ion::ValidatorDescr>& nodes,
+                                  const std::vector<ion::BlockSignature>& signatures, const ion::BlockIdExt& blkid) {
   if (nodes.empty()) {
     return td::Status::Error("empty validator public keys set");
   }
@@ -614,13 +614,13 @@ td::Status check_block_signatures(const std::vector<ton::ValidatorDescr>& nodes,
   }
   // compute the string to be signed and its hash
   unsigned char to_sign[68];
-  td::as<td::uint32>(to_sign) = 0xc50b6e70;  // ton.blockId root_cell_hash:int256 file_hash:int256 = ton.BlockId;
+  td::as<td::uint32>(to_sign) = 0xc50b6e70;  // ion.blockId root_cell_hash:int256 file_hash:int256 = ion.BlockId;
   memcpy(to_sign + 4, blkid.root_hash.data(), 32);
   memcpy(to_sign + 36, blkid.file_hash.data(), 32);
   // unsigned char hash[32];
   // digest::hash_str<digest::SHA256>(hash, (void*)to_sign, sizeof(to_sign));
 
-  ton::ValidatorWeight total_weight = 0, signed_weight = 0;
+  ion::ValidatorWeight total_weight = 0, signed_weight = 0;
   std::vector<std::pair<td::Bits256, unsigned>> node_map;
   for (unsigned i = 0; i < nodes.size(); i++) {
     total_weight += nodes[i].weight;

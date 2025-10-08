@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -30,7 +30,7 @@
 
 #include <algorithm>
 
-namespace ton {
+namespace ion {
 class WalletInterface : public SmartContract {
  public:
   static constexpr uint32_t EncryptedCommentOp = 0x2167da4b;
@@ -109,7 +109,7 @@ class WalletBase : public WalletInterface {
     return Traits::code_type;
   }
   static td::optional<td::int32> guess_revision(const vm::Cell::Hash &code_hash) {
-    for (auto revision : ton::SmartContractCode::get_revisions(get_code_type())) {
+    for (auto revision : ion::SmartContractCode::get_revisions(get_code_type())) {
       auto code = get_init_code(revision);
       if (code->get_hash() == code_hash) {
         return revision;
@@ -118,7 +118,7 @@ class WalletBase : public WalletInterface {
     return {};
   }
   static td::Span<td::int32> get_revisions() {
-    return ton::SmartContractCode::get_revisions(get_code_type());
+    return ion::SmartContractCode::get_revisions(get_code_type());
   }
   static td::optional<td::int32> guess_revision(block::StdAddress &address, const InitData &init_data) {
     for (auto revision : get_revisions()) {
@@ -136,4 +136,4 @@ class WalletBase : public WalletInterface {
   }
 };
 
-}  // namespace ton
+}  // namespace ion

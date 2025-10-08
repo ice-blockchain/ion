@@ -45,7 +45,7 @@ set(TOLK_SOURCE
 
 add_executable(tolk tolk-main.cpp ${TOLK_SOURCE})
 target_include_directories(tolk PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
-target_link_libraries(tolk PUBLIC git ton_crypto_core)
+target_link_libraries(tolk PUBLIC git ion_crypto_core)
 if (WINGETOPT_FOUND)
   target_link_libraries_system(tolk wingetopt)
 endif ()

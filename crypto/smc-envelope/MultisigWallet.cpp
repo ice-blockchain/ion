@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2019-2020 Telegram Systems LLP
 */
@@ -24,7 +24,7 @@
 
 #include "td/utils/misc.h"
 
-namespace ton {
+namespace ion {
 
 MultisigWallet::QueryBuilder::QueryBuilder(td::uint32 wallet_id, td::int64 query_id, td::Ref<vm::Cell> msg, int mode) {
   msg_ = vm::CellBuilder()
@@ -67,7 +67,7 @@ td::Ref<vm::Cell> MultisigWallet::QueryBuilder::create(td::int32 id, td::Ed25519
 
 td::Ref<MultisigWallet> MultisigWallet::create(td::Ref<vm::Cell> data) {
   return td::Ref<MultisigWallet>(
-      true, State{ton::SmartContractCode::get_code(ton::SmartContractCode::Multisig), std::move(data)});
+      true, State{ion::SmartContractCode::get_code(ion::SmartContractCode::Multisig), std::move(data)});
 }
 
 int MultisigWallet::processed(td::uint64 query_id) const {
@@ -195,4 +195,4 @@ std::vector<MultisigWallet::Message> MultisigWallet::get_unsigned_messaged(int i
   });
   return res;
 }
-}  // namespace ton
+}  // namespace ion

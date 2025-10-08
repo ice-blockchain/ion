@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "common.h"
 #include <memory>
@@ -22,7 +22,7 @@ namespace block::precompiled {
 
 using namespace vm;
 
-Result PrecompiledSmartContract::run(td::Ref<vm::CellSlice> my_address, ton::UnixTime now, ton::LogicalTime cur_lt,
+Result PrecompiledSmartContract::run(td::Ref<vm::CellSlice> my_address, ion::UnixTime now, ion::LogicalTime cur_lt,
                                      CurrencyCollection balance, td::Ref<vm::Cell> c4, vm::CellSlice msg_body,
                                      td::Ref<vm::Cell> msg, CurrencyCollection msg_balance, bool is_external,
                                      std::vector<td::Ref<vm::Cell>> libraries, int global_version,
@@ -91,7 +91,7 @@ void PrecompiledSmartContract::raw_reserve(const td::RefInt256 &amount, int mode
   c5_ = cb.finalize_novm();
 }
 
-td::RefInt256 PrecompiledSmartContract::get_compute_fee(ton::WorkchainId wc, td::uint64 gas_used) {
+td::RefInt256 PrecompiledSmartContract::get_compute_fee(ion::WorkchainId wc, td::uint64 gas_used) {
   if (gas_used >= (1ULL << 63)) {
     throw VmError{Excno::range_chk};
   }
@@ -99,7 +99,7 @@ td::RefInt256 PrecompiledSmartContract::get_compute_fee(ton::WorkchainId wc, td:
   return util::check_finite(prices.compute_gas_price(gas_used));
 }
 
-td::RefInt256 PrecompiledSmartContract::get_forward_fee(ton::WorkchainId wc, td::uint64 bits, td::uint64 cells) {
+td::RefInt256 PrecompiledSmartContract::get_forward_fee(ion::WorkchainId wc, td::uint64 bits, td::uint64 cells) {
   if (bits >= (1ULL << 63) || cells >= (1ULL << 63)) {
     throw VmError{Excno::range_chk};
   }
@@ -107,7 +107,7 @@ td::RefInt256 PrecompiledSmartContract::get_forward_fee(ton::WorkchainId wc, td:
   return util::check_finite(prices.compute_fwd_fees256(cells, bits));
 }
 
-td::RefInt256 PrecompiledSmartContract::get_storage_fee(ton::WorkchainId wc, td::uint64 duration, td::uint64 bits,
+td::RefInt256 PrecompiledSmartContract::get_storage_fee(ion::WorkchainId wc, td::uint64 duration, td::uint64 bits,
                                                         td::uint64 cells) {
   if (bits >= (1ULL << 63) || cells >= (1ULL << 63) || duration >= (1ULL << 63)) {
     throw VmError{Excno::range_chk};
@@ -116,7 +116,7 @@ td::RefInt256 PrecompiledSmartContract::get_storage_fee(ton::WorkchainId wc, td:
   return util::check_finite(util::calculate_storage_fee(maybe_prices, wc, duration, bits, cells));
 }
 
-td::RefInt256 PrecompiledSmartContract::get_simple_compute_fee(ton::WorkchainId wc, td::uint64 gas_used) {
+td::RefInt256 PrecompiledSmartContract::get_simple_compute_fee(ion::WorkchainId wc, td::uint64 gas_used) {
   if (gas_used >= (1ULL << 63)) {
     throw VmError{Excno::range_chk};
   }
@@ -124,7 +124,7 @@ td::RefInt256 PrecompiledSmartContract::get_simple_compute_fee(ton::WorkchainId 
   return util::check_finite(td::rshift(td::make_refint(prices.gas_price) * gas_used, 16, 1));
 }
 
-td::RefInt256 PrecompiledSmartContract::get_simple_forward_fee(ton::WorkchainId wc, td::uint64 bits, td::uint64 cells) {
+td::RefInt256 PrecompiledSmartContract::get_simple_forward_fee(ion::WorkchainId wc, td::uint64 bits, td::uint64 cells) {
   if (bits >= (1ULL << 63) || cells >= (1ULL << 63)) {
     throw VmError{Excno::range_chk};
   }
@@ -133,7 +133,7 @@ td::RefInt256 PrecompiledSmartContract::get_simple_forward_fee(ton::WorkchainId 
       td::rshift(td::make_refint(prices.bit_price) * bits + td::make_refint(prices.cell_price) * cells, 16, 1));
 }
 
-td::RefInt256 PrecompiledSmartContract::get_original_fwd_fee(ton::WorkchainId wc, const td::RefInt256 &x) {
+td::RefInt256 PrecompiledSmartContract::get_original_fwd_fee(ion::WorkchainId wc, const td::RefInt256 &x) {
   if (x->sgn() < 0) {
     throw VmError{Excno::range_chk, "fwd_fee is negative"};
   }

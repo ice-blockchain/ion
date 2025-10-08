@@ -1,8 +1,8 @@
 const int one_month = 2592000; ;; 1 month in seconds = 60 * 60 * 24 * 30
 const int one_year = 31622400; ;; 1 year in seconds = 60 * 60 * 24 * 366
 const int auction_start_time = 1659171600; ;; GMT: Monday, 30 July 2022 г., 09:00:00
-const int one_ton = 1000000000;
-const int dns_next_resolver_prefix = 0xba93; ;; dns_next_resolver prefix - https://github.com/ton-blockchain/ton/blob/7e3df93ca2ab336716a230fceb1726d81bac0a06/crypto/block/block.tlb#L819
+const int one_ion = 1000000000;
+const int dns_next_resolver_prefix = 0xba93; ;; dns_next_resolver prefix - https://github.com/ice-blockchain/ion/blob/7e3df93ca2ab336716a230fceb1726d81bac0a06/crypto/block/block.tlb#L819
 
 const int dns_config_id = 80; ;; dns black list config param; in testnet -80
 
@@ -18,7 +18,7 @@ slice zero_address() {
     return begin_cell().store_uint(0, 2).end_cell().begin_parse();
 }
 
-;; "ton\0test\0" -> "ton"
+;; "ion\0test\0" -> "ion"
 int get_top_domain_bits(slice domain) {
     int i = 0;
     int need_break = 0;
@@ -96,8 +96,8 @@ int check_domain_string(slice domain) {
 
 int get_min_price(int domain_bits_length, int now_time) {
     (int start_min_price, int end_min_price) = get_min_price_config(domain_bits_length / 8);
-    start_min_price *= one_ton;
-    end_min_price *= one_ton;
+    start_min_price *= one_ion;
+    end_min_price *= one_ion;
     int seconds = now_time - auction_start_time;
     int months = seconds / one_month;
     if (months > 21) {

@@ -1577,7 +1577,7 @@ fun demo410(s: slice) {
         CounterDecrement => { debug.dumpStack() }
         CounterReset => { random.setSeed(10) }
         CounterDecrementBy1 => { reserveToncoinsOnBalance(10, 1) }
-        else => { /* do nothing, "just accept tons" */ }
+        else => { /* do nothing, "just accept ions" */ }
     }
 }
 

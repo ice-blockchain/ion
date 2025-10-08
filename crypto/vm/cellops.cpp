@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -864,7 +864,7 @@ void register_cell_serialize_ops(OpcodeTable& cp0) {
       .insert(OpcodeInstr::mksimple(0xcf3e, 16, "BCHKREFSQ", std::bind(exec_builder_chk_bits_refs, _1, 6)))
       .insert(OpcodeInstr::mksimple(0xcf3f, 16, "BCHKBITREFSQ", std::bind(exec_builder_chk_bits_refs, _1, 7)))
       .insert(OpcodeInstr::mksimple(0xcf40, 16, "STZEROES", std::bind(exec_store_same, _1, "STZEROES", 0)))
-      .insert(OpcodeInstr::mksimple(0xcf41, 16, "STONES", std::bind(exec_store_same, _1, "STONES", 1)))
+      .insert(OpcodeInstr::mksimple(0xcf41, 16, "SIONES", std::bind(exec_store_same, _1, "SIONES", 1)))
       .insert(OpcodeInstr::mksimple(0xcf42, 16, "STSAME", std::bind(exec_store_same, _1, "STSAME", -1)))
       .insert(OpcodeInstr::mkext(0xcf80 >> 7, 9, 5, dump_store_const_slice, exec_store_const_slice,
                                  compute_len_store_const_slice));

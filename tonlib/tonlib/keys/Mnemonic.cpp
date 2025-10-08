@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -57,7 +57,7 @@ td::SecureString Mnemonic::to_entropy() const {
 
 td::SecureString Mnemonic::to_seed() const {
   td::SecureString hash(64);
-  td::pbkdf2_sha512(as_slice(to_entropy()), "TON default seed", PBKDF_ITERATIONS, hash.as_mutable_slice());
+  td::pbkdf2_sha512(as_slice(to_entropy()), "ION default seed", PBKDF_ITERATIONS, hash.as_mutable_slice());
   return hash;
 }
 
@@ -67,14 +67,14 @@ td::Ed25519::PrivateKey Mnemonic::to_private_key() const {
 
 bool Mnemonic::is_basic_seed() {
   td::SecureString hash(64);
-  td::pbkdf2_sha512(as_slice(to_entropy()), "TON seed version", td::max(1, PBKDF_ITERATIONS / 256),
+  td::pbkdf2_sha512(as_slice(to_entropy()), "ION seed version", td::max(1, PBKDF_ITERATIONS / 256),
                     hash.as_mutable_slice());
   return hash.as_slice()[0] == 0;
 }
 
 bool Mnemonic::is_password_seed() {
   td::SecureString hash(64);
-  td::pbkdf2_sha512(as_slice(to_entropy()), "TON fast seed version", 1, hash.as_mutable_slice());
+  td::pbkdf2_sha512(as_slice(to_entropy()), "ION fast seed version", 1, hash.as_mutable_slice());
   return hash.as_slice()[0] == 1;
 }
 

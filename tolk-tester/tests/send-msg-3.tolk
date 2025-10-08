@@ -77,7 +77,7 @@ fun test3(eventId: int) {
     val bodyAddress = address("Ef9nzj6RBc4mQ6p3ng7mGJ7tp7MbzERhe7obkM9A0wnCCEcf");
     val someRef = MyBody { queryId: 800 }.toCell();
     var b = createExternalLogMessage({
-        body: Body3 { bodyAddress, someRef, amount: ton("0.05") },
+        body: Body3 { bodyAddress, someRef, amount: ion("0.05") },
         dest: { topic: eventId },
     });
     return b.hash();

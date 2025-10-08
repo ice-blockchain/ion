@@ -1,18 +1,18 @@
 /* 
-    This file is part of TON Blockchain source code.
+    This file is part of ION Blockchain source code.
 
-    TON Blockchain is free software; you can redistribute it and/or
+    ION Blockchain is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
     as published by the Free Software Foundation; either version 2
     of the License, or (at your option) any later version.
 
-    TON Blockchain is distributed in the hope that it will be useful,
+    ION Blockchain is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with TON Blockchain.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain.  If not, see <http://www.gnu.org/licenses/>.
 
     In addition, as a special exception, the copyright holders give permission 
     to link the code of portions of this program with the OpenSSL library. 
@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
 
     bool exit_loop = false;
     std::string cur_line = "";
-    auto R = ton::http::HttpRequest::parse(nullptr, cur_line, exit_loop, r);
+    auto R = ion::http::HttpRequest::parse(nullptr, cur_line, exit_loop, r);
     R.ensure();
     auto req = R.move_as_ok();
 
@@ -101,7 +101,7 @@ int main(int argc, char *argv[]) {
 
     bool exit_loop = false;
     std::string cur_line = "";
-    auto R = ton::http::HttpRequest::parse(nullptr, cur_line, exit_loop, r);
+    auto R = ion::http::HttpRequest::parse(nullptr, cur_line, exit_loop, r);
     R.ensure_error();
   }
 
@@ -118,7 +118,7 @@ int main(int argc, char *argv[]) {
 
     bool exit_loop = false;
     std::string cur_line = "";
-    auto R = ton::http::HttpRequest::parse(nullptr, cur_line, exit_loop, r);
+    auto R = ion::http::HttpRequest::parse(nullptr, cur_line, exit_loop, r);
     R.ensure_error();
   }
 
@@ -135,7 +135,7 @@ int main(int argc, char *argv[]) {
 
     bool exit_loop = false;
     std::string cur_line = "";
-    auto R = ton::http::HttpRequest::parse(nullptr, cur_line, exit_loop, r);
+    auto R = ion::http::HttpRequest::parse(nullptr, cur_line, exit_loop, r);
     R.ensure();
     auto req = R.move_as_ok();
 
@@ -184,7 +184,7 @@ int main(int argc, char *argv[]) {
 
     bool exit_loop = false;
     std::string cur_line = "";
-    auto R = ton::http::HttpRequest::parse(nullptr, cur_line, exit_loop, r);
+    auto R = ion::http::HttpRequest::parse(nullptr, cur_line, exit_loop, r);
     R.ensure();
     auto req = R.move_as_ok();
 
@@ -252,8 +252,8 @@ int main(int argc, char *argv[]) {
     auto r = w.extract_reader();
     w.append(td::Slice(request, std::strlen(request)));
 
-    std::unique_ptr<ton::http::HttpRequest> req;
-    std::shared_ptr<ton::http::HttpPayload> payload;
+    std::unique_ptr<ion::http::HttpRequest> req;
+    std::shared_ptr<ion::http::HttpPayload> payload;
 
     auto l = strlen(request);
     std::string cur_line;
@@ -261,7 +261,7 @@ int main(int argc, char *argv[]) {
     for (size_t i = 0; i < l; i++) {
       r.advance_end(1);
       if (!req || !req->check_parse_header_completed()) {
-        req = ton::http::HttpRequest::parse(std::move(req), cur_line, exit_loop, r).move_as_ok();
+        req = ion::http::HttpRequest::parse(std::move(req), cur_line, exit_loop, r).move_as_ok();
       } else {
         if (!payload) {
           payload = req->create_empty_payload().move_as_ok();
@@ -290,7 +290,7 @@ int main(int argc, char *argv[]) {
 
     bool exit_loop = false;
     std::string cur_line = "";
-    auto R = ton::http::HttpResponse::parse(nullptr, cur_line, false, false, exit_loop, r);
+    auto R = ion::http::HttpResponse::parse(nullptr, cur_line, false, false, exit_loop, r);
     R.ensure();
     auto res = R.move_as_ok();
     CHECK(res);

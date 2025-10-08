@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -21,7 +21,7 @@
 #include "block/block-auto.h"
 #include "block/block-parse.h"
 #include "block/mc-config.h"
-#include "ton/ton-shard.h"
+#include "ion/ion-shard.h"
 #include "common/bigexp.h"
 #include "common/util.h"
 #include "td/utils/crypto.h"
@@ -83,7 +83,7 @@ std::string PublicKey::serialize(bool base64_url) {
   return res;
 }
 
-bool pack_std_smc_addr_to(char result[48], bool base64_url, ton::WorkchainId wc, const ton::StdSmcAddress& addr,
+bool pack_std_smc_addr_to(char result[48], bool base64_url, ion::WorkchainId wc, const ion::StdSmcAddress& addr,
                           bool bounceable, bool testnet) {
   if (wc < -128 || wc >= 128) {
     return false;
@@ -99,7 +99,7 @@ bool pack_std_smc_addr_to(char result[48], bool base64_url, ton::WorkchainId wc,
   return true;
 }
 
-std::string pack_std_smc_addr(bool base64_url, ton::WorkchainId wc, const ton::StdSmcAddress& addr, bool bounceable,
+std::string pack_std_smc_addr(bool base64_url, ion::WorkchainId wc, const ion::StdSmcAddress& addr, bool bounceable,
                               bool testnet) {
   char result[48];
   if (pack_std_smc_addr_to(result, base64_url, wc, addr, bounceable, testnet)) {
@@ -109,10 +109,10 @@ std::string pack_std_smc_addr(bool base64_url, ton::WorkchainId wc, const ton::S
   }
 }
 
-bool unpack_std_smc_addr(const char packed[48], ton::WorkchainId& wc, ton::StdSmcAddress& addr, bool& bounceable,
+bool unpack_std_smc_addr(const char packed[48], ion::WorkchainId& wc, ion::StdSmcAddress& addr, bool& bounceable,
                          bool& testnet) {
   unsigned char buffer[36];
-  wc = ton::workchainInvalid;
+  wc = ion::workchainInvalid;
   if (!buff_base64_decode(td::MutableSlice{buffer, 36}, td::Slice{packed, 48}, true)) {
     return false;
   }
@@ -130,12 +130,12 @@ bool unpack_std_smc_addr(const char packed[48], ton::WorkchainId& wc, ton::StdSm
   return true;
 }
 
-bool unpack_std_smc_addr(td::Slice packed, ton::WorkchainId& wc, ton::StdSmcAddress& addr, bool& bounceable,
+bool unpack_std_smc_addr(td::Slice packed, ion::WorkchainId& wc, ion::StdSmcAddress& addr, bool& bounceable,
                          bool& testnet) {
   return packed.size() == 48 && unpack_std_smc_addr(packed.data(), wc, addr, bounceable, testnet);
 }
 
-bool unpack_std_smc_addr(std::string packed, ton::WorkchainId& wc, ton::StdSmcAddress& addr, bool& bounceable,
+bool unpack_std_smc_addr(std::string packed, ion::WorkchainId& wc, ion::StdSmcAddress& addr, bool& bounceable,
                          bool& testnet) {
   return packed.size() == 48 && unpack_std_smc_addr(packed.data(), wc, addr, bounceable, testnet);
 }
@@ -201,12 +201,12 @@ bool StdAddress::parse_addr(td::Slice acc_string) {
       return invalidate();
     }
     auto tmp = acc_string.substr(0, pos);
-    auto r_wc = td::to_integer_safe<ton::WorkchainId>(tmp);
+    auto r_wc = td::to_integer_safe<ion::WorkchainId>(tmp);
     if (r_wc.is_error()) {
       return invalidate();
     }
     workchain = r_wc.move_as_ok();
-    if (workchain == ton::workchainInvalid) {
+    if (workchain == ion::workchainInvalid) {
       return invalidate();
     }
     ++pos;
@@ -231,7 +231,7 @@ bool StdAddress::parse_addr(td::Slice acc_string) {
   return true;
 }
 
-bool parse_std_account_addr(td::Slice acc_string, ton::WorkchainId& wc, ton::StdSmcAddress& addr, bool* bounceable,
+bool parse_std_account_addr(td::Slice acc_string, ion::WorkchainId& wc, ion::StdSmcAddress& addr, bool* bounceable,
                             bool* testnet_only) {
   StdAddress a;
   if (!a.parse_addr(acc_string)) {
@@ -265,24 +265,24 @@ void ShardId::init() {
   }
 }
 
-ShardId::ShardId(ton::WorkchainId wc_id, unsigned long long sh_pfx) : workchain_id(wc_id), shard_pfx(sh_pfx) {
+ShardId::ShardId(ion::WorkchainId wc_id, unsigned long long sh_pfx) : workchain_id(wc_id), shard_pfx(sh_pfx) {
   init();
 }
 
-ShardId::ShardId(ton::ShardIdFull ton_shard_id) : workchain_id(ton_shard_id.workchain), shard_pfx(ton_shard_id.shard) {
+ShardId::ShardId(ion::ShardIdFull ion_shard_id) : workchain_id(ion_shard_id.workchain), shard_pfx(ion_shard_id.shard) {
   init();
 }
 
-ShardId::ShardId(ton::BlockId ton_block_id) : workchain_id(ton_block_id.workchain), shard_pfx(ton_block_id.shard) {
+ShardId::ShardId(ion::BlockId ion_block_id) : workchain_id(ion_block_id.workchain), shard_pfx(ion_block_id.shard) {
   init();
 }
 
-ShardId::ShardId(const ton::BlockIdExt& ton_block_id)
-    : workchain_id(ton_block_id.id.workchain), shard_pfx(ton_block_id.id.shard) {
+ShardId::ShardId(const ion::BlockIdExt& ion_block_id)
+    : workchain_id(ion_block_id.id.workchain), shard_pfx(ion_block_id.id.shard) {
   init();
 }
 
-ShardId::ShardId(ton::WorkchainId wc_id, unsigned long long sh_pfx, int sh_pfx_len)
+ShardId::ShardId(ion::WorkchainId wc_id, unsigned long long sh_pfx, int sh_pfx_len)
     : workchain_id(wc_id), shard_pfx_len(sh_pfx_len) {
   if (sh_pfx_len < 0) {
     shard_pfx_len = 0;
@@ -302,7 +302,7 @@ std::ostream& operator<<(std::ostream& os, const ShardId& shard_id) {
 }
 
 void ShardId::show(std::ostream& os) const {
-  if (workchain_id == ton::workchainInvalid) {
+  if (workchain_id == ion::workchainInvalid) {
     os << '?';
     return;
   }
@@ -327,7 +327,7 @@ std::string ShardId::to_str() const {
 }
 
 bool ShardId::serialize(vm::CellBuilder& cb) const {
-  if (workchain_id == ton::workchainInvalid || cb.remaining_bits() < 104) {
+  if (workchain_id == ion::workchainInvalid || cb.remaining_bits() < 104) {
     return false;
   }
   return cb.store_long_bool(0, 2) && cb.store_ulong_rchk_bool(shard_pfx_len, 6) &&
@@ -336,7 +336,7 @@ bool ShardId::serialize(vm::CellBuilder& cb) const {
 
 bool ShardId::deserialize(vm::CellSlice& cs) {
   if (cs.fetch_ulong(2) == 0 && cs.fetch_uint_to(6, shard_pfx_len) && cs.fetch_int_to(32, workchain_id) &&
-      workchain_id != ton::workchainInvalid && cs.fetch_uint_to(64, shard_pfx)) {
+      workchain_id != ion::workchainInvalid && cs.fetch_uint_to(64, shard_pfx)) {
     auto pow2 = (1ULL << (63 - shard_pfx_len));
     if (!(shard_pfx & (pow2 - 1))) {
       shard_pfx |= pow2;
@@ -348,7 +348,7 @@ bool ShardId::deserialize(vm::CellSlice& cs) {
   return false;
 }
 
-MsgProcessedUptoCollection::MsgProcessedUptoCollection(ton::ShardIdFull _owner, Ref<vm::CellSlice> cs_ref)
+MsgProcessedUptoCollection::MsgProcessedUptoCollection(ion::ShardIdFull _owner, Ref<vm::CellSlice> cs_ref)
     : owner(_owner) {
   vm::Dictionary dict{std::move(cs_ref), 96};
   valid = dict.check_for_each([&](Ref<vm::CellSlice> value, td::ConstBitPtr key, int n) -> bool {
@@ -360,29 +360,29 @@ MsgProcessedUptoCollection::MsgProcessedUptoCollection(ton::ShardIdFull _owner, 
     z.shard = key.get_uint(64);
     z.mc_seqno = (unsigned)((key + 64).get_uint(32));
     z.last_inmsg_lt = value.write().fetch_ulong(64);
-    return value.write().fetch_bits_to(z.last_inmsg_hash) && z.shard && ton::shard_contains(owner.shard, z.shard);
+    return value.write().fetch_bits_to(z.last_inmsg_hash) && z.shard && ion::shard_contains(owner.shard, z.shard);
   });
 }
 
-std::unique_ptr<MsgProcessedUptoCollection> MsgProcessedUptoCollection::unpack(ton::ShardIdFull _owner,
+std::unique_ptr<MsgProcessedUptoCollection> MsgProcessedUptoCollection::unpack(ion::ShardIdFull _owner,
                                                                                Ref<vm::CellSlice> cs_ref) {
   auto v = std::make_unique<MsgProcessedUptoCollection>(_owner, std::move(cs_ref));
   return v && v->valid ? std::move(v) : std::unique_ptr<MsgProcessedUptoCollection>{};
 }
 
 bool MsgProcessedUpto::contains(const MsgProcessedUpto& other) const& {
-  return ton::shard_is_ancestor(shard, other.shard) && mc_seqno >= other.mc_seqno &&
+  return ion::shard_is_ancestor(shard, other.shard) && mc_seqno >= other.mc_seqno &&
          (last_inmsg_lt > other.last_inmsg_lt ||
           (last_inmsg_lt == other.last_inmsg_lt && !(last_inmsg_hash < other.last_inmsg_hash)));
 }
 
-bool MsgProcessedUpto::contains(ton::ShardId other_shard, ton::LogicalTime other_lt, td::ConstBitPtr other_hash,
-                                ton::BlockSeqno other_mc_seqno) const& {
-  return ton::shard_is_ancestor(shard, other_shard) && mc_seqno >= other_mc_seqno &&
+bool MsgProcessedUpto::contains(ion::ShardId other_shard, ion::LogicalTime other_lt, td::ConstBitPtr other_hash,
+                                ion::BlockSeqno other_mc_seqno) const& {
+  return ion::shard_is_ancestor(shard, other_shard) && mc_seqno >= other_mc_seqno &&
          (last_inmsg_lt > other_lt || (last_inmsg_lt == other_lt && !(last_inmsg_hash < other_hash)));
 }
 
-bool MsgProcessedUptoCollection::insert(ton::BlockSeqno mc_seqno, ton::LogicalTime last_proc_lt,
+bool MsgProcessedUptoCollection::insert(ion::BlockSeqno mc_seqno, ion::LogicalTime last_proc_lt,
                                         td::ConstBitPtr last_proc_hash) {
   if (!last_proc_lt) {
     return false;
@@ -396,7 +396,7 @@ bool MsgProcessedUptoCollection::insert(ton::BlockSeqno mc_seqno, ton::LogicalTi
   return true;
 }
 
-bool MsgProcessedUptoCollection::insert_infty(ton::BlockSeqno mc_seqno, ton::LogicalTime last_proc_lt) {
+bool MsgProcessedUptoCollection::insert_infty(ion::BlockSeqno mc_seqno, ion::LogicalTime last_proc_lt) {
   return insert(mc_seqno, last_proc_lt, td::Bits256::ones().bits());
 }
 
@@ -458,8 +458,8 @@ const MsgProcessedUpto* MsgProcessedUptoCollection::is_simple_update_of(const Ms
   return found;
 }
 
-ton::BlockSeqno MsgProcessedUptoCollection::min_mc_seqno() const {
-  ton::BlockSeqno min_mc_seqno = ~0U;
+ion::BlockSeqno MsgProcessedUptoCollection::min_mc_seqno() const {
+  ion::BlockSeqno min_mc_seqno = ~0U;
   for (const auto& z : list) {
     min_mc_seqno = std::min(min_mc_seqno, z.mc_seqno);
   }
@@ -509,8 +509,8 @@ bool MsgProcessedUptoCollection::pack(vm::CellBuilder& cb) {
   return std::move(dict).append_dict_to_bool(cb);
 }
 
-bool MsgProcessedUptoCollection::split(ton::ShardIdFull new_owner) {
-  if (!ton::shard_is_ancestor(owner, new_owner)) {
+bool MsgProcessedUptoCollection::split(ion::ShardIdFull new_owner) {
+  if (!ion::shard_is_ancestor(owner, new_owner)) {
     return false;
   }
   if (owner == new_owner) {
@@ -518,8 +518,8 @@ bool MsgProcessedUptoCollection::split(ton::ShardIdFull new_owner) {
   }
   std::size_t n = list.size(), i, j = 0;
   for (i = 0; i < n; i++) {
-    if (ton::shard_intersects(list[i].shard, new_owner.shard)) {
-      list[i].shard = ton::shard_intersection(list[i].shard, new_owner.shard);
+    if (ion::shard_intersects(list[i].shard, new_owner.shard)) {
+      list[i].shard = ion::shard_intersection(list[i].shard, new_owner.shard);
       if (j < i) {
         list[j] = std::move(list[i]);
       }
@@ -532,12 +532,12 @@ bool MsgProcessedUptoCollection::split(ton::ShardIdFull new_owner) {
 }
 
 bool MsgProcessedUptoCollection::combine_with(const MsgProcessedUptoCollection& other) {
-  if (!(other.owner == owner || ton::shard_is_sibling(other.owner, owner))) {
+  if (!(other.owner == owner || ion::shard_is_sibling(other.owner, owner))) {
     return false;
   }
   list.insert(list.end(), other.list.begin(), other.list.end());
   if (owner != other.owner) {
-    owner = ton::shard_parent(owner);
+    owner = ion::shard_parent(owner);
   }
   return compactify();
 }
@@ -548,13 +548,13 @@ bool MsgProcessedUpto::already_processed(const EnqueuedMsgDescr& msg) const {
   if (msg.lt_ > last_inmsg_lt) {
     return false;
   }
-  if (!ton::shard_contains(shard, msg.next_prefix_.account_id_prefix)) {
+  if (!ion::shard_contains(shard, msg.next_prefix_.account_id_prefix)) {
     return false;
   }
   if (msg.lt_ == last_inmsg_lt && last_inmsg_hash < msg.hash_) {
     return false;
   }
-  if (msg.same_workchain() && ton::shard_contains(shard, msg.cur_prefix_.account_id_prefix)) {
+  if (msg.same_workchain() && ion::shard_contains(shard, msg.cur_prefix_.account_id_prefix)) {
     // this branch is needed only for messages generated in the same shard
     // (such messages could have been processed without a reference from the masterchain)
     // ? enable this branch only if an extra boolean parameter is set ?
@@ -568,7 +568,7 @@ bool MsgProcessedUpto::already_processed(const EnqueuedMsgDescr& msg) const {
 bool MsgProcessedUptoCollection::already_processed(const EnqueuedMsgDescr& msg) const {
   // LOG(DEBUG) << "checking message with cur_addr=" << msg.cur_prefix_.to_str()
   //            << " next_addr=" << msg.next_prefix_.to_str() << " against ProcessedUpto of neighbor " << owner.to_str();
-  if (!ton::shard_contains(owner, msg.next_prefix_)) {
+  if (!ion::shard_contains(owner, msg.next_prefix_)) {
     return false;
   }
   for (const auto& rec : list) {
@@ -588,7 +588,7 @@ bool MsgProcessedUptoCollection::can_check_processed() const {
   return true;
 }
 
-bool MsgProcessedUptoCollection::for_each_mcseqno(std::function<bool(ton::BlockSeqno)> func) const {
+bool MsgProcessedUptoCollection::for_each_mcseqno(std::function<bool(ion::BlockSeqno)> func) const {
   for (const auto& entry : list) {
     if (!func(entry.mc_seqno)) {
       return false;
@@ -598,7 +598,7 @@ bool MsgProcessedUptoCollection::for_each_mcseqno(std::function<bool(ton::BlockS
 }
 
 std::ostream& MsgProcessedUpto::print(std::ostream& os) const {
-  return os << "[" << ton::shard_to_str(shard) << "," << mc_seqno << "," << last_inmsg_lt << ","
+  return os << "[" << ion::shard_to_str(shard) << "," << mc_seqno << "," << last_inmsg_lt << ","
             << last_inmsg_hash.to_hex() << "]";
 }
 
@@ -722,7 +722,7 @@ int BlockLimits::classify_gas(td::uint64 gas_value) const {
   return gas.classify(gas_value);
 }
 
-int BlockLimits::classify_lt(ton::LogicalTime lt) const {
+int BlockLimits::classify_lt(ion::LogicalTime lt) const {
   return lt_delta.classify(lt - start_lt);
 }
 
@@ -730,12 +730,12 @@ int BlockLimits::classify_collated_data_size(td::uint64 size) const {
   return collated_data.classify(size);
 }
 
-int BlockLimits::classify(td::uint64 size, td::uint64 gas, ton::LogicalTime lt, td::uint64 collated_size) const {
+int BlockLimits::classify(td::uint64 size, td::uint64 gas, ion::LogicalTime lt, td::uint64 collated_size) const {
   return std::max(
       {classify_size(size), classify_gas(gas), classify_lt(lt), classify_collated_data_size(collated_size)});
 }
 
-bool BlockLimits::fits(unsigned cls, td::uint64 size, td::uint64 gas_value, ton::LogicalTime lt,
+bool BlockLimits::fits(unsigned cls, td::uint64 size, td::uint64 gas_value, ion::LogicalTime lt,
                        td::uint64 collated_size) const {
   return bytes.fits(cls, size) && gas.fits(cls, gas_value) && lt_delta.fits(cls, lt - start_lt) &&
          collated_data.fits(cls, collated_size);
@@ -760,7 +760,7 @@ bool BlockLimitStatus::fits(unsigned cls) const {
           limits.bytes.fits(cls, estimate_block_size()) && limits.collated_data.fits(cls, collated_data_size_estimate));
 }
 
-bool BlockLimitStatus::would_fit(unsigned cls, ton::LogicalTime end_lt, td::uint64 more_gas,
+bool BlockLimitStatus::would_fit(unsigned cls, ion::LogicalTime end_lt, td::uint64 more_gas,
                                  const vm::NewCellStorageStat::Stat* extra) const {
   return cls >= ParamLimits::limits_cnt || (limits.gas.fits(cls, gas_used + more_gas) &&
                                             limits.lt_delta.fits(cls, std::max(cur_lt, end_lt) - limits.start_lt) &&
@@ -781,7 +781,7 @@ double BlockLimitStatus::load_fraction(unsigned cls) const {
 //    total_balance{,_extra}, total_validator_fees
 // SETS: out_msg_queue, processed_upto_, ihr_pending (via unpack_out_msg_queue_info)
 // SETS: utime_, lt_
-td::Status ShardState::unpack_state(ton::BlockIdExt blkid, Ref<vm::Cell> prev_state_root) {
+td::Status ShardState::unpack_state(ion::BlockIdExt blkid, Ref<vm::Cell> prev_state_root) {
   if (!blkid.is_valid()) {
     return td::Status::Error(-666, "invalid block id supplied to ShardState::unpack");
   }
@@ -796,7 +796,7 @@ td::Status ShardState::unpack_state(ton::BlockIdExt blkid, Ref<vm::Cell> prev_st
     return td::Status::Error(
         -666, PSTRING() << "shardchain state for " << blkid.to_str() << " has incorrect seqno " << state.seq_no);
   }
-  auto shard1 = ton::ShardIdFull(block::ShardId{state.shard_id});
+  auto shard1 = ion::ShardIdFull(block::ShardId{state.shard_id});
   if (shard1 != blkid.shard_full()) {
     return td::Status::Error(-666, "shardchain state for "s + blkid.to_str() +
                                        " corresponds to incorrect workchain or shard " + shard1.to_str());
@@ -902,7 +902,7 @@ td::Status ShardState::unpack_out_msg_queue_info(Ref<vm::Cell> out_msg_queue_inf
     return td::Status::Error(
         -666, "ProcessedInfo in the state of "s + id_.to_str() + " is invalid according to automated validity checks");
   }
-  processed_upto_ = block::MsgProcessedUptoCollection::unpack(ton::ShardIdFull(id_), std::move(qinfo.proc_info));
+  processed_upto_ = block::MsgProcessedUptoCollection::unpack(ion::ShardIdFull(id_), std::move(qinfo.proc_info));
   ihr_pending_ = std::make_unique<vm::Dictionary>(320);
   if (qinfo.extra.write().fetch_long(1)) {
     block::gen::OutMsgQueueExtra::Record extra;
@@ -927,9 +927,9 @@ td::Status ShardState::unpack_out_msg_queue_info(Ref<vm::Cell> out_msg_queue_inf
 }
 
 // UPDATES: prev_state_utime_, prev_state_lt_
-bool ShardState::update_prev_utime_lt(ton::UnixTime& prev_utime, ton::LogicalTime& prev_lt) const {
-  prev_utime = std::max<ton::UnixTime>(prev_utime, utime_);
-  prev_lt = std::max<ton::LogicalTime>(prev_lt, lt_);
+bool ShardState::update_prev_utime_lt(ion::UnixTime& prev_utime, ion::LogicalTime& prev_lt) const {
+  prev_utime = std::max<ion::UnixTime>(prev_utime, utime_);
+  prev_lt = std::max<ion::LogicalTime>(prev_lt, lt_);
   return true;
 }
 
@@ -950,7 +950,7 @@ td::Status ShardState::check_global_id(int req_global_id) const {
   return td::Status::OK();
 }
 
-td::Status ShardState::check_mc_blk_seqno(ton::BlockSeqno last_mc_block_seqno) const {
+td::Status ShardState::check_mc_blk_seqno(ion::BlockSeqno last_mc_block_seqno) const {
   if (mc_blk_seqno_ > last_mc_block_seqno) {
     return td::Status::Error(
         -666, PSTRING() << "previous block refers to masterchain block with seqno " << mc_blk_seqno_
@@ -959,9 +959,9 @@ td::Status ShardState::check_mc_blk_seqno(ton::BlockSeqno last_mc_block_seqno) c
   return td::Status::OK();
 }
 
-td::Status ShardState::unpack_state_ext(ton::BlockIdExt id, Ref<vm::Cell> state_root, int global_id,
-                                        ton::BlockSeqno prev_mc_block_seqno, bool after_split, bool clear_history,
-                                        std::function<bool(ton::BlockSeqno)> for_each_mcseqno_func) {
+td::Status ShardState::unpack_state_ext(ion::BlockIdExt id, Ref<vm::Cell> state_root, int global_id,
+                                        ion::BlockSeqno prev_mc_block_seqno, bool after_split, bool clear_history,
+                                        std::function<bool(ion::BlockSeqno)> for_each_mcseqno_func) {
   TRY_STATUS(unpack_state(id, std::move(state_root)));
   TRY_STATUS(check_global_id(global_id));
   TRY_STATUS(check_mc_blk_seqno(prev_mc_block_seqno));
@@ -979,10 +979,10 @@ td::Status ShardState::merge_with(ShardState& sib) {
   if (!is_valid() || !sib.is_valid()) {
     return td::Status::Error(-666, "cannot merge invalid or uninitialized states");
   }
-  if (!ton::shard_is_sibling(id_.shard_full(), sib.id_.shard_full())) {
+  if (!ion::shard_is_sibling(id_.shard_full(), sib.id_.shard_full())) {
     return td::Status::Error(-666, "cannot merge non-sibling states of "s + id_.to_str() + " and " + sib.id_.to_str());
   }
-  ton::ShardIdFull shard = ton::shard_parent(id_.shard_full());
+  ion::ShardIdFull shard = ion::shard_parent(id_.shard_full());
   // 2. compute total_balance and total_validator_fees
   total_balance_ += std::move(sib.total_balance_);
   if (!total_balance_.is_valid()) {
@@ -1073,9 +1073,9 @@ td::Status ShardState::merge_with(ShardState& sib) {
 }
 
 td::Result<std::unique_ptr<vm::AugmentedDictionary>> ShardState::compute_split_out_msg_queue(
-    ton::ShardIdFull subshard) {
+    ion::ShardIdFull subshard) {
   auto shard = id_.shard_full();
-  if (!ton::shard_is_parent(shard, subshard)) {
+  if (!ion::shard_is_parent(shard, subshard)) {
     return td::Status::Error(-666, "cannot split subshard "s + subshard.to_str() + " from state of " + id_.to_str() +
                                        " because it is not a parent");
   }
@@ -1090,8 +1090,8 @@ td::Result<std::unique_ptr<vm::AugmentedDictionary>> ShardState::compute_split_o
 }
 
 td::Result<std::shared_ptr<block::MsgProcessedUptoCollection>> ShardState::compute_split_processed_upto(
-    ton::ShardIdFull subshard) {
-  if (!ton::shard_is_parent(id_.shard_full(), subshard)) {
+    ion::ShardIdFull subshard) {
+  if (!ion::shard_is_parent(id_.shard_full(), subshard)) {
     return td::Status::Error(-666, "cannot split subshard "s + subshard.to_str() + " from state of " + id_.to_str() +
                                        " because it is not a parent");
   }
@@ -1103,8 +1103,8 @@ td::Result<std::shared_ptr<block::MsgProcessedUptoCollection>> ShardState::compu
   return std::move(sub_processed_upto);
 }
 
-td::Status ShardState::split(ton::ShardIdFull subshard) {
-  if (!ton::shard_is_parent(id_.shard_full(), subshard)) {
+td::Status ShardState::split(ion::ShardIdFull subshard) {
+  if (!ion::shard_is_parent(id_.shard_full(), subshard)) {
     return td::Status::Error(-666, "cannot split subshard "s + subshard.to_str() + " from state of " + id_.to_str() +
                                        " because it is not a parent");
   }
@@ -1119,7 +1119,7 @@ td::Status ShardState::split(ton::ShardIdFull subshard) {
   // 2. out_msg_queue
   LOG(DEBUG) << "splitting OutMsgQueue";
   auto shard1 = id_.shard_full();
-  CHECK(ton::shard_is_parent(shard1, subshard));
+  CHECK(ion::shard_is_parent(shard1, subshard));
   CHECK(out_msg_queue_);
   td::uint64 queue_size;
   int res1 = block::filter_out_msg_queue(*out_msg_queue_, shard1, subshard, &queue_size);
@@ -1168,7 +1168,7 @@ td::Status ShardState::split(ton::ShardIdFull subshard) {
   return td::Status::OK();
 }
 
-int filter_out_msg_queue(vm::AugmentedDictionary& out_queue, ton::ShardIdFull old_shard, ton::ShardIdFull subshard,
+int filter_out_msg_queue(vm::AugmentedDictionary& out_queue, ion::ShardIdFull old_shard, ion::ShardIdFull subshard,
                          td::uint64* queue_size) {
   if (queue_size) {
     *queue_size = 0;
@@ -1191,12 +1191,12 @@ int filter_out_msg_queue(vm::AugmentedDictionary& out_queue, ton::ShardIdFull ol
                  << " has invalid source or destination address";
       return -1;
     }
-    if (!ton::shard_contains(old_shard, cur_prefix)) {
+    if (!ion::shard_contains(old_shard, cur_prefix)) {
       LOG(ERROR) << "OutMsgQueue message with key " << key.to_hex(key_len)
                  << " does not contain current address belonging to shard " << old_shard.to_str();
       return -1;
     }
-    bool res = ton::shard_contains(subshard, cur_prefix);
+    bool res = ion::shard_contains(subshard, cur_prefix);
     if (res && queue_size) {
       ++*queue_size;
     }
@@ -1595,7 +1595,7 @@ std::ostream& operator<<(std::ostream& os, const ValueFlow& vflow) {
   return os;
 }
 
-bool DiscountedCounter::increase_by(unsigned count, ton::UnixTime now) {
+bool DiscountedCounter::increase_by(unsigned count, ion::UnixTime now) {
   if (!validate()) {
     return false;
   }
@@ -1953,7 +1953,7 @@ bool sub_extra_currency(Ref<vm::Cell> extra1, Ref<vm::Cell> extra2, Ref<vm::Cell
 }
 
 // combine d bits from dest, remaining 64 - d bits from src
-ton::AccountIdPrefixFull interpolate_addr(const ton::AccountIdPrefixFull& src, const ton::AccountIdPrefixFull& dest,
+ion::AccountIdPrefixFull interpolate_addr(const ion::AccountIdPrefixFull& src, const ion::AccountIdPrefixFull& dest,
                                           int d) {
   if (d <= 0) {
     return src;
@@ -1961,31 +1961,31 @@ ton::AccountIdPrefixFull interpolate_addr(const ton::AccountIdPrefixFull& src, c
     return dest;
   } else if (d >= 32) {
     unsigned long long mask = (std::numeric_limits<td::uint64>::max() >> (d - 32));
-    return ton::AccountIdPrefixFull{dest.workchain, (dest.account_id_prefix & ~mask) | (src.account_id_prefix & mask)};
+    return ion::AccountIdPrefixFull{dest.workchain, (dest.account_id_prefix & ~mask) | (src.account_id_prefix & mask)};
   } else {
     int mask = (int)(~0U >> d);
-    return ton::AccountIdPrefixFull{(dest.workchain & ~mask) | (src.workchain & mask), src.account_id_prefix};
+    return ion::AccountIdPrefixFull{(dest.workchain & ~mask) | (src.workchain & mask), src.account_id_prefix};
   }
 }
 
-bool interpolate_addr_to(const ton::AccountIdPrefixFull& src, const ton::AccountIdPrefixFull& dest, int d,
-                         ton::AccountIdPrefixFull& res) {
+bool interpolate_addr_to(const ion::AccountIdPrefixFull& src, const ion::AccountIdPrefixFull& dest, int d,
+                         ion::AccountIdPrefixFull& res) {
   res = interpolate_addr(src, dest, d);
   return true;
 }
 
 // result: (transit_addr_dest_bits, nh_addr_dest_bits)
-std::pair<int, int> perform_hypercube_routing(ton::AccountIdPrefixFull src, ton::AccountIdPrefixFull dest,
-                                              ton::ShardIdFull cur, int used_dest_bits) {
-  ton::AccountIdPrefixFull transit = interpolate_addr(src, dest, used_dest_bits);
-  if (!ton::shard_contains(cur, transit)) {
+std::pair<int, int> perform_hypercube_routing(ion::AccountIdPrefixFull src, ion::AccountIdPrefixFull dest,
+                                              ion::ShardIdFull cur, int used_dest_bits) {
+  ion::AccountIdPrefixFull transit = interpolate_addr(src, dest, used_dest_bits);
+  if (!ion::shard_contains(cur, transit)) {
     return {-1, -1};
   }
-  if (ton::shard_contains(cur, dest)) {
+  if (ion::shard_contains(cur, dest)) {
     // if destination is in this shard, set cur:=next_hop:=dest
     return {96, 96};
   }
-  if (transit.workchain == ton::masterchainId || dest.workchain == ton::masterchainId) {
+  if (transit.workchain == ion::masterchainId || dest.workchain == ion::masterchainId) {
     return {used_dest_bits, 96};  // route messages to/from masterchain directly
   }
   if (transit.workchain != dest.workchain) {
@@ -2018,14 +2018,14 @@ bool compute_out_msg_queue_key(Ref<vm::Cell> msg_env, td::BitArray<352>& key) {
   return true;
 }
 
-bool unpack_block_prev_blk(Ref<vm::Cell> block_root, const ton::BlockIdExt& id, std::vector<ton::BlockIdExt>& prev,
-                           ton::BlockIdExt& mc_blkid, bool& after_split, ton::BlockIdExt* fetch_blkid) {
+bool unpack_block_prev_blk(Ref<vm::Cell> block_root, const ion::BlockIdExt& id, std::vector<ion::BlockIdExt>& prev,
+                           ion::BlockIdExt& mc_blkid, bool& after_split, ion::BlockIdExt* fetch_blkid) {
   return unpack_block_prev_blk_ext(std::move(block_root), id, prev, mc_blkid, after_split, fetch_blkid).is_ok();
 }
 
-td::Status unpack_block_prev_blk_try(Ref<vm::Cell> block_root, const ton::BlockIdExt& id,
-                                     std::vector<ton::BlockIdExt>& prev, ton::BlockIdExt& mc_blkid, bool& after_split,
-                                     ton::BlockIdExt* fetch_blkid) {
+td::Status unpack_block_prev_blk_try(Ref<vm::Cell> block_root, const ion::BlockIdExt& id,
+                                     std::vector<ion::BlockIdExt>& prev, ion::BlockIdExt& mc_blkid, bool& after_split,
+                                     ion::BlockIdExt* fetch_blkid) {
   try {
     return unpack_block_prev_blk_ext(std::move(block_root), id, prev, mc_blkid, after_split, fetch_blkid);
   } catch (vm::VmError err) {
@@ -2035,24 +2035,24 @@ td::Status unpack_block_prev_blk_try(Ref<vm::Cell> block_root, const ton::BlockI
   }
 }
 
-td::Status unpack_block_prev_blk_ext(Ref<vm::Cell> block_root, const ton::BlockIdExt& id,
-                                     std::vector<ton::BlockIdExt>& prev, ton::BlockIdExt& mc_blkid, bool& after_split,
-                                     ton::BlockIdExt* fetch_blkid) {
+td::Status unpack_block_prev_blk_ext(Ref<vm::Cell> block_root, const ion::BlockIdExt& id,
+                                     std::vector<ion::BlockIdExt>& prev, ion::BlockIdExt& mc_blkid, bool& after_split,
+                                     ion::BlockIdExt* fetch_blkid) {
   block::gen::Block::Record blk;
   block::gen::BlockInfo::Record info;
   block::gen::ExtBlkRef::Record mcref;  // _ ExtBlkRef = BlkMasterInfo;
-  ton::ShardIdFull shard;
+  ion::ShardIdFull shard;
   if (!(tlb::unpack_cell(block_root, blk) && tlb::unpack_cell(blk.info, info) && !info.version &&
         block::tlb::t_ShardIdent.unpack(info.shard.write(), shard) &&
         (!info.not_master || tlb::unpack_cell(info.master_ref, mcref)))) {
     return td::Status::Error("cannot unpack block header");
   }
   if (fetch_blkid) {
-    fetch_blkid->id = ton::BlockId{shard, (unsigned)info.seq_no};
+    fetch_blkid->id = ion::BlockId{shard, (unsigned)info.seq_no};
     fetch_blkid->root_hash = block_root->get_hash().bits();
     fetch_blkid->file_hash.clear();
   } else {
-    ton::BlockId hdr_id{shard, (unsigned)info.seq_no};
+    ion::BlockId hdr_id{shard, (unsigned)info.seq_no};
     if (id.id != hdr_id) {
       return td::Status::Error("block header contains block id "s + hdr_id.to_str() + ", expected " + id.id.to_str());
     }
@@ -2079,9 +2079,9 @@ td::Status unpack_block_prev_blk_ext(Ref<vm::Cell> block_root, const ton::BlockI
     }
   }
   prev.clear();
-  ton::BlockSeqno prev_seqno = prev1.seq_no;
+  ion::BlockSeqno prev_seqno = prev1.seq_no;
   if (!info.after_merge) {
-    prev.emplace_back(shard.workchain, info.after_split ? ton::shard_parent(shard.shard) : shard.shard, prev1.seq_no,
+    prev.emplace_back(shard.workchain, info.after_split ? ion::shard_parent(shard.shard) : shard.shard, prev1.seq_no,
                       prev1.root_hash, prev1.file_hash);
     if (info.after_split && !prev1.seq_no) {
       return td::Status::Error("shardchains cannot be split immediately after initial state");
@@ -2090,9 +2090,9 @@ td::Status unpack_block_prev_blk_ext(Ref<vm::Cell> block_root, const ton::BlockI
     if (info.after_split) {
       return td::Status::Error("shardchains cannot be simultaneously split and merged at the same block");
     }
-    prev.emplace_back(shard.workchain, ton::shard_child(shard.shard, true), prev1.seq_no, prev1.root_hash,
+    prev.emplace_back(shard.workchain, ion::shard_child(shard.shard, true), prev1.seq_no, prev1.root_hash,
                       prev1.file_hash);
-    prev.emplace_back(shard.workchain, ton::shard_child(shard.shard, false), prev2.seq_no, prev2.root_hash,
+    prev.emplace_back(shard.workchain, ion::shard_child(shard.shard, false), prev2.seq_no, prev2.root_hash,
                       prev2.file_hash);
     prev_seqno = std::max<unsigned>(prev1.seq_no, prev2.seq_no);
     if (!prev1.seq_no || !prev2.seq_no) {
@@ -2105,7 +2105,7 @@ td::Status unpack_block_prev_blk_ext(Ref<vm::Cell> block_root, const ton::BlockI
   if (shard.is_masterchain()) {
     mc_blkid = prev.at(0);
   } else {
-    mc_blkid = ton::BlockIdExt{ton::masterchainId, ton::shardIdAll, mcref.seq_no, mcref.root_hash, mcref.file_hash};
+    mc_blkid = ion::BlockIdExt{ion::masterchainId, ion::shardIdAll, mcref.seq_no, mcref.root_hash, mcref.file_hash};
   }
   if (shard.is_masterchain() && info.vert_seqno_incr && !info.key_block) {
     return td::Status::Error("non-key masterchain block cannot have vert_seqno_incr set");
@@ -2113,15 +2113,15 @@ td::Status unpack_block_prev_blk_ext(Ref<vm::Cell> block_root, const ton::BlockI
   return td::Status::OK();
 }
 
-td::Status check_block_header(Ref<vm::Cell> block_root, const ton::BlockIdExt& id, ton::Bits256* store_shard_hash_to) {
+td::Status check_block_header(Ref<vm::Cell> block_root, const ion::BlockIdExt& id, ion::Bits256* store_shard_hash_to) {
   block::gen::Block::Record blk;
   block::gen::BlockInfo::Record info;
-  ton::ShardIdFull shard;
+  ion::ShardIdFull shard;
   if (!(tlb::unpack_cell(block_root, blk) && tlb::unpack_cell(blk.info, info) && !info.version &&
         block::tlb::t_ShardIdent.unpack(info.shard.write(), shard))) {
     return td::Status::Error("cannot unpack block header");
   }
-  ton::BlockId hdr_id{shard, (unsigned)info.seq_no};
+  ion::BlockId hdr_id{shard, (unsigned)info.seq_no};
   if (id.id != hdr_id) {
     return td::Status::Error("block header contains block id "s + hdr_id.to_str() + ", expected " + id.id.to_str());
   }
@@ -2166,37 +2166,37 @@ std::unique_ptr<vm::AugmentedDictionary> get_prev_blocks_dict(Ref<vm::Cell> stat
   return std::make_unique<vm::AugmentedDictionary>(extra_info.r1.prev_blocks, 32, block::tlb::aug_OldMcBlocksInfo);
 }
 
-bool get_old_mc_block_id(vm::AugmentedDictionary* prev_blocks_dict, ton::BlockSeqno seqno, ton::BlockIdExt& blkid,
-                         ton::LogicalTime* end_lt) {
+bool get_old_mc_block_id(vm::AugmentedDictionary* prev_blocks_dict, ion::BlockSeqno seqno, ion::BlockIdExt& blkid,
+                         ion::LogicalTime* end_lt) {
   return prev_blocks_dict && get_old_mc_block_id(*prev_blocks_dict, seqno, blkid, end_lt);
 }
 
-bool get_old_mc_block_id(vm::AugmentedDictionary& prev_blocks_dict, ton::BlockSeqno seqno, ton::BlockIdExt& blkid,
-                         ton::LogicalTime* end_lt) {
+bool get_old_mc_block_id(vm::AugmentedDictionary& prev_blocks_dict, ion::BlockSeqno seqno, ion::BlockIdExt& blkid,
+                         ion::LogicalTime* end_lt) {
   return unpack_old_mc_block_id(prev_blocks_dict.lookup(td::BitArray<32>{seqno}), seqno, blkid, end_lt);
 }
 
-bool unpack_old_mc_block_id(Ref<vm::CellSlice> old_blk_info, ton::BlockSeqno seqno, ton::BlockIdExt& blkid,
-                            ton::LogicalTime* end_lt) {
+bool unpack_old_mc_block_id(Ref<vm::CellSlice> old_blk_info, ion::BlockSeqno seqno, ion::BlockIdExt& blkid,
+                            ion::LogicalTime* end_lt) {
   return old_blk_info.not_null() && old_blk_info.write().advance(1) &&
          block::tlb::t_ExtBlkRef.unpack(std::move(old_blk_info), blkid, end_lt) && blkid.seqno() == seqno;
 }
 
-bool check_old_mc_block_id(vm::AugmentedDictionary* prev_blocks_dict, const ton::BlockIdExt& blkid) {
+bool check_old_mc_block_id(vm::AugmentedDictionary* prev_blocks_dict, const ion::BlockIdExt& blkid) {
   return prev_blocks_dict && check_old_mc_block_id(*prev_blocks_dict, blkid);
 }
 
-bool check_old_mc_block_id(vm::AugmentedDictionary& prev_blocks_dict, const ton::BlockIdExt& blkid) {
+bool check_old_mc_block_id(vm::AugmentedDictionary& prev_blocks_dict, const ion::BlockIdExt& blkid) {
   if (!blkid.id.is_masterchain_ext()) {
     return false;
   }
-  ton::BlockIdExt old_blkid;
+  ion::BlockIdExt old_blkid;
   return unpack_old_mc_block_id(prev_blocks_dict.lookup(td::BitArray<32>{blkid.id.seqno}), blkid.id.seqno, old_blkid) &&
          old_blkid == blkid;
 }
 
-td::Result<Ref<vm::Cell>> get_block_transaction(Ref<vm::Cell> block_root, ton::WorkchainId workchain,
-                                                const ton::StdSmcAddress& addr, ton::LogicalTime lt) {
+td::Result<Ref<vm::Cell>> get_block_transaction(Ref<vm::Cell> block_root, ion::WorkchainId workchain,
+                                                const ion::StdSmcAddress& addr, ion::LogicalTime lt) {
   block::gen::Block::Record block;
   block::gen::BlockInfo::Record info;
   if (!(tlb::unpack_cell(std::move(block_root), block) && tlb::unpack_cell(std::move(block.info), info))) {
@@ -2226,8 +2226,8 @@ td::Result<Ref<vm::Cell>> get_block_transaction(Ref<vm::Cell> block_root, ton::W
   return Ref<vm::Cell>{};
 }
 
-td::Result<Ref<vm::Cell>> get_block_transaction_try(Ref<vm::Cell> block_root, ton::WorkchainId workchain,
-                                                    const ton::StdSmcAddress& addr, ton::LogicalTime lt) {
+td::Result<Ref<vm::Cell>> get_block_transaction_try(Ref<vm::Cell> block_root, ion::WorkchainId workchain,
+                                                    const ion::StdSmcAddress& addr, ion::LogicalTime lt) {
   try {
     return get_block_transaction(std::move(block_root), workchain, addr, lt);
   } catch (vm::VmError err) {
@@ -2274,7 +2274,7 @@ bool is_transaction_out_msg(Ref<vm::Cell> trans_ref, Ref<vm::Cell> msg) {
 }
 
 // transaction$0111 account_addr:bits256 lt:uint64 ...
-bool get_transaction_id(Ref<vm::Cell> trans_ref, ton::StdSmcAddress& account_addr, ton::LogicalTime& lt) {
+bool get_transaction_id(Ref<vm::Cell> trans_ref, ion::StdSmcAddress& account_addr, ion::LogicalTime& lt) {
   if (trans_ref.is_null()) {
     return false;
   }
@@ -2284,13 +2284,13 @@ bool get_transaction_id(Ref<vm::Cell> trans_ref, ton::StdSmcAddress& account_add
          && cs.fetch_uint_to(64, lt);       // lt:uint64
 }
 
-bool get_transaction_owner(Ref<vm::Cell> trans_ref, ton::StdSmcAddress& addr) {
-  ton::LogicalTime lt;
+bool get_transaction_owner(Ref<vm::Cell> trans_ref, ion::StdSmcAddress& addr) {
+  ion::LogicalTime lt;
   return get_transaction_id(std::move(trans_ref), addr, lt);
 }
 
-td::uint32 compute_validator_set_hash(ton::CatchainSeqno cc_seqno, ton::ShardIdFull from,
-                                      const std::vector<ton::ValidatorDescr>& nodes) {
+td::uint32 compute_validator_set_hash(ion::CatchainSeqno cc_seqno, ion::ShardIdFull from,
+                                      const std::vector<ion::ValidatorDescr>& nodes) {
   /*
   std::vector<tl_object_ptr<ton_api::test0_validatorSetItem>> s_vec;
 
@@ -2400,7 +2400,7 @@ bool parse_hex_hash(td::Slice str, td::Bits256& hash) {
   return parse_hex_hash(str.begin(), str.end(), hash);
 }
 
-bool parse_block_id_ext(const char* str, const char* end, ton::BlockIdExt& blkid) {
+bool parse_block_id_ext(const char* str, const char* end, ion::BlockIdExt& blkid) {
   blkid.invalidate();
   if (!str || !end || str >= end || end - str > 255) {
     return false;
@@ -2417,19 +2417,19 @@ bool parse_block_id_ext(const char* str, const char* end, ton::BlockIdExt& blkid
   if (std::sscanf(str, "(%d,%llx,%u):%n", &wc, &shard, &seqno, &pos) < 3 || pos <= 0 || pos >= end - str) {
     return false;
   }
-  if (!shard || wc == ton::workchainInvalid) {
+  if (!shard || wc == ion::workchainInvalid) {
     return false;
   }
   str += pos;
   if (end - str != 64 * 2 + 1 || str[64] != ':') {
     return false;
   }
-  blkid.id = ton::BlockId{wc, shard, seqno};
+  blkid.id = ion::BlockId{wc, shard, seqno};
   return (parse_hex_hash(str, str + 64, blkid.root_hash) && parse_hex_hash(str + 65, end, blkid.file_hash)) ||
          blkid.invalidate();
 }
 
-bool parse_block_id_ext(td::Slice str, ton::BlockIdExt& blkid) {
+bool parse_block_id_ext(td::Slice str, ion::BlockIdExt& blkid) {
   return parse_block_id_ext(str.begin(), str.end(), blkid);
 }
 
@@ -2463,7 +2463,7 @@ Ref<vm::CellSlice> pack_account_dispatch_queue(const vm::Dictionary& dict, td::u
 }
 
 Ref<vm::CellSlice> get_dispatch_queue_min_lt_account(const vm::AugmentedDictionary& dispatch_queue,
-                                                     ton::StdSmcAddress& addr) {
+                                                     ion::StdSmcAddress& addr) {
   // TODO: This can be done more effectively
   vm::AugmentedDictionary queue{dispatch_queue.get_root(), 256, tlb::aug_DispatchQueue};
   if (queue.is_empty()) {
@@ -2473,7 +2473,7 @@ Ref<vm::CellSlice> get_dispatch_queue_min_lt_account(const vm::AugmentedDictiona
   if (root_extra.is_null()) {
     return {};
   }
-  ton::LogicalTime min_lt = root_extra->prefetch_long(64);
+  ion::LogicalTime min_lt = root_extra->prefetch_long(64);
   while (true) {
     td::Bits256 key;
     int pfx_len = queue.get_common_prefix(key.bits(), 256);
@@ -2493,7 +2493,7 @@ Ref<vm::CellSlice> get_dispatch_queue_min_lt_account(const vm::AugmentedDictiona
     if (root_extra.is_null()) {
       return {};
     }
-    ton::LogicalTime cut_min_lt = root_extra->prefetch_long(64);
+    ion::LogicalTime cut_min_lt = root_extra->prefetch_long(64);
     if (cut_min_lt != min_lt) {
       key[pfx_len] = true;
     }
@@ -2503,8 +2503,8 @@ Ref<vm::CellSlice> get_dispatch_queue_min_lt_account(const vm::AugmentedDictiona
   }
 }
 
-bool remove_dispatch_queue_entry(vm::AugmentedDictionary& dispatch_queue, const ton::StdSmcAddress& addr,
-                                 ton::LogicalTime lt) {
+bool remove_dispatch_queue_entry(vm::AugmentedDictionary& dispatch_queue, const ion::StdSmcAddress& addr,
+                                 ion::LogicalTime lt) {
   auto account_dispatch_queue = dispatch_queue.lookup(addr);
   if (account_dispatch_queue.is_null()) {
     return false;

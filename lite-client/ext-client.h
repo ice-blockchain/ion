@@ -1,22 +1,22 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 */
 #pragma once
 #include "td/actor/actor.h"
-#include "ton/ton-types.h"
+#include "ion/ion-types.h"
 #include "adnl/adnl-ext-client.h"
 #include "query-utils.hpp"
 
@@ -40,7 +40,7 @@ class ExtClient : public td::actor::Actor {
   virtual void reset_servers() {
   }
 
-  static td::actor::ActorOwn<ExtClient> create(ton::adnl::AdnlNodeIdFull dst, td::IPAddress dst_addr,
+  static td::actor::ActorOwn<ExtClient> create(ion::adnl::AdnlNodeIdFull dst, td::IPAddress dst_addr,
                                                td::unique_ptr<Callback> callback);
   static td::actor::ActorOwn<ExtClient> create(std::vector<LiteServerConfig> liteservers,
                                                td::unique_ptr<Callback> callback, bool connect_to_all = false);

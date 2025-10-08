@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -48,7 +48,7 @@
 #include <list>
 #include <queue>
 
-namespace ton {
+namespace ion {
 
 namespace validator {
 
@@ -256,7 +256,7 @@ class ValidatorManagerImpl : public ValidatorManager {
 
   struct ExtMessages {
     std::map<MessageId<ExtMessage>, std::unique_ptr<MessageExt<ExtMessage>>> ext_messages_;
-    std::map<std::pair<ton::WorkchainId, ton::StdSmcAddress>, std::map<ExtMessage::Hash, MessageId<ExtMessage>>>
+    std::map<std::pair<ion::WorkchainId, ion::StdSmcAddress>, std::map<ExtMessage::Hash, MessageId<ExtMessage>>>
         ext_addr_messages_;
     void erase(const MessageId<ExtMessage>& id) {
       auto it = ext_messages_.find(id);
@@ -844,4 +844,4 @@ class ValidatorManagerImpl : public ValidatorManager {
 
 }  // namespace validator
 
-}  // namespace ton
+}  // namespace ion

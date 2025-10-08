@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain source code.
+    This file is part of ION Blockchain source code.
 
-    TON Blockchain is free software; you can redistribute it and/or
+    ION Blockchain is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
     as published by the Free Software Foundation; either version 2
     of the License, or (at your option) any later version.
 
-    TON Blockchain is distributed in the hope that it will be useful,
+    ION Blockchain is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with TON Blockchain.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain.  If not, see <http://www.gnu.org/licenses/>.
 
     In addition, as a special exception, the copyright holders give permission
     to link the code of portions of this program with the OpenSSL library.
@@ -49,7 +49,7 @@
 #include <unistd.h>
 #endif
 
-namespace ton {
+namespace ion {
 
 namespace adnl {
 
@@ -74,7 +74,7 @@ class Receiver : public td::actor::Actor {
  private:
   td::uint16 in_port_;
   td::uint16 out_port_;
-  std::shared_ptr<ton::adnl::AdnlProxy> proxy_;
+  std::shared_ptr<ion::adnl::AdnlProxy> proxy_;
   td::IPAddress addr_;
   td::actor::ActorOwn<td::UdpServer> out_udp_server_;
   td::actor::ActorOwn<td::UdpServer> in_udp_server_;
@@ -277,7 +277,7 @@ void Receiver::receive_to_client(td::IPAddress addr, td::BufferSlice data) {
 
 }  // namespace adnl
 
-}  // namespace ton
+}  // namespace ion
 
 std::atomic<bool> rotate_logs_flags{false};
 void force_rotate_logs(int sig) {
@@ -289,16 +289,16 @@ int main(int argc, char *argv[]) {
 
   td::set_default_failure_signal_handler().ensure();
 
-  std::vector<td::actor::ActorOwn<ton::adnl::Receiver>> x;
+  std::vector<td::actor::ActorOwn<ion::adnl::Receiver>> x;
   std::unique_ptr<td::LogInterface> logger_;
   SCOPE_EXIT {
     td::log_interface = td::default_log_interface;
   };
 
-  std::string config = "/var/ton-work/etc/adnl-proxy.conf.json";
+  std::string config = "/var/ion-work/etc/adnl-proxy.conf.json";
 
   td::OptionParser p;
-  p.set_description("validator or full node for TON network");
+  p.set_description("validator or full node for ION network");
   p.add_option('v', "verbosity", "set verbosity level", [&](td::Slice arg) {
     int v = VERBOSITY_NAME(FATAL) + (td::to_integer<int>(arg));
     SET_VERBOSITY_LEVEL(v);
@@ -336,10 +336,10 @@ int main(int argc, char *argv[]) {
         try {
           v = std::stoi(fname.str());
         } catch (...) {
-          return td::Status::Error(ton::ErrorCode::error, "bad value for --threads: not a number");
+          return td::Status::Error(ion::ErrorCode::error, "bad value for --threads: not a number");
         }
         if (v < 1 || v > 256) {
-          return td::Status::Error(ton::ErrorCode::error, "bad value for --threads: should be in range [1..256]");
+          return td::Status::Error(ion::ErrorCode::error, "bad value for --threads: should be in range [1..256]");
         }
         threads = v;
         return td::Status::OK();
@@ -354,8 +354,8 @@ int main(int argc, char *argv[]) {
     TRY_RESULT_PREFIX(conf_data, td::read_file(config), "failed to read: ");
     TRY_RESULT_PREFIX(conf_json, td::json_decode(conf_data.as_slice()), "failed to parse json: ");
 
-    ton::ton_api::engine_adnlProxy_config conf;
-    TRY_STATUS_PREFIX(ton::ton_api::from_json(conf, conf_json.get_object()), "json does not fit TL scheme: ");
+    ion::ton_api::engine_adnlProxy_config conf;
+    TRY_STATUS_PREFIX(ion::ton_api::from_json(conf, conf_json.get_object()), "json does not fit TL scheme: ");
 
     if (!conf.ports_.size()) {
       return td::Status::Error("empty config");
@@ -367,14 +367,14 @@ int main(int argc, char *argv[]) {
       if (!y->proxy_type_) {
         return td::Status::Error("empty proxy type");
       }
-      TRY_RESULT(proxy, ton::adnl::AdnlProxy::create(*y->proxy_type_.get()));
+      TRY_RESULT(proxy, ion::adnl::AdnlProxy::create(*y->proxy_type_.get()));
       td::IPAddress a;
       if (y->dst_ip_ || y->dst_port_) {
         a.init_ipv4_port(td::IPAddress::ipv4_to_str(y->dst_ip_), static_cast<td::uint16>(y->dst_port_)).ensure();
       }
 
       scheduler.run_in_context([&] {
-        x.push_back(td::actor::create_actor<ton::adnl::Receiver>("adnl-proxy", in_port, out_port, std::move(proxy), a));
+        x.push_back(td::actor::create_actor<ion::adnl::Receiver>("adnl-proxy", in_port, out_port, std::move(proxy), a));
       });
     }
 

@@ -217,10 +217,10 @@ _ $__gen_get_owner() method_id(83229) {
 
 _ supported_interfaces() method_id {
     return (
-        "org.ton.introspection.v0"H >> 128,
-        "org.ton.abi.ipfs.v0"H >> 128,
-        "org.ton.ownable.transferable"H >> 128,
-        "org.ton.ownable"H >> 128
+        "org.ion.introspection.v0"H >> 128,
+        "org.ion.abi.ipfs.v0"H >> 128,
+        "org.ion.ownable.transferable"H >> 128,
+        "org.ion.ownable"H >> 128
     );
 }
 

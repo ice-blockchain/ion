@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain source code.
+    This file is part of ION Blockchain source code.
 
-    TON Blockchain is free software; you can redistribute it and/or
+    ION Blockchain is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
     as published by the Free Software Foundation; either version 2
     of the License, or (at your option) any later version.
 
-    TON Blockchain is distributed in the hope that it will be useful,
+    ION Blockchain is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with TON Blockchain.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "td/utils/filesystem.h"
 #include "td/actor/actor.h"
@@ -30,7 +30,7 @@
 #include "auto/tl/ton_api_json.h"
 #include "adnl/adnl.h"
 #include "lite-client/ext-client.h"
-#include "ton/lite-tl.hpp"
+#include "ion/lite-tl.hpp"
 
 #include "td/utils/overloaded.h"
 
@@ -39,11 +39,11 @@
 #include "vm/boc.h"
 #include "vm/cells/MerkleProof.h"
 
-#include <ton/ton-tl.hpp>
+#include <ion/ion-tl.hpp>
 #include "block/block-auto.h"
 #include "block/mc-config.h"
 
-using namespace ton;
+using namespace ion;
 
 std::string global_config_file;
 td::optional<BlockSeqno> start_mc_seqno, end_mc_seqno;
@@ -155,7 +155,7 @@ class PrepareLsSliceConfig : public td::actor::Actor {
     CHECK(sh_conf.unpack(vm::load_cell_slice_ref(root)));
     auto ids = sh_conf.get_shard_hash_ids(true);
     for (auto id : ids) {
-      BlockIdExt block_id = sh_conf.get_shard_hash(ton::ShardIdFull(id))->top_block_id();
+      BlockIdExt block_id = sh_conf.get_shard_hash(ion::ShardIdFull(id))->top_block_id();
       bool ok = shards.empty();
       for (const auto& our_shard : shards) {
         if (shard_intersects(our_shard, block_id.shard_full())) {
@@ -236,7 +236,7 @@ int main(int argc, char* argv[]) {
     std::cout << sb.as_cslice().c_str();
     std::exit(2);
   });
-  p.add_option('C', "global-config", "global TON configuration file (used to fetch shard configuration)",
+  p.add_option('C', "global-config", "global ION configuration file (used to fetch shard configuration)",
                [&](td::Slice arg) { global_config_file = arg.str(); });
   p.add_checked_option('f', "from-seqno", "starting masterchain seqno (default: none)",
                        [&](td::Slice arg) -> td::Status {

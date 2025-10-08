@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -1049,7 +1049,7 @@ blk_fl::val parse_repeat_stmt(Lexer& lex, CodeBlob& code) {
   }
   std::vector<var_idx_t> tmp_vars = expr->pre_compile(code);
   if (tmp_vars.size() != 1) {
-    lex.cur().error("repeat count value is not a singleton");
+    lex.cur().error("repeat count value is not a singleion");
   }
   Op& repeat_op = code.emplace_back(loc, Op::_Repeat, tmp_vars);
   code.push_set_cur(repeat_op.block0);
@@ -1076,7 +1076,7 @@ blk_fl::val parse_while_stmt(Lexer& lex, CodeBlob& code) {
   while_op.left = expr->pre_compile(code);
   code.close_pop_cur(lex.cur().loc);
   if (while_op.left.size() != 1) {
-    lex.cur().error("while condition value is not a singleton");
+    lex.cur().error("while condition value is not a singleion");
   }
   code.push_set_cur(while_op.block1);
   blk_fl::val res1 = parse_block_stmt(lex, code);
@@ -1105,7 +1105,7 @@ blk_fl::val parse_do_stmt(Lexer& lex, CodeBlob& code) {
   while_op.left = expr->pre_compile(code);
   code.close_pop_cur(lex.cur().loc);
   if (while_op.left.size() != 1) {
-    lex.cur().error("`until` condition value is not a singleton");
+    lex.cur().error("`until` condition value is not a singleion");
   }
   return res & ~blk_fl::empty;
 }
@@ -1156,7 +1156,7 @@ blk_fl::val parse_if_stmt(Lexer& lex, CodeBlob& code, int first_lex = _If) {
   }
   std::vector<var_idx_t> tmp_vars = expr->pre_compile(code);
   if (tmp_vars.size() != 1) {
-    lex.cur().error("condition value is not a singleton");
+    lex.cur().error("condition value is not a singleion");
   }
   Op& if_op = code.emplace_back(loc, Op::_If, tmp_vars);
   code.push_set_cur(if_op.block0);

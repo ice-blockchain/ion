@@ -19,7 +19,7 @@ jobs:
       - name: Download and unzip Linux arm64 artifacts
         uses: dawidd6/action-download-artifact@v6
         with:
-          workflow: build-ton-linux-arm64-appimage.yml
+          workflow: build-ion-linux-arm64-appimage.yml
           path: artifacts
           workflow_conclusion: success
           branch: master
@@ -28,7 +28,7 @@ jobs:
       - name: Download and unzip Linux x86-64 artifacts
         uses: dawidd6/action-download-artifact@v6
         with:
-          workflow: build-ton-linux-x86-64-appimage.yml
+          workflow: build-ion-linux-x86-64-appimage.yml
           path: artifacts
           workflow_conclusion: success
           branch: master
@@ -37,7 +37,7 @@ jobs:
       - name: Download and unzip Mac x86-64 artifacts
         uses: dawidd6/action-download-artifact@v6
         with:
-          workflow: build-ton-macos-13-x86-64-portable.yml
+          workflow: build-ion-macos-13-x86-64-portable.yml
           path: artifacts
           workflow_conclusion: success
           branch: master
@@ -46,7 +46,7 @@ jobs:
       - name: Download and unzip arm64 artifacts
         uses: dawidd6/action-download-artifact@v6
         with:
-          workflow: build-ton-macos-14-arm64-portable.yml
+          workflow: build-ion-macos-14-arm64-portable.yml
           path: artifacts
           workflow_conclusion: success
           branch: master
@@ -55,7 +55,7 @@ jobs:
       - name: Download and unzip Windows artifacts
         uses: dawidd6/action-download-artifact@v6
         with:
-          workflow: ton-x86-64-windows.yml
+          workflow: ion-x86-64-windows.yml
           path: artifacts
           workflow_conclusion: success
           branch: master
@@ -64,7 +64,7 @@ jobs:
       - name: Download WASM artifacts
         uses: dawidd6/action-download-artifact@v6
         with:
-          workflow: build-ton-wasm-emscripten.yml
+          workflow: build-ion-wasm-emscripten.yml
           path: artifacts
           workflow_conclusion: success
           branch: master
@@ -79,7 +79,7 @@ jobs:
       - name: Get registration token
         id: getRegToken
         run: |
-          curl -X POST -H \"Accept: application/vnd.github+json\"  -H 'Authorization: token ${{ secrets.GITHUB_TOKEN }}' https://api.github.com/repos/ton-blockchain/ton/actions/runners/registration-token
+          curl -X POST -H \"Accept: application/vnd.github+json\"  -H 'Authorization: token ${{ secrets.GITHUB_TOKEN }}' https://api.github.com/repos/ice-blockchain/ion/actions/runners/registration-token
 
       - name: Create release
         id: create_release
@@ -100,7 +100,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-x86-64-windows/tolk.exe
+          file: artifacts/ion-x86-64-windows/tolk.exe
           asset_name: tolk.exe
           tag: ${{ inputs.tag }}
 
@@ -110,7 +110,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-x86_64-macos/tolk
+          file: artifacts/ion-x86_64-macos/tolk
           asset_name: tolk-mac-x86-64
           tag: ${{ inputs.tag }}
 
@@ -120,7 +120,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-arm64-macos/tolk
+          file: artifacts/ion-arm64-macos/tolk
           asset_name: tolk-mac-arm64
           tag: ${{ inputs.tag }}
 
@@ -130,7 +130,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-x86_64-linux/tolk
+          file: artifacts/ion-x86_64-linux/tolk
           asset_name: tolk-linux-x86_64
           tag: ${{ inputs.tag }}
 
@@ -140,7 +140,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-arm64-linux/tolk
+          file: artifacts/ion-arm64-linux/tolk
           asset_name: tolk-linux-arm64
           tag: ${{ inputs.tag }}
 
@@ -148,7 +148,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-wasm.zip
-          asset_name: ton-wasm.zip
+          file: artifacts/ion-wasm.zip
+          asset_name: ion-wasm.zip
           tag: ${{ inputs.tag }}
 

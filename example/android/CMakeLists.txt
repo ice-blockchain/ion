@@ -5,7 +5,7 @@
 
 cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 
-project(TON_ANDROID VERSION 0.5 LANGUAGES C CXX)
+project(ION_ANDROID VERSION 0.5 LANGUAGES C CXX)
 
 option(TONLIB_ENABLE_JNI "Enable JNI-compatible TonLib API" ON)
 
@@ -34,12 +34,12 @@ add_library( # Sets the name of the library.
 
 
 list(APPEND CMAKE_FIND_ROOT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/third_party/crypto/${ANDROID_ARCH_NAME}")
-set(TON_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../..)
-add_subdirectory(${TON_DIR} ton EXCLUDE_FROM_ALL)
+set(ION_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../..)
+add_subdirectory(${ION_DIR} ion EXCLUDE_FROM_ALL)
 target_link_libraries(native-lib tonlibjson)
 target_link_libraries(native-lib tonlib)
 
-set(TONLIB_API_JAVA_PACKAGE "drinkless/org/ton")
+set(TONLIB_API_JAVA_PACKAGE "drinkless/org/ion")
 target_compile_definitions(native-lib PRIVATE PACKAGE_NAME="${TONLIB_API_JAVA_PACKAGE}")
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -55,9 +55,9 @@ endif()
 if (NOT CMAKE_CROSSCOMPILING)
   set(TONLIB_API_JAVA_PATH ${CMAKE_CURRENT_SOURCE_DIR}/src/)
   file(MAKE_DIRECTORY ${TONLIB_API_JAVA_PATH}${TONLIB_API_JAVA_PACKAGE})
-  set(TONLIB_API_TLO_PATH ${TON_DIR}/tl/generate/scheme/tonlib_api.tlo)
-  set(TONLIB_API_TL_PATH ${TON_DIR}/tl/generate/scheme/tonlib_api.tl)
-  set(JAVADOC_TL_DOCUMENTATION_GENERATOR_PATH ${TON_DIR}/tl/generate/JavadocTlDocumentationGenerator.php)
+  set(TONLIB_API_TLO_PATH ${ION_DIR}/tl/generate/scheme/tonlib_api.tlo)
+  set(TONLIB_API_TL_PATH ${ION_DIR}/tl/generate/scheme/tonlib_api.tl)
+  set(JAVADOC_TL_DOCUMENTATION_GENERATOR_PATH ${ION_DIR}/tl/generate/JavadocTlDocumentationGenerator.php)
   set(GENERATE_JAVA_CMD tonlib_generate_java_api TonApi ${TONLIB_API_TLO_PATH} ${TONLIB_API_JAVA_PATH} ${TONLIB_API_JAVA_PACKAGE})
   if (PHP_EXECUTABLE)
     set(GENERATE_JAVA_CMD ${GENERATE_JAVA_CMD} && ${PHP_EXECUTABLE} ${JAVADOC_TL_DOCUMENTATION_GENERATOR_PATH}

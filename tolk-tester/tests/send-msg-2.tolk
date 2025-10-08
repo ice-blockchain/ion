@@ -37,19 +37,19 @@ fun getAddressShard(address: address, shardLen: int): int {
 }
 
 @inline
-fun packJettonWalletData(status: int, balance: int, ownerAddress: address, jettonMasterAddress: address): cell {
+fun packJetionWalletData(status: int, balance: int, ownerAddress: address, jetionMasterAddress: address): cell {
     return beginCell()
         .storeUint(status, 8)
         .storeCoins(balance)
         .storeAddress(ownerAddress)
-        .storeAddress(jettonMasterAddress)
+        .storeAddress(jetionMasterAddress)
         .endCell();
 }
 
 @inline
-fun calculateJettonWalletStateInitWithShard(ownerAddress: address, jettonMasterAddress: address, jettonWalletCode: cell): cell {
+fun calculateJetionWalletStateInitWithShard(ownerAddress: address, jetionMasterAddress: address, jetionWalletCode: cell): cell {
     /*
-    https://github.com/ton-blockchain/ton/blob/8a9ff339927b22b72819c5125428b70c406da631/crypto/block/block.tlb#L144
+    https://github.com/ice-blockchain/ion/blob/8a9ff339927b22b72819c5125428b70c406da631/crypto/block/block.tlb#L144
     _ split_depth:(Maybe (## 5)) special:(Maybe TickTock)
     code:(Maybe ^Cell) data:(Maybe ^Cell)
     library:(Maybe ^Cell) = StateInit;
@@ -58,20 +58,20 @@ fun calculateJettonWalletStateInitWithShard(ownerAddress: address, jettonMasterA
         .storeUint(1, 1)
         .storeUint(SHARD_DEPTH, 5)
         .storeUint(0, 1)
-        .storeMaybeRef(jettonWalletCode)
+        .storeMaybeRef(jetionWalletCode)
         .storeMaybeRef(
-        packJettonWalletData(
+        packJetionWalletData(
             0, // status
             0, // balance
             ownerAddress,
-            jettonMasterAddress)
+            jetionMasterAddress)
     )
         .storeUint(0, 1) // Empty libraries
         .endCell();
 }
 
 @inline
-fun calculateJettonWalletAddress(shardPrefix: int, stateInitCell: cell): address {
+fun calculateJetionWalletAddress(shardPrefix: int, stateInitCell: cell): address {
     var mask = (1 << (256 - SHARD_DEPTH)) - 1;
     var prefixLess = stateInitCell.hash() & mask;
     return beginCell()
@@ -105,22 +105,22 @@ fun calculateAddressInAnotherShard(pivotAddress: address, shardPrefixLen: uint5,
 }
 
 @noinline
-fun test1_manual(toAddress: address, masterMsg: cell, jettonWalletCode: cell) {
+fun test1_manual(toAddress: address, masterMsg: cell, jetionWalletCode: cell) {
     var shardPrefix = getAddressShard(toAddress, SHARD_DEPTH);
-    var stateInitCell = calculateJettonWalletStateInitWithShard(toAddress, getMyAddressDev(), jettonWalletCode);
-    var toWalletAddress = calculateJettonWalletAddress(shardPrefix, stateInitCell);
-    var jettonWalletData =  packJettonWalletData(0, 0, toAddress, getMyAddressDev());
+    var stateInitCell = calculateJetionWalletStateInitWithShard(toAddress, getMyAddressDev(), jetionWalletCode);
+    var toWalletAddress = calculateJetionWalletAddress(shardPrefix, stateInitCell);
+    var jetionWalletData =  packJetionWalletData(0, 0, toAddress, getMyAddressDev());
 
     return beginCell()
         .storeUint(0x18, 6)     // bounceable
         .storeAddress(toWalletAddress) // dest
-        .storeCoins(ton("0.05"))
+        .storeCoins(ion("0.05"))
         // 1 state init exists, 0 either left (state init embedded), 1 either left (fixed_prefix_length exists)
         .storeUint(0b101, 1 + 4 + 4 + 64 + 32 + 1 + 1 + 1)
         .storeUint(SHARD_DEPTH, 5)
         .storeUint(0b01101, 4 + 1)  // 0 ticktock + 1 code + 1 data + 0 library + 1 body ref
-        .storeRef(jettonWalletCode)
-        .storeRef(jettonWalletData)
+        .storeRef(jetionWalletCode)
+        .storeRef(jetionWalletData)
         .storeRef(masterMsg)
         .endCell();
 }
@@ -129,14 +129,14 @@ fun test1_manual(toAddress: address, masterMsg: cell, jettonWalletCode: cell) {
 fun test1() {
     val toAddress = address("UQDKbjIcfM6ezt8KjKJJLshZJJSqX7XOA4ff-W72r5gqPuwA");
     val masterMsg = beginCell().storeUint(1<<14, 32).endCell();
-    val jettonWalletCode = beginCell().storeInt(0x273849723892, 94).endCell();
+    val jetionWalletCode = beginCell().storeInt(0x273849723892, 94).endCell();
 
     var b = createMessage({
         bounce: true,
         dest: {
             stateInit: {
-                code: jettonWalletCode,
-                data: packJettonWalletData(0, 0, toAddress, getMyAddressDev()),
+                code: jetionWalletCode,
+                data: packJetionWalletData(0, 0, toAddress, getMyAddressDev()),
             },
             toShard: {
                 fixedPrefixLength: SHARD_DEPTH,
@@ -144,22 +144,22 @@ fun test1() {
             }
         },
         body: masterMsg,
-        value: ton("0.05"),
+        value: ion("0.05"),
     });
-    assert(b.hash() == test1_manual(toAddress, masterMsg, jettonWalletCode).hash(), 101);
+    assert(b.hash() == test1_manual(toAddress, masterMsg, jetionWalletCode).hash(), 101);
     return b.hash()
 }
 
 @noinline
-fun test2_manual(toAddress: address, masterMsg: cell, jettonWalletCode: cell) {
+fun test2_manual(toAddress: address, masterMsg: cell, jetionWalletCode: cell) {
     var shardPrefix = getAddressShard(toAddress, SHARD_DEPTH);
-    var stateInit = calculateJettonWalletStateInitWithShard(toAddress, getMyAddressDev(), jettonWalletCode);
-    var toWalletAddress = calculateJettonWalletAddress(shardPrefix, stateInit);
+    var stateInit = calculateJetionWalletStateInitWithShard(toAddress, getMyAddressDev(), jetionWalletCode);
+    var toWalletAddress = calculateJetionWalletAddress(shardPrefix, stateInit);
 
     return beginCell()
         .storeUint(0x10, 6)     // not bounceable
         .storeAddress(toWalletAddress) // dest
-        .storeCoins(ton("0.05"))
+        .storeCoins(ion("0.05"))
         .storeUint(0b111, 1 + 4 + 4 + 64 + 32 + 1 + 1 + 1)  // 1 state init exists + 1 state init ref + 1 body ref
         .storeRef(stateInit)
         .storeRef(masterMsg)
@@ -170,8 +170,8 @@ fun test2_manual(toAddress: address, masterMsg: cell, jettonWalletCode: cell) {
 fun test2() {
     val toAddress = address("UQDKbjIcfM6ezt8KjKJJLshZJJSqX7XOA4ff-W72r5gqPuwA");
     val masterMsg = beginCell().endCell();
-    val jettonWalletCode = beginCell().storeInt(0x273849723892, 94).endCell();
-    var stateInitCell = calculateJettonWalletStateInitWithShard(toAddress, getMyAddressDev(), jettonWalletCode);
+    val jetionWalletCode = beginCell().storeInt(0x273849723892, 94).endCell();
+    var stateInitCell = calculateJetionWalletStateInitWithShard(toAddress, getMyAddressDev(), jetionWalletCode);
 
     var b = createMessage({
         bounce: false,
@@ -184,9 +184,9 @@ fun test2() {
             }
         },
         body: masterMsg,
-        value: ton("0.05"),
+        value: ion("0.05"),
     });
-    assert(b.hash() == test2_manual(toAddress, masterMsg, jettonWalletCode).hash(), 102);
+    assert(b.hash() == test2_manual(toAddress, masterMsg, jetionWalletCode).hash(), 102);
     return b.hash()
 }
 
@@ -201,7 +201,7 @@ fun test3_manual(myCode: cell, myData: cell, msgBody: Test3Body) {
     return beginCell()
         .storeUint(0x18, 6)     // bounceable
         .storeBuilder(addrInShard) // dest
-        .storeCoins(ton("0.001"))
+        .storeCoins(ion("0.001"))
         .storeUint(0b10, 1 + 4 + 4 + 64 + 32 + 1 + 1)  // 1 state init exists + 1 state init inline
             .storeUint(1, 1)
             .storeUint(20, 5)   // shard depth
@@ -233,7 +233,7 @@ fun test3() {
             }
         },
         body,
-        value: ton("0.001"),
+        value: ion("0.001"),
     });
     assert(b.hash() == test3_manual(myCode, myData, body).hash(), 103);
     return b.hash()
@@ -263,7 +263,7 @@ fun test4() {
             }
         },
         body,
-        value: ton("0.1"),
+        value: ion("0.1"),
     });
     return b.hash()
 }
@@ -295,7 +295,7 @@ fun test5() {
             }
         },
         body: UnsafeBodyNoRef { forceInline: body },
-        value: ton("0.1"),
+        value: ion("0.1"),
     });
     return b.hash()
 }
@@ -321,7 +321,7 @@ fun test6(shardLen: int) {
             }
         },
         body: body,
-        value: ton("0.1"),
+        value: ion("0.1"),
     });
     return b.hash()
 }

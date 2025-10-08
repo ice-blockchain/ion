@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "common/bitstring.h"
 #include "keys/encryptor.h"
@@ -39,7 +39,7 @@
 #include "common/refint.h"
 #include "crypto/block/block.h"
 
-namespace ton {
+namespace ion {
 
 bool is_whitespace(char c) {
   return strchr(" \t\n\r", c) != nullptr;
@@ -954,7 +954,7 @@ class StorageDaemonCli : public td::actor::Actor {
       td::TerminalIO::out() << "set-provider-params [--accept x] [--rate x] [--max-span x] [--min-file-size x] "
                                "[--max-file-size x]\tSet parameters of the smart contract\n";
       td::TerminalIO::out() << "\t--accept\tAccept new contracts: 0 (no) or 1 (yes)\n";
-      td::TerminalIO::out() << "\t--rate\tPrice of storage, nanoTON per MB*day\n";
+      td::TerminalIO::out() << "\t--rate\tPrice of storage, nanoION per MB*day\n";
       td::TerminalIO::out() << "\t--max-span\n";
       td::TerminalIO::out() << "\t--min-file-size\tMinimal total size of a bag of files (bytes)\n";
       td::TerminalIO::out() << "\t--max-file-size\tMaximal total size of a bag of files (bytes)\n";
@@ -969,9 +969,9 @@ class StorageDaemonCli : public td::actor::Actor {
       td::TerminalIO::out() << "\t--max-total-size\tMaximal total size storage contracts (in bytes)\n";
       td::TerminalIO::out() << "withdraw <address>\tSend bounty from storage contract <address> to the main contract\n";
       td::TerminalIO::out()
-          << "withdraw-all\tSend bounty from all storage contracts (where at least 1 TON is available) "
+          << "withdraw-all\tSend bounty from all storage contracts (where at least 1 ION is available) "
              "to the main contract\n";
-      td::TerminalIO::out() << "send-coins <address> <amount> [--message msg]\tSend <amount> nanoTON to <address> from "
+      td::TerminalIO::out() << "send-coins <address> <amount> [--message msg]\tSend <amount> nanoION to <address> from "
                                "the main contract\n";
       td::TerminalIO::out()
           << "close-contract <address>\tClose storage contract <address> and delete bag (if possible)\n";
@@ -1448,7 +1448,7 @@ class StorageDaemonCli : public td::actor::Actor {
         return;
       }
       td::TerminalIO::out() << "Saved message body to file\n";
-      td::TerminalIO::out() << "Rate (nanoTON per mb*day): " << obj->rate_ << "\n";
+      td::TerminalIO::out() << "Rate (nanoION per mb*day): " << obj->rate_ << "\n";
       td::TerminalIO::out() << "Max span: " << obj->max_span_ << "\n";
       td::actor::send_closure(SelfId, &StorageDaemonCli::command_finished, td::Status::OK());
     });
@@ -1457,7 +1457,7 @@ class StorageDaemonCli : public td::actor::Actor {
 
   td::Status execute_import_pk(std::string file) {
     TRY_RESULT(data, td::read_file_secure(file));
-    TRY_RESULT(pk, ton::PrivateKey::import(data.as_slice()));
+    TRY_RESULT(pk, ion::PrivateKey::import(data.as_slice()));
     auto query = create_tl_object<ton_api::storage_daemon_importPrivateKey>(pk.tl());
     send_query(
         std::move(query), [SelfId = actor_id(this)](td::Result<tl_object_ptr<ton_api::storage_daemon_keyHash>> R) {
@@ -1484,7 +1484,7 @@ class StorageDaemonCli : public td::actor::Actor {
                  td::TerminalIO::out() << "Address: " << obj->address_ << "\n";
                  td::TerminalIO::out() << "Non-bounceable address: " << std_address.rserialize() << "\n";
                  td::TerminalIO::out()
-                     << "Send a non-bounceable message with 1 TON to this address to initialize smart contract.\n";
+                     << "Send a non-bounceable message with 1 ION to this address to initialize smart contract.\n";
                  td::actor::send_closure(SelfId, &StorageDaemonCli::command_finished, td::Status::OK());
                });
     return td::Status::OK();
@@ -1531,7 +1531,7 @@ class StorageDaemonCli : public td::actor::Actor {
       auto params = R.move_as_ok();
       td::TerminalIO::out() << "Storage provider parameters:\n";
       td::TerminalIO::out() << "Accept new contracts: " << params->accept_new_contracts_ << "\n";
-      td::TerminalIO::out() << "Rate (nanoTON per day*MB): " << params->rate_per_mb_day_ << "\n";
+      td::TerminalIO::out() << "Rate (nanoION per day*MB): " << params->rate_per_mb_day_ << "\n";
       td::TerminalIO::out() << "Max span: " << (td::uint32)params->max_span_ << "\n";
       auto min_size = (td::uint64)params->minimal_file_size_, max_size = (td::uint64)params->maximal_file_size_;
       td::TerminalIO::out() << "Min file size: " << td::format::as_size(min_size) << " (" << min_size << ")\n";
@@ -1602,7 +1602,7 @@ class StorageDaemonCli : public td::actor::Actor {
                  td::TerminalIO::out() << "Total size: " << size_to_str(info->contracts_total_size_) << " / "
                                        << size_to_str(info->config_->max_total_size_) << "\n";
                  if (with_balances) {
-                   td::TerminalIO::out() << "Main contract balance: " << coins_to_str(info->balance_) << " TON\n";
+                   td::TerminalIO::out() << "Main contract balance: " << coins_to_str(info->balance_) << " ION\n";
                  }
                  if (with_contracts) {
                    td::TerminalIO::out() << "Storage contracts: " << info->contracts_.size() << "\n";
@@ -1713,7 +1713,7 @@ class StorageDaemonCli : public td::actor::Actor {
                      continue;
                    }
                    td::TerminalIO::out() << "Withdrawing from " << contract->address_ << " (" << coins_to_str(remaining)
-                                         << " TON)\n";
+                                         << " ION)\n";
                    addresses.push_back(contract->address_);
                  }
                  if (addresses.empty()) {
@@ -1995,14 +1995,14 @@ class StorageDaemonCli : public td::actor::Actor {
   }
 };
 
-}  // namespace ton
+}  // namespace ion
 
 int main(int argc, char* argv[]) {
   SET_VERBOSITY_LEVEL(verbosity_INFO);
   td::set_default_failure_signal_handler();
   td::IPAddress ip_addr;
-  ton::PrivateKey client_private_key;
-  ton::PublicKey server_public_key;
+  ion::PrivateKey client_private_key;
+  ion::PublicKey server_public_key;
   std::vector<std::string> commands;
   td::OptionParser p;
   p.set_description("command-line interface for storage-daemon");
@@ -2027,12 +2027,12 @@ int main(int argc, char* argv[]) {
   p.add_option('c', "cmd", "execute command", [&](td::Slice arg) { commands.push_back(arg.str()); });
   p.add_checked_option('k', "key", "private key", [&](td::Slice arg) {
     TRY_RESULT_PREFIX(data, td::read_file(arg.str()), "failed to read: ");
-    TRY_RESULT_ASSIGN(client_private_key, ton::PrivateKey::import(data));
+    TRY_RESULT_ASSIGN(client_private_key, ion::PrivateKey::import(data));
     return td::Status::OK();
   });
   p.add_checked_option('p', "pub", "server public key", [&](td::Slice arg) {
     TRY_RESULT_PREFIX(data, td::read_file(arg.str()), "failed to read: ");
-    TRY_RESULT_ASSIGN(server_public_key, ton::PublicKey::import(data));
+    TRY_RESULT_ASSIGN(server_public_key, ion::PublicKey::import(data));
     return td::Status::OK();
   });
 
@@ -2046,7 +2046,7 @@ int main(int argc, char* argv[]) {
 
   td::actor::Scheduler scheduler({0});
   scheduler.run_in_context([&] {
-    td::actor::create_actor<ton::StorageDaemonCli>("console", ip_addr, client_private_key, server_public_key,
+    td::actor::create_actor<ion::StorageDaemonCli>("console", ip_addr, client_private_key, server_public_key,
                                                    std::move(commands))
         .release();
   });

@@ -657,7 +657,7 @@ fun test_RestIsBuilderOrRemaining() {
         .storeRef(JustAddress { addr: createAddressNone() }.toCell());
     var w: ReadWriteRest<builder> = {
         f1: 60,
-        f2: ton("0.05"),
+        f2: ion("0.05"),
         rest: remainingB
     };
     var r: ReadRest_Remaining = w.toCell().beginParse().loadAny();
@@ -672,7 +672,7 @@ fun test_MidIsBuilderOrBitsN() {
     var typedCell = ReadWriteMid {
         f1: 5,
         mid: bits40_b,
-        f3: ton("0.05")
+        f3: ion("0.05")
     }.toCell();
     __expect_type(typedCell, "Cell<ReadWriteMid<builder>>");
     var r = ReadWriteMid<bits40>.fromCell(typedCell);

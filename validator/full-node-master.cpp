@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -20,8 +20,8 @@
 #include "full-node-master.hpp"
 #include "full-node-shard-queries.hpp"
 
-#include "ton/ton-shard.h"
-#include "ton/ton-tl.hpp"
+#include "ion/ion-shard.h"
+#include "ion/ion-tl.hpp"
 
 #include "adnl/utils.hpp"
 
@@ -30,7 +30,7 @@
 #include "auto/tl/lite_api.h"
 #include "tl-utils/lite-utils.hpp"
 
-namespace ton {
+namespace ion {
 
 namespace validator {
 
@@ -99,14 +99,14 @@ void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::tonNo
 
 void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::tonNode_downloadBlockFull &query,
                                        td::Promise<td::BufferSlice> promise) {
-  td::actor::create_actor<BlockFullSender>("sender", ton::create_block_id(query.block_), false, validator_manager_,
+  td::actor::create_actor<BlockFullSender>("sender", ion::create_block_id(query.block_), false, validator_manager_,
                                            std::move(promise))
       .release();
 }
 
 void FullNodeMasterImpl::process_query(adnl::AdnlNodeIdShort src, ton_api::tonNode_downloadNextBlockFull &query,
                                        td::Promise<td::BufferSlice> promise) {
-  td::actor::create_actor<BlockFullSender>("sender", ton::create_block_id(query.prev_block_), true, validator_manager_,
+  td::actor::create_actor<BlockFullSender>("sender", ion::create_block_id(query.prev_block_), true, validator_manager_,
                                            std::move(promise))
       .release();
 }
@@ -451,12 +451,12 @@ void FullNodeMasterImpl::receive_query(adnl::AdnlNodeIdShort src, td::BufferSlic
                                        td::Promise<td::BufferSlice> promise) {
   auto BX = fetch_tl_prefix<ton_api::tonNode_query>(query, true);
   if (BX.is_error()) {
-    promise.set_error(td::Status::Error(ErrorCode::protoviolation, "cannot parse tonnode query"));
+    promise.set_error(td::Status::Error(ErrorCode::protoviolation, "cannot parse ionnode query"));
     return;
   }
   auto B = fetch_tl_object<ton_api::Function>(std::move(query), true);
   if (B.is_error()) {
-    promise.set_error(td::Status::Error(ErrorCode::protoviolation, "cannot parse tonnode query"));
+    promise.set_error(td::Status::Error(ErrorCode::protoviolation, "cannot parse ionnode query"));
     return;
   }
   ton_api::downcast_call(*B.move_as_ok().get(), [&](auto &obj) { this->process_query(src, obj, std::move(promise)); });
@@ -507,7 +507,7 @@ td::actor::ActorOwn<FullNodeMaster> FullNodeMaster::create(
     adnl::AdnlNodeIdShort adnl_id, td::uint16 port, FileHash zero_state_file_hash,
     td::actor::ActorId<keyring::Keyring> keyring, td::actor::ActorId<adnl::Adnl> adnl,
     td::actor::ActorId<ValidatorManagerInterface> validator_manager) {
-  return td::actor::create_actor<FullNodeMasterImpl>("tonnode", adnl_id, port, zero_state_file_hash, keyring, adnl,
+  return td::actor::create_actor<FullNodeMasterImpl>("ionnode", adnl_id, port, zero_state_file_hash, keyring, adnl,
                                                      validator_manager);
 }
 
@@ -515,4 +515,4 @@ td::actor::ActorOwn<FullNodeMaster> FullNodeMaster::create(
 
 }  // namespace validator
 
-}  // namespace ton
+}  // namespace ion

@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 */
 #pragma once
 
@@ -132,11 +132,11 @@ public:
 class TypeDataInt final : public TypeData {
   TypeDataInt() : TypeData(0) {}
 
-  static TypePtr singleton;
+  static TypePtr singleion;
   friend void type_system_init();
 
 public:
-  static TypePtr create() { return singleton; }
+  static TypePtr create() { return singleion; }
 
   int get_type_id() const override { return 1; }
   std::string as_human_readable() const override { return "int"; }
@@ -151,11 +151,11 @@ public:
 class TypeDataBool final : public TypeData {
   TypeDataBool() : TypeData(0) {}
 
-  static TypePtr singleton;
+  static TypePtr singleion;
   friend void type_system_init();
 
 public:
-  static TypePtr create() { return singleton; }
+  static TypePtr create() { return singleion; }
 
   int get_type_id() const override { return 2; }
   std::string as_human_readable() const override { return "bool"; }
@@ -169,11 +169,11 @@ public:
 class TypeDataCell final : public TypeData {
   TypeDataCell() : TypeData(0) {}
 
-  static TypePtr singleton;
+  static TypePtr singleion;
   friend void type_system_init();
 
 public:
-  static TypePtr create() { return singleton; }
+  static TypePtr create() { return singleion; }
 
   int get_type_id() const override { return 3; }
   std::string as_human_readable() const override { return "cell"; }
@@ -187,11 +187,11 @@ public:
 class TypeDataSlice final : public TypeData {
   TypeDataSlice() : TypeData(0) {}
 
-  static TypePtr singleton;
+  static TypePtr singleion;
   friend void type_system_init();
 
 public:
-  static TypePtr create() { return singleton; }
+  static TypePtr create() { return singleion; }
 
   int get_type_id() const override { return 4; }
   std::string as_human_readable() const override { return "slice"; }
@@ -205,11 +205,11 @@ public:
 class TypeDataBuilder final : public TypeData {
   TypeDataBuilder() : TypeData(0) {}
 
-  static TypePtr singleton;
+  static TypePtr singleion;
   friend void type_system_init();
 
 public:
-  static TypePtr create() { return singleton; }
+  static TypePtr create() { return singleion; }
 
   int get_type_id() const override { return 5; }
   std::string as_human_readable() const override { return "builder"; }
@@ -225,11 +225,11 @@ public:
 class TypeDataTuple final : public TypeData {
   TypeDataTuple() : TypeData(0) {}
 
-  static TypePtr singleton;
+  static TypePtr singleion;
   friend void type_system_init();
 
 public:
-  static TypePtr create() { return singleton; }
+  static TypePtr create() { return singleion; }
 
   int get_type_id() const override { return 6; }
   std::string as_human_readable() const override { return "tuple"; }
@@ -244,11 +244,11 @@ public:
 class TypeDataContinuation final : public TypeData {
   TypeDataContinuation() : TypeData(0) {}
 
-  static TypePtr singleton;
+  static TypePtr singleion;
   friend void type_system_init();
 
 public:
-  static TypePtr create() { return singleton; }
+  static TypePtr create() { return singleion; }
 
   int get_type_id() const override { return 7; }
   std::string as_human_readable() const override { return "continuation"; }
@@ -263,11 +263,11 @@ public:
 class TypeDataAddress final : public TypeData {
   TypeDataAddress() : TypeData(0) {}
 
-  static TypePtr singleton;
+  static TypePtr singleion;
   friend void type_system_init();
 
 public:
-  static TypePtr create() { return singleton; }
+  static TypePtr create() { return singleion; }
 
   int get_type_id() const override { return 8; }
   std::string as_human_readable() const override { return "address"; }
@@ -284,11 +284,11 @@ public:
 class TypeDataNullLiteral final : public TypeData {
   TypeDataNullLiteral() : TypeData(0) {}
 
-  static TypePtr singleton;
+  static TypePtr singleion;
   friend void type_system_init();
 
 public:
-  static TypePtr create() { return singleton; }
+  static TypePtr create() { return singleion; }
 
   int get_type_id() const override { return 0; }
   std::string as_human_readable() const override { return "null"; }
@@ -479,16 +479,16 @@ public:
 
 /*
  * `coins` is just integer at TVM level, but encoded as varint when serializing structures.
- * Example: `var cost = ton("0.05")` has type `coins`.
+ * Example: `var cost = ion("0.05")` has type `coins`.
  */
 class TypeDataCoins final : public TypeData {
   TypeDataCoins() : TypeData(0) {}
 
-  static TypePtr singleton;
+  static TypePtr singleion;
   friend void type_system_init();
 
 public:
-  static TypePtr create() { return singleton; }
+  static TypePtr create() { return singleion; }
 
   int get_type_id() const override { return 17; }
   std::string as_human_readable() const override { return "coins"; }
@@ -589,11 +589,11 @@ public:
 class TypeDataUnknown final : public TypeData {
   TypeDataUnknown() : TypeData(flag_contains_unknown_inside) {}
 
-  static TypePtr singleton;
+  static TypePtr singleion;
   friend void type_system_init();
 
 public:
-  static TypePtr create() { return singleton; }
+  static TypePtr create() { return singleion; }
 
   int get_type_id() const override;
   std::string as_human_readable() const override { return "unknown"; }
@@ -610,11 +610,11 @@ public:
 class TypeDataNever final : public TypeData {
   TypeDataNever() : TypeData(0) {}
 
-  static TypePtr singleton;
+  static TypePtr singleion;
   friend void type_system_init();
 
 public:
-  static TypePtr create() { return singleton; }
+  static TypePtr create() { return singleion; }
 
   int get_width_on_stack() const override;
   int get_type_id() const override { return 19; }
@@ -632,11 +632,11 @@ public:
 class TypeDataVoid final : public TypeData {
   TypeDataVoid() : TypeData(0) {}
 
-  static TypePtr singleton;
+  static TypePtr singleion;
   friend void type_system_init();
 
 public:
-  static TypePtr create() { return singleton; }
+  static TypePtr create() { return singleion; }
 
   int get_width_on_stack() const override;
   int get_type_id() const override { return 10; }

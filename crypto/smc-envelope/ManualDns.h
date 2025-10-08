@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2019-2020 Telegram Systems LLP
 */
@@ -30,7 +30,7 @@
 
 #include <map>
 
-namespace ton {
+namespace ion {
 const td::Bits256 DNS_NEXT_RESOLVER_CATEGORY =
     td::sha256_bits256(td::Slice("dns_next_resolver", strlen("dns_next_resolver")));
 
@@ -51,7 +51,7 @@ class DnsInterface {
   };
 
   struct EntryDataAdnlAddress {
-    ton::Bits256 adnl_address;
+    ion::Bits256 adnl_address;
     // TODO: proto
     bool operator==(const EntryDataAdnlAddress& other) const {
       return adnl_address == other.adnl_address;
@@ -67,7 +67,7 @@ class DnsInterface {
   };
 
   struct EntryDataStorageAddress {
-    ton::Bits256 bag_id;
+    ion::Bits256 bag_id;
     // TODO: proto
     bool operator==(const EntryDataStorageAddress& other) const {
       return bag_id == other.bag_id;
@@ -86,13 +86,13 @@ class DnsInterface {
     static EntryData next_resolver(block::StdAddress resolver) {
       return {NextResolver, EntryDataNextResolver{resolver}};
     }
-    static EntryData adnl_address(ton::Bits256 adnl_address) {
+    static EntryData adnl_address(ion::Bits256 adnl_address) {
       return {AdnlAddress, EntryDataAdnlAddress{adnl_address}};
     }
     static EntryData smc_address(block::StdAddress smc_address) {
       return {SmcAddress, EntryDataSmcAddress{smc_address}};
     }
-    static EntryData storage_address(ton::Bits256 bag_id) {
+    static EntryData storage_address(ion::Bits256 bag_id) {
       return {StorageAddress, EntryDataStorageAddress{bag_id}};
     }
 
@@ -196,7 +196,7 @@ class DnsInterface {
                                                       block::StdAddress address = {});
 };
 
-class ManualDns : public ton::SmartContract, public DnsInterface {
+class ManualDns : public ion::SmartContract, public DnsInterface {
  public:
   ManualDns(State state, block::StdAddress address = {})
       : SmartContract(std::move(state)), address_(std::move(address)) {
@@ -355,4 +355,4 @@ class ManualDns : public ton::SmartContract, public DnsInterface {
   block::StdAddress address_;
 };
 
-}  // namespace ton
+}  // namespace ion

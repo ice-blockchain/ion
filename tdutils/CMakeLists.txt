@@ -319,8 +319,8 @@ set(TDUTILS_TEST_SOURCE
   PARENT_SCOPE
 )
 
-if (NOT TON_PRINT_BACKTRACE_ON_CRASH)
-  set_source_files_properties(td/utils/port/signals.cpp PROPERTIES COMPILE_DEFINITIONS TON_DISABLE_BACKTRACE)
+if (NOT ION_PRINT_BACKTRACE_ON_CRASH)
+  set_source_files_properties(td/utils/port/signals.cpp PROPERTIES COMPILE_DEFINITIONS ION_DISABLE_BACKTRACE)
 endif()
 
 #RULES

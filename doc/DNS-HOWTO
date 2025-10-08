@@ -1,66 +1,66 @@
-The aim of this document is to provide a very brief introduction to TON DNS, a service for translating human-readable domain names (such as `test.ton` or `mysite.temp.ton`) into TON smart contract addresses, ADNL addresses employed by services running in the TON Network (such as TON Sites), and so on.
+The aim of this document is to provide a very brief introduction to ION DNS, a service for translating human-readable domain names (such as `test.ion` or `mysite.temp.ion`) into ION smart contract addresses, ADNL addresses employed by services running in the ION Network (such as ION Sites), and so on.
 
 1. Domain names
 ~~~~~~~~~~~~~~~
 
-TON DNS employs familiarly-looking domain names, consisting of a UTF-8 encoded string up to 126 bytes, with different sections of the domain name separated by dots (`.`). Null characters (i.e. zero bytes) and, more generally, bytes in range 0..32 are not allowed in domain names. For instance, `test.ton` and `mysite.temp.ton` are valid TON DNS domains. A major difference from usual domain names is that TON DNS domains are case-sensitive; one could convert all domains to lowercase before performing a TON DNS lookup in order to obtain case-insensitivity if desired.
+ION DNS employs familiarly-looking domain names, consisting of a UTF-8 encoded string up to 126 bytes, with different sections of the domain name separated by dots (`.`). Null characters (i.e. zero bytes) and, more generally, bytes in range 0..32 are not allowed in domain names. For instance, `test.ion` and `mysite.temp.ion` are valid ION DNS domains. A major difference from usual domain names is that ION DNS domains are case-sensitive; one could convert all domains to lowercase before performing a ION DNS lookup in order to obtain case-insensitivity if desired.
 
-Currently, only domains ending in `.ton` are recognized as valid TON DNS domains. This could change in the future. Notice, however, that it is a bad idea to define first-level domains coinciding with first-level domains already existing in the Internet, such as `.com` or `.to`, because one could then register a TON domain `google.com`, deploy a TON site there, create a hidden link to a page at this TON site from his other innocently-looking TON site, and steal `google.com` cookies from unsuspecting visitors.
+Currently, only domains ending in `.ion` are recognized as valid ION DNS domains. This could change in the future. Notice, however, that it is a bad idea to define first-level domains coinciding with first-level domains already existing in the Internet, such as `.com` or `.to`, because one could then register a ION domain `google.com`, deploy a ION site there, create a hidden link to a page at this ION site from his other innocently-looking ION site, and steal `google.com` cookies from unsuspecting visitors.
 
-Internally, TON DNS transforms domain names as follows. First, a domain name is split into its components delimited by dot characters `.`. Then null characters are appended to each component, and all components are concatenated in reverse order. For example, `google.com` becomes `com\0google\0`.
+Internally, ION DNS transforms domain names as follows. First, a domain name is split into its components delimited by dot characters `.`. Then null characters are appended to each component, and all components are concatenated in reverse order. For example, `google.com` becomes `com\0google\0`.
 
-2. Resolving TON DNS domains
+2. Resolving ION DNS domains
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A TON DNS domain is resolved as follows. First, the *root DNS smart contract* is located by inspecting the value of configuration parameter #4 in a recent masterchain state. This parameter contains the 256-bit address of the root DNS smart contract inside the masterchain.
+A ION DNS domain is resolved as follows. First, the *root DNS smart contract* is located by inspecting the value of configuration parameter #4 in a recent masterchain state. This parameter contains the 256-bit address of the root DNS smart contract inside the masterchain.
 
 Then a special get-method `dnsresolve` (method id 123660) is invoked for the root DNS smart contract, with two parameters. The first parameter is a CellSlice with *8n* data bits containing the internal representation of the domain being resolved, where *n* is the length of the internal representation in bytes (at most 127). The second parameter is a signed 16-bit Integer containing the required *category*. If the category is zero, then all categories are requested.
 
-If this get-method fails, then the TON DNS lookup is unsuccessful. Otherwise the get-method returns two values. The first is *8m*, the length (in bits) of the prefix of the internal representation of the domain that has been resolved, 0 < m <= n. The second is a Cell with the TON DNS record for the required domain in the required category, or the root a Dictionary with 16-bit signed integer keys (categories) and values equal to the serializations of corresponding TON DNS records. If the domain cannot be resolved by the root DNS smart contract, i.e. if no non-empty prefix is a valid domain known to the smart contract, then (0, null) is returned. In other words, m = 0 means that the TON DNS lookup has found no data for the required domain. In that case, the TON DNS lookup is also unsuccessful.
+If this get-method fails, then the ION DNS lookup is unsuccessful. Otherwise the get-method returns two values. The first is *8m*, the length (in bits) of the prefix of the internal representation of the domain that has been resolved, 0 < m <= n. The second is a Cell with the ION DNS record for the required domain in the required category, or the root a Dictionary with 16-bit signed integer keys (categories) and values equal to the serializations of corresponding ION DNS records. If the domain cannot be resolved by the root DNS smart contract, i.e. if no non-empty prefix is a valid domain known to the smart contract, then (0, null) is returned. In other words, m = 0 means that the ION DNS lookup has found no data for the required domain. In that case, the ION DNS lookup is also unsuccessful.
 
-If m = n, then the second component of the result is either a Cell with a valid TON DNS record for the required domain and category, or a Null if there is no TON DNS record for this domain with this category. In either case, the resolution process stops, and the TON DNS record thus obtained is deserialized and the required information (such as the type of the record and its parameters, such as a smart contract address or a ADNL address).
+If m = n, then the second component of the result is either a Cell with a valid ION DNS record for the required domain and category, or a Null if there is no ION DNS record for this domain with this category. In either case, the resolution process stops, and the ION DNS record thus obtained is deserialized and the required information (such as the type of the record and its parameters, such as a smart contract address or a ADNL address).
 
-Finally, if m < n, then the lookup is successful so far, but only a partial result is available for the m-byte prefix of the original internal representation of the domain. The longest of all such prefixes known to the DNS smart contract is returned. For instance, an attempt to look up `mysite.test.ton` (i.e. `ton\0test\0mysite\0` in the internal representation) in the root DNS smart contract might return 8m=72, corresponding to prefix `ton\0test\0`, i.e. to subdomain "test.ton" in the usual domain representation. In that case, dnsresolve() returns the value for category -1 for this prefix regardless of the category originally requested by the client. By convention, category -1 usually contains a TON DNS Record of type *dns_next_resolver*, containing the address of next resolver smart contract (which can reside in any other workchain, such as the basechain). If that is indeed the case, the resolution process continues by running get-method `dnsresolve` for the next resolver, with the internal representation of the domain name containing only its part unresolved so far (if we were looking up `ton\0test\0mysite\0`, and prefix `ton\0test\0` was found by the root DNS smart contract, then the next `dnsresolve` will be invoked with `mysite\0` as its first argument). Then either the next resolver smart contract reports an error or the absence of any records for the required domain or any of its prefixes, or the final result is obtained, or another prefix and next resolver smart contract is returned. In the latter case, the process continues in the same fashion until all of the original domain is resolved.
+Finally, if m < n, then the lookup is successful so far, but only a partial result is available for the m-byte prefix of the original internal representation of the domain. The longest of all such prefixes known to the DNS smart contract is returned. For instance, an attempt to look up `mysite.test.ion` (i.e. `ion\0test\0mysite\0` in the internal representation) in the root DNS smart contract might return 8m=72, corresponding to prefix `ion\0test\0`, i.e. to subdomain "test.ion" in the usual domain representation. In that case, dnsresolve() returns the value for category -1 for this prefix regardless of the category originally requested by the client. By convention, category -1 usually contains a ION DNS Record of type *dns_next_resolver*, containing the address of next resolver smart contract (which can reside in any other workchain, such as the basechain). If that is indeed the case, the resolution process continues by running get-method `dnsresolve` for the next resolver, with the internal representation of the domain name containing only its part unresolved so far (if we were looking up `ion\0test\0mysite\0`, and prefix `ion\0test\0` was found by the root DNS smart contract, then the next `dnsresolve` will be invoked with `mysite\0` as its first argument). Then either the next resolver smart contract reports an error or the absence of any records for the required domain or any of its prefixes, or the final result is obtained, or another prefix and next resolver smart contract is returned. In the latter case, the process continues in the same fashion until all of the original domain is resolved.
 
-3. Using LiteClient and TonLib to resolve TON DNS domains
+3. Using LiteClient and TonLib to resolve ION DNS domains
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The above process can be invoked automatically using the TON LiteClient or TONLib. For instance, one can invoke the command `dnsresolve test.ton 1` in the LiteClient to resolve "test.ton" with category 1 and obtain the following result:
+The above process can be invoked automatically using the ION LiteClient or IONLib. For instance, one can invoke the command `dnsresolve test.ion 1` in the LiteClient to resolve "test.ion" with category 1 and obtain the following result:
 
 ================================================
-> dnsresolve test.ton
+> dnsresolve test.ion
 ...
-Result for domain 'test.ton' category 1
+Result for domain 'test.ion' category 1
 raw data: x{AD011B3CBBE404F47FFEF92D0D7894C5C6F215F677732A49E544F16D1E75643D46AB00}
 
 category #1 : (dns_adnl_address adnl_addr:x1B3CBBE404F47FFEF92D0D7894C5C6F215F677732A49E544F16D1E75643D46AB flags:0)
 	adnl address 1B3CBBE404F47FFEF92D0D7894C5C6F215F677732A49E544F16D1E75643D46AB = UNTZO7EAT2H77XZFUGXRFGFY3ZBL5TXOMVETZKE6FWR45LEHVDKXAUY
 ================================================
 
-In this case, the TON DNS record for "test.ton" is a `dns_adnl_address` record containing ADNL address UNTZO7EAT2H77XZFUGXRFGFY3ZBL5TXOMVETZKE6FWR45LEHVDKXAUY
+In this case, the ION DNS record for "test.ion" is a `dns_adnl_address` record containing ADNL address UNTZO7EAT2H77XZFUGXRFGFY3ZBL5TXOMVETZKE6FWR45LEHVDKXAUY
 
 Alternatively, one can invoke `tonlib-cli` and enter the following command:
 ================================================
-> dns resolve root test.ton 1
+> dns resolve root test.ion 1
 Redirect resolver
 ...
 Done
-  test.ton 1 ADNL:untzo7eat2h77xzfugxrfgfy3zbl5txomvetzke6fwr45lehvdkxauy
+  test.ion 1 ADNL:untzo7eat2h77xzfugxrfgfy3zbl5txomvetzke6fwr45lehvdkxauy
 ================================================
 
 This is a more compact representation of the same result.
 
-Finally, if one uses RLDP-HTTP Proxy in the client mode to access TON Sites from a browser as explained in `TONSites-HOWTO.txt`, the TONLib resolver is automatically invoked to resolve all domains entered by the end user, so that a HTTP query to `http://test.ton/testnet/last` is automatically forwarded to ADNL address `untzo7eat2h77xzfugxrfgfy3zbl5txomvetzke6fwr45lehvdkxauy` via RLDP.
+Finally, if one uses RLDP-HTTP Proxy in the client mode to access ION Sites from a browser as explained in `IONSites-HOWTO.txt`, the IONLib resolver is automatically invoked to resolve all domains entered by the end user, so that a HTTP query to `http://test.ion/testnet/last` is automatically forwarded to ADNL address `untzo7eat2h77xzfugxrfgfy3zbl5txomvetzke6fwr45lehvdkxauy` via RLDP.
 
 4. Registering new domains
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Suppose that you have a new TON Site with a newly-generated ADNL address, such as `vcqmha5j3ceve35ammfrhqty46rkhi455otydstv66pk2tmf7rl25f3`. Of course, the end user might type `http://vcqmha5j3ceve35ammfrhqty46rkhi455otydstv66pk2tmf7rl25f3.adnl/` to visit your TON Site from a browser using a RLDP-HTTP Proxy in client mode, but this is not very convenient. Instead, you could register a new domain, say, `mysite.temp.ton` with a `dns_adnl_address` record in category 1 containing the ADNL address vcq...25f3 of your TON Site. Then the user would access your TON Site by simply typing `mysite.temp.ton` in a browser.
+Suppose that you have a new ION Site with a newly-generated ADNL address, such as `vcqmha5j3ceve35ammfrhqty46rkhi455otydstv66pk2tmf7rl25f3`. Of course, the end user might type `http://vcqmha5j3ceve35ammfrhqty46rkhi455otydstv66pk2tmf7rl25f3.adnl/` to visit your ION Site from a browser using a RLDP-HTTP Proxy in client mode, but this is not very convenient. Instead, you could register a new domain, say, `mysite.temp.ion` with a `dns_adnl_address` record in category 1 containing the ADNL address vcq...25f3 of your ION Site. Then the user would access your ION Site by simply typing `mysite.temp.ion` in a browser.
 
-In general, you would need to contact the owner of the higher-level domain and ask him to add a record for your subdomain in his DNS resolver smart contract. However, the TestNet of the TON Blockchain has a special resolver smart contract for `temp.ton` that allows anyone to automatically register any subdomains of `temp.ton` not registered yet, provided a small fee (in test Grams) is paid to that smart contract. In our case, we first need to find out the address of this smart contract, for example by using the Lite Client:
+In general, you would need to contact the owner of the higher-level domain and ask him to add a record for your subdomain in his DNS resolver smart contract. However, the TestNet of the ION Blockchain has a special resolver smart contract for `temp.ion` that allows anyone to automatically register any subdomains of `temp.ion` not registered yet, provided a small fee (in test Grams) is paid to that smart contract. In our case, we first need to find out the address of this smart contract, for example by using the Lite Client:
 
 ================================================
-> dnsresolve temp.ton -1
+> dnsresolve temp.ion -1
 ...
 category #-1 : (dns_next_resolver
   resolver:(addr_std
@@ -163,9 +163,9 @@ If all works correctly, you'll obtain some change from the automatic DNS smart c
 =====================================================
 > last
 ...
-> dnsresolve mysite.temp.ton 1
+> dnsresolve mysite.temp.ion 1
 ...
-Result for domain 'mysite.temp.ton' category 1
+Result for domain 'mysite.temp.ion' category 1
 category #1 : (dns_adnl_address adnl_addr:x45061C1D4EC44A937D0318589E13C73D151D1CEF5D3C0E53AFBCF56A6C2FE2BD flags:0)
 	adnl address 45061C1D4EC44A937D0318589E13C73D151D1CEF5D3C0E53AFBCF56A6C2FE2BD = vcqmha5j3ceve35ammfrhqty46rkhi455otydstv66pk2tmf7rl25f3
 =====================================================

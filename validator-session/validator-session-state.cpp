@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -25,45 +25,45 @@
 
 namespace td {
 
-td::StringBuilder& operator<<(td::StringBuilder& sb, const ton::ton_api::validatorSession_round_Message& message) {
-  ton::ton_api::downcast_call(
-      const_cast<ton::ton_api::validatorSession_round_Message&>(message),
+td::StringBuilder& operator<<(td::StringBuilder& sb, const ion::ton_api::validatorSession_round_Message& message) {
+  ion::ton_api::downcast_call(
+      const_cast<ion::ton_api::validatorSession_round_Message&>(message),
       td::overloaded(
-          [&](const ton::ton_api::validatorSession_message_submittedBlock& obj) {
+          [&](const ion::ton_api::validatorSession_message_submittedBlock& obj) {
             sb << "SUBMIT(" << obj.round_ << "," << obj.root_hash_ << "," << obj.file_hash_
                << obj.collated_data_file_hash_ << ")";
           },
-          [&](const ton::ton_api::validatorSession_message_approvedBlock& obj) {
+          [&](const ion::ton_api::validatorSession_message_approvedBlock& obj) {
             sb << "APPROVE(" << obj.round_ << "," << obj.candidate_ << ")";
           },
-          [&](const ton::ton_api::validatorSession_message_rejectedBlock& obj) {
+          [&](const ion::ton_api::validatorSession_message_rejectedBlock& obj) {
             sb << "REJECT(" << obj.round_ << "," << obj.candidate_ << ")";
           },
-          [&](const ton::ton_api::validatorSession_message_commit& obj) {
+          [&](const ion::ton_api::validatorSession_message_commit& obj) {
             sb << "COMMIT(" << obj.round_ << "," << obj.candidate_ << ")";
           },
-          [&](const ton::ton_api::validatorSession_message_vote& obj) {
+          [&](const ion::ton_api::validatorSession_message_vote& obj) {
             sb << "VOTE(" << obj.round_ << "," << obj.attempt_ << "," << obj.candidate_ << ")";
           },
-          [&](const ton::ton_api::validatorSession_message_voteFor& obj) {
+          [&](const ion::ton_api::validatorSession_message_voteFor& obj) {
             sb << "VOTEFOR(" << obj.round_ << "," << obj.attempt_ << "," << obj.candidate_ << ")";
           },
-          [&](const ton::ton_api::validatorSession_message_precommit& obj) {
+          [&](const ion::ton_api::validatorSession_message_precommit& obj) {
             sb << "PRECOMMIT(" << obj.round_ << "," << obj.attempt_ << "," << obj.candidate_ << ")";
           },
-          [&](const ton::ton_api::validatorSession_message_empty& obj) {
+          [&](const ion::ton_api::validatorSession_message_empty& obj) {
             sb << "EMPTY(" << obj.round_ << "," << obj.attempt_ << ")";
           }));
   return sb;
 }
 
-td::StringBuilder& operator<<(td::StringBuilder& sb, const ton::ton_api::validatorSession_round_Message* message) {
+td::StringBuilder& operator<<(td::StringBuilder& sb, const ion::ton_api::validatorSession_round_Message* message) {
   return sb << *message;
 }
 
 }  // namespace td
 
-namespace ton {
+namespace ion {
 
 namespace validatorsession {
 
@@ -1150,4 +1150,4 @@ void ValidatorSessionRoundState::dump(ValidatorSessionDescription& desc, td::Str
 
 }  // namespace validatorsession
 
-}  // namespace ton
+}  // namespace ion

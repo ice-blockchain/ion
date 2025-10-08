@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -22,7 +22,7 @@
 #include "Ed25519.h"
 #include "SmartContract.h"
 
-namespace ton {
+namespace ion {
 namespace smc {
 td::Ref<vm::CellSlice> pack_grams(td::uint64 amount);
 bool unpack_grams(td::Ref<vm::CellSlice> cs, td::uint64& amount);
@@ -33,7 +33,7 @@ class GenericAccount {
   static td::Ref<vm::Cell> get_init_state(const SmartContract::State& state) noexcept {
     return get_init_state(state.code, state.data);
   }
-  static block::StdAddress get_address(ton::WorkchainId workchain_id, const td::Ref<vm::Cell>& init_state) noexcept;
+  static block::StdAddress get_address(ion::WorkchainId workchain_id, const td::Ref<vm::Cell>& init_state) noexcept;
   static td::Ref<vm::Cell> create_ext_message(const block::StdAddress& address, td::Ref<vm::Cell> new_state,
                                               td::Ref<vm::Cell> body) noexcept;
   static void store_int_message(vm::CellBuilder& cb, const block::StdAddress& dest_address, td::int64 gramms,
@@ -43,4 +43,4 @@ class GenericAccount {
   static td::Result<td::uint32> get_seqno(const SmartContract& sc);
   static td::Result<td::uint32> get_wallet_id(const SmartContract& sc);
 };
-}  // namespace ton
+}  // namespace ion

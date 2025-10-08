@@ -1,31 +1,31 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
 #include "download-block-new.hpp"
-#include "ton/ton-tl.hpp"
+#include "ion/ion-tl.hpp"
 #include "adnl/utils.hpp"
-#include "ton/ton-shard.h"
+#include "ion/ion-shard.h"
 #include "td/utils/overloaded.h"
-#include "ton/ton-io.hpp"
+#include "ion/ion-io.hpp"
 #include "validator/full-node.h"
 #include "full-node-serializer.hpp"
 
-namespace ton {
+namespace ion {
 
 namespace validator {
 
@@ -283,4 +283,4 @@ void DownloadBlockNew::checked_block_proof() {
 
 }  // namespace validator
 
-}  // namespace ton
+}  // namespace ion

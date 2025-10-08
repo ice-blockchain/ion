@@ -9,7 +9,7 @@ using namespace std::string_literals;
 
 namespace emulator {
 td::Result<std::unique_ptr<TransactionEmulator::EmulationResult>> TransactionEmulator::emulate_transaction(
-    block::Account&& account, td::Ref<vm::Cell> msg_root, ton::UnixTime utime, ton::LogicalTime lt, int trans_type) {
+    block::Account&& account, td::Ref<vm::Cell> msg_root, ion::UnixTime utime, ion::LogicalTime lt, int trans_type) {
 
     td::Ref<vm::Cell> old_mparams;
     std::vector<block::StoragePrices> storage_prices;
@@ -85,8 +85,8 @@ td::Result<TransactionEmulator::EmulationSuccess> TransactionEmulator::emulate_t
       return td::Status::Error("Failed to unpack Transaction");
     }
 
-    ton::LogicalTime lt = record_trans.lt;
-    ton::UnixTime utime = record_trans.now;
+    ion::LogicalTime lt = record_trans.lt;
+    ion::UnixTime utime = record_trans.now;
     account.now_ = utime;
     account.block_lt = record_trans.lt - record_trans.lt % block::ConfigInfo::get_lt_align();
     td::Ref<vm::Cell> msg_root = record_trans.r1.in_msg->prefetch_ref();
@@ -177,7 +177,7 @@ bool TransactionEmulator::check_state_update(const block::Account& account, cons
 
 td::Result<std::unique_ptr<block::transaction::Transaction>> TransactionEmulator::create_transaction(
                                                          td::Ref<vm::Cell> msg_root, block::Account* acc,
-                                                         ton::UnixTime utime, ton::LogicalTime lt, int trans_type,
+                                                         ion::UnixTime utime, ion::LogicalTime lt, int trans_type,
                                                          block::StoragePhaseConfig* storage_phase_cfg,
                                                          block::ComputePhaseConfig* compute_phase_cfg,
                                                          block::ActionPhaseConfig* action_phase_cfg) {
@@ -246,11 +246,11 @@ td::Result<std::unique_ptr<block::transaction::Transaction>> TransactionEmulator
   return trans;
 }
 
-void TransactionEmulator::set_unixtime(ton::UnixTime unixtime) {
+void TransactionEmulator::set_unixtime(ion::UnixTime unixtime) {
   unixtime_ = unixtime;
 }
 
-void TransactionEmulator::set_lt(ton::LogicalTime lt) {
+void TransactionEmulator::set_lt(ion::LogicalTime lt) {
   lt_ = lt;
 }
 

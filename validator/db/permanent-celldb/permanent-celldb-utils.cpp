@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "permanent-celldb-utils.h"
 #include "block/block-auto.h"
@@ -20,7 +20,7 @@
 #include "td/utils/HashMap.h"
 #include "vm/db/CellStorage.h"
 
-namespace ton::validator {
+namespace ion::validator {
 
 void calculate_permanent_celldb_update(const std::map<BlockIdExt, td::Ref<BlockData>>& blocks,
                                        std::shared_ptr<vm::DynamicBagOfCellsDb::AsyncExecutor> executor,
@@ -80,4 +80,4 @@ void calculate_permanent_celldb_update(const std::map<BlockIdExt, td::Ref<BlockD
   });
 }
 
-}  // namespace ton::validator
+}  // namespace ion::validator

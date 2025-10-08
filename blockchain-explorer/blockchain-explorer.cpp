@@ -1,12 +1,12 @@
 /* 
-    This file is part of TON Blockchain source code.
+    This file is part of ION Blockchain source code.
 
-    TON Blockchain is free software; you can redistribute it and/or
+    ION Blockchain is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
     as published by the Free Software Foundation; either version 2
     of the License, or (at your option) any later version.
 
-    TON Blockchain is distributed in the hope that it will be useful,
+    ION Blockchain is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
@@ -21,7 +21,7 @@
     but you are not obligated to do so. If you do not wish to do so, delete this 
     exception statement from your version. If you delete this exception statement 
     from all source files in the program, then also delete it here.
-    along with TON Blockchain.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -37,7 +37,7 @@
 #include "td/utils/port/signals.h"
 #include "td/utils/port/user.h"
 #include "td/utils/port/FileFd.h"
-#include "ton/ton-tl.hpp"
+#include "ion/ion-tl.hpp"
 #include "block/block-db.h"
 #include "block/block.h"
 #include "block/block-auto.h"
@@ -55,7 +55,7 @@
 #include "vm/vm.h"
 
 #include "auto/tl/lite_api.h"
-#include "ton/lite-tl.hpp"
+#include "ion/lite-tl.hpp"
 #include "tl-utils/lite-utils.hpp"
 #include "lite-client/ext-client.h"
 
@@ -126,7 +126,7 @@ class HttpQueryRunner {
 
 class CoreActor : public CoreActorInterface {
  private:
-  std::string global_config_ = "ton-global.config";
+  std::string global_config_ = "ion-global.config";
 
   td::actor::ActorOwn<liteclient::ExtClient> client_;
 
@@ -134,7 +134,7 @@ class CoreActor : public CoreActorInterface {
   MHD_Daemon* daemon_ = nullptr;
 
   td::IPAddress remote_addr_;
-  ton::PublicKey remote_public_key_;
+  ion::PublicKey remote_public_key_;
 
   bool hide_ips_ = false;
 
@@ -201,9 +201,9 @@ class CoreActor : public CoreActorInterface {
     remote_addr_ = addr;
   }
   void set_remote_public_key(td::BufferSlice file_name) {
-    auto R = [&]() -> td::Result<ton::PublicKey> {
+    auto R = [&]() -> td::Result<ion::PublicKey> {
       TRY_RESULT_PREFIX(conf_data, td::read_file(file_name.as_slice().str()), "failed to read: ");
-      return ton::PublicKey::import(conf_data.as_slice());
+      return ion::PublicKey::import(conf_data.as_slice());
     }();
 
     if (R.is_error()) {
@@ -439,8 +439,8 @@ class CoreActor : public CoreActorInterface {
     if (remote_public_key_.empty()) {
       auto G = td::read_file(global_config_).move_as_ok();
       auto gc_j = td::json_decode(G.as_slice()).move_as_ok();
-      ton::ton_api::liteclient_config_global gc;
-      ton::ton_api::from_json(gc, gc_j.get_object()).ensure();
+      ion::ton_api::liteclient_config_global gc;
+      ion::ton_api::from_json(gc, gc_j.get_object()).ensure();
       auto r_servers = liteclient::LiteServerConfig::parse_global_config(gc);
       r_servers.ensure();
       servers = r_servers.move_as_ok();
@@ -452,7 +452,7 @@ class CoreActor : public CoreActorInterface {
         LOG(FATAL) << "remote addr not set";
       }
       addrs_.push_back(remote_addr_);
-      servers.push_back(liteclient::LiteServerConfig{ton::adnl::AdnlNodeIdFull{remote_public_key_}, remote_addr_});
+      servers.push_back(liteclient::LiteServerConfig{ion::adnl::AdnlNodeIdFull{remote_public_key_}, remote_addr_});
     }
     n_servers_ = servers.size();
     client_ = liteclient::ExtClient::create(std::move(servers), make_callback(), true);
@@ -491,8 +491,8 @@ void CoreActor::got_servers_ready(td::int32 attempt, std::vector<bool> ready) {
 
 void CoreActor::send_ping(td::uint32 idx) {
   waiting_++;
-  auto query = ton::create_tl_object<ton::lite_api::liteServer_getMasterchainInfo>();
-  auto q = ton::create_tl_object<ton::lite_api::liteServer_query>(serialize_tl_object(query, true));
+  auto query = ion::create_tl_object<ion::lite_api::liteServer_getMasterchainInfo>();
+  auto q = ion::create_tl_object<ion::lite_api::liteServer_query>(serialize_tl_object(query, true));
 
   auto P =
       td::PromiseCreator::lambda([SelfId = actor_id(this), idx, attempt = attempt_](td::Result<td::BufferSlice> R) {
@@ -515,7 +515,7 @@ void CoreActor::got_ping_result(td::uint32 idx, td::int32 attempt, td::Result<td
   }
   auto data = R.move_as_ok();
   {
-    auto F = ton::fetch_tl_object<ton::lite_api::liteServer_error>(data.clone(), true);
+    auto F = ion::fetch_tl_object<ion::lite_api::liteServer_error>(data.clone(), true);
     if (F.is_ok()) {
       auto f = F.move_as_ok();
       auto err = td::Status::Error(f->code_, f->message_);
@@ -526,7 +526,7 @@ void CoreActor::got_ping_result(td::uint32 idx, td::int32 attempt, td::Result<td
       return;
     }
   }
-  auto F = ton::fetch_tl_object<ton::lite_api::liteServer_masterchainInfo>(std::move(data), true);
+  auto F = ion::fetch_tl_object<ion::lite_api::liteServer_masterchainInfo>(std::move(data), true);
   if (F.is_error()) {
     waiting_--;
     if (waiting_ == 0) {
@@ -535,7 +535,7 @@ void CoreActor::got_ping_result(td::uint32 idx, td::int32 attempt, td::Result<td
     return;
   }
   auto f = F.move_as_ok();
-  new_result_->values_[idx] = ton::create_block_id(f->last_);
+  new_result_->values_[idx] = ion::create_block_id(f->last_);
   waiting_--;
   CHECK(waiting_ >= 0);
   if (waiting_ == 0) {
@@ -551,7 +551,7 @@ void CoreActor::send_lite_query(td::BufferSlice query, td::Promise<td::BufferSli
     }
     auto B = R.move_as_ok();
     {
-      auto F = ton::fetch_tl_object<ton::lite_api::liteServer_error>(B.clone(), true);
+      auto F = ion::fetch_tl_object<ion::lite_api::liteServer_error>(B.clone(), true);
       if (F.is_ok()) {
         auto f = F.move_as_ok();
         promise.set_error(td::Status::Error(f->code_, f->message_));
@@ -560,7 +560,7 @@ void CoreActor::send_lite_query(td::BufferSlice query, td::Promise<td::BufferSli
     }
     promise.set_value(std::move(B));
   });
-  auto q = ton::create_tl_object<ton::lite_api::liteServer_query>(std::move(query));
+  auto q = ion::create_tl_object<ion::lite_api::liteServer_query>(std::move(query));
   td::actor::send_closure(client_, &liteclient::ExtClient::send_query, "query", serialize_tl_object(q, true),
                           td::Timestamp::in(10.0), std::move(P));
 }
@@ -580,7 +580,7 @@ int main(int argc, char* argv[]) {
   td::actor::ActorOwn<CoreActor> x;
 
   td::OptionParser p;
-  p.set_description("TON Blockchain explorer");
+  p.set_description("ION Blockchain explorer");
   p.add_checked_option('h', "help", "prints_help", [&]() {
     char b[10240];
     td::StringBuilder sb(td::MutableSlice{b, 10000});

@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain source code.
+    This file is part of ION Blockchain source code.
 
-    TON Blockchain is free software; you can redistribute it and/or
+    ION Blockchain is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
     as published by the Free Software Foundation; either version 2
     of the License, or (at your option) any later version.
 
-    TON Blockchain is distributed in the hope that it will be useful,
+    ION Blockchain is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with TON Blockchain.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain.  If not, see <http://www.gnu.org/licenses/>.
 
     In addition, as a special exception, the copyright holders give permission
     to link the code of portions of this program with the OpenSSL library.
@@ -45,15 +45,15 @@ class HttpProxy;
 class HttpRemote : public td::actor::Actor {
  public:
   struct Query {
-    std::unique_ptr<ton::http::HttpRequest> request;
-    std::shared_ptr<ton::http::HttpPayload> payload;
+    std::unique_ptr<ion::http::HttpRequest> request;
+    std::shared_ptr<ion::http::HttpPayload> payload;
     td::Timestamp timeout;
-    td::Promise<std::pair<std::unique_ptr<ton::http::HttpResponse>, std::shared_ptr<ton::http::HttpPayload>>> promise;
+    td::Promise<std::pair<std::unique_ptr<ion::http::HttpResponse>, std::shared_ptr<ion::http::HttpPayload>>> promise;
   };
   HttpRemote(std::string domain, td::actor::ActorId<HttpProxy> proxy) : domain_(std::move(domain)), proxy_(proxy) {
   }
   void start_up() override {
-    class Cb : public ton::http::HttpClient::Callback {
+    class Cb : public ion::http::HttpClient::Callback {
      public:
       Cb(td::actor::ActorId<HttpRemote> id) : id_(id) {
       }
@@ -67,7 +67,7 @@ class HttpRemote : public td::actor::Actor {
      private:
       td::actor::ActorId<HttpRemote> id_;
     };
-    client_ = ton::http::HttpClient::create_multi(domain_, td::IPAddress(), 1, 1, std::make_shared<Cb>(actor_id(this)));
+    client_ = ion::http::HttpClient::create_multi(domain_, td::IPAddress(), 1, 1, std::make_shared<Cb>(actor_id(this)));
     fail_at_ = td::Timestamp::in(10.0);
     close_at_ = td::Timestamp::in(60.0);
   }
@@ -84,35 +84,35 @@ class HttpRemote : public td::actor::Actor {
       while (list_.size() > 0) {
         auto q = std::move(list_.front());
         list_.pop_front();
-        td::actor::send_closure(client_, &ton::http::HttpClient::send_request, std::move(q.request),
+        td::actor::send_closure(client_, &ion::http::HttpClient::send_request, std::move(q.request),
                                 std::move(q.payload), q.timeout, std::move(q.promise));
         close_at_ = td::Timestamp::in(60.0);
       }
     }
   }
   void receive_request(
-      std::unique_ptr<ton::http::HttpRequest> request, std::shared_ptr<ton::http::HttpPayload> payload,
-      td::Promise<std::pair<std::unique_ptr<ton::http::HttpResponse>, std::shared_ptr<ton::http::HttpPayload>>>
+      std::unique_ptr<ion::http::HttpRequest> request, std::shared_ptr<ion::http::HttpPayload> payload,
+      td::Promise<std::pair<std::unique_ptr<ion::http::HttpResponse>, std::shared_ptr<ion::http::HttpPayload>>>
           promise) {
     bool keep = request->keep_alive();
     auto P = td::PromiseCreator::lambda(
         [promise = std::move(promise),
-         keep](td::Result<std::pair<std::unique_ptr<ton::http::HttpResponse>, std::shared_ptr<ton::http::HttpPayload>>>
+         keep](td::Result<std::pair<std::unique_ptr<ion::http::HttpResponse>, std::shared_ptr<ion::http::HttpPayload>>>
                    R) mutable {
           if (R.is_error()) {
             promise.set_error(R.move_as_error());
           } else {
             auto v = R.move_as_ok();
             v.first->set_keep_alive(keep);
-            if (v.second->payload_type() != ton::http::HttpPayload::PayloadType::pt_empty &&
+            if (v.second->payload_type() != ion::http::HttpPayload::PayloadType::pt_empty &&
                 !v.first->found_content_length() && !v.first->found_transfer_encoding()) {
-              v.first->add_header(ton::http::HttpHeader{"Transfer-Encoding", "Chunked"});
+              v.first->add_header(ion::http::HttpHeader{"Transfer-Encoding", "Chunked"});
             }
             promise.set_value(std::move(v));
           }
         });
     if (ready_) {
-      td::actor::send_closure(client_, &ton::http::HttpClient::send_request, std::move(request), std::move(payload),
+      td::actor::send_closure(client_, &ion::http::HttpClient::send_request, std::move(request), std::move(payload),
                               td::Timestamp::in(3.0), std::move(P));
       close_at_ = td::Timestamp::in(60.0);
     } else {
@@ -127,7 +127,7 @@ class HttpRemote : public td::actor::Actor {
   bool ready_ = false;
   td::Timestamp fail_at_;
   td::Timestamp close_at_;
-  td::actor::ActorOwn<ton::http::HttpClient> client_;
+  td::actor::ActorOwn<ion::http::HttpClient> client_;
 
   std::list<Query> list_;
 
@@ -153,13 +153,13 @@ class HttpProxy : public td::actor::Actor {
       std::_Exit(2);
     }
 
-    class Cb : public ton::http::HttpServer::Callback {
+    class Cb : public ion::http::HttpServer::Callback {
      public:
       Cb(td::actor::ActorId<HttpProxy> proxy) : proxy_(proxy) {
       }
       void receive_request(
-          std::unique_ptr<ton::http::HttpRequest> request, std::shared_ptr<ton::http::HttpPayload> payload,
-          td::Promise<std::pair<std::unique_ptr<ton::http::HttpResponse>, std::shared_ptr<ton::http::HttpPayload>>>
+          std::unique_ptr<ion::http::HttpRequest> request, std::shared_ptr<ion::http::HttpPayload> payload,
+          td::Promise<std::pair<std::unique_ptr<ion::http::HttpResponse>, std::shared_ptr<ion::http::HttpPayload>>>
               promise) override {
         td::actor::send_closure(proxy_, &HttpProxy::receive_request, std::move(request), std::move(payload),
                                 std::move(promise));
@@ -169,12 +169,12 @@ class HttpProxy : public td::actor::Actor {
       td::actor::ActorId<HttpProxy> proxy_;
     };
 
-    server_ = ton::http::HttpServer::create(port_, std::make_shared<Cb>(actor_id(this)));
+    server_ = ion::http::HttpServer::create(port_, std::make_shared<Cb>(actor_id(this)));
   }
 
   void receive_request(
-      std::unique_ptr<ton::http::HttpRequest> request, std::shared_ptr<ton::http::HttpPayload> payload,
-      td::Promise<std::pair<std::unique_ptr<ton::http::HttpResponse>, std::shared_ptr<ton::http::HttpPayload>>>
+      std::unique_ptr<ion::http::HttpRequest> request, std::shared_ptr<ion::http::HttpPayload> payload,
+      td::Promise<std::pair<std::unique_ptr<ion::http::HttpResponse>, std::shared_ptr<ion::http::HttpPayload>>>
           promise) {
     auto host = request->host();
     if (host.size() == 0) {
@@ -224,7 +224,7 @@ class HttpProxy : public td::actor::Actor {
  private:
   td::uint16 port_;
 
-  td::actor::ActorOwn<ton::http::HttpServer> server_;
+  td::actor::ActorOwn<ion::http::HttpServer> server_;
   std::map<std::string, td::actor::ActorOwn<HttpRemote>> clients_;
 };
 

@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -111,13 +111,13 @@ td::Status save_binary_file(std::string filename, const td::BufferSlice& data, u
 }
 
 FileHash compute_file_hash(const td::BufferSlice& data) {
-  ton::Bits256 data_hash;
+  ion::Bits256 data_hash;
   td::sha256(data, td::MutableSlice{data_hash.data(), 32});
   return data_hash;
 }
 
 FileHash compute_file_hash(td::Slice data) {
-  ton::Bits256 data_hash;
+  ion::Bits256 data_hash;
   td::sha256(data, td::MutableSlice{data_hash.data(), 32});
   return data_hash;
 }
@@ -484,11 +484,11 @@ int BlockBinlogCallback::replay(const log::SetZeroState& lev, unsigned long long
   // LOG(DEBUG) << "db.zstate_rhash = " << db.zstate_rhash.to_hex();
   if (db.zstate_rhash != td::ConstBitPtr{lev.root_hash}) {
     throw BinlogBuffer::InterpretError{std::string{"SetZeroState: zerostate root hash mismatch: in binlog "} +
-                                       ton::Bits256{lev.root_hash}.to_hex() + ", required " + db.zstate_rhash.to_hex()};
+                                       ion::Bits256{lev.root_hash}.to_hex() + ", required " + db.zstate_rhash.to_hex()};
   }
   db.zerostate = td::Ref<FileInfo>{true,
                                    FileType::state,
-                                   ton::BlockId{ton::masterchainId, 1ULL << 63, 0},
+                                   ion::BlockId{ion::masterchainId, 1ULL << 63, 0},
                                    0,
                                    td::as<FileHash>(lev.file_hash),
                                    td::as<RootHash>(lev.root_hash),
@@ -498,10 +498,10 @@ int BlockBinlogCallback::replay(const log::SetZeroState& lev, unsigned long long
 
 int BlockBinlogCallback::replay(const log::NewBlock& lev, unsigned long long log_pos) const {
   LOG(DEBUG) << "in replay(NewBlock)";
-  if (!lev.seqno || lev.workchain == ton::workchainInvalid) {
+  if (!lev.seqno || lev.workchain == ion::workchainInvalid) {
     return -1;
   }
-  ton::BlockId blkid{lev.workchain, lev.shard, lev.seqno};
+  ion::BlockId blkid{lev.workchain, lev.shard, lev.seqno};
   auto blk_info = td::Ref<FileInfo>{true,
                                     FileType::block,
                                     blkid,
@@ -520,10 +520,10 @@ int BlockBinlogCallback::replay(const log::NewBlock& lev, unsigned long long log
 
 int BlockBinlogCallback::replay(const log::NewState& lev, unsigned long long log_pos) const {
   LOG(DEBUG) << "in replay(NewState)";
-  if (!lev.seqno || lev.workchain == ton::workchainInvalid) {
+  if (!lev.seqno || lev.workchain == ion::workchainInvalid) {
     return -1;
   }
-  ton::BlockId id{lev.workchain, lev.shard, lev.seqno};
+  ion::BlockId id{lev.workchain, lev.shard, lev.seqno};
   auto state_info = td::Ref<FileInfo>{true,
                                       FileType::state,
                                       id,
@@ -582,24 +582,24 @@ td::Status BlockDbImpl::update_state_info(Ref<FileInfo> state) {
   }
 }
 
-void BlockDbImpl::get_top_block_id(ton::ShardIdFull shard, int authority, td::Promise<ton::BlockIdExt> promise) {
+void BlockDbImpl::get_top_block_id(ion::ShardIdFull shard, int authority, td::Promise<ion::BlockIdExt> promise) {
   LOG(DEBUG) << "in BlockDb::get_top_block_id()";
-  auto it = block_info.upper_bound(ton::BlockId{shard, std::numeric_limits<td::uint32>::max()});
-  if (it != block_info.begin() && ton::ShardIdFull{(--it)->first} == shard) {
+  auto it = block_info.upper_bound(ion::BlockId{shard, std::numeric_limits<td::uint32>::max()});
+  if (it != block_info.begin() && ion::ShardIdFull{(--it)->first} == shard) {
     promise(it->second->blk);
     return;
   }
   if (shard.is_masterchain()) {
-    promise(ton::BlockIdExt{ton::BlockId{ton::masterchainId, 1ULL << 63, 0}});
+    promise(ion::BlockIdExt{ion::BlockId{ion::masterchainId, 1ULL << 63, 0}});
     return;
   }
   promise(td::Status::Error(-666));
 }
 
-void BlockDbImpl::get_top_block_state_id(ton::ShardIdFull shard, int authority, td::Promise<ton::BlockIdExt> promise) {
+void BlockDbImpl::get_top_block_state_id(ion::ShardIdFull shard, int authority, td::Promise<ion::BlockIdExt> promise) {
   LOG(DEBUG) << "in BlockDb::get_top_block_state_id()";
-  auto it = state_info.upper_bound(ton::BlockId{shard, std::numeric_limits<td::uint32>::max()});
-  if (it != state_info.begin() && ton::ShardIdFull{(--it)->first} == shard) {
+  auto it = state_info.upper_bound(ion::BlockId{shard, std::numeric_limits<td::uint32>::max()});
+  if (it != state_info.begin() && ion::ShardIdFull{(--it)->first} == shard) {
     promise(it->second->blk);
     return;
   }
@@ -610,7 +610,7 @@ void BlockDbImpl::get_top_block_state_id(ton::ShardIdFull shard, int authority, 
   promise(td::Status::Error(-666, "no state for given workchain found in database"));
 }
 
-void BlockDbImpl::get_block_by_id(ton::BlockId blk_id, bool need_data, td::Promise<td::Ref<FileInfo>> promise) {
+void BlockDbImpl::get_block_by_id(ion::BlockId blk_id, bool need_data, td::Promise<td::Ref<FileInfo>> promise) {
   LOG(DEBUG) << "in BlockDb::get_block_by_id({" << blk_id.workchain << ", " << blk_id.shard << ", " << blk_id.seqno
              << "}, " << need_data << ")";
   auto it = block_info.find(blk_id);
@@ -629,7 +629,7 @@ void BlockDbImpl::get_block_by_id(ton::BlockId blk_id, bool need_data, td::Promi
   promise(td::Status::Error(-666, "block not found in database"));
 }
 
-void BlockDbImpl::get_state_by_id(ton::BlockId blk_id, bool need_data, td::Promise<td::Ref<FileInfo>> promise) {
+void BlockDbImpl::get_state_by_id(ion::BlockId blk_id, bool need_data, td::Promise<td::Ref<FileInfo>> promise) {
   LOG(DEBUG) << "in BlockDb::get_state_by_id({" << blk_id.workchain << ", " << blk_id.shard << ", " << blk_id.seqno
              << "}, " << need_data << ")";
   auto it = state_info.find(blk_id);
@@ -661,7 +661,7 @@ void BlockDbImpl::get_state_by_id(ton::BlockId blk_id, bool need_data, td::Promi
   promise(td::Status::Error(-666, "requested state not found in database"));
 }
 
-void BlockDbImpl::get_out_queue_info_by_id(ton::BlockId blk_id, td::Promise<td::Ref<OutputQueueInfoDescr>> promise) {
+void BlockDbImpl::get_out_queue_info_by_id(ion::BlockId blk_id, td::Promise<td::Ref<OutputQueueInfoDescr>> promise) {
   LOG(DEBUG) << "in BlockDb::get_out_queue_info_by_id({" << blk_id.workchain << ", " << blk_id.shard << ", "
              << blk_id.seqno << ")";
   auto it = state_info.find(blk_id);
@@ -755,7 +755,7 @@ void BlockDbImpl::get_object_by_root_hash(RootHash root_hash, bool need_data, bo
   promise(td::Status::Error(-666));
 }
 
-void BlockDbImpl::save_new_block(ton::BlockIdExt id, td::BufferSlice data, int authority,
+void BlockDbImpl::save_new_block(ion::BlockIdExt id, td::BufferSlice data, int authority,
                                  td::Promise<td::Unit> promise) {
   // TODO: add verification that data is a BoC with correct root hash, and that it is a Block corresponding to blk_id
   // ...
@@ -778,7 +778,7 @@ void BlockDbImpl::save_new_block(ton::BlockIdExt id, td::BufferSlice data, int a
   promise(td::Unit{});
 }
 
-void BlockDbImpl::save_new_state(ton::BlockIdExt id, td::BufferSlice data, int authority,
+void BlockDbImpl::save_new_state(ion::BlockIdExt id, td::BufferSlice data, int authority,
                                  td::Promise<td::Unit> promise) {
   // TODO: add verification that data is a BoC with correct root hash, and that it is a Block corresponding to blk_id
   // ...

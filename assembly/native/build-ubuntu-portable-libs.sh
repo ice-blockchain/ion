@@ -129,7 +129,7 @@ cmake -GNinja .. \
 -DLZ4_LIBRARIES=$lz4Path/lib/liblz4.a
 
 
-test $? -eq 0 || { echo "Can't configure ton"; exit 1; }
+test $? -eq 0 || { echo "Can't configure ion"; exit 1; }
 
 ninja tonlibjson emulator
 test $? -eq 0 || { echo "Can't compile tonlibjson and emulator"; exit 1; }

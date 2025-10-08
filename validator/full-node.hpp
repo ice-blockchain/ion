@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -20,7 +20,7 @@
 
 #include "full-node.h"
 #include "full-node-shard.h"
-//#include "ton-node-slave.h"
+//#include "ion-node-slave.h"
 #include "interfaces/proof.h"
 #include "interfaces/shard.h"
 #include "full-node-private-overlay.hpp"
@@ -31,7 +31,7 @@
 #include <queue>
 #include <token-manager.h>
 
-namespace ton {
+namespace ion {
 
 namespace validator {
 
@@ -51,7 +51,7 @@ class FullNodeImpl : public FullNode {
   void sign_shard_overlay_certificate(ShardIdFull shard_id, PublicKeyHash signed_key, td::uint32 expiry_at,
                                       td::uint32 max_size, td::Promise<td::BufferSlice> promise) override;
   void import_shard_overlay_certificate(ShardIdFull shard_id, PublicKeyHash signed_key,
-                                        std::shared_ptr<ton::overlay::Certificate> cert,
+                                        std::shared_ptr<ion::overlay::Certificate> cert,
                                         td::Promise<td::Unit> promise) override;
 
   void update_adnl_id(adnl::AdnlNodeIdShort adnl_id, td::Promise<td::Unit> promise) override;
@@ -192,4 +192,4 @@ class FullNodeImpl : public FullNode {
 
 }  // namespace validator
 
-}  // namespace ton
+}  // namespace ion

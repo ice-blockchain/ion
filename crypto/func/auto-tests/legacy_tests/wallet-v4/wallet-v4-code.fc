@@ -36,14 +36,14 @@
   var msg = begin_cell();
   if (op == 0x706c7567) { ;; request funds
 
-    (int r_toncoins, cell r_extra) = (in_msg~load_grams(), in_msg~load_dict());
+    (int r_ioncoins, cell r_extra) = (in_msg~load_grams(), in_msg~load_dict());
 
     [int my_balance, _] = get_balance();
-    throw_unless(80, my_balance - msg_value >= r_toncoins);
+    throw_unless(80, my_balance - msg_value >= r_ioncoins);
 
     msg = msg.store_uint(0x18, 6)
              .store_slice(s_addr)
-             .store_grams(r_toncoins)
+             .store_grams(r_ioncoins)
              .store_dict(r_extra)
              .store_uint(0, 4 + 4 + 64 + 32 + 1 + 1)
              .store_uint(0x706c7567 | 0x80000000, 32)

@@ -7,7 +7,7 @@
 #include "td/db/RocksDb.h"
 #include "validator/fabric.h"
 
-namespace ton {
+namespace ion {
 
 namespace validator {
 
@@ -329,4 +329,4 @@ void ArchiveManager::start_up() {
 
 }  // namespace validator
 
-}  // namespace ton
+}  // namespace ion

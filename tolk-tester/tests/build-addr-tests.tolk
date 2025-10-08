@@ -103,9 +103,9 @@ fun test6() {
 }
 
 
-fun manual_buildAddressOfJettonWallet_plain(ownerAddress: address, minterAddress: address, jettonWalletCode: cell): builder {
+fun manual_buildAddressOfJetionWallet_plain(ownerAddress: address, minterAddress: address, jetionWalletCode: cell): builder {
     val stateInitHash = StateInit.calcHashCodeData(
-        jettonWalletCode,
+        jetionWalletCode,
         WalletStorage.generateEmptyData(ownerAddress, minterAddress)
     );
     return beginCell()
@@ -114,10 +114,10 @@ fun manual_buildAddressOfJettonWallet_plain(ownerAddress: address, minterAddress
         .storeUint(stateInitHash, 256)
 }
 
-fun manual_buildAddressOfJettonWallet_sharded(ownerAddress: address, minterAddress: address, jettonWalletCode: cell): builder {
+fun manual_buildAddressOfJetionWallet_sharded(ownerAddress: address, minterAddress: address, jetionWalletCode: cell): builder {
     val stateInitHash = StateInit.calcHashPrefixCodeData(
         SHARD_DEPTH,
-        jettonWalletCode,
+        jetionWalletCode,
         WalletStorage.generateEmptyData(ownerAddress, minterAddress)
     );
     var mask = stateInitHash & ((1 << (256 - SHARD_DEPTH)) - 1);
@@ -129,19 +129,19 @@ fun manual_buildAddressOfJettonWallet_sharded(ownerAddress: address, minterAddre
         .storeUint( mask, 256 - SHARD_DEPTH);
 }
 
-fun address.manual_isAddressOfJettonWallet_plain(self, ownerAddress: address, minterAddress: address, jettonWalletCode: cell) {
+fun address.manual_isAddressOfJetionWallet_plain(self, ownerAddress: address, minterAddress: address, jetionWalletCode: cell) {
     val stateInitHash = StateInit.calcHashCodeData(
-        jettonWalletCode,
+        jetionWalletCode,
         WalletStorage.generateEmptyData(ownerAddress, minterAddress)
     );
     val (wc, hash) = self.getWorkchainAndHash();
     return (stateInitHash == hash) & (BASECHAIN == wc);
 }
 
-fun address.manual_isAddressOfJettonWallet_sharded(self, ownerAddress: address, minterAddress: address, jettonWalletCode: cell) {
+fun address.manual_isAddressOfJetionWallet_sharded(self, ownerAddress: address, minterAddress: address, jetionWalletCode: cell) {
     var stateInitHash = StateInit.calcHashPrefixCodeData(
         SHARD_DEPTH,
-        jettonWalletCode,
+        jetionWalletCode,
         WalletStorage.generateEmptyData(ownerAddress, minterAddress)
     );
     val mask = (1 << (256 - SHARD_DEPTH)) - 1;
@@ -157,7 +157,7 @@ fun test10() {
     val ownerAddress = address("EQDKbjIcfM6ezt8KjKJJLshZJJSqX7XOA4ff-W72r5gqPrHF");
     val minterAddress = getMyAddressDev();
 
-    val b1 = manual_buildAddressOfJettonWallet_plain(ownerAddress, minterAddress, jwCode);
+    val b1 = manual_buildAddressOfJetionWallet_plain(ownerAddress, minterAddress, jwCode);
     val si2: AutoDeployAddress = {
         stateInit: { code: jwCode, data: WalletStorage.generateEmptyData(ownerAddress, minterAddress) }
     };
@@ -165,7 +165,7 @@ fun test10() {
     assert (b1.endCell().hash() == b2.endCell().hash()) throw 123;
 
     val checkedAddr = b1.endCell().beginParse() as address;
-    assert (checkedAddr.manual_isAddressOfJettonWallet_plain(ownerAddress, minterAddress, jwCode)) throw 123;
+    assert (checkedAddr.manual_isAddressOfJetionWallet_plain(ownerAddress, minterAddress, jwCode)) throw 123;
     assert (si2.addressMatches(checkedAddr)) throw 123;
 
     return (
@@ -183,7 +183,7 @@ fun test11() {
     val ownerAddress = address("EQDKbjIcfM6ezt8KjKJJLshZJJSqX7XOA4ff-W72r5gqPrHF");
     val minterAddress = getMyAddressDev();
 
-    val b1 = manual_buildAddressOfJettonWallet_sharded(ownerAddress, minterAddress, jwCode);
+    val b1 = manual_buildAddressOfJetionWallet_sharded(ownerAddress, minterAddress, jwCode);
     val si2: AutoDeployAddress = {
         stateInit: { code: jwCode, data: WalletStorage.generateEmptyData(ownerAddress, minterAddress) },
         toShard: { fixedPrefixLength: SHARD_DEPTH, closeTo: ownerAddress }
@@ -192,7 +192,7 @@ fun test11() {
     assert (b1.endCell().hash() == b2.endCell().hash()) throw 123;
 
     val checkedAddr = b1.endCell().beginParse() as address;
-    assert (checkedAddr.manual_isAddressOfJettonWallet_sharded(ownerAddress, minterAddress, jwCode)) throw 123;
+    assert (checkedAddr.manual_isAddressOfJetionWallet_sharded(ownerAddress, minterAddress, jwCode)) throw 123;
     assert (si2.addressMatches(checkedAddr)) throw 123;
 
     return (

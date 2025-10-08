@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "queue-size-counter.hpp"
 #include "block/block-auto.h"
@@ -21,7 +21,7 @@
 #include "td/actor/MultiPromise.h"
 #include "td/utils/Random.h"
 
-namespace ton::validator {
+namespace ion::validator {
 
 static td::Result<td::uint64> calc_queue_size(const td::Ref<ShardState> &state) {
   td::uint64 size = 0;
@@ -92,7 +92,7 @@ void QueueSizeCounter::get_queue_size(BlockIdExt block_id, td::Promise<td::uint6
   get_queue_size_ex(block_id, simple_mode_ || is_block_too_old(block_id), std::move(promise));
 }
 
-void QueueSizeCounter::get_queue_size_ex(ton::BlockIdExt block_id, bool calc_whole, td::Promise<td::uint64> promise) {
+void QueueSizeCounter::get_queue_size_ex(ion::BlockIdExt block_id, bool calc_whole, td::Promise<td::uint64> promise) {
   Entry &entry = results_[block_id];
   if (entry.done_) {
     promise.set_result(entry.queue_size_);
@@ -188,7 +188,7 @@ void QueueSizeCounter::get_queue_size_cont2(td::Ref<ShardState> state, td::Ref<S
   entry.promises_.clear();
 }
 
-void QueueSizeCounter::on_error(ton::BlockIdExt block_id, td::Status error) {
+void QueueSizeCounter::on_error(ion::BlockIdExt block_id, td::Status error) {
   auto it = results_.find(block_id);
   if (it == results_.end()) {
     return;
@@ -300,4 +300,4 @@ void QueueSizeCounter::alarm() {
   alarm_timestamp() = td::Timestamp::in(td::Random::fast(20.0, 40.0));
 }
 
-}  // namespace ton::validator
+}  // namespace ion::validator

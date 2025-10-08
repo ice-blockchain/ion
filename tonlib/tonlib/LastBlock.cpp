@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -21,7 +21,7 @@
 
 #include "tonlib/utils.h"
 
-#include "ton/lite-tl.hpp"
+#include "ion/lite-tl.hpp"
 
 #include "lite-client/lite-client-common.h"
 
@@ -83,14 +83,14 @@ void LastBlock::sync_loop() {
   }
 
   update_zero_state(state_.zero_state_id, "cache");
-  update_zero_state(ton::ZeroStateIdExt(config_.zero_state_id.id.workchain, config_.zero_state_id.root_hash,
+  update_zero_state(ion::ZeroStateIdExt(config_.zero_state_id.id.workchain, config_.zero_state_id.root_hash,
                                         config_.zero_state_id.file_hash),
                     "config");
 
   if (get_mc_info_state_ == QueryState::Empty) {
     VLOG(last_block) << "get_masterchain_info: start";
     get_mc_info_state_ = QueryState::Active;
-    client_.send_query(ton::lite_api::liteServer_getMasterchainInfo(),
+    client_.send_query(ion::lite_api::liteServer_getMasterchainInfo(),
                        [this](auto r_info) { this->on_masterchain_info(std::move(r_info)); });
   }
 
@@ -132,24 +132,24 @@ void LastBlock::do_get_last_block() {
   VLOG(last_block) << "get_last_block: continue " << state_.last_key_block_id.to_str() << " -> ?";
   get_last_block_stats_.queries_++;
   client_.send_query(
-      ton::lite_api::liteServer_getBlockProof(0, create_tl_lite_block_id(state_.last_key_block_id), nullptr),
+      ion::lite_api::liteServer_getBlockProof(0, create_tl_lite_block_id(state_.last_key_block_id), nullptr),
       [this, from = state_.last_key_block_id](auto r_block_proof) {
         this->on_block_proof(from, std::move(r_block_proof));
       });
 }
 
-void LastBlock::do_check_init_block(ton::BlockIdExt from, ton::BlockIdExt to) {
+void LastBlock::do_check_init_block(ion::BlockIdExt from, ion::BlockIdExt to) {
   VLOG(last_block) << "check_init_block: continue " << from.to_str() << " -> " << to.to_str();
   //liteServer.getBlockProof mode:# known_block:tonNode.blockIdExt target_block:mode.0?tonNode.blockIdExt = liteServer.PartialBlockProof;
   check_init_block_stats_.queries_++;
   client_.send_query(
-      ton::lite_api::liteServer_getBlockProof(1, create_tl_lite_block_id(from), create_tl_lite_block_id(to)),
+      ion::lite_api::liteServer_getBlockProof(1, create_tl_lite_block_id(from), create_tl_lite_block_id(to)),
       [this, from, to](auto r_block_proof) { this->on_init_block_proof(from, to, std::move(r_block_proof)); });
 }
 
 td::Result<std::unique_ptr<block::BlockProofChain>> LastBlock::process_block_proof(
-    ton::BlockIdExt from,
-    td::Result<ton::ton_api::object_ptr<ton::lite_api::liteServer_partialBlockProof>> r_block_proof) {
+    ion::BlockIdExt from,
+    td::Result<ion::ton_api::object_ptr<ion::lite_api::liteServer_partialBlockProof>> r_block_proof) {
   TRY_RESULT(block_proof, std::move(r_block_proof));  //TODO: it is fatal?
   TRY_RESULT_PREFIX(chain, TRY_VM(process_block_proof(from, std::move(block_proof))),
                     TonlibError::ValidateBlockProof());
@@ -157,7 +157,7 @@ td::Result<std::unique_ptr<block::BlockProofChain>> LastBlock::process_block_pro
 }
 
 td::Result<std::unique_ptr<block::BlockProofChain>> LastBlock::process_block_proof(
-    ton::BlockIdExt from, ton::ton_api::object_ptr<ton::lite_api::liteServer_partialBlockProof> block_proof) {
+    ion::BlockIdExt from, ion::ton_api::object_ptr<ion::lite_api::liteServer_partialBlockProof> block_proof) {
   VLOG(last_block) << "Got proof FROM\n" << to_string(block_proof->from_) << "TO\n" << to_string(block_proof->to_);
   TRY_RESULT(chain, liteclient::deserialize_proof_chain(std::move(block_proof)));
   if (chain->from != from) {
@@ -194,8 +194,8 @@ void LastBlock::save_state() {
 }
 
 void LastBlock::on_block_proof(
-    ton::BlockIdExt from,
-    td::Result<ton::ton_api::object_ptr<ton::lite_api::liteServer_partialBlockProof>> r_block_proof) {
+    ion::BlockIdExt from,
+    td::Result<ion::ton_api::object_ptr<ion::lite_api::liteServer_partialBlockProof>> r_block_proof) {
   get_last_block_stats_.validate_.resume();
   auto r_chain = process_block_proof(from, std::move(r_block_proof));
   get_last_block_stats_.validate_.pause();
@@ -219,8 +219,8 @@ void LastBlock::on_block_proof(
 }
 
 void LastBlock::on_init_block_proof(
-    ton::BlockIdExt from, ton::BlockIdExt to,
-    td::Result<ton::ton_api::object_ptr<ton::lite_api::liteServer_partialBlockProof>> r_block_proof) {
+    ion::BlockIdExt from, ion::BlockIdExt to,
+    td::Result<ion::ton_api::object_ptr<ion::lite_api::liteServer_partialBlockProof>> r_block_proof) {
   check_init_block_stats_.validate_.resume();
   auto r_chain = process_block_proof(from, std::move(r_block_proof));
   check_init_block_stats_.validate_.pause();
@@ -247,7 +247,7 @@ void LastBlock::on_init_block_proof(
 }
 
 void LastBlock::on_masterchain_info(
-    td::Result<ton::ton_api::object_ptr<ton::lite_api::liteServer_masterchainInfo>> r_info) {
+    td::Result<ion::ton_api::object_ptr<ion::lite_api::liteServer_masterchainInfo>> r_info) {
   if (r_info.is_ok()) {
     auto info = r_info.move_as_ok();
     update_zero_state(create_zero_state_id(info->init_), "masterchain info");
@@ -264,7 +264,7 @@ void LastBlock::on_masterchain_info(
   sync_loop();
 }
 
-void LastBlock::update_zero_state(ton::ZeroStateIdExt zero_state_id, td::Slice source) {
+void LastBlock::update_zero_state(ion::ZeroStateIdExt zero_state_id, td::Slice source) {
   if (has_fatal_error()) {
     return;
   }
@@ -288,7 +288,7 @@ void LastBlock::update_zero_state(ton::ZeroStateIdExt zero_state_id, td::Slice s
                                                          << zero_state_id.to_str() << " from " << source));
 }
 
-bool LastBlock::update_mc_last_block(ton::BlockIdExt mc_block_id) {
+bool LastBlock::update_mc_last_block(ion::BlockIdExt mc_block_id) {
   if (has_fatal_error()) {
     return false;
   }
@@ -304,7 +304,7 @@ bool LastBlock::update_mc_last_block(ton::BlockIdExt mc_block_id) {
   return false;
 }
 
-bool LastBlock::update_mc_last_key_block(ton::BlockIdExt mc_key_block_id) {
+bool LastBlock::update_mc_last_key_block(ion::BlockIdExt mc_key_block_id) {
   if (has_fatal_error()) {
     return false;
   }
@@ -335,7 +335,7 @@ bool LastBlock::update_mc_last_key_block(ton::BlockIdExt mc_key_block_id) {
   return false;
 }
 
-bool LastBlock::update_init_block(ton::BlockIdExt init_block_id) {
+bool LastBlock::update_init_block(ion::BlockIdExt init_block_id) {
   if (has_fatal_error()) {
     return false;
   }

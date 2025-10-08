@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "StorageManager.h"
@@ -21,7 +21,7 @@
 #include "td/db/RocksDb.h"
 #include "td/actor/MultiPromise.h"
 
-namespace ton {
+namespace ion {
 
 static overlay::OverlayIdFull get_overlay_id(td::Bits256 hash) {
   td::BufferSlice hash_str(hash.as_slice());
@@ -30,7 +30,7 @@ static overlay::OverlayIdFull get_overlay_id(td::Bits256 hash) {
 
 StorageManager::StorageManager(adnl::AdnlNodeIdShort local_id, std::string db_root, td::unique_ptr<Callback> callback,
                                bool client_mode, td::actor::ActorId<adnl::Adnl> adnl,
-                               td::actor::ActorId<ton_rldp::Rldp> rldp, td::actor::ActorId<overlay::Overlays> overlays)
+                               td::actor::ActorId<ion_rldp::Rldp> rldp, td::actor::ActorId<overlay::Overlays> overlays)
     : local_id_(local_id)
     , db_root_(std::move(db_root))
     , callback_(std::move(callback))
@@ -388,4 +388,4 @@ void StorageManager::set_upload_speed_limit(double max_speed) {
   db_store_config();
 }
 
-}  // namespace ton
+}  // namespace ion

@@ -44,7 +44,7 @@ struct Parameters<TBody = never, TInit = never> {
 }
 
 fun createParameters<TBody = null, TInit = null>(bounce: bool, body: TBody, data: TInit): Parameters<TBody, TInit> {
-    return { bounce, body, init: { value: ton("0"), data } };
+    return { bounce, body, init: { value: ion("0"), data } };
 }
 
 @noinline
@@ -134,17 +134,17 @@ fun test6() {
     var p: Parameters<int, cell> = {
         bounce: true,
         body: 123,
-        init: { value: ton("0"), data: beginCell().endCell() }
+        init: { value: ion("0"), data: beginCell().endCell() }
     };
     return (p.body is int, p.init is cell, p.init is MyInit, p.init is MyInit && p.init.data.depth() == 0);
 }
 
 @method_id(107)
 fun test7() {
-    __expect_type(Parameters{ bounce: false, body: 123, init: { value: ton("0"), data: beginCell() }}, "Parameters<int, builder>");
+    __expect_type(Parameters{ bounce: false, body: 123, init: { value: ion("0"), data: beginCell() }}, "Parameters<int, builder>");
     var v1 = mySend({ bounce: true });
     var v2 = mySend({ bounce: false, body: 123, init: beginCell() });
-    var v3 = mySend({ bounce: false, body: 123, init: { value: ton("0"), data: beginCell() }});
+    var v3 = mySend({ bounce: false, body: 123, init: { value: ion("0"), data: beginCell() }});
     var v4 = mySend({ bounce: true, init: { value: 16, data: null as [int]? }});
     return (v1, v2, v3, v4);
 }

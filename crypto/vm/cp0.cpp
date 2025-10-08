@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -25,7 +25,7 @@
 #include "contops.h"
 #include "dictops.h"
 #include "debugops.h"
-#include "tonops.h"
+#include "ionops.h"
 
 namespace vm {
 
@@ -39,7 +39,7 @@ const OpcodeTable* init_op_cp0(bool enable_debug) {
     register_cell_ops(*op_cp0);          // cellops.cpp
     register_continuation_ops(*op_cp0);  // contops.cpp
     register_dictionary_ops(*op_cp0);    // dictops.cpp
-    register_ton_ops(*op_cp0);           // tonops.cpp
+    register_ion_ops(*op_cp0);           // ionops.cpp
     register_debug_ops(*op_cp0);         // debugops.cpp
     register_codepage_ops(*op_cp0);      // contops.cpp
     op_cp0->finalize()->register_table(Codepage::test_cp);

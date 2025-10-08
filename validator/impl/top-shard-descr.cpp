@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -28,7 +28,7 @@
 #include "block/block-parse.h"
 #include "block/block-auto.h"
 
-namespace ton {
+namespace ion {
 
 namespace validator {
 using td::Ref;
@@ -313,7 +313,7 @@ td::Result<int> ShardTopBlockDescrQ::validate_internal(BlockIdExt last_mc_block_
       res_flags |= 1;  // permanently invalid
       return td::Status::Error(
           -666, std::string{"ShardTopBlockDescr for "} + block_id_.to_str() +
-                    " is invalid because its chain refers to masterchain blocks with non-monotonic seqno");
+                    " is invalid because its chain refers to masterchain blocks with non-monoionic seqno");
     }
     next_mc_seqno = mcid.id.seqno;
     auto valid =
@@ -348,7 +348,7 @@ td::Result<int> ShardTopBlockDescrQ::validate_internal(BlockIdExt last_mc_block_
     return -1;  // valid, but too new
   }
   auto oldr = oldl;
-  if (ton::shard_is_proper_ancestor(shard(), oldl->shard())) {
+  if (ion::shard_is_proper_ancestor(shard(), oldl->shard())) {
     oldr = config->get_shard_hash(ShardIdFull{block_id_.id.workchain, block_id_.id.shard + 1}, false);
     if (oldr.is_null()) {
       return td::Status::Error(
@@ -363,10 +363,10 @@ td::Result<int> ShardTopBlockDescrQ::validate_internal(BlockIdExt last_mc_block_
                                          oldr->blk_.to_str() +
                                          " but only in the right branch; corresponds to a shardchain fork?");
     }
-    CHECK(ton::shard_is_proper_ancestor(shard(), oldr->shard()));
+    CHECK(ion::shard_is_proper_ancestor(shard(), oldr->shard()));
     CHECK(oldl->shard() < oldr->shard());
   } else {
-    CHECK(ton::shard_is_ancestor(oldl->shard(), shard()));
+    CHECK(ion::shard_is_ancestor(oldl->shard(), shard()));
   }
   if (oldr->seqno() < link_prev_.back().id.seqno) {
     if (mode & Mode::fail_new) {
@@ -581,4 +581,4 @@ void ValidateShardTopBlockDescr::start_up() {
 
 }  // namespace validator
 
-}  // namespace ton
+}  // namespace ion

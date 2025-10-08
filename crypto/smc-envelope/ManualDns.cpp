@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2019-2020 Telegram Systems LLP
 */
@@ -32,7 +32,7 @@
 
 #include "common/util.h"
 
-namespace ton {
+namespace ion {
 td::StringBuilder& operator<<(td::StringBuilder& sb, const ManualDns::EntryData& data) {
   switch (data.type) {
     case ManualDns::EntryData::Type::Empty:
@@ -127,8 +127,8 @@ td::Result<DnsInterface::EntryData> DnsInterface::EntryData::from_cellslice(vm::
     case block::gen::DNSRecord::dns_next_resolver: {
       block::gen::DNSRecord::Record_dns_next_resolver dns;
       tlb::unpack(cs, dns);
-      ton::WorkchainId wc;
-      ton::StdSmcAddress addr;
+      ion::WorkchainId wc;
+      ion::StdSmcAddress addr;
       if (!block::tlb::t_MsgAddressInt.extract_std_address(dns.resolver, wc, addr)) {
         return td::Status::Error("Invalid address");
       }
@@ -142,8 +142,8 @@ td::Result<DnsInterface::EntryData> DnsInterface::EntryData::from_cellslice(vm::
     case block::gen::DNSRecord::dns_smc_address: {
       block::gen::DNSRecord::Record_dns_smc_address dns;
       tlb::unpack(cs, dns);
-      ton::WorkchainId wc;
-      ton::StdSmcAddress addr;
+      ion::WorkchainId wc;
+      ion::StdSmcAddress addr;
       if (!block::tlb::t_MsgAddressInt.extract_std_address(dns.smc_addr, wc, addr)) {
         return td::Status::Error("Invalid address");
       }
@@ -216,7 +216,7 @@ td::Result<std::vector<DnsInterface::Entry>> DnsInterface::resolve(td::Slice nam
 // creation
 td::Ref<ManualDns> ManualDns::create(td::Ref<vm::Cell> data, int revision) {
   return td::Ref<ManualDns>(
-      true, State{ton::SmartContractCode::get_code(ton::SmartContractCode::ManualDns, revision), std::move(data)});
+      true, State{ion::SmartContractCode::get_code(ion::SmartContractCode::ManualDns, revision), std::move(data)});
 }
 
 td::Ref<ManualDns> ManualDns::create(const td::Ed25519::PublicKey& public_key, td::uint32 wallet_id, int revision) {
@@ -224,8 +224,8 @@ td::Ref<ManualDns> ManualDns::create(const td::Ed25519::PublicKey& public_key, t
 }
 
 td::optional<td::int32> ManualDns::guess_revision(const vm::Cell::Hash& code_hash) {
-  for (auto i : ton::SmartContractCode::get_revisions(ton::SmartContractCode::ManualDns)) {
-    if (ton::SmartContractCode::get_code(ton::SmartContractCode::ManualDns, i)->get_hash() == code_hash) {
+  for (auto i : ion::SmartContractCode::get_revisions(ion::SmartContractCode::ManualDns)) {
+    if (ion::SmartContractCode::get_code(ion::SmartContractCode::ManualDns, i)->get_hash() == code_hash) {
       return i;
     }
   }
@@ -234,7 +234,7 @@ td::optional<td::int32> ManualDns::guess_revision(const vm::Cell::Hash& code_has
 td::optional<td::int32> ManualDns::guess_revision(const block::StdAddress& address,
                                                   const td::Ed25519::PublicKey& public_key, td::uint32 wallet_id) {
   for (auto i : {-1, 1}) {
-    auto dns = ton::ManualDns::create(public_key, wallet_id, i);
+    auto dns = ion::ManualDns::create(public_key, wallet_id, i);
     if (dns->get_address() == address) {
       return i;
     }
@@ -549,11 +549,11 @@ std::string DnsInterface::decode_name(td::Slice name) {
 std::string ManualDns::serialize_data(const EntryData& data) {
   std::string res;
   data.data.visit(
-      td::overloaded([&](const ton::ManualDns::EntryDataText& text) { res = "UNSUPPORTED"; },
-                     [&](const ton::ManualDns::EntryDataNextResolver& resolver) { res = "UNSUPPORTED"; },
-                     [&](const ton::ManualDns::EntryDataAdnlAddress& adnl_address) { res = "UNSUPPORTED"; },
-                     [&](const ton::ManualDns::EntryDataSmcAddress& text) { res = "UNSUPPORTED"; },
-                     [&](const ton::ManualDns::EntryDataStorageAddress& storage_address) { res = "UNSUPPORTED"; }));
+      td::overloaded([&](const ion::ManualDns::EntryDataText& text) { res = "UNSUPPORTED"; },
+                     [&](const ion::ManualDns::EntryDataNextResolver& resolver) { res = "UNSUPPORTED"; },
+                     [&](const ion::ManualDns::EntryDataAdnlAddress& adnl_address) { res = "UNSUPPORTED"; },
+                     [&](const ion::ManualDns::EntryDataSmcAddress& text) { res = "UNSUPPORTED"; },
+                     [&](const ion::ManualDns::EntryDataStorageAddress& storage_address) { res = "UNSUPPORTED"; }));
   return res;
 }
 
@@ -631,4 +631,4 @@ td::Result<std::vector<ManualDns::ActionExt>> ManualDns::parse(td::Slice cmd) {
   return res;
 }
 
-}  // namespace ton
+}  // namespace ion

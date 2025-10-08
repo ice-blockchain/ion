@@ -1,18 +1,18 @@
 /* 
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "block-parse.h"
@@ -35,7 +35,7 @@
 const size_t KEY_LEN = 3 + 8 + 256;
 
 void print_help() {
-  std::cerr << "mintless-proof-generator - generates proofs for mintless jettons. Usage:\n\n";
+  std::cerr << "mintless-proof-generator - generates proofs for mintless jetions. Usage:\n\n";
   std::cerr << "mintless-proof-generator generate <input-list> <output-file>\n";
   std::cerr << "  Generate a full tree for <input-list>, save boc to <output-file>.\n";
   std::cerr << "  Input format: each line is <address> <amount> <start_from> <expired_at>.\n\n";
@@ -77,7 +77,7 @@ block::StdAddress key_to_address(const td::BitArray<KEY_LEN> &key) {
   td::ConstBitPtr ptr = key.bits();
   LOG_CHECK(ptr.get_uint(3) == 0b100) << "Invalid address";
   ptr.advance(3);
-  addr.workchain = (ton::WorkchainId)ptr.get_int(8);
+  addr.workchain = (ion::WorkchainId)ptr.get_int(8);
   ptr.advance(8);
   addr.addr = ptr;
   return addr;
@@ -289,7 +289,7 @@ class MakeAllProofsActor : public td::actor::core::Actor {
 
   void run_worker(td::BitArray<KEY_LEN> key, td::uint64 idx) {
     pending_results_[idx] = "";
-    ton::delay_action(
+    ion::delay_action(
         [SelfId = actor_id(this), key, idx, root = dict_.get_root_cell()]() {
           vm::MerkleProofBuilder mpb{root};
           CHECK(vm::Dictionary(mpb.root(), KEY_LEN).lookup(key).not_null());

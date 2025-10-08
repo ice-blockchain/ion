@@ -7,7 +7,7 @@
 }:
 
 pkgs.llvmPackages_14.stdenv.mkDerivation {
-  pname = "ton";
+  pname = "ion";
   version = "dev-bin";
 
   src = ./.;
@@ -36,9 +36,9 @@ pkgs.llvmPackages_14.stdenv.mkDerivation {
   configureFlags = [];
 
   cmakeFlags = [
-    "-DTON_USE_ABSEIL=OFF"
+    "-DION_USE_ABSEIL=OFF"
     "-DNIX=ON"
-    "-DTON_USE_JEMALLOC=ON"
+    "-DION_USE_JEMALLOC=ON"
     "-DCMAKE_CROSSCOMPILING=OFF"
     "-DCMAKE_LINK_SEARCH_START_STATIC=ON"
     "-DCMAKE_LINK_SEARCH_END_STATIC=ON"

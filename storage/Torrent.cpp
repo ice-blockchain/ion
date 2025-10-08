@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -25,7 +25,7 @@
 #include "td/utils/tl_helpers.h"
 #include "td/utils/port/path.h"
 
-namespace ton {
+namespace ion {
 
 td::Result<Torrent> Torrent::open(Options options, td::Bits256 hash) {
   Torrent res(hash);
@@ -481,7 +481,7 @@ TorrentMeta Torrent::get_meta(const GetMetaOptions &options) const {
 Torrent::Torrent(td::Bits256 hash) : hash_(hash), inited_info_(false) {
 }
 
-Torrent::Torrent(Info info, td::optional<TorrentHeader> header, ton::MerkleTree tree, std::vector<ChunkState> chunks,
+Torrent::Torrent(Info info, td::optional<TorrentHeader> header, ion::MerkleTree tree, std::vector<ChunkState> chunks,
                  std::string root_dir)
     : hash_(info.get_hash())
     , inited_info_(true)
@@ -737,4 +737,4 @@ td::Status Torrent::copy_to(const std::string &new_root_dir) {
   return td::Status::OK();
 }
 
-}  // namespace ton
+}  // namespace ion

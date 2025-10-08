@@ -65,11 +65,11 @@ fun tuple.pop<T>(mutate self): T
     Mathematical primitives.
  */
 
-/// Converts a constant floating-point string to nanotoncoins.
-/// Example: `ton("0.05")` is equal to 50000000.
-/// Note, that `ton()` requires a constant string; `ton(some_var)` is an error
+/// Converts a constant floating-point string to nanoioncoins.
+/// Example: `ion("0.05")` is equal to 50000000.
+/// Note, that `ion()` requires a constant string; `ion(some_var)` is an error
 @pure
-fun ton(floatString: slice): coins
+fun ion(floatString: slice): coins
     builtin
 
 /// Computes the minimum of two integers.
@@ -144,14 +144,14 @@ struct contract
 fun contract.getAddress(): address
     asm "MYADDR"
 
-/// Returns the balance (in nanotoncoins) of the smart contract at the start of Computation Phase.
+/// Returns the balance (in nanoioncoins) of the smart contract at the start of Computation Phase.
 /// Note that RAW primitives such as [sendMessage] do not update this field.
 @pure
 fun contract.getOriginalBalance(): coins
     asm "BALANCE" "FIRST"
 
 /// Same as [contract.getOriginalBalance], but returns a tuple:
-/// `int` — balance in nanotoncoins;
+/// `int` — balance in nanoioncoins;
 /// `dict` — a dictionary with 32-bit keys representing the balance of "extra currencies".
 @pure
 fun contract.getOriginalBalanceWithExtraCurrencies(): [coins, dict]
@@ -394,12 +394,12 @@ fun Cell<T>.hash(self): uint256
 /// RemainingBitsAndRefs is a special built-in type to get "all the rest" slice tail on reading.
 /// Example:
 /// ```
-/// struct JettonMessage {
+/// struct JetionMessage {
 ///     ... some fields
 ///     forwardPayload: RemainingBitsAndRefs;
 /// }
 /// ```
-/// When you deserialize JettonMessage, forwardPayload contains "everything left after reading fields above".
+/// When you deserialize JetionMessage, forwardPayload contains "everything left after reading fields above".
 type RemainingBitsAndRefs = slice
 
 /// Creates a cell with zero bits and references.
@@ -628,7 +628,7 @@ fun stringHexToSlice(constStringBytesHex: slice): slice
     builtin
 
 /// Converts a `cell` into a `slice`. Notice that [c] must be either an ordinary cell,
-/// or an exotic cell (see [TVM.pdf](https://ton-blockchain.github.io/docs/tvm.pdf), 3.1.2)
+/// or an exotic cell (see [TVM.pdf](https://ice-blockchain.github.io/docs/tvm.pdf), 3.1.2)
 /// which is automatically loaded to yield an ordinary cell `c'`, converted into a `slice` afterwards.
 @pure
 fun cell.beginParse(self): slice
@@ -940,7 +940,7 @@ fun slice.loadAddress(mutate self): address
     Reserving Toncoins on balance and its flags.
  */
 
-/// mode = 0: Reserve exact amount of nanotoncoins
+/// mode = 0: Reserve exact amount of nanoioncoins
 const RESERVE_MODE_EXACT_AMOUNT = 0
 /// +1: Actually reserves all but amount, meaning `currentContractBalance - amount`
 const RESERVE_MODE_ALL_BUT_AMOUNT = 1
@@ -979,7 +979,7 @@ const SEND_MODE_REGULAR = 0
 const SEND_MODE_PAY_FEES_SEPARATELY = 1
 /// +2 means that any errors arising while processing this message during the action phase should be ignored.
 const SEND_MODE_IGNORE_ERRORS = 2
-/// in the case of action fail - bounce transaction. No effect if SEND_MODE_IGNORE_ERRORS (+2) is used. TVM UPGRADE 2023-07. https://docs.ton.org/learn/tvm-instructions/tvm-upgrade-2023-07#sending-messages
+/// in the case of action fail - bounce transaction. No effect if SEND_MODE_IGNORE_ERRORS (+2) is used. TVM UPGRADE 2023-07. https://docs.ion.org/learn/tvm-instructions/tvm-upgrade-2023-07#sending-messages
 const SEND_MODE_BOUNCE_ON_ACTION_FAIL = 16
 /// mode = 32 means that the current account must be destroyed if its resulting balance is zero.
 const SEND_MODE_DESTROY = 32
@@ -987,7 +987,7 @@ const SEND_MODE_DESTROY = 32
 const SEND_MODE_CARRY_ALL_REMAINING_MESSAGE_VALUE = 64
 /// mode = 128 is used for messages that are to carry all the remaining balance of the current smart contract (instead of the value originally indicated in the message).
 const SEND_MODE_CARRY_ALL_BALANCE = 128
-/// do not create an action, only estimate fee. TVM UPGRADE 2023-07. https://docs.ton.org/learn/tvm-instructions/tvm-upgrade-2023-07#sending-messages
+/// do not create an action, only estimate fee. TVM UPGRADE 2023-07. https://docs.ion.org/learn/tvm-instructions/tvm-upgrade-2023-07#sending-messages
 const SEND_MODE_ESTIMATE_FEE_ONLY = 1024
 /// Other modes affect the fee calculation as follows:
 /// +64 substitutes the entire balance of the incoming message as an outcoming value (slightly inaccurate, gas expenses that cannot be estimated before the computation is completed are not taken into account).
@@ -1017,14 +1017,14 @@ struct AddressShardingOptions {
 ///     dest: {
 ///         workchain: 0,
 ///         stateInit: {
-///             code: jettonWalletCode,
-///             data: jettonWalletEmptyStorage.toCell()
+///             code: jetionWalletCode,
+///             data: jetionWalletEmptyStorage.toCell()
 ///         }
 ///     },
 ///     ...
 /// ```
 /// You just provide code+data, and the compiler automatically calculates the destination address,
-/// because in TON, the address of a contract, by definition, is a hash of its initial state.
+/// because in ION, the address of a contract, by definition, is a hash of its initial state.
 /// You can also use it without sending a message. See [buildAddress] and [addressMatches].
 struct AutoDeployAddress {
     workchain: int8 = BASECHAIN
@@ -1033,12 +1033,12 @@ struct AutoDeployAddress {
 }
 
 /// Constructs an address that a deployed contract will have.
-/// For example, from a jetton minter, you want to calculate an address of a jetton wallet:
+/// For example, from a jetion minter, you want to calculate an address of a jetion wallet:
 /// ```
-/// val jwDeployed = calcDeployedJettonWallet(...);
+/// val jwDeployed = calcDeployedJetionWallet(...);
 /// val jwAddrBuilt = jwDeployed.buildAddress();
 /// ```
-/// Just instead of `dest` for [createMessage], you use it is to calculate a jetton/nft address.
+/// Just instead of `dest` for [createMessage], you use it is to calculate a jetion/nft address.
 /// Note: returns `builder`, not `address`! It's cheap.
 /// If you really need `address`, use `address.fromValidBuilder(res)`.
 @pure
@@ -1046,12 +1046,12 @@ fun AutoDeployAddress.buildAddress(self): builder
     builtin
 
 /// Checks that an address matches a deployed contract.
-/// For example, from a jetton minter, you're checking whether a message is from a jetton wallet:
+/// For example, from a jetion minter, you're checking whether a message is from a jetion wallet:
 /// ```
-/// val jwDeployed = calcDeployedJettonWallet(...);
+/// val jwDeployed = calcDeployedJetionWallet(...);
 /// val fromJW = jwDeployed.addressMatches(senderAddress);
 /// ```
-/// Just instead of `dest` for [createMessage], you use it is to check whether a sender is a jetton/nft.
+/// Just instead of `dest` for [createMessage], you use it is to check whether a sender is a jetion/nft.
 @pure
 fun AutoDeployAddress.addressMatches(self, addr: address): bool
     builtin
@@ -1061,7 +1061,7 @@ fun AutoDeployAddress.addressMatches(self, addr: address): bool
 struct CreateMessageOptions<TBody = never> {
     /// whether a message will bounce back on error
     bounce: bool
-    /// message value: attached tons (or tons + extra currencies)
+    /// message value: attached ions (or ions + extra currencies)
     value: coins | (coins, ExtraCurrenciesDict)
     /// destination is either a provided address, or is auto-calculated by stateInit
     dest: address               // either just send a message to some address
@@ -1078,7 +1078,7 @@ struct CreateMessageOptions<TBody = never> {
 /// ```
 /// val reply = createMessage({
 ///     bounce: false,
-///     value: ton("0.05"),
+///     value: ion("0.05"),
 ///     dest: senderAddress,
 ///     body: RequestedInfo { ... }        // note: no `toCell`! just pass an object
 /// });
@@ -1311,7 +1311,7 @@ fun sendRawMessage(msg: cell, mode: int): void
 /// ```
 struct InMessage {
     senderAddress: address          // an internal address from which the message arrived
-    valueCoins: coins               // ton amount attached to an incoming message
+    valueCoins: coins               // ion amount attached to an incoming message
     valueExtra: dict                // extra currencies attached to an incoming message
     originalForwardFee: coins       // fee that was paid by the sender
     createdLt: uint64               // logical time when a message was created
@@ -1331,7 +1331,7 @@ struct InMessage {
 /// ```
 struct InMessageBounced {
     senderAddress: address          // an internal address from which the message was bounced
-    valueCoins: coins               // ton amount attached to a message
+    valueCoins: coins               // ion amount attached to a message
     valueExtra: dict                // extra currencies attached to a message
     originalForwardFee: coins       // comission that the sender has payed to send this message
     createdLt: uint64               // logical time when a message was created (and bounced)

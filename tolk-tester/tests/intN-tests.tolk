@@ -7,8 +7,8 @@ const someN_u128: uint128 = 128;
 const someN_i32: int32 = 20 + (12 as int32) * (1 as uint8);
 const someN_coins = 10 as coins;
 
-const cost1 = ton("1.234");
-const cost2 = ton("0.05") + ton("0.001");
+const cost1 = ion("1.234");
+const cost2 = ion("0.05") + ion("0.001");
 
 fun rand(): uint256 { return random.uint256(); }
 
@@ -183,27 +183,27 @@ fun test9(c: coins, i: int8) {
 
 @method_id(110)
 fun test10() {
-    return (ton("0.05"), ton("0.05") + 100, cost1, cost2);
+    return (ion("0.05"), ion("0.05") + 100, cost1, cost2);
 }
 
 @method_id(111)
 fun test11() {
-    __expect_type(ton("0"), "coins");
-    __expect_type(ton("0") + ton("0"), "coins");
-    __expect_type(ton("0") * 20, "int");
+    __expect_type(ion("0"), "coins");
+    __expect_type(ion("0") + ion("0"), "coins");
+    __expect_type(ion("0") * 20, "int");
     return [
-        ton("1"),
-        ton("1.0"),
-        ton("1.00000"),
-        ton("-321.123456789"),
-        ton("+321.123456789876"),
-        ton("0001.1000")
+        ion("1"),
+        ion("1.0"),
+        ion("1.00000"),
+        ion("-321.123456789"),
+        ion("+321.123456789876"),
+        ion("0001.1000")
     ];
 }
 
 fun test12() {
-    var a = ton("1") + ton("2");    // check absence in fif codegen
-    return ton("0.1");
+    var a = ion("1") + ion("2");    // check absence in fif codegen
+    return ion("0.1");
 }
 
 fun test13(x1: int?, x2: int8?, x3: int, x4: int8): (int8?, int8?, int8?, int8?, int32?, int32?) {

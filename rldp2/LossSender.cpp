@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -21,13 +21,13 @@
 
 #include "td/utils/logging.h"
 
-#if TON_HAVE_GSL
+#if ION_HAVE_GSL
 #include <gsl/gsl_cdf.h>
 #endif
 
 #include <cmath>
 
-namespace ton {
+namespace ion {
 namespace rldp2 {
 namespace {
 // works for 1e-x, where x in {1..10}
@@ -96,7 +96,7 @@ int LossSender::send_n_approx_norm(int n) {
 }
 
 int LossSender::send_n_approx_nbd(int n) {
-#if TON_HAVE_GSL
+#if ION_HAVE_GSL
   auto mean = n * loss_ / (1 - loss_);
   auto var = sqrt(mean / (1 - loss_));
   auto min_k = static_cast<int>(mean + var);
@@ -115,7 +115,7 @@ int LossSender::send_n_approx_nbd(int n) {
 }
 
 int LossSender::send_n_approx_pd(int n) {
-#if TON_HAVE_GSL
+#if ION_HAVE_GSL
   for (int k = 0;; k++) {
     if (gsl_cdf_poisson_P(k, (n + k) * loss_) > 1 - p_) {
       return k + n;
@@ -125,7 +125,7 @@ int LossSender::send_n_approx_pd(int n) {
   return send_n_approx_norm(n);
 }
 bool LossSender::has_good_approx() {
-#if TON_HAVE_GSL
+#if ION_HAVE_GSL
   return true;
 #else
   return false;
@@ -151,4 +151,4 @@ void LossSender::step() {
 }
 
 }  // namespace rldp2
-}  // namespace ton
+}  // namespace ion

@@ -2,7 +2,7 @@
 
 #include "td/actor/actor.h"
 #include "td/utils/buffer.h"
-#include "ton/ton-types.h"
+#include "ion/ion-types.h"
 #include "td/utils/port/FileFd.h"
 #include "package.hpp"
 #include "filedb.hpp"
@@ -11,7 +11,7 @@
 #include <map>
 #include <list>
 
-namespace ton {
+namespace ion {
 
 namespace validator {
 
@@ -94,4 +94,4 @@ class ArchiveManager : public td::actor::Actor {
 
 }  // namespace validator
 
-}  // namespace ton
+}  // namespace ion

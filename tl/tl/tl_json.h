@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -79,7 +79,7 @@ inline void to_json(JsonValueScope &jv, const td::BitArray<size> &vec) {
 }
 
 template <class T>
-void to_json(JsonValueScope &jv, const ton::tl_object_ptr<T> &value) {
+void to_json(JsonValueScope &jv, const ion::tl_object_ptr<T> &value) {
   if (value) {
     to_json(jv, *value);
   } else {
@@ -255,7 +255,7 @@ class DowncastHelper : public T {
 };
 
 template <class T>
-std::enable_if_t<!std::is_constructible<T>::value, Status> from_json(ton::tl_object_ptr<T> &to, JsonValue from) {
+std::enable_if_t<!std::is_constructible<T>::value, Status> from_json(ion::tl_object_ptr<T> &to, JsonValue from) {
   if (from.type() != JsonValue::Type::Object) {
     if (from.type() == JsonValue::Type::Null) {
       to = nullptr;
@@ -291,7 +291,7 @@ std::enable_if_t<!std::is_constructible<T>::value, Status> from_json(ton::tl_obj
 }
 
 template <class T>
-std::enable_if_t<std::is_constructible<T>::value, Status> from_json(ton::tl_object_ptr<T> &to, JsonValue from) {
+std::enable_if_t<std::is_constructible<T>::value, Status> from_json(ion::tl_object_ptr<T> &to, JsonValue from) {
   if (from.type() != JsonValue::Type::Object) {
     if (from.type() == JsonValue::Type::Null) {
       to = nullptr;
@@ -299,7 +299,7 @@ std::enable_if_t<std::is_constructible<T>::value, Status> from_json(ton::tl_obje
     }
     return Status::Error(PSLICE() << "Expected object, got " << from.type());
   }
-  to = ton::create_tl_object<T>();
+  to = ion::create_tl_object<T>();
   return from_json(*to, from.get_object());
 }
 

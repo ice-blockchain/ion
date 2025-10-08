@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -26,7 +26,7 @@
 
 #include <limits>
 
-namespace ton {
+namespace ion {
 td::Ref<vm::Cell> Wallet::get_init_state(const td::Ed25519::PublicKey& public_key, td::int32 revision) noexcept {
   auto code = get_init_code(revision);
   auto data = get_init_data(public_key);
@@ -64,7 +64,7 @@ td::Ref<vm::Cell> Wallet::make_a_gift_message(const td::Ed25519::PrivateKey& pri
 }
 
 td::Ref<vm::Cell> Wallet::get_init_code(td::int32 revision) noexcept {
-  return SmartContractCode::get_code(ton::SmartContractCode::WalletV2, revision);
+  return SmartContractCode::get_code(ion::SmartContractCode::WalletV2, revision);
 }
 
 vm::CellHash Wallet::get_init_code_hash() noexcept {
@@ -107,4 +107,4 @@ td::Result<td::Ed25519::PublicKey> Wallet::get_public_key_or_throw() const {
   return td::Ed25519::PublicKey(std::move(res));
 }
 
-}  // namespace ton
+}  // namespace ion
