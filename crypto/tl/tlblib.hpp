@@ -1067,8 +1067,8 @@ struct SnakeString final : TLB {
   std::ostream& print_type(std::ostream& os) const override {
     return os << "SnakeString";
   }
-  std::string load_snake_string(vm::CellSlice& cs) const;
-  std::vector<unsigned char> load_snake_binary(vm::CellSlice& cs) const;
+  td::Result<std::string> load_snake_string(vm::CellSlice& cs) const;
+  td::Result<std::vector<unsigned char>> load_snake_binary(vm::CellSlice& cs) const;
   
   bool print_skip(PrettyPrinter& pp, vm::CellSlice& cs) const override;
   bool print_skip(Printer& pp, vm::CellSlice& cs) const override;

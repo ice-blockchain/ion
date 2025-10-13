@@ -192,7 +192,7 @@ bool SnakeString::validate_skip(int* ops, vm::CellSlice& cs, bool weak) const {
   }
 }
 
-std::vector<unsigned char> SnakeString::load_snake_binary(vm::CellSlice& cs) const {
+td::Result<std::vector<unsigned char>> SnakeString::load_snake_binary(vm::CellSlice& cs) const {
   std::vector<unsigned char> data;
   vm::CellSlice current = cs;
   
@@ -202,7 +202,7 @@ std::vector<unsigned char> SnakeString::load_snake_binary(vm::CellSlice& cs) con
       while (bits_available >= 8) {
         int byte_val = current.fetch_octet();
         if (byte_val < 0) {
-          return {};
+          return td::Status::Error("failed to fetch octet from snake cell");
         }
         data.push_back(static_cast<unsigned char>(byte_val));
         bits_available -= 8;
@@ -210,7 +210,7 @@ std::vector<unsigned char> SnakeString::load_snake_binary(vm::CellSlice& cs) con
       if (bits_available > 0) {
         unsigned long long remaining = current.fetch_ulong(bits_available);
         if (remaining == vm::CellSlice::fetch_ulong_eof) {
-          return {};
+          return td::Status::Error("failed to fetch remaining bits from snake cell");
         }
         // shift remaining to form a byte
         unsigned char byte_val = static_cast<unsigned char>(remaining << (8 - bits_available));
@@ -218,7 +218,7 @@ std::vector<unsigned char> SnakeString::load_snake_binary(vm::CellSlice& cs) con
       }
     }
     if (current.size_refs() > 1) {
-      return {};
+      return td::Status::Error("snake cell has more than one reference");
     }
     if (current.size_refs() == 0) {
       cs = current;
@@ -226,24 +226,25 @@ std::vector<unsigned char> SnakeString::load_snake_binary(vm::CellSlice& cs) con
     }
     auto ref = current.fetch_ref();
     if (ref.is_null()) {
-      return {};
+      return td::Status::Error("snake cell reference is null");
     }
     if (!current.load(vm::NoVm{}, ref)) {
-      return {};
+      return td::Status::Error("failed to load snake cell reference");
     }
   }
 }
 
-std::string SnakeString::load_snake_string(vm::CellSlice& cs) const {
-  auto binary_data = load_snake_binary(cs);
+td::Result<std::string> SnakeString::load_snake_string(vm::CellSlice& cs) const {
+  TRY_RESULT(binary_data, load_snake_binary(cs));
   return std::string(binary_data.begin(), binary_data.end());
 }
 
 bool SnakeString::print_skip(PrettyPrinter& pp, vm::CellSlice& cs) const {
-  auto text = load_snake_string(cs);
-  if (text.empty() && cs.size() > 0) {
-    return pp.fail("invalid snake text format");
+  auto text_result = load_snake_string(cs);
+  if (text_result.is_error()) {
+    return pp.fail(text_result.error().message().str());
   }
+  auto text = text_result.move_as_ok();
   pp.os << '"';
   for (char c : text) {
     if (c == '"') {
@@ -267,11 +268,11 @@ bool SnakeString::print_skip(PrettyPrinter& pp, vm::CellSlice& cs) const {
 }
 
 bool SnakeString::print_skip(Printer& pp, vm::CellSlice& cs) const {
-  auto text = load_snake_string(cs);
-  if (text.empty() && cs.size() > 0) {
-    return pp.fail("invalid snake text format");
+  auto text_result = load_snake_string(cs);
+  if (text_result.is_error()) {
+    return pp.fail(text_result.error().message().str());
   }
-  return pp.out(text);
+  return pp.out(text_result.move_as_ok());
 }
 
 bool TupleT::skip(vm::CellSlice& cs) const {
