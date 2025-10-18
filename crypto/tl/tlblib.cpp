@@ -841,7 +841,7 @@ bool JsonPrinter::fetch_uint256_field(vm::CellSlice& cs, int n, std::string name
 bool JsonPrinter::fetch_bool_field(vm::CellSlice& cs) {
   if (!after_semicolon_) field("");
   after_semicolon_ = false;
-  return cs.have(1) && out(cs.fetch_ulong(1) ? "true" : "false");
+  return cs.have(1) && write_raw(cs.fetch_ulong(1) ? "true" : "false");
 }
 
 bool JsonPrinter::fetch_bool_field(vm::CellSlice& cs, std::string name) {
