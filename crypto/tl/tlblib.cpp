@@ -645,22 +645,23 @@ std::string JsonPrinter::escape_string(const std::string& str) {
 }
 
 bool JsonPrinter::open(std::string msg) {
-  if (buffer().empty() && level_ == 0) {
-    buffer() += "{";
-  }
+  // if (buffer().empty() && level_ == 0) {
+  //   buffer() += "{";
+  // }
   if (msg.empty())
     buffer() += "{";
   else {
-    if (after_semicolon_) {
-      buffer() += "{\"type\":\"" + escape_string(msg) + "\",";
-    }
-    else {
-      if (!first_field_) buffer() += ",";
-      buffer() += "\"" + escape_string(msg) + "\":{";
-    }
+    // if (after_semicolon_) {
+    buffer() += "{\"@type\":\"" + escape_string(msg) + "\"";
+    // }
+    // else {
+    //   if (!first_field_) buffer() += ",";
+    //   buffer() += "\"" + escape_string(msg) + "\":" + "{\"@type\":\"" + escape_string(msg) + "\"";
+    // }
   }
   level_++;
-  first_field_ = true;
+  first_field_ = false;
+  if (msg.empty()) first_field_ = true;
   after_semicolon_ = false;
   return true;
 }
@@ -679,9 +680,9 @@ bool JsonPrinter::close(std::string msg) {
   buffer() += "}";
   first_field_ = false;
   after_semicolon_ = false;
-  if (level_ == 0) { // last ever
-    buffer() += "}";
-  }
+  // if (level_ == 0) { // last ever
+  //   buffer() += "}";
+  // }
   return true;
 }
 
@@ -849,7 +850,7 @@ bool JsonPrinter::out_integer(td::RefInt256 value) {
 }
 
 bool JsonPrinter::cons(std::string str) {
-  return out(str);
+  return open(str) && close();
 }
 
 bool JsonPrinter::register_recursive_call() {
