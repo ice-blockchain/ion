@@ -52,7 +52,7 @@ bool Bool::print_skip(PrettyPrinter& pp, vm::CellSlice& cs) const {
   return cs.advance(1) && pp.out(t ? "bool_true" : "bool_false");
 }
 
-bool Bool::print_skip(Printer& pp, vm::CellSlice& cs) const {
+bool Bool::print_skip(JsonPrinter& pp, vm::CellSlice& cs) const {
   int t = get_tag(cs);
   return cs.advance(1) && pp.out(t ? "bool_true" : "bool_false");
 }
@@ -86,7 +86,7 @@ bool TupleT::print_skip(PrettyPrinter& pp, vm::CellSlice& cs) const {
   return pp.close("]");
 }
 
-bool TupleT::print_skip(Printer& pp, vm::CellSlice& cs) const {
+bool TupleT::print_skip(JsonPrinter& pp, vm::CellSlice& cs) const {
   pp.open("tuple");
   for (int i = 0; i < n; i++) {
     if (!pp.open(std::to_string(i)) ||
@@ -102,7 +102,20 @@ bool CondT::print_skip(PrettyPrinter& pp, vm::CellSlice& cs) const {
   return (n > 0 ? X.print_skip(pp, cs) : (!n && pp.out("()")));
 }
 
+bool CondT::print_skip(JsonPrinter& pp, vm::CellSlice& cs) const {
+  return (n > 0 ? X.print_skip(pp, cs) : (!n && pp.out("()")));
+}
+
 bool Int::print_skip(PrettyPrinter& pp, vm::CellSlice& cs) const {
+  if (n <= 64) {
+    long long value;
+    return cs.fetch_int_to(n, value) && pp.out_int(value);
+  } else {
+    return pp.out_integer(cs.fetch_int256(n, true));
+  }
+}
+
+bool Int::print_skip(JsonPrinter& pp, vm::CellSlice& cs) const {
   if (n <= 64) {
     long long value;
     return cs.fetch_int_to(n, value) && pp.out_int(value);
@@ -120,10 +133,27 @@ bool UInt::print_skip(PrettyPrinter& pp, vm::CellSlice& cs) const {
   }
 }
 
+bool UInt::print_skip(JsonPrinter& pp, vm::CellSlice& cs) const {
+  if (n <= 64) {
+    unsigned long long value;
+    return cs.fetch_uint_to(n, value) && pp.out_uint(value);
+  } else {
+    return pp.out_integer(cs.fetch_int256(n, false));
+  }
+}
+
 bool Bits::print_skip(PrettyPrinter& pp, vm::CellSlice& cs) const {
   if (cs.have(n)) {
     pp.os << 'x' << cs.fetch_bits(n).to_hex();
     return true;
+  } else {
+    return false;
+  }
+}
+
+bool Bits::print_skip(JsonPrinter& pp, vm::CellSlice& cs) const {
+  if (cs.have(n)) {
+    return pp.out(cs.fetch_bits(n).to_hex());
   } else {
     return false;
   }
@@ -267,7 +297,7 @@ bool SnakeString::print_skip(PrettyPrinter& pp, vm::CellSlice& cs) const {
   return true;
 }
 
-bool SnakeString::print_skip(Printer& pp, vm::CellSlice& cs) const {
+bool SnakeString::print_skip(JsonPrinter& pp, vm::CellSlice& cs) const {
   auto text_result = load_snake_string(cs);
   if (text_result.is_error()) {
     return pp.fail(text_result.error().message().str());
@@ -326,7 +356,7 @@ bool TLB::print_skip(PrettyPrinter& pp, vm::CellSlice& cs) const {
          pp.fail("raw value too long");
 }
 
-bool TLB::print_skip(tlb::Printer& pp, vm::CellSlice& cs) const {
+bool TLB::print_skip(tlb::JsonPrinter& pp, vm::CellSlice& cs) const {
   // print base64 encoded boc, so other programs can parse it
   vm::CellSlice cs_copy{cs};
   if (!validate_skip(nullptr, cs) || !cs_copy.cut_tail(cs)) {
@@ -352,7 +382,7 @@ bool TLB::print_special(PrettyPrinter& pp, vm::CellSlice& cs) const {
   return (cs.print_rec(pp.os, &pp.limit, pp.indent) && pp.mkindent() && pp.close()) || pp.fail("raw value too long");
 }
 
-bool TLB::print_special(Printer& pp, vm::CellSlice& cs) const {
+bool TLB::print_special(JsonPrinter& pp, vm::CellSlice& cs) const {
   return print_skip(pp, cs);
 }
 
@@ -372,7 +402,7 @@ bool TLB::print_ref(PrettyPrinter& pp, Ref<vm::Cell> cell_ref) const {
   }
 }
 
-bool TLB::print_ref(Printer& pp, Ref<vm::Cell> cell_ref) const {
+bool TLB::print_ref(JsonPrinter& pp, Ref<vm::Cell> cell_ref) const {
   if (cell_ref.is_null()) {
     return pp.fail("null cell reference");
   }

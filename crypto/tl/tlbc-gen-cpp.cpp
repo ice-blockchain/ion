@@ -48,6 +48,7 @@ void init_forbidden_cpp_idents() {
   f.insert("unsigned");
   f.insert("long");
   f.insert("short");
+  f.insert("double");
   f.insert("char");
   f.insert("void");
   f.insert("class");
@@ -2375,9 +2376,9 @@ void CppTypeCode::generate_print_cons_method(std::ostream& os, std::string nl, i
   clear_context();
 }
 
-void CppTypeCode::generate_print_method(std::ostream& os, int options) {
+void CppTypeCode::generate_print_method(std::ostream& os, int options, const char* printer_type) {
   bool ret_ext = options & 2;
-  os << "\nbool " << cpp_type_class_name << "::print_skip(Printer& pp, vm::CellSlice& cs";
+  os << "\nbool " << cpp_type_class_name << "::print_skip(" << printer_type << "& pp, vm::CellSlice& cs";
   if (ret_ext) {
     os << skip_extra_args;
   }
@@ -3162,9 +3163,11 @@ void CppTypeCode::generate_header(std::ostream& os, int options) {
     records[i].declare_record_pack(os, "  ", 18);
     records[i].declare_record_pack(os, "  ", 26);
   }
-  os << "  bool print_skip(Printer& pp, vm::CellSlice& cs) const override;\n";
+  os << "  bool print_skip(PrettyPrinter& pp, vm::CellSlice& cs) const override;\n";
+  os << "  bool print_skip(JsonPrinter& pp, vm::CellSlice& cs) const override;\n";
   if (ret_params) {
-    os << "  bool print_skip(Printer& pp, vm::CellSlice& cs" << skip_extra_args << ") const;\n";
+    os << "  bool print_skip(PrettyPrinter& pp, vm::CellSlice& cs" << skip_extra_args << ") const;\n";
+    os << "  bool print_skip(JsonPrinter& pp, vm::CellSlice& cs" << skip_extra_args << ") const;\n";
   }
   os << "  std::ostream& print_type(std::ostream& os) const override {";
   generate_print_type_body(os, "\n    ");
@@ -3227,9 +3230,11 @@ void CppTypeCode::generate_body(std::ostream& os, int options) {
     generate_pack_method(os, rec, 18);
     generate_pack_method(os, rec, 26);
   }
-  generate_print_method(os, options + 1);
+  generate_print_method(os, options + 1, "PrettyPrinter");
+  generate_print_method(os, options + 1, "JsonPrinter");
   if (ret_params) {
-    generate_print_method(os, options + 3);
+    generate_print_method(os, options + 3, "PrettyPrinter");
+    generate_print_method(os, options + 3, "JsonPrinter");
   }
   if (!cpp_type_var_name.empty()) {
     os << "\nconst " << cpp_type_class_name << " " << cpp_type_var_name << ";";
