@@ -135,14 +135,8 @@ Result<std::vector<RocksDbSecondary::GetStatus>> RocksDbSecondary::get_multi(td:
   }
   std::vector<rocksdb::PinnableSlice> values_rocksdb(keys.size());
   rocksdb::ReadOptions options;
-  if (snapshot_) {
-    options.snapshot = snapshot_.get();
-    db_->MultiGet(options, db_->DefaultColumnFamily(), keys_rocksdb.size(), keys_rocksdb.data(), values_rocksdb.data(),
-                  statuses.data());
-  } else {
-    db_->MultiGet(options, db_->DefaultColumnFamily(), keys_rocksdb.size(), keys_rocksdb.data(), values_rocksdb.data(),
-                  statuses.data());
-  }
+  db_->MultiGet(options, db_->DefaultColumnFamily(), keys_rocksdb.size(), keys_rocksdb.data(), values_rocksdb.data(),
+                statuses.data());
   std::vector<GetStatus> res(statuses.size());
   values->resize(statuses.size());
   for (size_t i = 0; i < statuses.size(); i++) {
