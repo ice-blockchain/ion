@@ -1410,7 +1410,17 @@ void ArchiveManager::iterate_temp_block_handles(std::function<void(const BlockHa
     if (file.deleted) {
       continue;
     }
-    td::actor::send_closure(file.file_actor_id(), &ArchiveSlice::iterate_block_handles, f);
+    if (mode_ == td::DbOpenMode::db_secondary) {
+      auto R = td::PromiseCreator::lambda(
+          [file_actor_id = file.file_actor_id(), f](td::Result<td::Unit> R) {
+            if (R.is_ok()) {
+              td::actor::send_closure(file_actor_id, &ArchiveSlice::iterate_block_handles, f);
+            }
+          });
+      td::actor::send_closure(file.file_actor_id(), &ArchiveSlice::try_catch_up_with_primary, std::move(R));
+    } else {
+      td::actor::send_closure(file.file_actor_id(), &ArchiveSlice::iterate_block_handles, f);
+    }
   }
 }
 
