@@ -1059,8 +1059,12 @@ void ArchiveManager::try_catch_up_with_primary(td::Promise<td::Unit> promise) {
     }
     // catch up last package to sync latest blocks
     if (d == x->packages_.back()) {
-      auto actor_id = get_file_map(id).find(id)->second.file_actor_id();
-      if (actor_id.empty()) {
+      auto it = get_file_map(id).find(id);
+      if (it == get_file_map(id).end()) {
+        continue;
+      }
+      auto actor_id = it->second.file_actor_id();
+      if (!actor_id.is_alive()) {
         continue;
       }
       auto P = td::PromiseCreator::lambda([id, promise = ig.get_promise()](td::Result<td::Unit> R) mutable {
@@ -1100,8 +1104,12 @@ void ArchiveManager::try_catch_up_with_primary(td::Promise<td::Unit> promise) {
 
     // catch up last temp package to sync latest blocks
     if (d == x->temp_packages_.back()) {
-      auto actor_id = get_file_map(id).find(id)->second.file_actor_id();
-      if (actor_id.empty()) {
+      auto it = get_file_map(id).find(id);
+      if (it == get_file_map(id).end()) {
+        continue;
+      }
+      auto actor_id = it->second.file_actor_id();
+      if (!actor_id.is_alive()) {
         continue;
       }
       auto P = td::PromiseCreator::lambda([id, promise = ig.get_promise()](td::Result<td::Unit> R) mutable {
