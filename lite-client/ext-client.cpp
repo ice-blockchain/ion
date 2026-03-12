@@ -1,21 +1,21 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "td/utils/Random.h"
-#include "ton/ton-shard.h"
+#include "ion/ion-shard.h"
 
 #include "ext-client.h"
 
@@ -99,14 +99,14 @@ class ExtClientImpl : public ExtClient {
     td::Promise<td::BufferSlice> P = [SelfId = actor_id(this), server_idx,
                                       promise = std::move(promise)](td::Result<td::BufferSlice> R) mutable {
       if (R.is_error() &&
-          (R.error().code() == ton::ErrorCode::timeout || R.error().code() == ton::ErrorCode::cancelled)) {
+          (R.error().code() == ion::ErrorCode::timeout || R.error().code() == ion::ErrorCode::cancelled)) {
         td::actor::send_closure(SelfId, &ExtClientImpl::on_server_status, server_idx, false);
       }
       promise.set_result(std::move(R));
     };
     LOG(DEBUG) << "Sending query " << query_info.to_str() << " to server #" << server.idx << " ("
                << server.config.hostname << ")";
-    send_closure(server.client, &ton::adnl::AdnlExtClient::send_query, std::move(name), std::move(data), timeout,
+    send_closure(server.client, &ion::adnl::AdnlExtClient::send_query, std::move(name), std::move(data), timeout,
                  std::move(P));
   }
 
@@ -159,7 +159,7 @@ class ExtClientImpl : public ExtClient {
       return;
     }
 
-    class Callback : public ton::adnl::AdnlExtClient::Callback {
+    class Callback : public ion::adnl::AdnlExtClient::Callback {
      public:
       explicit Callback(td::actor::ActorId<ExtClientImpl> parent, size_t idx) : parent_(std::move(parent)), idx_(idx) {
       }
@@ -176,14 +176,14 @@ class ExtClientImpl : public ExtClient {
     };
     LOG(INFO) << "Connecting to liteserver #" << server.idx << " (" << server.config.hostname << ") for query "
               << (query_info ? query_info->to_str() : "[none]");
-    server.client = ton::adnl::AdnlExtClient::create(server.config.adnl_id, server.config.hostname,
+    server.client = ion::adnl::AdnlExtClient::create(server.config.adnl_id, server.config.hostname,
                                                      std::make_unique<Callback>(actor_id(this), server_idx));
   }
 
   struct Server {
     LiteServerConfig config;
     size_t idx = 0;
-    td::actor::ActorOwn<ton::adnl::AdnlExtClient> client;
+    td::actor::ActorOwn<ion::adnl::AdnlExtClient> client;
     bool alive = false;
     td::Timestamp timeout = td::Timestamp::never();
     td::Timestamp ignore_until = td::Timestamp::never();
@@ -229,7 +229,7 @@ class ExtClientImpl : public ExtClient {
   }
 };
 
-td::actor::ActorOwn<ExtClient> ExtClient::create(ton::adnl::AdnlNodeIdFull dst, td::IPAddress dst_addr,
+td::actor::ActorOwn<ExtClient> ExtClient::create(ion::adnl::AdnlNodeIdFull dst, td::IPAddress dst_addr,
                                                  td::unique_ptr<Callback> callback) {
   return create({LiteServerConfig{dst, dst_addr}}, std::move(callback));
 }

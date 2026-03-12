@@ -34,13 +34,13 @@ export NDK_PLATFORM="android-21"
 export ANDROID_PLATFORM="android-21"
 export OPENSSL_DIR=$(pwd)/example/android/third_party/crypto
 
-rm -rf example/android/src/drinkless/org/ton/TonApi.java
+rm -rf example/android/src/drinkless/org/ion/TonApi.java
 cd example/android/ || exit
 
 rm CMakeCache.txt .ninja_*
-cmake -GNinja -DTON_ONLY_TONLIB=ON .
+cmake -GNinja -DION_ONLY_TONLIB=ON .
 
-test $? -eq 0 || { echo "Can't configure TON"; exit 1; }
+test $? -eq 0 || { echo "Can't configure ION"; exit 1; }
 
 ninja prepare_cross_compiling
 
@@ -55,6 +55,6 @@ find . -name "*.debug" -type f -delete
 if [ "$with_artifacts" = true ]; then
   cd ../..
   mkdir -p artifacts/tonlib-android-jni
-  cp example/android/src/drinkless/org/ton/TonApi.java artifacts/tonlib-android-jni/
+  cp example/android/src/drinkless/org/ion/TonApi.java artifacts/tonlib-android-jni/
   cp -R example/android/libs/* artifacts/tonlib-android-jni/
 fi

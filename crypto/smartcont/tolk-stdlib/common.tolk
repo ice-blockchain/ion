@@ -11,14 +11,14 @@ tolk 1.2
 type int = builtin
 
 /// `bool` is a classic boolean type, which can hold only two values: `true` and `false`.
-/// At the TVM (TON virtual machine) level, it's an integer -1 or 0.
+/// At the TVM (ION virtual machine) level, it's an integer -1 or 0.
 /// Note: `boolVar as int` is possible, but remember, that true is -1, not 1!
 type bool = builtin
 
 /// `cell` is a data structure, which can hold of up to 1023 bits (not bytes!)
 /// and up to 4 references (refs) to other cells.
 /// Both contract code and contract state are represented by a tree of cells.
-/// [See docs](https://docs.ton.org/v3/documentation/data-formats/tlb/cell-boc)
+/// [See docs](https://docs.ion.org/v3/documentation/data-formats/tlb/cell-boc)
 type cell = builtin
 
 /// `slice` is a "cell opened for reading".
@@ -48,7 +48,7 @@ type tuple = builtin
 /// When set to `null`, `address?` will be serialized as '00' ("none address"):
 /// '00' (two zero bits) is a standard representation of a "missing" ("none") address.
 /// At the TVM level, addresses are slices, so it's possible to  `someAddress as slice`.
-/// [See docs](https://docs.ton.org/learn/overviews/addresses#address-of-smart-contract)
+/// [See docs](https://docs.ion.org/learn/overviews/addresses#address-of-smart-contract)
 type address = builtin
 
 /// `any_address` represents an internal/external/none address.
@@ -56,7 +56,7 @@ type address = builtin
 /// If you wish to describe "internal or none address", use `address?` (nullable)
 /// instead of "any". That's why `any_address` is used in practice extremely rarely.
 /// At the TVM level, addresses are slices, so it's possible to  `anyAddress as slice`.
-/// [See docs](https://docs.ton.org/learn/overviews/addresses#address-of-smart-contract)
+/// [See docs](https://docs.ion.org/learn/overviews/addresses#address-of-smart-contract)
 type any_address = builtin
 
 /// `never` is a special type that represents computations that never complete normally.
@@ -74,8 +74,8 @@ type intN = builtin
 /// overflow will happen at serialization to a cell/builder, NOT at assignment. 
 type uintN = builtin
 
-/// `coins` is a special primitive representing "nanotoncoins". One TON = 10^9 nanotoncoins.
-/// You can create coins with `ton()` function: `ton("0.05")` (actually, `int` 50000000 at runtime).
+/// `coins` is a special primitive representing "nanoioncoins". One ION = 10^9 nanoioncoins.
+/// You can create coins with `ion()` function: `ion("0.05")` (actually, `int` 50000000 at runtime).
 /// Arithmetic operations on `coins` degrade to 257-bit `int` type.
 type coins = builtin
 
@@ -234,11 +234,11 @@ fun T.fromTuple(packedObject: tuple): T
     Mathematical primitives.
  */
 
-/// Converts a constant floating-point string to nanotoncoins.
-/// Example: `ton("0.05")` is equal to 50000000.
-/// Note, that `ton()` requires a constant string; `ton(some_var)` is an error.
+/// Converts a constant floating-point string to nanoioncoins.
+/// Example: `ion("0.05")` is equal to 50000000.
+/// Note, that `ion()` requires a constant string; `ion(some_var)` is an error.
 @pure
-fun ton(floatString: slice): coins
+fun ion(floatString: slice): coins
     builtin
 
 /// Computes the minimum of two integers.
@@ -313,12 +313,12 @@ struct contract
 fun contract.getAddress(): address
     asm "MYADDR"
 
-/// Returns the balance (in nanotoncoins) of the smart contract at the start of Computation Phase.
+/// Returns the balance (in nanoioncoins) of the smart contract at the start of Computation Phase.
 @pure
 fun contract.getOriginalBalance(): coins
     asm "BALANCE" "FIRST"
 
-/// Same as [contract.getOriginalBalance], but returns a tuple: balance in nanotoncoins and extra currencies.
+/// Same as [contract.getOriginalBalance], but returns a tuple: balance in nanoioncoins and extra currencies.
 @pure
 fun contract.getOriginalBalanceWithExtraCurrencies(): [coins, ExtraCurrenciesMap]
     asm "BALANCE"
@@ -1086,7 +1086,7 @@ fun slice.preloadUint(self, len: int): int
 fun slice.preloadBits(self, len: int): slice
     builtin
 
-/// Loads the serialized amount of nanotoncoins (any unsigned integer up to `2^120 - 1`).
+/// Loads the serialized amount of nanoioncoins (any unsigned integer up to `2^120 - 1`).
 @pure
 fun slice.loadCoins(mutate self): coins
     asm( -> 1 0) "LDGRAMS"
@@ -1218,7 +1218,7 @@ fun builder.storeAddressAny(mutate self, addrAny: any_address): self
 fun builder.storeAddressNone(mutate self): self
     asm "b{00} STSLICECONST"
 
-/// Stores the amount of nanotoncoins into a builder.
+/// Stores the amount of nanoioncoins into a builder.
 @pure
 fun builder.storeCoins(mutate self, x: coins): self
     builtin
@@ -1398,7 +1398,7 @@ fun slice.loadAddressAny(mutate self): any_address
     Reserving Toncoins on balance and its flags.
  */
 
-/// mode = 0: Reserve exact amount of nanotoncoins
+/// mode = 0: Reserve exact amount of nanoioncoins
 const RESERVE_MODE_EXACT_AMOUNT = 0
 /// +1: Actually reserves all but amount, meaning `currentContractBalance - amount`
 const RESERVE_MODE_ALL_BUT_AMOUNT = 1
@@ -1437,7 +1437,7 @@ const SEND_MODE_REGULAR = 0
 const SEND_MODE_PAY_FEES_SEPARATELY = 1
 /// +2 means that any errors arising while processing this message during the action phase should be ignored.
 const SEND_MODE_IGNORE_ERRORS = 2
-/// in the case of action fail - bounce transaction. No effect if SEND_MODE_IGNORE_ERRORS (+2) is used. [TVM UPGRADE 2023-07](https://docs.ton.org/learn/tvm-instructions/tvm-upgrade-2023-07#sending-messages)
+/// in the case of action fail - bounce transaction. No effect if SEND_MODE_IGNORE_ERRORS (+2) is used. [TVM UPGRADE 2023-07](https://docs.ion.org/learn/tvm-instructions/tvm-upgrade-2023-07#sending-messages)
 const SEND_MODE_BOUNCE_ON_ACTION_FAIL = 16
 /// mode = 32 means that the current account must be destroyed if its resulting balance is zero.
 const SEND_MODE_DESTROY = 32
@@ -1445,13 +1445,13 @@ const SEND_MODE_DESTROY = 32
 const SEND_MODE_CARRY_ALL_REMAINING_MESSAGE_VALUE = 64
 /// mode = 128 is used for messages that are to carry all the remaining balance of the current smart contract (instead of the value originally indicated in the message).
 const SEND_MODE_CARRY_ALL_BALANCE = 128
-/// do not create an action, only estimate fee. [TVM UPGRADE 2023-07](https://docs.ton.org/learn/tvm-instructions/tvm-upgrade-2023-07#sending-messages)
+/// do not create an action, only estimate fee. [TVM UPGRADE 2023-07](https://docs.ion.org/learn/tvm-instructions/tvm-upgrade-2023-07#sending-messages)
 const SEND_MODE_ESTIMATE_FEE_ONLY = 1024
 /// Other modes affect the fee calculation as follows:
 /// +64 substitutes the entire balance of the incoming message as an outcoming value (slightly inaccurate, gas expenses that cannot be estimated before the computation is completed are not taken into account).
 /// +128 substitutes the value of the entire balance of the contract before the start of the computation phase (slightly inaccurate, since gas expenses that cannot be estimated before the completion of the computation phase are not taken into account).
 
-/// `ExtraCurrenciesMap` represents a dictionary of "extra currencies" other than TON coin.
+/// `ExtraCurrenciesMap` represents a dictionary of "extra currencies" other than ION coin.
 /// They can be attached to a message (incoming and outgoing) and stored on contract's balance.
 /// It's a dictionary `[currencyID => amount]` (amount is like `coins`, but encoded with a high precision). 
 type ExtraCurrenciesMap = map<int32, varuint32>
@@ -1484,7 +1484,7 @@ struct AddressShardingOptions {
 ///     ...
 /// ```
 /// You just provide code+data, and the compiler automatically calculates the destination address,
-/// because in TON, the address of a contract, by definition, is a hash of its initial state.
+/// because in ION, the address of a contract, by definition, is a hash of its initial state.
 /// You can also use it without sending a message. 
 /// See [AutoDeployAddress.calculateAddress].
 struct AutoDeployAddress {
@@ -1560,7 +1560,7 @@ type OldBounceMode = bool
 struct CreateMessageOptions<TBody = void> {
     /// whether a message will bounce back on error, and what piece of outgoing `body` it will contain
     bounce: BounceMode | OldBounceMode
-    /// message value: attached tons (or tons + extra currencies)
+    /// message value: attached ions (or ions + extra currencies)
     value: coins | (coins, ExtraCurrenciesMap)
     /// destination is either a provided address, or is auto-calculated by stateInit
     dest: address               // either just send a message to some address
@@ -1576,7 +1576,7 @@ struct CreateMessageOptions<TBody = void> {
 /// ```
 /// val reply = createMessage({
 ///     bounce: BounceMode.NoBounce,
-///     value: ton("0.05"),
+///     value: ion("0.05"),
 ///     dest: senderAddress,
 ///     body: RequestedInfo { ... }    // note: no toCell! just pass an object
 /// });
@@ -1782,7 +1782,7 @@ fun sendRawMessage(msg: cell, mode: int): void
 /// ```
 struct InMessage {
     senderAddress: address          // an internal address from which the message arrived
-    valueCoins: coins               // ton amount attached to an incoming message
+    valueCoins: coins               // ion amount attached to an incoming message
     valueExtra: ExtraCurrenciesMap  // extra currencies attached to an incoming message
     originalForwardFee: coins       // fee that was paid by the sender
     createdLt: uint64               // logical time when a message was created
@@ -1803,7 +1803,7 @@ struct InMessage {
 /// ```
 struct InMessageBounced {
     senderAddress: address          // an internal address from which the message was bounced
-    valueCoins: coins               // ton amount attached to a message
+    valueCoins: coins               // ion amount attached to a message
     valueExtra: ExtraCurrenciesMap  // extra currencies attached to a message
     originalForwardFee: coins       // comission that the sender has payed to send this message
     createdLt: uint64               // logical time when a message was created (and bounced)
@@ -1839,7 +1839,7 @@ struct RichBounceComputePhaseInfo {
 /// ```
 /// createMessage({
 ///     bounce: BounceMode.RichBounce,
-///     value: ton("0.05")   // it will be `valueCoins` if this message is bounced
+///     value: ion("0.05")   // it will be `valueCoins` if this message is bounced
 /// ```
 struct RichBounceOriginalMsgInfo {
     valueCoins: coins

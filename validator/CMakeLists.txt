@@ -182,7 +182,7 @@ set(FULL_NODE_SOURCE
 
 add_library(validator-db OBJECT ${VALIDATOR_DB_SOURCE})
 target_include_directories(validator-db PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
-target_link_libraries(validator-db PUBLIC tdactor adnl rldp tl_api dht tdfec overlay catchain validatorsession ton_db)
+target_link_libraries(validator-db PUBLIC tdactor adnl rldp tl_api dht tdfec overlay catchain validatorsession ion_db)
 
 add_library(validator OBJECT ${VALIDATOR_SOURCE})
 add_library(validator-disk OBJECT ${DISK_VALIDATOR_SOURCE})
@@ -223,4 +223,4 @@ target_link_libraries(validator-disk PRIVATE validator-db)
 
 target_link_libraries(validator-hardfork PRIVATE validator-db)
 
-target_link_libraries(full-node PRIVATE tdactor adnl rldp rldp2 tl_api dht tdfec overlay catchain validatorsession ton_db)
+target_link_libraries(full-node PRIVATE tdactor adnl rldp rldp2 tl_api dht tdfec overlay catchain validatorsession ion_db)

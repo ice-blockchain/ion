@@ -11,11 +11,11 @@
 
   outputs = { self, nixpkgs-stable, nixpkgs-trunk, flake-compat, flake-utils }:
     let
-      ton = { host, pkgs ? host, stdenv ? pkgs.stdenv, staticGlibc ? false
+      ion = { host, pkgs ? host, stdenv ? pkgs.stdenv, staticGlibc ? false
         , staticMusl ? false, staticExternalDeps ? staticGlibc }:
         with host.lib;
         stdenv.mkDerivation {
-          pname = "ton";
+          pname = "ion";
           version = "dev";
 
           src = ./.;
@@ -45,7 +45,7 @@
 
           dontAddStaticConfigureFlags = stdenv.isDarwin;
 
-          cmakeFlags = [ "-DTON_USE_ABSEIL=OFF" "-DNIX=ON" ] ++ optionals staticMusl [
+          cmakeFlags = [ "-DION_USE_ABSEIL=OFF" "-DNIX=ON" ] ++ optionals staticMusl [
             "-DCMAKE_CROSSCOMPILING=OFF" # pkgsStatic sets cross
           ] ++ optionals (staticGlibc || staticMusl) [
             "-DCMAKE_LINK_SEARCH_START_STATIC=ON"
@@ -110,49 +110,49 @@
           in (host.overrideCC host.stdenv cc);
         in rec {
           packages = rec {
-            ton-normal = ton { inherit host; };
-            ton-static = ton {
+            ion-normal = ion { inherit host; };
+            ion-static = ion {
               inherit host;
               stdenv = host.makeStatic host.stdenv;
               staticGlibc = true;
             };
-            ton-musl =
+            ion-musl =
               let pkgs = nixpkgs-stable.legacyPackages.${system}.pkgsStatic;
-              in ton {
+              in ion {
                 inherit host;
                 inherit pkgs;
                 stdenv =
                   pkgs.gcc12Stdenv; # doesn't build on aarch64-linux w/default GCC 9
                 staticMusl = true;
               };
-            ton-oldglibc = (ton {
+            ion-oldglibc = (ion {
               inherit host;
               stdenv = stdenv227;
               staticExternalDeps = true;
             });
-            ton-oldglibc_staticbinaries = host.symlinkJoin {
-              name = "ton";
-              paths = [ ton-musl.bin ton-oldglibc.out ];
+            ion-oldglibc_staticbinaries = host.symlinkJoin {
+              name = "ion";
+              paths = [ ion-musl.bin ion-oldglibc.out ];
             };
           };
           devShells.default =
-            host.mkShell { inputsFrom = [ packages.ton-normal ]; };
+            host.mkShell { inputsFrom = [ packages.ion-normal ]; };
         })) (eachSystem (with system; [ x86_64-darwin aarch64-darwin ]) (system:
           let host = hostPkgs system;
           in rec {
             packages = rec {
-              ton-normal = ton { inherit host; };
-              ton-static = ton {
+              ion-normal = ion { inherit host; };
+              ion-static = ion {
                 inherit host;
                 stdenv = host.makeStatic host.stdenv;
                 staticExternalDeps = true;
               };
-              ton-staticbin-dylib = host.symlinkJoin {
-                name = "ton";
-                paths = [ ton-static.bin ton-static.out ];
+              ion-staticbin-dylib = host.symlinkJoin {
+                name = "ion";
+                paths = [ ion-static.bin ion-static.out ];
               };
             };
             devShells.default =
-              host.mkShell { inputsFrom = [ packages.ton-normal ]; };
+              host.mkShell { inputsFrom = [ packages.ion-normal ]; };
           })));
 }

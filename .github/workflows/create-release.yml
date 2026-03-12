@@ -17,7 +17,7 @@ jobs:
       - name: Download Linux arm64 artifacts
         uses: dawidd6/action-download-artifact@v6
         with:
-          workflow: build-ton-linux-arm64-appimage.yml
+          workflow: build-ion-linux-arm64-appimage.yml
           path: artifacts
           workflow_conclusion: success
           branch: master
@@ -26,7 +26,7 @@ jobs:
       - name: Download and unzip Linux arm64 artifacts
         uses: dawidd6/action-download-artifact@v6
         with:
-          workflow: build-ton-linux-arm64-appimage.yml
+          workflow: build-ion-linux-arm64-appimage.yml
           path: artifacts
           workflow_conclusion: success
           branch: master
@@ -35,7 +35,7 @@ jobs:
       - name: Download Linux x86-64 artifacts
         uses: dawidd6/action-download-artifact@v6
         with:
-          workflow: build-ton-linux-x86-64-appimage.yml
+          workflow: build-ion-linux-x86-64-appimage.yml
           path: artifacts
           workflow_conclusion: success
           branch: master
@@ -44,7 +44,7 @@ jobs:
       - name: Download and unzip Linux x86-64 artifacts
         uses: dawidd6/action-download-artifact@v6
         with:
-          workflow: build-ton-linux-x86-64-appimage.yml
+          workflow: build-ion-linux-x86-64-appimage.yml
           path: artifacts
           workflow_conclusion: success
           branch: master
@@ -53,7 +53,7 @@ jobs:
       - name: Download Mac x86-64 artifacts
         uses: dawidd6/action-download-artifact@v6
         with:
-          workflow: build-ton-macos-15-x86-64-portable.yml
+          workflow: build-ion-macos-15-x86-64-portable.yml
           path: artifacts
           workflow_conclusion: success
           branch: master
@@ -62,7 +62,7 @@ jobs:
       - name: Download Mac arm64 artifacts
         uses: dawidd6/action-download-artifact@v6
         with:
-          workflow: build-ton-macos-14-arm64-portable.yml
+          workflow: build-ion-macos-14-arm64-portable.yml
           path: artifacts
           workflow_conclusion: success
           branch: master
@@ -71,7 +71,7 @@ jobs:
       - name: Download and unzip Mac x86-64 artifacts
         uses: dawidd6/action-download-artifact@v6
         with:
-          workflow: build-ton-macos-15-x86-64-portable.yml
+          workflow: build-ion-macos-15-x86-64-portable.yml
           path: artifacts
           workflow_conclusion: success
           branch: master
@@ -80,7 +80,7 @@ jobs:
       - name: Download and unzip arm64 artifacts
         uses: dawidd6/action-download-artifact@v6
         with:
-          workflow: build-ton-macos-14-arm64-portable.yml
+          workflow: build-ion-macos-14-arm64-portable.yml
           path: artifacts
           workflow_conclusion: success
           branch: master
@@ -89,7 +89,7 @@ jobs:
       - name: Download Windows artifacts
         uses: dawidd6/action-download-artifact@v6
         with:
-          workflow: ton-x86-64-windows.yml
+          workflow: ion-x86-64-windows.yml
           path: artifacts
           workflow_conclusion: success
           branch: master
@@ -98,7 +98,7 @@ jobs:
       - name: Download and unzip Windows artifacts
         uses: dawidd6/action-download-artifact@v6
         with:
-          workflow: ton-x86-64-windows.yml
+          workflow: ion-x86-64-windows.yml
           path: artifacts
           workflow_conclusion: success
           branch: master
@@ -107,7 +107,7 @@ jobs:
       - name: Download WASM artifacts
         uses: dawidd6/action-download-artifact@v6
         with:
-          workflow: build-ton-wasm-emscripten.yml
+          workflow: build-ion-wasm-emscripten.yml
           path: artifacts
           workflow_conclusion: success
           branch: master
@@ -116,7 +116,7 @@ jobs:
       - name: Download Android Tonlib artifacts
         uses: dawidd6/action-download-artifact@v6
         with:
-          workflow: build-ton-linux-android-tonlib.yml
+          workflow: build-ion-linux-android-tonlib.yml
           path: artifacts
           workflow_conclusion: success
           branch: master
@@ -154,7 +154,7 @@ jobs:
       - name: Get registration token
         id: getRegToken
         run: |
-          curl -X POST -H \"Accept: application/vnd.github+json\"  -H 'Authorization: token ${{ secrets.GITHUB_TOKEN }}' https://api.github.com/repos/ton-blockchain/ton/actions/runners/registration-token
+          curl -X POST -H \"Accept: application/vnd.github+json\"  -H 'Authorization: token ${{ secrets.GITHUB_TOKEN }}' https://api.github.com/repos/ice-blockchain/ion/actions/runners/registration-token
 
       - name: Create release
         id: create_release
@@ -163,7 +163,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ steps.tag.outputs.TAG }}
-          release_name: TON ${{ steps.tag.outputs.TAG }}
+          release_name: ION ${{ steps.tag.outputs.TAG }}
           body: |
             ${{ steps.read_release.outputs.CHANGELOG_BODY }}
           draft: false
@@ -177,15 +177,15 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-x86-64-windows.zip
-          asset_name: ton-win-x86-64.zip
+          file: artifacts/ion-x86-64-windows.zip
+          asset_name: ion-win-x86-64.zip
           tag: ${{ steps.tag.outputs.TAG }}
 
       - name: Upload Windows 2019 single artifact - fift
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-x86-64-windows/fift.exe
+          file: artifacts/ion-x86-64-windows/fift.exe
           asset_name: fift.exe
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -193,7 +193,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-x86-64-windows/func.exe
+          file: artifacts/ion-x86-64-windows/func.exe
           asset_name: func.exe
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -201,7 +201,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-x86-64-windows/tolk.exe
+          file: artifacts/ion-x86-64-windows/tolk.exe
           asset_name: tolk.exe
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -209,7 +209,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-x86-64-windows/lite-client.exe
+          file: artifacts/ion-x86-64-windows/lite-client.exe
           asset_name: lite-client.exe
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -217,7 +217,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-x86-64-windows/proxy-liteserver.exe
+          file: artifacts/ion-x86-64-windows/proxy-liteserver.exe
           asset_name: proxy-liteserver.exe
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -225,7 +225,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-x86-64-windows/rldp-http-proxy.exe
+          file: artifacts/ion-x86-64-windows/rldp-http-proxy.exe
           asset_name: rldp-http-proxy.exe
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -233,7 +233,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-x86-64-windows/http-proxy.exe
+          file: artifacts/ion-x86-64-windows/http-proxy.exe
           asset_name: http-proxy.exe
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -241,7 +241,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-x86-64-windows/storage-daemon-cli.exe
+          file: artifacts/ion-x86-64-windows/storage-daemon-cli.exe
           asset_name: storage-daemon-cli.exe
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -249,7 +249,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-x86-64-windows/storage-daemon.exe
+          file: artifacts/ion-x86-64-windows/storage-daemon.exe
           asset_name: storage-daemon.exe
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -257,7 +257,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-x86-64-windows/tonlibjson.dll
+          file: artifacts/ion-x86-64-windows/tonlibjson.dll
           asset_name: tonlibjson.dll
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -265,7 +265,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-x86-64-windows/emulator.dll
+          file: artifacts/ion-x86-64-windows/emulator.dll
           asset_name: libemulator.dll
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -273,7 +273,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-x86-64-windows/tonlib-cli.exe
+          file: artifacts/ion-x86-64-windows/tonlib-cli.exe
           asset_name: tonlib-cli.exe
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -283,15 +283,15 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-x86_64-macos.zip
-          asset_name: ton-mac-x86-64.zip
+          file: artifacts/ion-x86_64-macos.zip
+          asset_name: ion-mac-x86-64.zip
           tag: ${{ steps.tag.outputs.TAG }}
 
       - name: Upload Mac x86-64 single artifact - fift
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-x86_64-macos/fift
+          file: artifacts/ion-x86_64-macos/fift
           asset_name: fift-mac-x86-64
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -299,7 +299,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-x86_64-macos/func
+          file: artifacts/ion-x86_64-macos/func
           asset_name: func-mac-x86-64
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -307,7 +307,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-x86_64-macos/tolk
+          file: artifacts/ion-x86_64-macos/tolk
           asset_name: tolk-mac-x86-64
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -315,7 +315,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-x86_64-macos/lite-client
+          file: artifacts/ion-x86_64-macos/lite-client
           asset_name: lite-client-mac-x86-64
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -323,7 +323,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-x86_64-macos/proxy-liteserver
+          file: artifacts/ion-x86_64-macos/proxy-liteserver
           asset_name: proxy-liteserver-mac-x86-64
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -331,7 +331,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-x86_64-macos/rldp-http-proxy
+          file: artifacts/ion-x86_64-macos/rldp-http-proxy
           asset_name: rldp-http-proxy-mac-x86-64
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -339,7 +339,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-x86_64-macos/http-proxy
+          file: artifacts/ion-x86_64-macos/http-proxy
           asset_name: http-proxy-mac-x86-64
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -347,7 +347,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-x86_64-macos/storage-daemon-cli
+          file: artifacts/ion-x86_64-macos/storage-daemon-cli
           asset_name: storage-daemon-cli-mac-x86-64
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -355,7 +355,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-x86_64-macos/storage-daemon
+          file: artifacts/ion-x86_64-macos/storage-daemon
           asset_name: storage-daemon-mac-x86-64
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -363,7 +363,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-x86_64-macos/libtonlibjson.dylib
+          file: artifacts/ion-x86_64-macos/libtonlibjson.dylib
           asset_name: tonlibjson-mac-x86-64.dylib
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -371,7 +371,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-x86_64-macos/libemulator.dylib
+          file: artifacts/ion-x86_64-macos/libemulator.dylib
           asset_name: libemulator-mac-x86-64.dylib
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -379,7 +379,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-x86_64-macos/tonlib-cli
+          file: artifacts/ion-x86_64-macos/tonlib-cli
           asset_name: tonlib-cli-mac-x86-64
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -390,15 +390,15 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-arm64-macos.zip
-          asset_name: ton-mac-arm64.zip
+          file: artifacts/ion-arm64-macos.zip
+          asset_name: ion-mac-arm64.zip
           tag: ${{ steps.tag.outputs.TAG }}
 
       - name: Upload Mac arm64 single artifact - fift
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-arm64-macos/fift
+          file: artifacts/ion-arm64-macos/fift
           asset_name: fift-mac-arm64
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -406,7 +406,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-arm64-macos/func
+          file: artifacts/ion-arm64-macos/func
           asset_name: func-mac-arm64
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -414,7 +414,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-arm64-macos/tolk
+          file: artifacts/ion-arm64-macos/tolk
           asset_name: tolk-mac-arm64
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -422,7 +422,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-arm64-macos/lite-client
+          file: artifacts/ion-arm64-macos/lite-client
           asset_name: lite-client-mac-arm64
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -430,7 +430,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-arm64-macos/proxy-liteserver
+          file: artifacts/ion-arm64-macos/proxy-liteserver
           asset_name: proxy-liteserver-mac-arm64
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -438,7 +438,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-arm64-macos/rldp-http-proxy
+          file: artifacts/ion-arm64-macos/rldp-http-proxy
           asset_name: rldp-http-proxy-mac-arm64
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -446,7 +446,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-arm64-macos/http-proxy
+          file: artifacts/ion-arm64-macos/http-proxy
           asset_name: http-proxy-mac-arm64
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -454,7 +454,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-arm64-macos/storage-daemon-cli
+          file: artifacts/ion-arm64-macos/storage-daemon-cli
           asset_name: storage-daemon-cli-mac-arm64
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -462,7 +462,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-arm64-macos/storage-daemon
+          file: artifacts/ion-arm64-macos/storage-daemon
           asset_name: storage-daemon-mac-arm64
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -470,7 +470,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-arm64-macos/libtonlibjson.dylib
+          file: artifacts/ion-arm64-macos/libtonlibjson.dylib
           asset_name: tonlibjson-mac-arm64.dylib
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -478,7 +478,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-arm64-macos/libemulator.dylib
+          file: artifacts/ion-arm64-macos/libemulator.dylib
           asset_name: libemulator-mac-arm64.dylib
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -486,7 +486,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-arm64-macos/tonlib-cli
+          file: artifacts/ion-arm64-macos/tonlib-cli
           asset_name: tonlib-cli-mac-arm64
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -496,15 +496,15 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-x86_64-linux.zip
-          asset_name: ton-linux-x86_64.zip
+          file: artifacts/ion-x86_64-linux.zip
+          asset_name: ion-linux-x86_64.zip
           tag: ${{ steps.tag.outputs.TAG }}
 
       - name: Upload generic smartcont+lib artifact
         run: |
           mkdir smartcont_lib
           cd smartcont_lib
-          cp -r ../artifacts/ton-x86_64-linux/{smartcont,lib} .          
+          cp -r ../artifacts/ion-x86_64-linux/{smartcont,lib} .          
           zip -r smartcont_lib.zip .
           gh release upload ${{ steps.tag.outputs.TAG }} smartcont_lib.zip
 
@@ -512,7 +512,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-x86_64-linux/fift
+          file: artifacts/ion-x86_64-linux/fift
           asset_name: fift-linux-x86_64
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -520,7 +520,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-x86_64-linux/func
+          file: artifacts/ion-x86_64-linux/func
           asset_name: func-linux-x86_64
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -528,7 +528,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-x86_64-linux/tolk
+          file: artifacts/ion-x86_64-linux/tolk
           asset_name: tolk-linux-x86_64
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -536,7 +536,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-x86_64-linux/lite-client
+          file: artifacts/ion-x86_64-linux/lite-client
           asset_name: lite-client-linux-x86_64
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -544,7 +544,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-x86_64-linux/proxy-liteserver
+          file: artifacts/ion-x86_64-linux/proxy-liteserver
           asset_name: proxy-liteserver-linux-x86_64
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -552,7 +552,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-x86_64-linux/rldp-http-proxy
+          file: artifacts/ion-x86_64-linux/rldp-http-proxy
           asset_name: rldp-http-proxy-linux-x86_64
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -560,7 +560,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-x86_64-linux/http-proxy
+          file: artifacts/ion-x86_64-linux/http-proxy
           asset_name: http-proxy-linux-x86_64
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -568,7 +568,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-x86_64-linux/storage-daemon-cli
+          file: artifacts/ion-x86_64-linux/storage-daemon-cli
           asset_name: storage-daemon-cli-linux-x86_64
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -576,7 +576,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-x86_64-linux/storage-daemon
+          file: artifacts/ion-x86_64-linux/storage-daemon
           asset_name: storage-daemon-linux-x86_64
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -584,7 +584,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-x86_64-linux/libtonlibjson.so
+          file: artifacts/ion-x86_64-linux/libtonlibjson.so
           asset_name: tonlibjson-linux-x86_64.so
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -592,7 +592,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-x86_64-linux/libemulator.so
+          file: artifacts/ion-x86_64-linux/libemulator.so
           asset_name: libemulator-linux-x86_64.so
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -600,7 +600,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-x86_64-linux/tonlib-cli
+          file: artifacts/ion-x86_64-linux/tonlib-cli
           asset_name: tonlib-cli-linux-x86_64
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -611,15 +611,15 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-arm64-linux.zip
-          asset_name: ton-linux-arm64.zip
+          file: artifacts/ion-arm64-linux.zip
+          asset_name: ion-linux-arm64.zip
           tag: ${{ steps.tag.outputs.TAG }}
 
       - name: Upload Linux arm64 single artifact - fift
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-arm64-linux/fift
+          file: artifacts/ion-arm64-linux/fift
           asset_name: fift-linux-arm64
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -627,7 +627,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-arm64-linux/func
+          file: artifacts/ion-arm64-linux/func
           asset_name: func-linux-arm64
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -635,7 +635,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-arm64-linux/tolk
+          file: artifacts/ion-arm64-linux/tolk
           asset_name: tolk-linux-arm64
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -643,7 +643,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-arm64-linux/lite-client
+          file: artifacts/ion-arm64-linux/lite-client
           asset_name: lite-client-linux-arm64
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -651,7 +651,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-arm64-linux/proxy-liteserver
+          file: artifacts/ion-arm64-linux/proxy-liteserver
           asset_name: proxy-liteserver-linux-arm64
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -659,7 +659,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-arm64-linux/rldp-http-proxy
+          file: artifacts/ion-arm64-linux/rldp-http-proxy
           asset_name: rldp-http-proxy-linux-arm64
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -667,7 +667,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-arm64-linux/http-proxy
+          file: artifacts/ion-arm64-linux/http-proxy
           asset_name: http-proxy-linux-arm64
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -675,7 +675,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-arm64-linux/storage-daemon-cli
+          file: artifacts/ion-arm64-linux/storage-daemon-cli
           asset_name: storage-daemon-cli-linux-arm64
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -683,7 +683,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-arm64-linux/storage-daemon
+          file: artifacts/ion-arm64-linux/storage-daemon
           asset_name: storage-daemon-linux-arm64
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -691,7 +691,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-arm64-linux/libtonlibjson.so
+          file: artifacts/ion-arm64-linux/libtonlibjson.so
           asset_name: tonlibjson-linux-arm64.so
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -699,7 +699,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-arm64-linux/libemulator.so
+          file: artifacts/ion-arm64-linux/libemulator.so
           asset_name: libemulator-linux-arm64.so
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -707,7 +707,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-arm64-linux/tonlib-cli
+          file: artifacts/ion-arm64-linux/tonlib-cli
           asset_name: tonlib-cli-linux-arm64
           tag: ${{ steps.tag.outputs.TAG }}
 
@@ -716,14 +716,14 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-wasm.zip
-          asset_name: ton-wasm.zip
+          file: artifacts/ion-wasm.zip
+          asset_name: ion-wasm.zip
           tag: ${{ steps.tag.outputs.TAG }}
 
       - name: Upload Android Tonlib artifacts
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: artifacts/ton-android-tonlib.zip
-          asset_name: ton-android-tonlib.zip
+          file: artifacts/ion-android-tonlib.zip
+          asset_name: ion-android-tonlib.zip
           tag: ${{ steps.tag.outputs.TAG }}

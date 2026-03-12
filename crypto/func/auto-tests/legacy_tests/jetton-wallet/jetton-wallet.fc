@@ -20,8 +20,8 @@ This is suitable for most tokens, if you need tokens transferable between workch
 
 -}
 
-const min_tons_for_storage = 10000000; ;; 0.01 TON
-const gas_consumption = 10000000; ;; 0.01 TON
+const min_ions_for_storage = 10000000; ;; 0.01 ION
+const gas_consumption = 10000000; ;; 0.01 ION
 
 {-
   Storage
@@ -40,11 +40,11 @@ const gas_consumption = 10000000; ;; 0.01 TON
 {-
   transfer query_id:uint64 amount:(VarUInteger 16) destination:MsgAddress
            response_destination:MsgAddress custom_payload:(Maybe ^Cell)
-           forward_ton_amount:(VarUInteger 16) forward_payload:(Either Cell ^Cell)
+           forward_ion_amount:(VarUInteger 16) forward_payload:(Either Cell ^Cell)
            = InternalMsgBody;
   internal_transfer  query_id:uint64 amount:(VarUInteger 16) from:MsgAddress
                      response_address:MsgAddress
-                     forward_ton_amount:(VarUInteger 16)
+                     forward_ion_amount:(VarUInteger 16)
                      forward_payload:(Either Cell ^Cell) 
                      = InternalMsgBody;
 -}
@@ -64,7 +64,7 @@ const gas_consumption = 10000000; ;; 0.01 TON
   slice to_wallet_address = calculate_jetton_wallet_address(state_init);
   slice response_address = in_msg_body~load_msg_addr();
   cell custom_payload = in_msg_body~load_dict();
-  int forward_ton_amount = in_msg_body~load_coins();
+  int forward_ion_amount = in_msg_body~load_coins();
   throw_unless(708, slice_bits(in_msg_body) >= 1);
   slice either_forward_payload = in_msg_body;
   var msg = begin_cell()
@@ -79,18 +79,18 @@ const gas_consumption = 10000000; ;; 0.01 TON
     .store_coins(jetton_amount)
     .store_slice(owner_address)
     .store_slice(response_address)
-    .store_coins(forward_ton_amount)
+    .store_coins(forward_ion_amount)
     .store_slice(either_forward_payload)
     .end_cell();
 
   msg = msg.store_ref(msg_body);
-  int fwd_count = forward_ton_amount ? 2 : 1;
+  int fwd_count = forward_ion_amount ? 2 : 1;
   throw_unless(709, msg_value >
-                     forward_ton_amount +
+                     forward_ion_amount +
                      ;; 3 messages: wal1->wal2,  wal2->owner, wal2->response
                      ;; but last one is optional (it is ok if it fails)
                      fwd_count * fwd_fee +
-                     (2 * gas_consumption + min_tons_for_storage)); ;; TODO(shahar) ?
+                     (2 * gas_consumption + min_ions_for_storage)); ;; TODO(shahar) ?
                      ;; universal message send fee calculation may be activated here
                      ;; by using this instead of fwd_fee
                      ;; msg_fwd_fee(to_wallet, msg_body, state_init, 15)
@@ -102,12 +102,12 @@ const gas_consumption = 10000000; ;; 0.01 TON
 {-
   internal_transfer  query_id:uint64 amount:(VarUInteger 16) from:MsgAddress
                      response_address:MsgAddress
-                     forward_ton_amount:(VarUInteger 16)
+                     forward_ion_amount:(VarUInteger 16)
                      forward_payload:(Either Cell ^Cell) 
                      = InternalMsgBody;
 -}
 
-() receive_tokens (slice in_msg_body, slice sender_address, int my_ton_balance, int fwd_fee, int msg_value) impure {
+() receive_tokens (slice in_msg_body, slice sender_address, int my_ion_balance, int fwd_fee, int msg_value) impure {
   ;; NOTE we can not allow fails in action phase since in that case there will be
   ;; no bounce. Thus check and throw in computation phase.
   (int balance, slice owner_address, slice jetton_master_address, cell jetton_wallet_code) = load_data();
@@ -121,13 +121,13 @@ const gas_consumption = 10000000; ;; 0.01 TON
       |
       equal_slices(calculate_user_jetton_wallet_address(from_address, jetton_master_address, jetton_wallet_code), sender_address)
   );
-  int forward_ton_amount = in_msg_body~load_coins();
+  int forward_ion_amount = in_msg_body~load_coins();
 
-  int ton_balance_before_msg = my_ton_balance - msg_value;
-  int storage_fee = min_tons_for_storage - min(ton_balance_before_msg, min_tons_for_storage);
+  int ion_balance_before_msg = my_ion_balance - msg_value;
+  int storage_fee = min_ions_for_storage - min(ion_balance_before_msg, min_ions_for_storage);
   msg_value -= (storage_fee + gas_consumption);
-  if(forward_ton_amount) {
-    msg_value -= (forward_ton_amount + fwd_fee);
+  if(forward_ion_amount) {
+    msg_value -= (forward_ion_amount + fwd_fee);
     slice either_forward_payload = in_msg_body;
 
     var msg_body = begin_cell()
@@ -141,7 +141,7 @@ const gas_consumption = 10000000; ;; 0.01 TON
     var msg = begin_cell()
       .store_uint(0x10, 6) ;; we should not bounce here cause receiver can have uninitialized contract
       .store_slice(owner_address)
-      .store_coins(forward_ton_amount)
+      .store_coins(forward_ion_amount)
       .store_uint(1, 1 + 4 + 4 + 64 + 32 + 1 + 1)
       .store_ref(msg_body);
 

@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "auto/tl/ton_api_json.h"
@@ -25,7 +25,7 @@
 
 #include "StorageProvider.h"
 
-namespace ton {
+namespace ion {
 
 td::Result<ProviderParams> ProviderParams::create(const tl_object_ptr<ton_api::storage_daemon_provider_params>& obj) {
   ProviderParams p;
@@ -838,7 +838,7 @@ void StorageProvider::send_coins(ContractAddress dest, td::RefInt256 amount, std
     }
     b.store_bytes(td::Slice(message));
   }
-  LOG(INFO) << "Sending " << amount << " nanoTON to " << dest.to_string();
+  LOG(INFO) << "Sending " << amount << " nanoION to " << dest.to_string();
   td::actor::send_closure(contract_wrapper_, &FabricContractWrapper::send_internal_message, dest, amount,
                           b.finalize_novm(), std::move(promise));
 }
@@ -860,4 +860,4 @@ tl_object_ptr<ton_api::storage_daemon_providerConfig> StorageProvider::Config::t
   return create_tl_object<ton_api::storage_daemon_providerConfig>(max_contracts, max_total_size);
 }
 
-}  // namespace ton
+}  // namespace ion

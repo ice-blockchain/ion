@@ -1,31 +1,31 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 */
 #pragma once
 #include "adnl/adnl-node-id.hpp"
 #include "auto/tl/lite_api.h"
 #include "td/utils/port/IPAddress.h"
-#include "ton/ton-types.h"
+#include "ion/ion-types.h"
 
 namespace liteclient {
 
 struct QueryInfo {
   enum Type { t_simple, t_seqno, t_utime, t_lt, t_mc_seqno };
   int query_id = 0;
-  ton::ShardIdFull shard_id{ton::masterchainId};
+  ion::ShardIdFull shard_id{ion::masterchainId};
   Type type = t_simple;
   td::uint64 value = 0;
   /* Query types and examples:
@@ -50,15 +50,15 @@ struct QueryInfo {
 };
 
 QueryInfo get_query_info(td::Slice data);
-QueryInfo get_query_info(const ton::lite_api::Function& f);
+QueryInfo get_query_info(const ion::lite_api::Function& f);
 
 struct LiteServerConfig {
  private:
   struct ShardInfo {
-    ton::ShardIdFull shard_id;
-    ton::BlockSeqno seqno;
-    ton::UnixTime utime;
-    ton::LogicalTime lt;
+    ion::ShardIdFull shard_id;
+    ion::BlockSeqno seqno;
+    ion::UnixTime utime;
+    ion::LogicalTime lt;
   };
 
   struct Slice {
@@ -72,21 +72,21 @@ struct LiteServerConfig {
   std::vector<Slice> slices;
 
  public:
-  ton::adnl::AdnlNodeIdFull adnl_id;
+  ion::adnl::AdnlNodeIdFull adnl_id;
   std::string hostname;
 
   LiteServerConfig() = default;
-  LiteServerConfig(ton::adnl::AdnlNodeIdFull adnl_id, std::string hostname)
+  LiteServerConfig(ion::adnl::AdnlNodeIdFull adnl_id, std::string hostname)
       : is_full(true), adnl_id(adnl_id), hostname(std::move(hostname)) {
   }
-  LiteServerConfig(ton::adnl::AdnlNodeIdFull adnl_id, td::IPAddress ip)
+  LiteServerConfig(ion::adnl::AdnlNodeIdFull adnl_id, td::IPAddress ip)
       : is_full(true), adnl_id(adnl_id), hostname(PSTRING() << ip.get_ip_str() << ":" << ip.get_port()) {
   }
 
   bool accepts_query(const QueryInfo& query_info) const;
 
   static td::Result<std::vector<LiteServerConfig>> parse_global_config(
-      const ton::ton_api::liteclient_config_global& config);
+      const ion::ton_api::liteclient_config_global& config);
 };
 
 }  // namespace liteclient

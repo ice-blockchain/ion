@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -28,7 +28,7 @@
 #include "crypto/openssl/rand.hpp"
 #include "td/db/utils/BlobView.h"
 #include "td/utils/Random.h"
-#include "ton/ton-shard.h"
+#include "ion/ion-shard.h"
 #include "vm/boc.h"
 #include "vm/db/StaticBagOfCellsDb.h"
 #include "vm/dict.h"
@@ -40,7 +40,7 @@
 #include "top-shard-descr.hpp"
 #include "validator-set.hpp"
 
-namespace ton {
+namespace ion {
 
 int collator_settings = 0;
 
@@ -115,7 +115,7 @@ void Collator::start_up() {
     is_key_block_ = true;
   }
   // 1. check validity of parameters, especially prev_blocks, shard and min_mc_block_id
-  if (workchain() != ton::masterchainId && workchain() != ton::basechainId) {
+  if (workchain() != ion::masterchainId && workchain() != ion::basechainId) {
     fatal_error(-667, "can create block candidates only for masterchain (-1) and base workchain (0)");
     return;
   }
@@ -176,7 +176,7 @@ void Collator::start_up() {
     }
     if (ShardIdFull(prev_blocks[0]) != shard_) {
       after_split_ = true;
-      right_child_ = ton::is_right_child(shard_);
+      right_child_ = ion::is_right_child(shard_);
       LOG(INFO) << "AFTER_SPLIT set for the new block of " << shard_.to_str() << " (generating "
                 << (right_child_ ? "right" : "left") << " child)";
       if (!shard_is_parent(ShardIdFull(prev_blocks[0]), shard_)) {
@@ -387,7 +387,7 @@ void Collator::alarm() {
  *
  * @returns A string representation of the shard.
  */
-std::string show_shard(ton::WorkchainId workchain, ton::ShardId shard) {
+std::string show_shard(ion::WorkchainId workchain, ion::ShardId shard) {
   char tmp[128];
   char* ptr = tmp + snprintf(tmp, 31, "%d:", workchain);
   if (!(shard & ((1ULL << 63) - 1))) {
@@ -408,7 +408,7 @@ std::string show_shard(ton::WorkchainId workchain, ton::ShardId shard) {
  *
  * @returns A string representation of the shard.
  */
-std::string show_shard(const ton::BlockId blk_id) {
+std::string show_shard(const ion::BlockId blk_id) {
   return show_shard(blk_id.workchain, blk_id.shard);
 }
 
@@ -419,7 +419,7 @@ std::string show_shard(const ton::BlockId blk_id) {
  *
  * @returns The string representation of the `ShardIdFull` object.
  */
-std::string show_shard(const ton::ShardIdFull blk_id) {
+std::string show_shard(const ion::ShardIdFull blk_id) {
   return show_shard(blk_id.workchain, blk_id.shard);
 }
 
@@ -610,7 +610,7 @@ Ref<MasterchainStateQ> Collator::get_aux_mc_state(BlockSeqno seqno) const {
  * @param blkid The BlockIdExt of the shard state.
  * @param res The result of retrieving the shard state.
  */
-void Collator::after_get_aux_shard_state(ton::BlockIdExt blkid, td::Result<Ref<ShardState>> res,
+void Collator::after_get_aux_shard_state(ion::BlockIdExt blkid, td::Result<Ref<ShardState>> res,
                                          td::PerfLogAction token) {
   LOG(DEBUG) << "in Collator::after_get_aux_shard_state(" << blkid.to_str() << ")";
   --pending;
@@ -874,11 +874,11 @@ bool Collator::unpack_last_mc_state() {
   global_version_ = config_->get_global_version();
   ihr_enabled_ = config_->ihr_enabled();
   create_stats_enabled_ = config_->create_stats_enabled();
-  report_version_ = config_->has_capability(ton::capReportVersion);
-  short_dequeue_records_ = config_->has_capability(ton::capShortDequeue);
-  store_out_msg_queue_size_ = config_->has_capability(ton::capStoreOutMsgQueueSize);
-  msg_metadata_enabled_ = config_->has_capability(ton::capMsgMetadata);
-  deferring_messages_enabled_ = config_->has_capability(ton::capDeferMessages);
+  report_version_ = config_->has_capability(ion::capReportVersion);
+  short_dequeue_records_ = config_->has_capability(ion::capShortDequeue);
+  store_out_msg_queue_size_ = config_->has_capability(ion::capStoreOutMsgQueueSize);
+  msg_metadata_enabled_ = config_->has_capability(ion::capMsgMetadata);
+  deferring_messages_enabled_ = config_->has_capability(ion::capDeferMessages);
   full_collated_data_ = config_->has_capability(capFullCollatedData) || collator_opts_->force_full_collated_data;
   LOG(DEBUG) << "full_collated_data is " << full_collated_data_;
   shard_conf_ = std::make_unique<block::ShardConfig>(*config_);
@@ -972,11 +972,11 @@ bool Collator::request_neighbor_msg_queues() {
   assert(config_ && shard_conf_);
   auto neighbor_list = shard_conf_->get_neighbor_shard_hash_ids(shard_);
   LOG(DEBUG) << "got a preliminary list of " << neighbor_list.size() << " neighbors for " << shard_.to_str();
-  for (ton::BlockId blk_id : neighbor_list) {
+  for (ion::BlockId blk_id : neighbor_list) {
     if (blk_id.seqno == 0 && blk_id.shard_full() != shard_) {
       continue;
     }
-    auto shard_ptr = shard_conf_->get_shard_hash(ton::ShardIdFull(blk_id));
+    auto shard_ptr = shard_conf_->get_shard_hash(ion::ShardIdFull(blk_id));
     if (shard_ptr.is_null()) {
       return fatal_error(-667, "cannot obtain shard hash for neighbor "s + blk_id.to_str());
     }
@@ -1255,7 +1255,7 @@ bool Collator::unpack_last_state() {
  */
 bool Collator::unpack_one_last_state(block::ShardState& ss, BlockIdExt blkid, Ref<vm::Cell> prev_state_root) {
   auto res = ss.unpack_state_ext(blkid, std::move(prev_state_root), global_id_, prev_mc_block_seqno, after_split_,
-                                 after_split_ | after_merge_, [self = this](ton::BlockSeqno mc_seqno) {
+                                 after_split_ | after_merge_, [self = this](ion::BlockSeqno mc_seqno) {
                                    Ref<MasterchainStateQ> state;
                                    return self->request_aux_mc_state(mc_seqno, state);
                                  });
@@ -1282,7 +1282,7 @@ bool Collator::unpack_one_last_state(block::ShardState& ss, BlockIdExt blkid, Re
 bool Collator::split_last_state(block::ShardState& ss) {
   LOG(INFO) << "Splitting previous state " << ss.id_.to_str() << " to subshard " << shard_.to_str();
   CHECK(after_split_);
-  auto sib_shard = ton::shard_sibling(shard_);
+  auto sib_shard = ion::shard_sibling(shard_);
   auto res1 = ss.compute_split_out_msg_queue(sib_shard);
   if (res1.is_error()) {
     return fatal_error(res1.move_as_error());
@@ -1354,10 +1354,10 @@ bool Collator::add_trivial_neighbor_after_merge() {
   std::size_t n = neighbors_.size();
   for (std::size_t i = 0; i < n; i++) {
     auto& nb = neighbors_.at(i);
-    if (ton::shard_intersects(nb.shard(), shard_)) {
+    if (ion::shard_intersects(nb.shard(), shard_)) {
       ++found;
       LOG(DEBUG) << "neighbor #" << i << " : " << nb.blk_.to_str() << " intersects our shard " << shard_.to_str();
-      if (!ton::shard_is_parent(shard_, nb.shard()) || found > 2) {
+      if (!ion::shard_is_parent(shard_, nb.shard()) || found > 2) {
         return fatal_error("impossible shard configuration in add_trivial_neighbor_after_merge()");
       }
       auto prev_shard = prev_blocks.at(found - 1).shard_full();
@@ -1407,7 +1407,7 @@ bool Collator::add_trivial_neighbor() {
   }
   CHECK(descr_ref->blk_ == prev_blocks[0]);
   CHECK(out_msg_queue_);
-  ton::ShardIdFull prev_shard = descr_ref->shard();
+  ion::ShardIdFull prev_shard = descr_ref->shard();
   // Possible cases are:
   // 1. prev_shard = shard = one of neighbors
   //    => replace neighbor by (more recent) prev_shard info
@@ -1426,7 +1426,7 @@ bool Collator::add_trivial_neighbor() {
   std::size_t n = neighbors_.size();
   for (std::size_t i = 0; i < n; i++) {
     auto& nb = neighbors_.at(i);
-    if (ton::shard_intersects(nb.shard(), shard_)) {
+    if (ion::shard_intersects(nb.shard(), shard_)) {
       ++found;
       LOG(DEBUG) << "neighbor #" << i << " : " << nb.blk_.to_str() << " intersects our shard " << shard_.to_str();
       if (nb.shard() == prev_shard) {
@@ -1438,7 +1438,7 @@ bool Collator::add_trivial_neighbor() {
           nb.processed_upto = processed_upto_;
           LOG(DEBUG) << "adjusted neighbor #" << i << " : " << nb.blk_.to_str() << " (simple replacement)";
           cs = 1;
-        } else if (ton::shard_is_parent(nb.shard(), shard_)) {
+        } else if (ion::shard_is_parent(nb.shard(), shard_)) {
           // case 2. Immediate after-split.
           CHECK(found == 1);
           CHECK(after_split_);
@@ -1450,7 +1450,7 @@ bool Collator::add_trivial_neighbor() {
           auto& nb2 = neighbors_.at(i);
           nb2.set_queue_root(sibling_out_msg_queue_->get_root_cell());
           nb2.processed_upto = sibling_processed_upto_;
-          nb2.blk_.id.shard = ton::shard_sibling(get_shard());
+          nb2.blk_.id.shard = ion::shard_sibling(get_shard());
           stats_.neighbors[i].shard = nb2.blk_.shard_full();
           LOG(DEBUG) << "adjusted neighbor #" << i << " : " << nb2.blk_.to_str()
                      << " with shard shrinking to our sibling (immediate after-split adjustment)";
@@ -1464,7 +1464,7 @@ bool Collator::add_trivial_neighbor() {
         } else {
           return fatal_error("impossible shard configuration in add_trivial_neighbor()");
         }
-      } else if (ton::shard_is_parent(nb.shard(), shard_) && shard_ == prev_shard) {
+      } else if (ion::shard_is_parent(nb.shard(), shard_) && shard_ == prev_shard) {
         // case 3. Continued after-split
         CHECK(found == 1);
         CHECK(!after_split_);
@@ -1474,14 +1474,14 @@ bool Collator::add_trivial_neighbor() {
         stats_.neighbors.push_back(CollationStats::NeighborStats{
             .shard = descr_ref->shard(), .is_trivial = true, .is_local = true, .msg_limit = -1});
         auto& nb2 = neighbors_.at(i);
-        auto sib_shard = ton::shard_sibling(shard_);
+        auto sib_shard = ion::shard_sibling(shard_);
         // compute the part of virtual sibling's OutMsgQueue with destinations in our shard
         sibling_out_msg_queue_ =
             std::make_unique<vm::AugmentedDictionary>(nb2.outmsg_root, 352, block::tlb::aug_OutMsgQueue);
         td::BitArray<96> pfx;
         pfx.bits().store_int(workchain(), 32);
         (pfx.bits() + 32).store_uint(get_shard(), 64);
-        int l = ton::shard_prefix_length(shard_);
+        int l = ion::shard_prefix_length(shard_);
         CHECK(sibling_out_msg_queue_->cut_prefix_subdict(pfx.bits(), 32 + l));
         int res2 = block::filter_out_msg_queue(*sibling_out_msg_queue_, nb2.shard(), sib_shard);
         if (res2 < 0) {
@@ -1491,7 +1491,7 @@ bool Collator::add_trivial_neighbor() {
         if (!nb2.processed_upto->split(sib_shard)) {
           return fatal_error("error splitting ProcessedUpto for our virtual sibling");
         }
-        nb2.blk_.id.shard = ton::shard_sibling(get_shard());
+        nb2.blk_.id.shard = ion::shard_sibling(get_shard());
         stats_.neighbors[i].shard = nb2.blk_.shard_full();
         LOG(DEBUG) << "adjusted neighbor #" << i << " : " << nb2.blk_.to_str()
                    << " with shard shrinking to our sibling (continued after-split adjustment)";
@@ -1501,7 +1501,7 @@ bool Collator::add_trivial_neighbor() {
         LOG(DEBUG) << "created neighbor #" << n << " : " << nb1.blk_.to_str()
                    << " from our preceding state (continued after-split adjustment)";
         cs = 3;
-      } else if (ton::shard_is_parent(shard_, nb.shard()) && shard_ == prev_shard) {
+      } else if (ion::shard_is_parent(shard_, nb.shard()) && shard_ == prev_shard) {
         // case 4. Continued after-merge.
         if (found == 1) {
           cs = 4;
@@ -1749,7 +1749,7 @@ bool Collator::do_preinit() {
     last_block_seqno = prev_blocks[1].seqno();
   }
   new_block_seqno = last_block_seqno + 1;
-  new_id = ton::BlockId{shard_, new_block_seqno};
+  new_id = ion::BlockId{shard_, new_block_seqno};
   CHECK(!config_);
   CHECK(mc_state_root.not_null());
   LOG(INFO) << "unpacking most recent masterchain state";
@@ -1808,7 +1808,7 @@ bool Collator::adjust_shard_config() {
   fees_import_dict_ = std::make_unique<vm::AugmentedDictionary>(96, block::tlb::aug_ShardFees);
   int wc_act = 0;
   for (const auto& wpair : wset) {
-    ton::WorkchainId wc = wpair.first;
+    ion::WorkchainId wc = wpair.first;
     const block::WorkchainInfo* winfo = wpair.second.get();
     LOG(DEBUG) << "have workchain " << wc << " in configuration; active=" << winfo->active
                << ", enabled_since=" << winfo->enabled_since << ", now=" << now_;
@@ -1901,7 +1901,7 @@ bool Collator::import_new_shard_top_blocks() {
   int tb_act = 0;
   Ref<ShardTopBlockDescrQ> prev_bd;
   Ref<block::McShardHash> prev_descr;
-  ShardIdFull prev_shard{ton::workchainInvalid, ~0ULL};
+  ShardIdFull prev_shard{ion::workchainInvalid, ~0ULL};
   int prev_chain_len = 0;
   for (auto entry : shard_block_descr_) {
     auto sh_bd = Ref<ShardTopBlockDescrQ>(entry);
@@ -2127,7 +2127,7 @@ bool Collator::try_collate() {
  *
  * @returns True if the processed up to information was successfully adjusted, false otherwise.
  */
-bool Collator::fix_one_processed_upto(block::MsgProcessedUpto& proc, const ton::ShardIdFull& owner) {
+bool Collator::fix_one_processed_upto(block::MsgProcessedUpto& proc, const ion::ShardIdFull& owner) {
   if (proc.compute_shard_end_lt) {
     return true;
   }
@@ -2137,7 +2137,7 @@ bool Collator::fix_one_processed_upto(block::MsgProcessedUpto& proc, const ton::
     return fatal_error(
         -666, PSTRING() << "cannot obtain masterchain state with seqno " << seqno << " (originally required "
                         << proc.mc_seqno << ") in a MsgProcessedUpto record for "
-                        << ton::ShardIdFull{owner.workchain, proc.shard}.to_str() << " owned by " << owner.to_str());
+                        << ion::ShardIdFull{owner.workchain, proc.shard}.to_str() << " owned by " << owner.to_str());
   }
   proc.compute_shard_end_lt = state->get_config()->get_compute_shard_end_lt_func();
   return (bool)proc.compute_shard_end_lt;
@@ -2230,7 +2230,7 @@ bool Collator::init_lt() {
   } else {
     start_lt = std::max(start_lt, shards_max_end_lt_);
   }
-  ton::LogicalTime align = config_->get_lt_align(), incr = align - start_lt % align;
+  ion::LogicalTime align = config_->get_lt_align(), incr = align - start_lt % align;
   if (incr < align || !start_lt) {
     if (start_lt >= td::bits_negate64(incr)) {
       return fatal_error(
@@ -2361,7 +2361,7 @@ bool Collator::init_value_create() {
       value_flow_.minted.set_zero();
     }
   } else if (workchain() == basechainId) {
-    value_flow_.created = block::CurrencyCollection{basechain_create_fee_ >> ton::shard_prefix_length(shard_)};
+    value_flow_.created = block::CurrencyCollection{basechain_create_fee_ >> ion::shard_prefix_length(shard_)};
   }
   value_flow_.fees_collected += value_flow_.created;
   return true;
@@ -2516,7 +2516,7 @@ bool Collator::do_collate() {
  *
  * @returns True if the message was successfully dequeued, false otherwise.
  */
-bool Collator::dequeue_message(Ref<vm::Cell> msg_envelope, ton::LogicalTime delivered_lt) {
+bool Collator::dequeue_message(Ref<vm::Cell> msg_envelope, ion::LogicalTime delivered_lt) {
   LOG(DEBUG) << "dequeueing outbound message";
   vm::CellBuilder cb;
   if (short_dequeue_records_) {
@@ -2595,7 +2595,7 @@ bool Collator::out_msg_queue_cleanup() {
       LOG(DEBUG) << "scanning outbound message with (lt,hash)=(" << enq_msg_descr.lt_ << ","
                  << enq_msg_descr.hash_.to_hex() << ") enqueued_lt=" << enq_msg_descr.enqueued_lt_;
       bool delivered = false;
-      ton::LogicalTime deliver_lt = 0;
+      ion::LogicalTime deliver_lt = 0;
       for (const auto& neighbor : neighbors_) {
         // could look up neighbor with shard containing enq_msg_descr.next_prefix more efficiently
         // (instead of checking all neighbors)
@@ -3213,11 +3213,11 @@ bool Collator::create_special_transaction(block::CurrencyCollection amount, Ref<
     return true;
   }
   CHECK(dest_addr_cell.not_null());
-  ton::StdSmcAddress addr;
+  ion::StdSmcAddress addr;
   CHECK(vm::load_cell_slice(dest_addr_cell).prefetch_bits_to(addr));
   LOG(INFO) << "creating special transaction to recover " << amount.to_str() << " to account " << addr.to_hex();
   CHECK(in_msg.is_null());
-  ton::LogicalTime lt = start_lt;
+  ion::LogicalTime lt = start_lt;
   vm::CellBuilder cb;
   Ref<vm::Cell> msg;
   if (!(cb.store_long_bool(6, 4)          // int_msg_info$0 ihr_disabled:Bool bounce:Bool bounced:Bool
@@ -3270,7 +3270,7 @@ bool Collator::create_special_transactions() {
  *
  * @returns True if the transaction was created successfully, false otherwise.
  */
-bool Collator::create_ticktock_transaction(const ton::StdSmcAddress& smc_addr, ton::LogicalTime req_start_lt,
+bool Collator::create_ticktock_transaction(const ion::StdSmcAddress& smc_addr, ion::LogicalTime req_start_lt,
                                            int mask) {
   auto acc_res = make_account(smc_addr.cbits(), false);
   if (acc_res.is_error()) {
@@ -3354,7 +3354,7 @@ bool Collator::create_ticktock_transaction(const ton::StdSmcAddress& smc_addr, t
 Ref<vm::Cell> Collator::create_ordinary_transaction(Ref<vm::Cell> msg_root,
                                                     td::optional<block::MsgMetadata> msg_metadata, LogicalTime after_lt,
                                                     bool is_special_tx) {
-  ton::StdSmcAddress addr;
+  ion::StdSmcAddress addr;
   auto cs = vm::load_cell_slice(msg_root);
   bool external;
   Ref<vm::CellSlice> src, dest;
@@ -3384,7 +3384,7 @@ Ref<vm::Cell> Collator::create_ordinary_transaction(Ref<vm::Cell> msg_root,
       fatal_error("cannot unpack message to be processed by an ordinary transaction");
       return {};
   }
-  ton::WorkchainId wc;
+  ion::WorkchainId wc;
   if (!block::tlb::t_MsgAddressInt.extract_std_address(dest, wc, addr) || wc != workchain()) {
     return {};
   }
@@ -3560,7 +3560,7 @@ td::Result<std::unique_ptr<block::transaction::Transaction>> Collator::impl_crea
  *
  * @param lt The logical time to be compared.
  */
-void Collator::update_max_lt(ton::LogicalTime lt) {
+void Collator::update_max_lt(ion::LogicalTime lt) {
   CHECK(lt >= start_lt);
   if (lt > max_lt) {
     max_lt = lt;
@@ -3574,7 +3574,7 @@ void Collator::update_max_lt(ton::LogicalTime lt) {
  *
  * @returns True if the last processed internal message was successfully updated, false otherwise.
  */
-bool Collator::update_last_proc_int_msg(const std::pair<ton::LogicalTime, ton::Bits256>& new_lt_hash) {
+bool Collator::update_last_proc_int_msg(const std::pair<ion::LogicalTime, ion::Bits256>& new_lt_hash) {
   if (last_proc_int_msg_ < new_lt_hash) {
     last_proc_int_msg_ = new_lt_hash;
     CHECK(new_lt_hash.first > 0);
@@ -3597,7 +3597,7 @@ bool Collator::update_last_proc_int_msg(const std::pair<ton::LogicalTime, ton::B
  * @returns True if all ticktock transactions were successfully created, false otherwise.
  */
 bool Collator::create_ticktock_transactions(int mask) {
-  ton::LogicalTime req_lt = mask == 2 ? start_lt + 1 : max_lt;
+  ion::LogicalTime req_lt = mask == 2 ? start_lt + 1 : max_lt;
   for (auto smc_addr : special_smcs) {
     auto found = lookup_account(smc_addr.cbits());
     int ticktock = (found ? found->tick * 2 + found->tock : config_->get_smc_tick_tock(smc_addr.cbits()));
@@ -3628,8 +3628,8 @@ bool Collator::is_our_address(Ref<vm::CellSlice> addr_ref) const {
  *
  * @returns True if the account ID prefix belongs to the current shard, False otherwise.
  */
-bool Collator::is_our_address(ton::AccountIdPrefixFull addr_pfx) const {
-  return ton::shard_contains(shard_, addr_pfx);
+bool Collator::is_our_address(ion::AccountIdPrefixFull addr_pfx) const {
+  return ion::shard_contains(shard_, addr_pfx);
 }
 
 /**
@@ -3639,8 +3639,8 @@ bool Collator::is_our_address(ton::AccountIdPrefixFull addr_pfx) const {
  *
  * @returns True if the address belongs to the current shard, False otherwise.
  */
-bool Collator::is_our_address(const ton::StdSmcAddress& addr) const {
-  return ton::shard_contains(get_shard(), addr);
+bool Collator::is_our_address(const ion::StdSmcAddress& addr) const {
+  return ion::shard_contains(get_shard(), addr);
 }
 
 /**
@@ -3748,7 +3748,7 @@ int Collator::process_one_new_message(block::NewOutMsg msg, bool enqueue_only, R
   // process message by a transaction in this block:
   // 0. update last_proc_int_msg
   if (!is_special &&
-      !update_last_proc_int_msg(std::pair<ton::LogicalTime, ton::Bits256>(msg.lt, msg.msg->get_hash().bits()))) {
+      !update_last_proc_int_msg(std::pair<ion::LogicalTime, ion::Bits256>(msg.lt, msg.msg->get_hash().bits()))) {
     fatal_error("processing a message AFTER a newer message has been processed");
     return -1;
   }
@@ -3836,8 +3836,8 @@ int Collator::process_one_new_message(block::NewOutMsg msg, bool enqueue_only, R
  * @returns True if the transit message is successfully enqueued, false otherwise.
  */
 bool Collator::enqueue_transit_message(Ref<vm::Cell> msg, Ref<vm::Cell> old_msg_env,
-                                       ton::AccountIdPrefixFull prev_prefix, ton::AccountIdPrefixFull cur_prefix,
-                                       ton::AccountIdPrefixFull dest_prefix, td::RefInt256 fwd_fee_remaining,
+                                       ion::AccountIdPrefixFull prev_prefix, ion::AccountIdPrefixFull cur_prefix,
+                                       ion::AccountIdPrefixFull dest_prefix, td::RefInt256 fwd_fee_remaining,
                                        td::optional<block::MsgMetadata> msg_metadata,
                                        td::optional<LogicalTime> emitted_lt) {
   bool from_dispatch_queue = (bool)emitted_lt;
@@ -3955,8 +3955,8 @@ bool Collator::delete_out_msg_queue_msg(td::ConstBitPtr key) {
   return register_out_msg_queue_op();
 }
 
-bool Collator::precheck_inbound_message(Ref<vm::CellSlice> enq_msg, ton::LogicalTime lt) {
-  ton::LogicalTime enqueued_lt = 0;
+bool Collator::precheck_inbound_message(Ref<vm::CellSlice> enq_msg, ion::LogicalTime lt) {
+  ion::LogicalTime enqueued_lt = 0;
   if (enq_msg.is_null() || enq_msg->size_ext() != 0x10040 ||
       (enqueued_lt = enq_msg->prefetch_ulong(64)) < /* 0 */ 1 * lt) {  // DEBUG
     if (enq_msg.not_null()) {
@@ -3998,10 +3998,10 @@ bool Collator::precheck_inbound_message(Ref<vm::CellSlice> enq_msg, ton::Logical
  *
  * @returns True if the message was processed successfully, false otherwise.
  */
-bool Collator::process_inbound_message(Ref<vm::CellSlice> enq_msg, ton::LogicalTime lt, td::ConstBitPtr key,
+bool Collator::process_inbound_message(Ref<vm::CellSlice> enq_msg, ion::LogicalTime lt, td::ConstBitPtr key,
                                        int src_nb_idx) {
   const auto& src_nb = neighbors_.at(src_nb_idx);
-  ton::LogicalTime enqueued_lt = enq_msg->prefetch_ulong(64);
+  ion::LogicalTime enqueued_lt = enq_msg->prefetch_ulong(64);
   auto msg_env = enq_msg->prefetch_ref();
   // 1. unpack MsgEnvelope
   block::tlb::MsgEnvelope::Record_std env;
@@ -4035,7 +4035,7 @@ bool Collator::process_inbound_message(Ref<vm::CellSlice> enq_msg, ton::LogicalT
     return false;
   }
   // 2.0. update last_proc_int_msg
-  if (!update_last_proc_int_msg(std::pair<ton::LogicalTime, ton::Bits256>(lt, env.msg->get_hash().bits()))) {
+  if (!update_last_proc_int_msg(std::pair<ion::LogicalTime, ion::Bits256>(lt, env.msg->get_hash().bits()))) {
     return fatal_error("processing a message AFTER a newer message has been processed");
   }
   // 2.1. check fwd_fee and fwd_fee_remaining
@@ -4060,12 +4060,12 @@ bool Collator::process_inbound_message(Ref<vm::CellSlice> enq_msg, ton::LogicalT
     return false;
   }
   // 5.1. cur_prefix must belong to the originating neighbor
-  if (!ton::shard_contains(src_nb.shard(), cur_prefix)) {
+  if (!ion::shard_contains(src_nb.shard(), cur_prefix)) {
     LOG(ERROR) << "inbound internal message does not have current address in the originating neighbor shard";
     return false;
   }
   // 5.2. next_prefix must belong to our shard
-  if (!ton::shard_contains(shard_, next_prefix)) {
+  if (!ion::shard_contains(shard_, next_prefix)) {
     LOG(ERROR) << "inbound internal message does not have next hop address in our shard";
     return false;
   }
@@ -4087,8 +4087,8 @@ bool Collator::process_inbound_message(Ref<vm::CellSlice> enq_msg, ton::LogicalT
   }
   // 6. check whether we have already processed this message before using ProcessedUpTo (processed_upto)
   //    (then silently ignore this message; NB: it can be ours after merge)
-  bool our = ton::shard_contains(shard_, cur_prefix);
-  bool to_us = ton::shard_contains(shard_, dest_prefix);
+  bool our = ion::shard_contains(shard_, cur_prefix);
+  bool to_us = ion::shard_contains(shard_, dest_prefix);
 
   block::EnqueuedMsgDescr enq_msg_descr{cur_prefix, next_prefix,
                                         env.emitted_lt ? env.emitted_lt.value() : info.created_lt, enqueued_lt,
@@ -4297,7 +4297,7 @@ bool Collator::process_inbound_external_messages() {
       return false;
     }
     auto ext_msg = ext_msg_struct.cell;
-    ton::Bits256 hash{ext_msg->get_hash().bits()};
+    ion::Bits256 hash{ext_msg->get_hash().bits()};
     int r = process_external_message(std::move(ext_msg));
     if (r > 0) {
       ++stats_.ext_msgs_accepted;
@@ -4921,7 +4921,7 @@ void Collator::register_new_msgs(block::transaction::Transaction& trans,
  *
  * @returns True if the reference was successfully stored, false otherwise.
  */
-bool store_ext_blk_ref_to(vm::CellBuilder& cb, const ton::BlockIdExt& id_ext, ton::LogicalTime end_lt) {
+bool store_ext_blk_ref_to(vm::CellBuilder& cb, const ion::BlockIdExt& id_ext, ion::LogicalTime end_lt) {
   return cb.store_long_bool(end_lt, 64)             // end_lt:uint64
          && cb.store_long_bool(id_ext.seqno(), 32)  // seq_no:uint32
          && cb.store_bits_bool(id_ext.root_hash)    // root_hash:bits256
@@ -4937,7 +4937,7 @@ bool store_ext_blk_ref_to(vm::CellBuilder& cb, const ton::BlockIdExt& id_ext, to
  *
  * @returns True if the reference was successfully stored, false otherwise.
  */
-bool store_ext_blk_ref_to(vm::CellBuilder& cb, const ton::BlockIdExt& id_ext, Ref<vm::Cell> blk_root) {
+bool store_ext_blk_ref_to(vm::CellBuilder& cb, const ion::BlockIdExt& id_ext, Ref<vm::Cell> blk_root) {
   block::gen::Block::Record rec;
   block::gen::BlockInfo::Record info;
   block::ShardId shard_id;
@@ -4965,7 +4965,7 @@ bool store_ext_blk_ref_to(vm::CellBuilder& cb, const ton::BlockIdExt& id_ext, Re
  * @returns A boolean value indicating whether the shard description has changed.
  */
 static int update_one_shard(block::McShardHash& info, const block::McShardHash* sibling,
-                            const block::WorkchainInfo* wc_info, ton::UnixTime now,
+                            const block::WorkchainInfo* wc_info, ion::UnixTime now,
                             const block::CatchainValidatorsConfig& ccvc, bool update_cc) {
   bool changed = false;
   bool old_before_merge = info.before_merge_;
@@ -4979,7 +4979,7 @@ static int update_one_shard(block::McShardHash& info, const block::McShardHash* 
   }
   if (wc_info && !info.before_split_) {
     // workchain present in configuration?
-    unsigned depth = ton::shard_prefix_length(info.shard());
+    unsigned depth = ion::shard_prefix_length(info.shard());
     if (info.is_fsm_none() && (info.want_split_ || depth < wc_info->min_split) && depth < wc_info->max_split &&
         depth < 60) {
       // prepare split
@@ -5029,9 +5029,9 @@ static int update_one_shard(block::McShardHash& info, const block::McShardHash* 
 bool Collator::update_shard_config(const block::WorkchainSet& wc_set, const block::CatchainValidatorsConfig& ccvc,
                                    bool update_cc) {
   LOG(DEBUG) << "updating shard configuration (update_cc=" << update_cc << ")";
-  WorkchainId wc_id{ton::workchainInvalid};
+  WorkchainId wc_id{ion::workchainInvalid};
   Ref<block::WorkchainInfo> wc_info;
-  ton::BlockSeqno& min_seqno = min_ref_mc_seqno_;
+  ion::BlockSeqno& min_seqno = min_ref_mc_seqno_;
   return shard_conf_->process_sibling_shard_hashes(
       [&wc_set, &wc_id, &wc_info, &ccvc, &min_seqno, now = now_, update_cc](block::McShardHash& cur,
                                                                             const block::McShardHash* sibling) {
@@ -5069,7 +5069,7 @@ bool Collator::create_mc_state_extra() {
     return fatal_error("cannot unpack previous McStateExtra");
   }
   // 1. update config:ConfigParams
-  ton::StdSmcAddress config_addr;
+  ion::StdSmcAddress config_addr;
   if (state_extra.config->size_ext() != 0x10100 || !state_extra.config->prefetch_bits_to(config_addr)) {
     return fatal_error("previous McStateExtra has invalid ConfigParams");
   }
@@ -5096,7 +5096,7 @@ bool Collator::create_mc_state_extra() {
   }
   bool changed_cfg = false;
   if (cfg0.not_null()) {
-    ton::StdSmcAddress new_config_addr;
+    ion::StdSmcAddress new_config_addr;
     Ref<vm::Cell> new_cfg_smc_config;
     if (vm::load_cell_slice(cfg0).prefetch_bits_to(new_config_addr) && new_config_addr != config_addr &&
         try_fetch_new_config(new_config_addr, new_cfg_smc_config)) {
@@ -5402,7 +5402,7 @@ bool Collator::update_block_creator_stats() {
  *
  * @returns A Result object containing a reference to the configuration data.
  */
-td::Result<Ref<vm::Cell>> Collator::get_config_data_from_smc(const ton::StdSmcAddress& cfg_addr) {
+td::Result<Ref<vm::Cell>> Collator::get_config_data_from_smc(const ion::StdSmcAddress& cfg_addr) {
   return block::get_config_data_from_smc(account_dict->lookup_ref(cfg_addr));
 }
 
@@ -5414,7 +5414,7 @@ td::Result<Ref<vm::Cell>> Collator::get_config_data_from_smc(const ton::StdSmcAd
  *
  * @returns True if the new configuration was successfully fetched, false otherwise.
  */
-bool Collator::try_fetch_new_config(const ton::StdSmcAddress& cfg_addr, Ref<vm::Cell>& new_config) {
+bool Collator::try_fetch_new_config(const ion::StdSmcAddress& cfg_addr, Ref<vm::Cell>& new_config) {
   auto cfg_res = get_config_data_from_smc(cfg_addr);
   if (cfg_res.is_error()) {
     LOG(ERROR) << "cannot extract new configuration from configuration smart contract " << cfg_addr.to_hex() << " : "
@@ -5680,7 +5680,7 @@ bool Collator::update_public_libraries() {
  *
  * @returns True if the minimum reference masterchain sequence number was updated successfully, false otherwise.
  */
-bool Collator::update_min_mc_seqno(ton::BlockSeqno some_mc_seqno) {
+bool Collator::update_min_mc_seqno(ion::BlockSeqno some_mc_seqno) {
   min_ref_mc_seqno_ = std::min(min_ref_mc_seqno_, some_mc_seqno);
   return true;
 }
@@ -6427,7 +6427,7 @@ bool Collator::create_block_candidate() {
             << block_limit_status_->transactions;
   LOG(INFO) << "serialized collated data size " << cdata_slice.size() << " bytes (preliminary estimate was "
             << block_limit_status_->collated_data_size_estimate << ")";
-  auto new_block_id_ext = ton::BlockIdExt{ton::BlockId{shard_, new_block_seqno}, new_block->get_hash().bits(),
+  auto new_block_id_ext = ion::BlockIdExt{ion::BlockId{shard_, new_block_seqno}, new_block->get_hash().bits(),
                                           block::compute_file_hash(blk_slice.as_slice())};
   // 3. create a BlockCandidate
   block_candidate =
@@ -6563,7 +6563,7 @@ td::Result<bool> Collator::register_external_message_cell(Ref<vm::Cell> ext_msg,
   if (cs.prefetch_ulong(2) != 2) {  // ext_in_msg_info$10
     return td::Status::Error("external message must begin with ext_in_msg_info$10");
   }
-  ton::Bits256 hash{ext_msg->get_hash().bits()};
+  ion::Bits256 hash{ext_msg->get_hash().bits()};
   auto it = ext_msg_map.find(hash);
   if (it != ext_msg_map.end()) {
     if (it->second > 0) {
@@ -6591,7 +6591,7 @@ td::Result<bool> Collator::register_external_message_cell(Ref<vm::Cell> ext_msg,
     return td::Status::Error("destination of an inbound external message is an invalid blockchain address");
   }
   // NB: previous checks are quite general and can be done at an outer level before multiplexing to correct Collator
-  if (!ton::shard_contains(shard_, dest_prefix)) {
+  if (!ion::shard_contains(shard_, dest_prefix)) {
     return td::Status::Error("inbound external message has destination address not in this shard");
   }
   if (verbosity > 2) {
@@ -6745,4 +6745,4 @@ void Collator::set_current_tx_storage_dict(const block::Account& account) {
 
 }  // namespace validator
 
-}  // namespace ton
+}  // namespace ion

@@ -60,12 +60,12 @@ enum EOfCrc32: uint32 {
 }
 
 enum Amounts: coins {
-    zero = ton("0"),
-    nanoton = 1,
-    small = ton("0.0001"),
-    more = ton("0.05"),
+    zero = ion("0"),
+    nanoion = 1,
+    small = ion("0.0001"),
+    more = ion("0.05"),
     more1,
-    one = ton("1"),
+    one = ion("1"),
 }
 
 
@@ -182,7 +182,7 @@ fun test14() {
         beginCell().storeAny(Amounts.zero).bitsCount(),
         beginCell().storeAny(Amounts.more).bitsCount(),
         Amounts.fromSlice(stringHexToSlice("402faf080")) as int64,
-        Amounts.fromSlice(stringHexToSlice("402faf080")) as coins == ton("0.05"),
+        Amounts.fromSlice(stringHexToSlice("402faf080")) as coins == ion("0.05"),
         Amounts.fromSlice(stringHexToSlice("402faf080")) == Amounts.more,
         Amounts.more1,
         ex,

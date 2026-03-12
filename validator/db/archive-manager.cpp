@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2019-2020 Telegram Systems LLP
 */
@@ -27,7 +27,7 @@
 #include "archive-manager.hpp"
 #include "files-async.hpp"
 
-namespace ton {
+namespace ion {
 
 namespace validator {
 
@@ -1163,7 +1163,7 @@ td::Status ArchiveManager::catch_up_package(const PackageId& id) {
 }
 
 void ArchiveManager::get_max_masterchain_seqno(td::Promise<BlockSeqno> promise) {
-  auto fd = get_file_desc_by_seqno(ton::AccountIdPrefixFull(ton::masterchainId, ton::shardIdAll), INT_MAX, false);
+  auto fd = get_file_desc_by_seqno(ion::AccountIdPrefixFull(ion::masterchainId, ion::shardIdAll), INT_MAX, false);
   if (mode_ == td::DbOpenMode::db_secondary) {
     auto R = td::PromiseCreator::lambda([SelfId = actor_id(this), promise = std::move(promise), file = fd->file.get()](td::Result<td::Unit> R) mutable {
       if (R.is_error()) {
@@ -1179,7 +1179,7 @@ void ArchiveManager::get_max_masterchain_seqno(td::Promise<BlockSeqno> promise) 
 }
 
 void ArchiveManager::get_min_masterchain_seqno(td::Promise<BlockSeqno> promise) {
-  auto fd = get_file_map(PackageId{0, false, false}).get_next_file_desc(ShardIdFull(ton::masterchainId, ton::shardIdAll), nullptr);
+  auto fd = get_file_map(PackageId{0, false, false}).get_next_file_desc(ShardIdFull(ion::masterchainId, ion::shardIdAll), nullptr);
   td::actor::send_closure(fd->file, &ArchiveSlice::get_min_masterchain_seqno, std::move(promise));
 }
 
@@ -1689,4 +1689,4 @@ void ArchiveManager::update_permanent_slices() {
 
 }  // namespace validator
 
-}  // namespace ton
+}  // namespace ion

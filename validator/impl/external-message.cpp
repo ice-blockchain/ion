@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -29,13 +29,13 @@
 #include "external-message.hpp"
 #include "fabric.h"
 
-namespace ton {
+namespace ion {
 
 namespace validator {
 using td::Ref;
 
 ExtMessageQ::ExtMessageQ(td::BufferSlice data, td::Ref<vm::Cell> root, AccountIdPrefixFull addr_prefix,
-                         ton::WorkchainId wc, ton::StdSmcAddress addr)
+                         ion::WorkchainId wc, ion::StdSmcAddress addr)
     : root_(std::move(root)), addr_prefix_(addr_prefix), data_(std::move(data)), wc_(wc), addr_(addr) {
   hash_ = block::compute_file_hash(data_);
 }
@@ -64,7 +64,7 @@ td::Result<Ref<ExtMessageQ>> ExtMessageQ::create_ext_message(td::BufferSlice dat
   if (cs.prefetch_ulong(2) != 2) {  // ext_in_msg_info$10
     return td::Status::Error("external message must begin with ext_in_msg_info$10");
   }
-  ton::Bits256 hash{ext_msg->get_hash().bits()};
+  ion::Bits256 hash{ext_msg->get_hash().bits()};
   if (!block::gen::t_Message_Any.validate_ref(128, ext_msg)) {
     return td::Status::Error("external message is not a (Message Any) according to automated checks");
   }
@@ -79,8 +79,8 @@ td::Result<Ref<ExtMessageQ>> ExtMessageQ::create_ext_message(td::BufferSlice dat
   if (!dest_prefix.is_valid()) {
     return td::Status::Error("destination of an inbound external message is an invalid blockchain address");
   }
-  ton::StdSmcAddress addr;
-  ton::WorkchainId wc;
+  ion::StdSmcAddress addr;
+  ion::WorkchainId wc;
   if (!block::tlb::t_MsgAddressInt.extract_std_address(info.dest, wc, addr)) {
     return td::Status::Error(PSLICE() << "Can't parse destination address");
   }
@@ -88,13 +88,13 @@ td::Result<Ref<ExtMessageQ>> ExtMessageQ::create_ext_message(td::BufferSlice dat
   return Ref<ExtMessageQ>{true, std::move(data), std::move(ext_msg), dest_prefix, wc, addr};
 }
 
-void ExtMessageQ::run_message(td::Ref<ExtMessage> message, td::actor::ActorId<ton::validator::ValidatorManager> manager,
+void ExtMessageQ::run_message(td::Ref<ExtMessage> message, td::actor::ActorId<ion::validator::ValidatorManager> manager,
                               td::Promise<td::Ref<ExtMessage>> promise) {
   auto root = message->root_cell();
   block::gen::CommonMsgInfo::Record_ext_in_msg_info info;
   tlb::unpack_cell_inexact(root, info);  // checked in create message
-  ton::StdSmcAddress addr = message->addr();
-  ton::WorkchainId wc = message->wc();
+  ion::StdSmcAddress addr = message->addr();
+  ion::WorkchainId wc = message->wc();
 
   run_fetch_account_state(
       wc, addr, manager,
@@ -127,7 +127,7 @@ void ExtMessageQ::run_message(td::Ref<ExtMessage> message, td::actor::ActorId<to
       });
 }
 
-td::Status ExtMessageQ::run_message_on_account(ton::WorkchainId wc, block::Account* acc, UnixTime utime, LogicalTime lt,
+td::Status ExtMessageQ::run_message_on_account(ion::WorkchainId wc, block::Account* acc, UnixTime utime, LogicalTime lt,
                                                td::Ref<vm::Cell> msg_root, std::unique_ptr<block::ConfigInfo> config) {
   Ref<vm::Cell> old_mparams;
   std::vector<block::StoragePrices> storage_prices_;
@@ -169,4 +169,4 @@ td::Status ExtMessageQ::run_message_on_account(ton::WorkchainId wc, block::Accou
 }
 
 }  // namespace validator
-}  // namespace ton
+}  // namespace ion

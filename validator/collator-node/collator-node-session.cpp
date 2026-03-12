@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "collator-node-session.hpp"
@@ -20,7 +20,7 @@
 #include "fabric.h"
 #include "utils.hpp"
 
-namespace ton::validator {
+namespace ion::validator {
 
 static BlockSeqno get_next_block_seqno(const std::vector<BlockIdExt>& prev) {
   if (prev.size() == 1) {
@@ -310,4 +310,4 @@ void CollatorNodeSession::CacheEntry::cancel(td::Status reason) {
   cancellation_token_source.cancel();
 }
 
-}  // namespace ton::validator
+}  // namespace ion::validator

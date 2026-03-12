@@ -4,8 +4,8 @@ requires-python = ">=3.13"
 
 [manifest]
 members = [
-    "ton",
-    "tontester",
+    "ion",
+    "iontester",
 ]
 
 [[package]]
@@ -136,13 +136,13 @@ wheels = [
 ]
 
 [[package]]
-name = "ton"
+name = "ion"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "pytest" },
     { name = "pytest-asyncio" },
-    { name = "tontester" },
+    { name = "iontester" },
     { name = "types-gdb" },
 ]
 
@@ -156,7 +156,7 @@ dev = [
 requires-dist = [
     { name = "pytest", specifier = ">=9.0.1" },
     { name = "pytest-asyncio" },
-    { name = "tontester", editable = "test/tontester" },
+    { name = "iontester", editable = "test/iontester" },
     { name = "types-gdb", specifier = ">=16.3.0.20250920" },
 ]
 
@@ -167,9 +167,9 @@ dev = [
 ]
 
 [[package]]
-name = "tontester"
+name = "iontester"
 version = "0.1.0"
-source = { editable = "test/tontester" }
+source = { editable = "test/iontester" }
 
 [[package]]
 name = "types-gdb"

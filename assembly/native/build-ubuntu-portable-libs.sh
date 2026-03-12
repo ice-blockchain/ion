@@ -94,7 +94,7 @@ else
 fi
 
 if [ ! -d "../3pp/libmicrohttpd" ]; then
-  git clone https://github.com/ton-blockchain/libmicrohttpd.git ../3pp/libmicrohttpd
+  git clone https://github.com/ice-blockchain/libmicrohttpd.git ../3pp/libmicrohttpd
   cd ../3pp/libmicrohttpd
   libmicrohttpdPath=`pwd`
   ./configure --enable-static --disable-tests --disable-benchmark --disable-shared --disable-https --with-pic
@@ -126,7 +126,7 @@ cmake -GNinja .. \
 -DLZ4_LIBRARIES=$lz4Path/lib/liblz4.a
 
 
-test $? -eq 0 || { echo "Can't configure ton"; exit 1; }
+test $? -eq 0 || { echo "Can't configure ion"; exit 1; }
 
 ninja tonlibjson emulator
 test $? -eq 0 || { echo "Can't compile tonlibjson and emulator"; exit 1; }

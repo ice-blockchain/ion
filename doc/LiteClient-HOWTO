@@ -1,11 +1,11 @@
-The aim of this document is to provide step-by-step instructions for compiling and creating a simple smart contract (a simple wallet) in the TON Blockchain Test Network using the TON Blockchain Lite Client and associated software.
+The aim of this document is to provide step-by-step instructions for compiling and creating a simple smart contract (a simple wallet) in the ION Blockchain Test Network using the ION Blockchain Lite Client and associated software.
 
 Download and installation instructions may be found in README. We assume here that the Lite Client is already properly downloaded, compiled and installed.
 
 1. Smart-contract addresses
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Smart-contract addresses in the TON Network consist of two parts: (a) the workchain ID (a signed 32-bit integer) and (b) the address inside the workchain (64-512 bits depending on the workchain). Currently, only the masterchain (workchain_id=-1) and occasionally the basic workchain (workchain_id=0) are running in the TON Blockchain Test Network. Both of them have 256-bit addresses, so we henceforth assume that workchain_id is either 0 or -1 and that the address inside the workchain is exactly 256-bit.
+Smart-contract addresses in the ION Network consist of two parts: (a) the workchain ID (a signed 32-bit integer) and (b) the address inside the workchain (64-512 bits depending on the workchain). Currently, only the masterchain (workchain_id=-1) and occasionally the basic workchain (workchain_id=0) are running in the ION Blockchain Test Network. Both of them have 256-bit addresses, so we henceforth assume that workchain_id is either 0 or -1 and that the address inside the workchain is exactly 256-bit.
 
 Under the conditions stated above, the smart-contract address can be represented in the following forms:
 
@@ -33,7 +33,7 @@ kf_8uRo6OBbQ97jCx2EIuKm8Wmt6Vb15-KsQHFLbKSMiYIny (base64url)
 
 in the "user-friendly" form (to be displayed by user-friendly clients). Notice that both forms (base64 and base64url) are valid and must be accepted.
 
-Incidentally, other binary data related to the TON Blockchain have similar "armored" base64 representations, differing by their first bytes. For example, the ubiquitious 256-bit Ed25519 public keys are represented by first creating a 36-byte sequence as follows:
+Incidentally, other binary data related to the ION Blockchain have similar "armored" base64 representations, differing by their first bytes. For example, the ubiquitious 256-bit Ed25519 public keys are represented by first creating a 36-byte sequence as follows:
 - one tag byte 0x3E, meaning that this is a public key
 - one tag byte 0xE6, meaning that this is a Ed25519 public key
 - 32 bytes containing the standard binary representation of the Ed25519 public key
@@ -46,7 +46,7 @@ Pubjns2gp7DGCnEH7EOWeCnb6Lw1akm538YYaz6sdLVHfRB2
 2. Inspecting the state of a smart contract
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Inspecting the state of smart contracts with the aid of the TON Lite Client is easy. For the sample smart contract described above, you would run the Lite Client and enter the following commands:
+Inspecting the state of smart contracts with the aid of the ION Lite Client is easy. For the sample smart contract described above, you would run the Lite Client and enter the following commands:
 
 > last
 ...
@@ -96,22 +96,22 @@ last transaction lt = 2310000001 hash = 73F89C6F8910F598AD84504A777E5945C798AC8C
 
 The first information line "got account state ... for ..." shows the account address and the masterchain block identifier with respect to which the account state has been dumped. Notice that even if the account state changes in a subsequent block, the `getaccount xxx` command will return the same result until the reference block is updated to a newer value by a `last` command. In this way one can study the state of all accounts and obtain consistent results.
 
-The "account state is (account ... " line begins the pretty-printed deserialized view of the account state. It is a deserialization of TL-B data type Account, used to represent account states in the TON Blockchain as explained in the TON Blockchain documentation. (You can find the TL-B scheme used for deserialization in the source file crypto/block/block.tlb; notice that if the scheme is out of date, the deserialization may break down.)
+The "account state is (account ... " line begins the pretty-printed deserialized view of the account state. It is a deserialization of TL-B data type Account, used to represent account states in the ION Blockchain as explained in the ION Blockchain documentation. (You can find the TL-B scheme used for deserialization in the source file crypto/block/block.tlb; notice that if the scheme is out of date, the deserialization may break down.)
 
 Finally, the last several lines beginning with x{CFF538... (the "raw dump") contain the same information displayed as a tree of cells. In this case, we have one root cell containing the data bits CFF...134_ (the underscore means that the last binary one and all subsequent binary zeroes are to be removed, so hexadecimal "4_" corresponds to binary "0"), and two cells that are its children (displayed with one-space indentation).
 
-We can see that x{FF0020DD20...} is the code of this smart contract. If we consult the Appendix A of the TON Virtual Machine documentation, we can even disassemble this code: FF00 is SETCP 0, 20 is DUP, DD is IFNOTRET, 20 is DUP, and so on. (Incidentally, you can find the source code of this smartcontract in the source file crypto/block/new-testgiver.fif .)
+We can see that x{FF0020DD20...} is the code of this smart contract. If we consult the Appendix A of the ION Virtual Machine documentation, we can even disassemble this code: FF00 is SETCP 0, 20 is DUP, DD is IFNOTRET, 20 is DUP, and so on. (Incidentally, you can find the source code of this smartcontract in the source file crypto/block/new-testgiver.fif .)
 
-We can also see that x{00009A15} (the actual value you see may be different) is the persistent data of this smart contract. It is actually an unsigned 32-bit integer, used by the smart contract as the counter of operations performed so far. Notice that this value is big-endian (i.e., 3 is encoded as x{00000003}, not as x{03000000}), as are all integers inside the TON Blockchain. In this case the counter is equal to 0x9A15 = 39445.
+We can also see that x{00009A15} (the actual value you see may be different) is the persistent data of this smart contract. It is actually an unsigned 32-bit integer, used by the smart contract as the counter of operations performed so far. Notice that this value is big-endian (i.e., 3 is encoded as x{00000003}, not as x{03000000}), as are all integers inside the ION Blockchain. In this case the counter is equal to 0x9A15 = 39445.
 
 The current balance of the smart contract is easily seen in the pretty-printed portion of the output. In this case, we see ... balance:(currencies:(grams:(nanograms:(... value:1000000000000000...)))), which is the balance of the account in (test) nanograms (a million test Grams in this example; the actual number you see may be smaller). If you study the TL-B scheme provided in crypto/block/scheme.tlb, you will be able to find this number (10^15) in binary big-endian form in the raw dump portion as well (it is located near the end of the data bits of the root cell).
 
 3. Compiling a new smart contract
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Before uploading a new smart contract into the TON Blockchain, you need to determine its code and data and save them in serialized form into a file (called a "bag-of-cells" or BOC file, usually with a .boc suffix). Let us consider the case of a simple wallet smart contract, which stores a 32-bit operations counter and a 256-bit Ed25519 public key of its owner in its persistent data.
+Before uploading a new smart contract into the ION Blockchain, you need to determine its code and data and save them in serialized form into a file (called a "bag-of-cells" or BOC file, usually with a .boc suffix). Let us consider the case of a simple wallet smart contract, which stores a 32-bit operations counter and a 256-bit Ed25519 public key of its owner in its persistent data.
 
-Obviously, you'll need some tools for developing smart contracts - namely, a TON smart contract compiler. Basically, a TON smart contract compiler is a program that reads the source of a smart contract in a specialized high-level programming language and creates a .boc file from this source.
+Obviously, you'll need some tools for developing smart contracts - namely, a ION smart contract compiler. Basically, a ION smart contract compiler is a program that reads the source of a smart contract in a specialized high-level programming language and creates a .boc file from this source.
 
 One such tool is the Fift interpreter, which is included in this distribution and can help create simple smart contracts. Larger smart contracts should be developed using more sophisticated tools (such as the FunC compiler included in this distribution, that creates Fift assembler files from FunC source files; you can find some FunC smart-contract sources in the directory `crypto/smartcont`). However, Fift is sufficient for demonstration purposes.
 
@@ -223,7 +223,7 @@ In a nutshell, the Fift assembler (loaded by the "Asm.fif" include line) is used
 
 The code and data for the new smart contract are combined into a StateInit structure (in the next lines), the address of the new smart contract (equal to the hash of this StateInit structure) is computed and output, and then an external message with a destination address equal to that of the new smart contract is created. This external message contains both the correct StateInit for the new smart contract and a non-trivial payload (signed by the correct private key).
 
-Finally, the external message is serialized into a bag of cells (represented by B5EE...BE63) and saved into the file `my_wallet_name-query.boc`. Essentially, this file is your compiled smart contract with all additional information necessary to upload it into the TON Blockchain.
+Finally, the external message is serialized into a bag of cells (represented by B5EE...BE63) and saved into the file `my_wallet_name-query.boc`. Essentially, this file is your compiled smart contract with all additional information necessary to upload it into the ION Blockchain.
 
 4. Transferring some funds to the new smart contract
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -476,7 +476,7 @@ x{CFF60C04141C6A7B96D68615E7A91D265AD0F3A9A922E9AE9C901D4FA83F5D3C0D020680F0C2E4
  x{00000001F61CF0BC8E891AD7636E0CD35229D579323AA2DA827EB85D8071407464DC2FA3}
 ---------------------------------------------
 
-You will see that the smart contract has been initialized using code and data from the StateInit of the external message, and its balance has been slightly decreased because of the processing fees. Now it is up and running, and you can activate it by generating new external messages and uploading them to the TON Blockchain using the "sendfile" command of the Lite Client.
+You will see that the smart contract has been initialized using code and data from the StateInit of the external message, and its balance has been slightly decreased because of the processing fees. Now it is up and running, and you can activate it by generating new external messages and uploading them to the ION Blockchain using the "sendfile" command of the Lite Client.
 
 8. Using the simple wallet smart contract
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -551,6 +551,6 @@ Here `my_wallet_name` is the identifier of your wallet used before with new-wall
 
 When you run this code (by invoking the Fift interpreter), you create an external message with a destination equal to the address of your wallet smart contract, containing a correct Ed25519 signature, a sequence number, and an enveloped internal message from your wallet smart contract to the smart contract indicated in dest_addr, with an arbitrary value attached and an arbitrary payload. When your smart contract receives and processes this external message, it first checks the signature and the sequence number. If they are correct, it accepts the external message, sends the embedded internal message from itself to the intended destination, and increases the sequence number in its persistent data (this is a simple measure to prevent replay attacks, in case this sample wallet smart contract code ends up used in a real wallet application).
 
-Of course, a true TON Blockchain wallet application would hide all the intermediate steps explained above. It would first communicate the address of the new smart contract to the user, asking them to transfer some funds to the indicated address (displayed in its non-bounceable user-friendly form) from another wallet or a cryptocurrency exchange, and then would provide a simple interface to display the current balance and to transfer funds to whatever other addresses the user wants. (The aim of this document is to explain how to create new non-trivial smart contracts and experiment with the TON Blockchain Test Network, rather than to explain how one could use the Lite Client instead of a more user-friendly wallet application.)
+Of course, a true ION Blockchain wallet application would hide all the intermediate steps explained above. It would first communicate the address of the new smart contract to the user, asking them to transfer some funds to the indicated address (displayed in its non-bounceable user-friendly form) from another wallet or a cryptocurrency exchange, and then would provide a simple interface to display the current balance and to transfer funds to whatever other addresses the user wants. (The aim of this document is to explain how to create new non-trivial smart contracts and experiment with the ION Blockchain Test Network, rather than to explain how one could use the Lite Client instead of a more user-friendly wallet application.)
 
 One final remark: The above examples used smart contracts in the basic workchain (workchain 0). They would work in exactly the same way in the masterchain (workchain -1), if one passes workchain identifier -1 instead of 0 as the first argument to `new-wallet.fif`. The only difference is that the processing and storage fees in the basic workchain are 100-1000 times lower than in the masterchain. Some smart contracts (such as the validator election smart contract) accept transfers only from masterchain smart contracts, so you'll need a wallet in the masterchain if you wish to make stakes on behalf of your own validator and participate in the elections.

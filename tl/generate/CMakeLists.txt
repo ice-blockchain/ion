@@ -1,6 +1,6 @@
 file(MAKE_DIRECTORY auto/tl)
 
-set(TL_TON_API
+set(TL_ION_API
   ${CMAKE_CURRENT_SOURCE_DIR}/auto/tl/ton_api.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/auto/tl/ton_api.h
   ${CMAKE_CURRENT_SOURCE_DIR}/auto/tl/ton_api.hpp
@@ -8,7 +8,7 @@ set(TL_TON_API
   ${CMAKE_CURRENT_SOURCE_DIR}/auto/tl/ton_api_json.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/auto/tl/ton_api_json.h
 )
-set(TL_TON_API ${TL_TON_API} PARENT_SCOPE)
+set(TL_ION_API ${TL_ION_API} PARENT_SCOPE)
 
 set(TL_LITE_API
   ${CMAKE_CURRENT_SOURCE_DIR}/auto/tl/lite_api.cpp
@@ -79,9 +79,9 @@ if (NOT CMAKE_CROSSCOMPILING)
     COMMAND ${GENERATE_COMMON_CMD}
     COMMENT "Generate common tl source files"
     DEPENDS generate_common scheme/ton_api.tlo scheme/lite_api.tlo scheme/tonlib_api.tlo
-    OUTPUT ${TL_TON_API} ${TL_LITE_API} ${TL_TONLIB_API} ${TL_TONLIB_API_JSON}
+    OUTPUT ${TL_ION_API} ${TL_LITE_API} ${TL_TONLIB_API} ${TL_TONLIB_API_JSON}
   )
-  add_custom_target(tl_generate_common DEPENDS ${TL_TON_API} ${TL_LITE_API} ${TL_TONLIB_API} ${TL_TONLIB_API_JSON})
+  add_custom_target(tl_generate_common DEPENDS ${TL_ION_API} ${TL_LITE_API} ${TL_TONLIB_API} ${TL_TONLIB_API_JSON})
   if (TONLIB_ENABLE_JNI)
     target_compile_definitions(generate_common PRIVATE TONLIB_ENABLE_JNI=1)
   endif()

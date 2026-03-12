@@ -1,31 +1,31 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "auto/tl/ton_api_json.h"
 #include "common/delay.h"
 #include "td/utils/JsonBuilder.h"
 #include "tl/tl_json.h"
-#include "ton/ton-tl.hpp"
+#include "ion/ion-tl.hpp"
 
 #include "checksum.h"
 #include "full-node-fast-sync-overlays.hpp"
 #include "full-node-serializer.hpp"
 
-namespace ton::validator::fullnode {
+namespace ion::validator::fullnode {
 
 namespace {
 
@@ -350,7 +350,7 @@ void FullNodeFastSyncOverlay::init() {
 
 void FullNodeFastSyncOverlay::tear_down() {
   if (inited_) {
-    td::actor::send_closure(overlays_, &ton::overlay::Overlays::delete_overlay, local_id_, overlay_id_);
+    td::actor::send_closure(overlays_, &ion::overlay::Overlays::delete_overlay, local_id_, overlay_id_);
   }
 }
 
@@ -359,7 +359,7 @@ void FullNodeFastSyncOverlay::set_validators(std::vector<PublicKeyHash> root_pub
   root_public_keys_ = std::move(root_public_keys);
   current_validators_adnl_ = std::move(current_validators_adnl);
   if (inited_) {
-    td::actor::send_closure(overlays_, &ton::overlay::Overlays::delete_overlay, local_id_, overlay_id_);
+    td::actor::send_closure(overlays_, &ion::overlay::Overlays::delete_overlay, local_id_, overlay_id_);
     init();
   }
 }
@@ -378,7 +378,7 @@ void FullNodeFastSyncOverlay::set_receive_broadcasts(bool value) {
   }
   receive_broadcasts_ = value;
   if (inited_) {
-    td::actor::send_closure(overlays_, &ton::overlay::Overlays::delete_overlay, local_id_, overlay_id_);
+    td::actor::send_closure(overlays_, &ion::overlay::Overlays::delete_overlay, local_id_, overlay_id_);
     init();
   }
 }
@@ -583,4 +583,4 @@ void FullNodeFastSyncOverlays::add_member_certificate(adnl::AdnlNodeIdShort loca
   // Overlays will be updated in the next update_overlays
 }
 
-}  // namespace ton::validator::fullnode
+}  // namespace ion::validator::fullnode

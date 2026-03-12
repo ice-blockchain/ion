@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain source code.
+    This file is part of ION Blockchain source code.
 
-    TON Blockchain is free software; you can redistribute it and/or
+    ION Blockchain is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
     as published by the Free Software Foundation; either version 2
     of the License, or (at your option) any later version.
 
-    TON Blockchain is distributed in the hope that it will be useful,
+    ION Blockchain is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with TON Blockchain.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "ast.h"
 #include "ast-visitor.h"
@@ -32,11 +32,11 @@ namespace tolk {
 class ConstantExpressionsChecker final : public ASTVisitorFunctionBody {
 
   void visit(V<ast_function_call> v) override {
-    // check `ton("0.05")` and others for correctness (not `ton(local_var)`, etc.)
+    // check `ion("0.05")` and others for correctness (not `ion(local_var)`, etc.)
     if (v->fun_maybe && v->fun_maybe->is_compile_time_const_val()) {
       // on invalid usage, this call will fire
       eval_call_to_compile_time_function(v);
-      // note that in AST tree, it's still left as `ton("0.05")`, `stringCrc32("...")`, etc.
+      // note that in AST tree, it's still left as `ion("0.05")`, `stringCrc32("...")`, etc.
       // later, when transforming to IR, such compile-time functions are handled specially
     }
 

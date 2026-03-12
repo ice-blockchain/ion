@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -29,7 +29,7 @@
 
 #include "NodeActor.h"
 
-namespace ton {
+namespace ion {
 NodeActor::NodeActor(PeerId self_id, Torrent torrent, td::unique_ptr<Callback> callback,
                      td::unique_ptr<NodeCallback> node_callback, std::shared_ptr<db::DbType> db,
                      SpeedLimiters speed_limiters, bool should_download, bool should_upload)
@@ -44,7 +44,7 @@ NodeActor::NodeActor(PeerId self_id, Torrent torrent, td::unique_ptr<Callback> c
     , speed_limiters_(std::move(speed_limiters)) {
 }
 
-NodeActor::NodeActor(PeerId self_id, ton::Torrent torrent, td::unique_ptr<Callback> callback,
+NodeActor::NodeActor(PeerId self_id, ion::Torrent torrent, td::unique_ptr<Callback> callback,
                      td::unique_ptr<NodeCallback> node_callback, std::shared_ptr<db::DbType> db,
                      SpeedLimiters speed_limiters, bool should_download, bool should_upload,
                      DbInitialData db_initial_data)
@@ -1121,4 +1121,4 @@ void NodeActor::get_peers_info(td::Promise<tl_object_ptr<ton_api::storage_daemon
   }
 }
 
-}  // namespace ton
+}  // namespace ion

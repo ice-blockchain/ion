@@ -75,7 +75,7 @@ void UI_free(UI *ui);
    functions takes another buffer to compare the result against.
    The boolean input functions take an action description string (which should
    be safe to ignore if the expected user action is obvious, for example with
-   a dialog box with an OK button and a Cancel button), a string of acceptable
+   a dialog box with an OK bution and a Cancel bution), a string of acceptable
    characters to mean OK and to mean Cancel.  The two last strings are checked
    to make sure they don't have common characters.  Additionally, the same
    flag argument as for the string input is taken, as well as a result buffer.

@@ -1,24 +1,24 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
 #include "WalletInterface.h"
 
-namespace ton {
+namespace ion {
 td::Result<td::uint64> WalletInterface::get_balance(td::uint64 account_balance, td::uint32 now) const {
   return TRY_VM([&]() -> td::Result<td::uint64> {
     Answer answer = this->run_get_method(Args().set_method_id("balance").set_balance(account_balance).set_now(now));
@@ -77,4 +77,4 @@ void WalletInterface::store_gift_message(vm::CellBuilder &cb, const Gift &gift) 
   }
   vm::CellString::store(cb, gift.message, 35 * 8).ensure();
 }
-}  // namespace ton
+}  // namespace ion

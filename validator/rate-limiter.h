@@ -5,7 +5,7 @@
 
 #include "td/utils/Time.h"
 
-namespace ton::validator::fullnode {
+namespace ion::validator::fullnode {
 struct LimiterWindow {
   double size;
   size_t limit;
@@ -111,4 +111,4 @@ void RateLimiter<RequestID>::insert(RequestID request, td::Timestamp time) {
   }
 }
 
-}  // namespace ton::validator::fullnode
+}  // namespace ion::validator::fullnode

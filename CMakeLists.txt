@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 
-project(TON VERSION 0.5 LANGUAGES C CXX)
+project(ION VERSION 0.5 LANGUAGES C CXX)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # Define the two required variables before including the source code for watching a git repository.
@@ -14,11 +14,11 @@ target_include_directories(git PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 add_dependencies(git check_git)
 
 # Prevent in-source build
-get_filename_component(TON_REAL_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}" REALPATH)
-get_filename_component(TON_REAL_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}" REALPATH)
+get_filename_component(ION_REAL_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}" REALPATH)
+get_filename_component(ION_REAL_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}" REALPATH)
 
-if (TON_REAL_BINARY_DIR STREQUAL TON_REAL_SOURCE_DIR)
-  message("  Out-of-source build should be used to build TON.")
+if (ION_REAL_BINARY_DIR STREQUAL ION_REAL_SOURCE_DIR)
+  message("  Out-of-source build should be used to build ION.")
   message("  You need to remove the files already created by CMake and")
   message("  rerun CMake from a new directory:")
   message("  rm -rf CMakeFiles CMakeCache.txt")
@@ -47,33 +47,33 @@ endif()
 #BEGIN internal
 option(BUILD_SHARED_LIBS "Use \"ON\" to build shared libraries instead of static where it's not specified (not recommended)" OFF)
 option(USE_EMSCRIPTEN "Use \"ON\" for config building wasm." OFF)
-option(TON_ONLY_TONLIB "Use \"ON\" to build only tonlib." OFF)
+option(ION_ONLY_TONLIB "Use \"ON\" to build only tonlib." OFF)
 if (USE_EMSCRIPTEN)
-  set(TON_ONLY_TONLIB true)
+  set(ION_ONLY_TONLIB true)
 endif()
-if (TON_ONLY_TONLIB)
-  set(NOT_TON_ONLY_TONLIB false)
+if (ION_ONLY_TONLIB)
+  set(NOT_ION_ONLY_TONLIB false)
 else()
-  set(NOT_TON_ONLY_TONLIB true)
+  set(NOT_ION_ONLY_TONLIB true)
 endif()
-option(TON_USE_ROCKSDB "Use \"ON\" to enable RocksDb." ${NOT_TON_ONLY_TONLIB})
-option(TON_USE_ABSEIL "Use \"ON\" to enable Abseil." ${NOT_TON_ONLY_TONLIB})
-option(TON_USE_JEMALLOC "Use \"ON\" to enable JeMalloc." OFF)
+option(ION_USE_ROCKSDB "Use \"ON\" to enable RocksDb." ${NOT_ION_ONLY_TONLIB})
+option(ION_USE_ABSEIL "Use \"ON\" to enable Abseil." ${NOT_ION_ONLY_TONLIB})
+option(ION_USE_JEMALLOC "Use \"ON\" to enable JeMalloc." OFF)
 #END internal
 
 option(TONLIB_ENABLE_JNI "Use \"ON\" to enable JNI-compatible TonLib API.")
-option(TON_USE_ASAN "Use \"ON\" to enable AddressSanitizer." OFF)
-option(TON_USE_TSAN "Use \"ON\" to enable ThreadSanitizer." OFF)
-option(TON_USE_UBSAN "Use \"ON\" to enable UndefinedBehaviorSanitizer." OFF)
-option(TON_USE_COVERAGE "Use \"ON\" to enable code coverage with gcov." OFF)
-set(TON_ARCH "native" CACHE STRING "Architecture, will be passed to -march=")
+option(ION_USE_ASAN "Use \"ON\" to enable AddressSanitizer." OFF)
+option(ION_USE_TSAN "Use \"ON\" to enable ThreadSanitizer." OFF)
+option(ION_USE_UBSAN "Use \"ON\" to enable UndefinedBehaviorSanitizer." OFF)
+option(ION_USE_COVERAGE "Use \"ON\" to enable code coverage with gcov." OFF)
+set(ION_ARCH "native" CACHE STRING "Architecture, will be passed to -march=")
 
-option(TON_PRINT_BACKTRACE_ON_CRASH "Attempt to print a backtrace when a fatal signal is caught" ON)
-option(TON_INSERT_GDB_HOOKS "Insert GDB hooks" OFF)
+option(ION_PRINT_BACKTRACE_ON_CRASH "Attempt to print a backtrace when a fatal signal is caught" ON)
+option(ION_INSERT_GDB_HOOKS "Insert GDB hooks" OFF)
 
-option(TON_USE_LLD "Use LLD for linking" OFF)
+option(ION_USE_LLD "Use LLD for linking" OFF)
 
-if (TON_USE_LLD)
+if (ION_USE_LLD)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fuse-ld=lld")
     set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fuse-ld=lld")
     set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -fuse-ld=lld")
@@ -84,7 +84,7 @@ EXECUTE_PROCESS( COMMAND uname -m COMMAND tr -d '\n' OUTPUT_VARIABLE ARCHITECTUR
 
 if ((ARCHITECTURE MATCHES "arm64") AND (CMAKE_SYSTEM_NAME STREQUAL "Darwin") AND
     (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 13.0)) # only clang 13+ supports cpu=apple-m1
-    set(TON_ARCH "apple-m1")
+    set(ION_ARCH "apple-m1")
 endif()
 #END M1 support
 
@@ -92,29 +92,29 @@ if (CLANG AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "20")
   add_compile_options(--warning-suppression-mappings=${CMAKE_SOURCE_DIR}/suppression_mappings.txt)
 endif()
 
-option(TON_WERROR_BUILD "Use -Werror" OFF)
+option(ION_WERROR_BUILD "Use -Werror" OFF)
 
 # If we want to check -Werror build in CI, we want to use it for third party projects as well but we
 # don't want to force our warning options on them.
-if (TON_WERROR_BUILD)
+if (ION_WERROR_BUILD)
   add_compile_options(-Werror)
 endif()
 
-if (TON_USE_ASAN)
+if (ION_USE_ASAN)
   add_compile_options(-fsanitize=address)
   add_link_options(-fsanitize=address)
   add_definitions(-DTD_USE_ASAN=1)
 endif()
-if (TON_USE_TSAN)
+if (ION_USE_TSAN)
   add_compile_options(-fsanitize=thread)
   add_link_options(-fsanitize=thread)
 endif()
-if (TON_USE_UBSAN)
+if (ION_USE_UBSAN)
   add_compile_options(-fsanitize=undefined)
   add_link_options(-fsanitize=undefined)
 endif()
 
-if (TON_USE_ABSEIL)
+if (ION_USE_ABSEIL)
   message("Add abseil-cpp")
   function(abseil_scope)
     set(ABSL_PROPAGATE_CXX_STD TRUE)
@@ -151,7 +151,7 @@ endfunction()
 crc32_scope()
 set(CRC32C_FOUND 1)
 
-if (TON_USE_ROCKSDB)
+if (ION_USE_ROCKSDB)
   if (ANDROID)
     set(PORTABLE ON CACHE BOOL "portable")
   endif()
@@ -161,7 +161,7 @@ if (TON_USE_ROCKSDB)
   set(USE_RTTI ON CACHE BOOL "use rtti")
   set(FAIL_ON_WARNINGS OFF CACHE BOOL "fail on warnings")
   message("Add rocksdb")
-  if (TON_USE_JEMALLOC)
+  if (ION_USE_JEMALLOC)
     set(WITH_JEMALLOC ON CACHE BOOL "build with jemalloc")
   endif()
   add_subdirectory(third-party/rocksdb EXCLUDE_FROM_ALL)
@@ -192,7 +192,7 @@ endif()
 message("Add tl-parser")
 add_subdirectory(third-party/tl-parser EXCLUDE_FROM_ALL)
 
-message("Add ton")
+message("Add ion")
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake" ${CMAKE_MODULE_PATH})
 
 include(BuildBLST)
@@ -224,21 +224,21 @@ else()
 endif()
 
 
-if (TON_ARCH AND NOT MSVC)
-  CHECK_CXX_COMPILER_FLAG( "-march=${TON_ARCH}" COMPILER_OPT_ARCH_SUPPORTED )
-  if (TON_ARCH STREQUAL "apple-m1")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mcpu=${TON_ARCH}")
+if (ION_ARCH AND NOT MSVC)
+  CHECK_CXX_COMPILER_FLAG( "-march=${ION_ARCH}" COMPILER_OPT_ARCH_SUPPORTED )
+  if (ION_ARCH STREQUAL "apple-m1")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mcpu=${ION_ARCH}")
   elseif(COMPILER_OPT_ARCH_SUPPORTED)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=${TON_ARCH}")
-  elseif(NOT TON_ARCH STREQUAL "native")
-    message(FATAL_ERROR "Compiler doesn't support arch ${TON_ARCH}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=${ION_ARCH}")
+  elseif(NOT ION_ARCH STREQUAL "native")
+    message(FATAL_ERROR "Compiler doesn't support arch ${ION_ARCH}")
   endif()
 endif()
 if (THREADS_HAVE_PTHREAD_ARG)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 endif()
 
-if (TON_USE_JEMALLOC)
+if (ION_USE_JEMALLOC)
   find_package(jemalloc REQUIRED)
 endif()
 
@@ -285,7 +285,7 @@ elseif (CLANG OR GCC)
       set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--gc-sections -Wl,--exclude-libs,ALL")
     endif()
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--gc-sections")
-    if (NOT TON_USE_ASAN AND NOT TON_USE_TSAN AND NOT TON_USE_COVERAGE AND NOT MEMPROF)
+    if (NOT ION_USE_ASAN AND NOT ION_USE_TSAN AND NOT ION_USE_COVERAGE AND NOT MEMPROF)
       if (NOT USE_EMSCRIPTEN)
         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--exclude-libs,ALL")
       endif()
@@ -304,8 +304,8 @@ if (NOT ANDROID) # _FILE_OFFSET_BITS is broken in ndk r15 and r15b and doesn't w
   add_definitions(-D_FILE_OFFSET_BITS=64)
 endif()
 
-if (TON_INSERT_GDB_HOOKS)
-  add_compile_definitions(-DTON_INSERT_GDB_HOOKS=1)
+if (ION_INSERT_GDB_HOOKS)
+  add_compile_definitions(-DION_INSERT_GDB_HOOKS=1)
 endif()
 
 set(INTERNAL_COMPILE "0")
@@ -360,7 +360,7 @@ if (GCC OR CLANG)
   endif()
 endif()
 
-if (TON_USE_COVERAGE)
+if (ION_USE_COVERAGE)
   add_cxx_compiler_flag("-fprofile-arcs")
   add_cxx_compiler_flag("-ftest-coverage")
   add_cxx_compiler_flag("--coverage")
@@ -385,9 +385,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 find_package(LATEX)
 if (LATEX_FOUND)
   include(UseLATEX)
-  add_latex_document(doc/ton.tex TARGET_NAME ton_white_paper)
-  add_latex_document(doc/tvm.tex TARGET_NAME ton_vm_description)
-  add_latex_document(doc/tblkch.tex TARGET_NAME ton_blockchain_description)
+  add_latex_document(doc/ion.tex TARGET_NAME ion_white_paper)
+  add_latex_document(doc/tvm.tex TARGET_NAME ion_vm_description)
+  add_latex_document(doc/tblkch.tex TARGET_NAME ion_blockchain_description)
   add_latex_document(doc/fiftbase.tex TARGET_NAME fift_basic_description)
   add_latex_document(doc/catchain.tex TARGET_NAME catchain_consensus_description)
 endif()
@@ -411,7 +411,7 @@ endfunction(target_link_libraries_system)
 
 add_custom_target(all-tests)
 
-function(ton_test TEST_NAME)
+function(ion_test TEST_NAME)
   add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME} ${ARGN})
   add_dependencies(all-tests ${TEST_NAME})
 endfunction()
@@ -421,7 +421,7 @@ add_subdirectory(tdutils)
 add_subdirectory(memprof)
 add_subdirectory(tdactor)
 add_subdirectory(tdnet)
-if (TON_USE_ROCKSDB)
+if (ION_USE_ROCKSDB)
   option(TDDB_USE_ROCKSDB "Use rockdb" ON)
 endif()
 add_subdirectory(tddb)
@@ -445,7 +445,7 @@ add_subdirectory(common)
 add_subdirectory(http)
 
 #BEGIN internal
-if (NOT TON_ONLY_TONLIB)
+if (NOT ION_ONLY_TONLIB)
 add_subdirectory(tdfec)
 add_subdirectory(keyring)
 add_subdirectory(fec)
@@ -476,23 +476,23 @@ endif()
 
 #TESTS
 add_executable(test-ed25519 test/test-td-main.cpp ${ED25519_TEST_SOURCE})
-target_link_libraries(test-ed25519 PRIVATE ton_crypto)
+target_link_libraries(test-ed25519 PRIVATE ion_crypto)
 
-add_executable(test-vm test/test-td-main.cpp ${TONVM_TEST_SOURCE})
-target_link_libraries(test-vm PRIVATE ton_crypto fift-lib)
+add_executable(test-vm test/test-td-main.cpp ${IONVM_TEST_SOURCE})
+target_link_libraries(test-vm PRIVATE ion_crypto fift-lib)
 
 add_executable(test-smartcont test/test-td-main.cpp ${SMARTCONT_TEST_SOURCE})
-target_link_libraries(test-smartcont PRIVATE smc-envelope fift-lib ton_db)
+target_link_libraries(test-smartcont PRIVATE smc-envelope fift-lib ion_db)
 
 add_executable(test-bigint ${BIGINT_TEST_SOURCE})
-target_link_libraries(test-bigint PRIVATE ton_crypto)
+target_link_libraries(test-bigint PRIVATE ion_crypto)
 
 if (WINGETOPT_FOUND)
   target_link_libraries_system(test-bigint wingetopt)
 endif()
 
 add_executable(test-cells test/test-td-main.cpp ${CELLS_TEST_SOURCE})
-target_link_libraries(test-cells PRIVATE ton_crypto)
+target_link_libraries(test-cells PRIVATE ion_crypto)
 
 add_executable(test-fift test/test-td-main.cpp ${FIFT_TEST_SOURCE})
 target_link_libraries(test-fift PRIVATE fift-lib)
@@ -508,10 +508,10 @@ target_link_libraries(test-net PRIVATE tdnet tdutils ${CMAKE_THREAD_LIBS_INIT})
 
 #BEGIN tonlib
 add_executable(test-tonlib ${TONLIB_ONLINE_TEST_SOURCE})
-target_link_libraries(test-tonlib tdactor adnllite tl_api ton_crypto tl_tonlib_api tonlib)
+target_link_libraries(test-tonlib tdactor adnllite tl_api ion_crypto tl_tonlib_api tonlib)
 
 add_executable(test-tonlib-offline test/test-td-main.cpp ${TONLIB_OFFLINE_TEST_SOURCE})
-target_link_libraries(test-tonlib-offline tdactor adnllite tl_api ton_crypto fift-lib tl_tonlib_api tonlib)
+target_link_libraries(test-tonlib-offline tdactor adnllite tl_api ion_crypto fift-lib tl_tonlib_api tonlib)
 
 if (NOT CMAKE_CROSSCOMPILING)
   add_dependencies(test-tonlib-offline gen_fif)
@@ -519,12 +519,12 @@ endif()
 #END tonlib
 
 #BEGIN internal
-if (NOT TON_ONLY_TONLIB)
-add_executable(test-db test/test-td-main.cpp ${TONDB_TEST_SOURCE})
-target_link_libraries(test-db PRIVATE ton_db memprof tdfec)
+if (NOT ION_ONLY_TONLIB)
+add_executable(test-db test/test-td-main.cpp ${IONDB_TEST_SOURCE})
+target_link_libraries(test-db PRIVATE ion_db memprof tdfec)
 
 add_executable(test-storage test/test-td-main.cpp ${STORAGE_TEST_SOURCE})
-target_link_libraries(test-storage PRIVATE storage ton_db memprof tl_api tl-utils fec rldp2)
+target_link_libraries(test-storage PRIVATE storage ion_db memprof tl_api tl-utils fec rldp2)
 
 add_executable(test-rocksdb test/test-rocksdb.cpp)
 target_link_libraries(test-rocksdb PRIVATE memprof tddb tdutils)
@@ -540,7 +540,7 @@ if (USE_LIBRAPTORQ)
 endif()
 
 add_executable(test-hello-world test/test-hello-world.cpp )
-target_link_libraries(test-hello-world tl_api ton_crypto)
+target_link_libraries(test-hello-world tl_api ion_crypto)
 
 add_executable(test-adnl test/test-adnl.cpp)
 target_link_libraries(test-adnl adnl adnltest dht tl_api)
@@ -558,12 +558,12 @@ target_link_libraries(test-overlay overlay tdutils tdactor adnl adnltest tl_api 
 add_executable(test-catchain test/test-catchain.cpp)
 target_link_libraries(test-catchain overlay tdutils tdactor adnl adnltest rldp tl_api dht
   catchain )
-add_executable(test-ton-collator test/test-ton-collator.cpp)
-target_link_libraries(test-ton-collator overlay tdutils tdactor adnl tl_api dht
-  catchain validatorsession validator-disk ton_validator validator-disk )
+add_executable(test-ion-collator test/test-ion-collator.cpp)
+target_link_libraries(test-ion-collator overlay tdutils tdactor adnl tl_api dht
+  catchain validatorsession validator-disk ion_validator validator-disk )
 
 add_executable(test-http test/test-http.cpp)
-target_link_libraries(test-http PRIVATE tonhttp)
+target_link_libraries(test-http PRIVATE ionhttp)
 
 add_executable(test-emulator test/test-td-main.cpp emulator/test/emulator-tests.cpp)
 target_link_libraries(test-emulator PRIVATE emulator)
@@ -577,31 +577,31 @@ if (HAS_PARENT)
           ${TDDB_TEST_SOURCE}
           ${FEC_TEST_SOURCE}
           ${ED25519_TEST_SOURCE}
-          ${TONDB_TEST_SOURCE}
+          ${IONDB_TEST_SOURCE}
           ${BIGNUM_TEST_SOURCE}
           ${CELLS_TEST_SOURCE}
           PARENT_SCOPE)
 endif()
 add_library(all_tests INTERFACE)
-target_link_libraries(all_tests INTERFACE tdutils tdactor tdnet tdfec ton_db ton_crypto fift-lib)
+target_link_libraries(all_tests INTERFACE tdutils tdactor tdnet tdfec ion_db ion_crypto fift-lib)
 endif()
 #END internal
 
 enable_testing()
 set(TEST_OPTIONS "--regression ${CMAKE_CURRENT_SOURCE_DIR}/test/regression-tests.ans --filter -Bench")
 separate_arguments(TEST_OPTIONS)
-ton_test(test-ed25519)
-ton_test(test-bigint)
-ton_test(test-vm ${TEST_OPTIONS})
-ton_test(test-fift ${TEST_OPTIONS})
-ton_test(test-cells ${TEST_OPTIONS})
-ton_test(test-smartcont)
-ton_test(test-net)
-ton_test(test-tdactor)
+ion_test(test-ed25519)
+ion_test(test-bigint)
+ion_test(test-vm ${TEST_OPTIONS})
+ion_test(test-fift ${TEST_OPTIONS})
+ion_test(test-cells ${TEST_OPTIONS})
+ion_test(test-smartcont)
+ion_test(test-net)
+ion_test(test-tdactor)
 
 #BEGIN tonlib
-ton_test(test-tdutils)
-ton_test(test-tonlib-offline)
+ion_test(test-tdutils)
+ion_test(test-tonlib-offline)
 #END tonlib
 
 # FunC tests
@@ -669,17 +669,17 @@ if (NOT NIX)
 endif()
 
 #BEGIN internal
-if (NOT TON_ONLY_TONLIB)
-ton_test(test-adnl)
-ton_test(test-dht)
-ton_test(test-rldp)
-ton_test(test-rldp2)
-ton_test(test-validator-session-state)
-ton_test(test-catchain)
-ton_test(test-emulator)
+if (NOT ION_ONLY_TONLIB)
+ion_test(test-adnl)
+ion_test(test-dht)
+ion_test(test-rldp)
+ion_test(test-rldp2)
+ion_test(test-validator-session-state)
+ion_test(test-catchain)
+ion_test(test-emulator)
 
-ton_test(test-fec)
-ton_test(test-tddb ${TEST_OPTIONS})
-ton_test(test-db ${TEST_OPTIONS})
+ion_test(test-fec)
+ion_test(test-tddb ${TEST_OPTIONS})
+ion_test(test-db ${TEST_OPTIONS})
 endif()
 #END internal

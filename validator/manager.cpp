@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -34,9 +34,9 @@
 #include "td/utils/port/path.h"
 #include "tl-utils/lite-utils.hpp"
 #include "tl/tl_json.h"
-#include "ton/lite-tl.hpp"
-#include "ton/ton-io.hpp"
-#include "ton/ton-tl.hpp"
+#include "ion/lite-tl.hpp"
+#include "ion/ion-io.hpp"
+#include "ion/ion-tl.hpp"
 #include "validator/stats-merger.h"
 
 #include "checksum.h"
@@ -50,7 +50,7 @@
 #include "validate-broadcast.hpp"
 #include "validator-group.hpp"
 
-namespace ton {
+namespace ion {
 
 namespace validator {
 
@@ -1778,7 +1778,7 @@ void ValidatorManagerImpl::register_block_handle(BlockHandle handle) {
 
 void ValidatorManagerImpl::get_top_masterchain_state(td::Promise<td::Ref<MasterchainState>> promise) {
   if (last_masterchain_state_.is_null()) {
-    promise.set_error(td::Status::Error(ton::ErrorCode::notready, "not started"));
+    promise.set_error(td::Status::Error(ion::ErrorCode::notready, "not started"));
   } else {
     promise.set_result(last_masterchain_state_);
   }
@@ -1807,7 +1807,7 @@ td::Ref<MasterchainState> ValidatorManagerImpl::do_get_last_liteserver_state() {
 
 void ValidatorManagerImpl::get_top_masterchain_block(td::Promise<BlockIdExt> promise) {
   if (!last_masterchain_block_id_.is_valid()) {
-    promise.set_error(td::Status::Error(ton::ErrorCode::notready, "not started"));
+    promise.set_error(td::Status::Error(ion::ErrorCode::notready, "not started"));
   } else {
     promise.set_result(last_masterchain_block_id_);
   }
@@ -1816,7 +1816,7 @@ void ValidatorManagerImpl::get_top_masterchain_block(td::Promise<BlockIdExt> pro
 void ValidatorManagerImpl::get_top_masterchain_state_block(
     td::Promise<std::pair<td::Ref<MasterchainState>, BlockIdExt>> promise) {
   if (last_masterchain_state_.is_null()) {
-    promise.set_error(td::Status::Error(ton::ErrorCode::notready, "not started"));
+    promise.set_error(td::Status::Error(ion::ErrorCode::notready, "not started"));
   } else {
     promise.set_result(
         std::pair<td::Ref<MasterchainState>, BlockIdExt>{last_masterchain_state_, last_masterchain_block_id_});
@@ -1827,7 +1827,7 @@ void ValidatorManagerImpl::get_last_liteserver_state_block(
     td::Promise<std::pair<td::Ref<MasterchainState>, BlockIdExt>> promise) {
   auto state = do_get_last_liteserver_state();
   if (state.is_null()) {
-    promise.set_error(td::Status::Error(ton::ErrorCode::notready, "not started"));
+    promise.set_error(td::Status::Error(ion::ErrorCode::notready, "not started"));
   } else {
     promise.set_result(std::pair<td::Ref<MasterchainState>, BlockIdExt>{state, state->get_block_id()});
   }
@@ -3853,4 +3853,4 @@ void ValidatorManagerImpl::cleanup_nonfinal_groups() {
 
 }  // namespace validator
 
-}  // namespace ton
+}  // namespace ion

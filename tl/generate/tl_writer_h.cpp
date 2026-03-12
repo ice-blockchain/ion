@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -66,10 +66,10 @@ std::string TD_TL_writer_h::gen_output_begin() const {
          "#include <memory>\n"
          "#include <utility>\n"
          "#include <vector>\n\n" +
-         ext_forward_declaration + "namespace ton {\n" + "namespace " + tl_name + "{\n" +
-         "using BaseObject = ::ton::TlObject;\n\n"
+         ext_forward_declaration + "namespace ion {\n" + "namespace " + tl_name + "{\n" +
+         "using BaseObject = ::ion::TlObject;\n\n"
          "template <class Type>\n"
-         "using object_ptr = ::ton::tl_object_ptr<Type>;\n\n"
+         "using object_ptr = ::ion::tl_object_ptr<Type>;\n\n"
          "template <class Type, class... Args>\n"
          "object_ptr<Type> make_object(Args &&... args) {\n"
          "  return object_ptr<Type>(new Type(std::forward<Args>(args)...));\n"
@@ -95,7 +95,7 @@ std::string TD_TL_writer_h::gen_output_begin() const {
 std::string TD_TL_writer_h::gen_output_end() const {
   return "}  // namespace " + tl_name +
          "\n"
-         "}  // namespace ton\n";
+         "}  // namespace ion\n";
 }
 
 std::string TD_TL_writer_h::gen_field_definition(const std::string &class_name, const std::string &type_name,

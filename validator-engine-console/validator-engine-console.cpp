@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain source code.
+    This file is part of ION Blockchain source code.
 
-    TON Blockchain is free software; you can redistribute it and/or
+    ION Blockchain is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
     as published by the Free Software Foundation; either version 2
     of the License, or (at your option) any later version.
 
-    TON Blockchain is distributed in the hope that it will be useful,
+    ION Blockchain is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with TON Blockchain.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain.  If not, see <http://www.gnu.org/licenses/>.
 
     In addition, as a special exception, the copyright holders give permission
     to link the code of portions of this program with the OpenSSL library.
@@ -46,8 +46,8 @@
 #include "td/utils/port/stacktrace.h"
 #include "terminal/terminal.h"
 #include "tl-utils/lite-utils.hpp"
-#include "ton/lite-tl.hpp"
-#include "ton/ton-shard.h"
+#include "ion/lite-tl.hpp"
+#include "ion/ion-shard.h"
 #include "vm/boc.h"
 #include "vm/cellops.h"
 #include "vm/cells/MerkleProof.h"
@@ -65,8 +65,8 @@
 
 int verbosity;
 
-std::unique_ptr<ton::adnl::AdnlExtClient::Callback> ValidatorEngineConsole::make_callback() {
-  class Callback : public ton::adnl::AdnlExtClient::Callback {
+std::unique_ptr<ion::adnl::AdnlExtClient::Callback> ValidatorEngineConsole::make_callback() {
+  class Callback : public ion::adnl::AdnlExtClient::Callback {
    public:
     void on_ready() override {
       td::actor::send_closure(id_, &ValidatorEngineConsole::conn_ready);
@@ -102,7 +102,7 @@ void ValidatorEngineConsole::run() {
   td::TerminalIO::out() << "local key: " << private_key_.compute_short_id().bits256_value().to_hex() << "\n";
   td::TerminalIO::out() << "remote key: " << server_public_key_.compute_short_id().bits256_value().to_hex() << "\n";
 
-  client_ = ton::adnl::AdnlExtClient::create(ton::adnl::AdnlNodeIdFull{server_public_key_}, private_key_, remote_addr_,
+  client_ = ion::adnl::AdnlExtClient::create(ion::adnl::AdnlNodeIdFull{server_public_key_}, private_key_, remote_addr_,
                                              make_callback());
 
   add_query_runner(std::make_unique<QueryRunnerImpl<GetTimeQuery>>());
@@ -179,7 +179,7 @@ void ValidatorEngineConsole::run() {
 
 bool ValidatorEngineConsole::envelope_send_query(td::BufferSlice query, td::Promise<td::BufferSlice> promise) {
   if (!ready_ || client_.empty()) {
-    promise.set_error(td::Status::Error(ton::ErrorCode::notready, "failed to send query to server: not ready"));
+    promise.set_error(td::Status::Error(ion::ErrorCode::notready, "failed to send query to server: not ready"));
     return false;
   }
   auto P = td::PromiseCreator::lambda([promise = std::move(promise)](td::Result<td::BufferSlice> R) mutable {
@@ -188,7 +188,7 @@ bool ValidatorEngineConsole::envelope_send_query(td::BufferSlice query, td::Prom
       return;
     }
     auto data = R.move_as_ok();
-    auto F = ton::fetch_tl_object<ton::ton_api::engine_validator_controlQueryError>(data.clone(), true);
+    auto F = ion::fetch_tl_object<ion::ton_api::engine_validator_controlQueryError>(data.clone(), true);
     if (F.is_ok()) {
       auto f = F.move_as_ok();
       promise.set_error(td::Status::Error(f->code_, f->message_));
@@ -196,9 +196,9 @@ bool ValidatorEngineConsole::envelope_send_query(td::BufferSlice query, td::Prom
     }
     promise.set_result(std::move(data));
   });
-  td::BufferSlice b = ton::serialize_tl_object(
-      ton::create_tl_object<ton::ton_api::engine_validator_controlQuery>(std::move(query)), true);
-  td::actor::send_closure(client_, &ton::adnl::AdnlExtClient::send_query, "query", std::move(b),
+  td::BufferSlice b = ion::serialize_tl_object(
+      ion::create_tl_object<ion::ton_api::engine_validator_controlQuery>(std::move(query)), true);
+  td::actor::send_closure(client_, &ion::adnl::AdnlExtClient::send_query, "query", std::move(b),
                           td::Timestamp::in(10.0), std::move(P));
   return true;
 }
@@ -259,10 +259,10 @@ void ValidatorEngineConsole::parse_line(td::BufferSlice data) {
 }
 
 void ValidatorEngineConsole::set_private_key(td::BufferSlice file_name) {
-  auto R = [&]() -> td::Result<ton::PrivateKey> {
+  auto R = [&]() -> td::Result<ion::PrivateKey> {
     TRY_RESULT_PREFIX(conf_data, td::read_file(file_name.as_slice().str()), "failed to read: ");
 
-    return ton::PrivateKey::import(conf_data.as_slice());
+    return ion::PrivateKey::import(conf_data.as_slice());
   }();
 
   if (R.is_error()) {
@@ -272,10 +272,10 @@ void ValidatorEngineConsole::set_private_key(td::BufferSlice file_name) {
 }
 
 void ValidatorEngineConsole::set_public_key(td::BufferSlice file_name) {
-  auto R = [&]() -> td::Result<ton::PublicKey> {
+  auto R = [&]() -> td::Result<ion::PublicKey> {
     TRY_RESULT_PREFIX(conf_data, td::read_file(file_name.as_slice().str()), "failed to read: ");
 
-    return ton::PublicKey::import(conf_data.as_slice());
+    return ion::PublicKey::import(conf_data.as_slice());
   }();
 
   if (R.is_error()) {
@@ -291,7 +291,7 @@ int main(int argc, char* argv[]) {
   td::actor::ActorOwn<ValidatorEngineConsole> x;
 
   td::OptionParser p;
-  p.set_description("console for validator for TON Blockchain");
+  p.set_description("console for validator for ION Blockchain");
   p.add_option('h', "help", "prints_help", [&]() {
     char b[10240];
     td::StringBuilder sb(td::MutableSlice{b, 10000});

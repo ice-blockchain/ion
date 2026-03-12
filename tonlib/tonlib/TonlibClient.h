@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -54,8 +54,8 @@ class Query;
 class RunEmulator;
 
 td::Result<tonlib_api::object_ptr<tonlib_api::dns_EntryData>> to_tonlib_api(
-    const ton::ManualDns::EntryData& entry_data);
-td::Result<ton::ManualDns::EntryData> to_dns_entry_data(tonlib_api::dns_EntryData& entry_data);
+    const ion::ManualDns::EntryData& entry_data);
+td::Result<ion::ManualDns::EntryData> to_dns_entry_data(tonlib_api::dns_EntryData& entry_data);
 td::Result<td::Bits256> get_ext_in_msg_hash_norm(td::Ref<vm::Cell> ext_in_msg_cell);
 
 class TonlibClient : public td::actor::Actor {
@@ -106,7 +106,7 @@ class TonlibClient : public td::actor::Actor {
   KeyStorage key_storage_;
   LastBlockStorage last_block_storage_;
   struct QueryContext {
-    td::optional<ton::BlockIdExt> block_id;
+    td::optional<ion::BlockIdExt> block_id;
   };
   QueryContext query_context_;
   vm::Dictionary libraries{256};
@@ -332,7 +332,7 @@ class TonlibClient : public td::actor::Actor {
 
   td::Status do_request(const tonlib_api::smc_getLibraries& request,
                         td::Promise<object_ptr<tonlib_api::smc_libraryResult>>&& promise);
-  void get_libraries(ton::BlockIdExt blkid, std::vector<td::Bits256> library_list_,
+  void get_libraries(ion::BlockIdExt blkid, std::vector<td::Bits256> library_list_,
                      td::Promise<object_ptr<tonlib_api::smc_libraryResult>>&& promise);
 
   td::Status do_request(const tonlib_api::smc_getLibrariesExt& request,
@@ -350,17 +350,17 @@ class TonlibClient : public td::actor::Actor {
                         td::Promise<object_ptr<tonlib_api::pchan_promise>>&& promise);
 
   void process_new_libraries(
-      td::Result<ton::lite_api::object_ptr<ton::lite_api::liteServer_libraryResult>> r_libraries);
-  void perform_smc_execution(td::Ref<ton::SmartContract> smc, ton::SmartContract::Args args,
+      td::Result<ion::lite_api::object_ptr<ion::lite_api::liteServer_libraryResult>> r_libraries);
+  void perform_smc_execution(td::Ref<ion::SmartContract> smc, ion::SmartContract::Args args,
                              td::Promise<object_ptr<tonlib_api::smc_runResult>>&& promise);
 
-  void do_dns_request(std::string name, td::Bits256 category, td::int32 ttl, td::optional<ton::BlockIdExt> block_id,
+  void do_dns_request(std::string name, td::Bits256 category, td::int32 ttl, td::optional<ion::BlockIdExt> block_id,
                       block::StdAddress address, td::Promise<object_ptr<tonlib_api::dns_resolved>>&& promise);
   struct DnsFinishData {
-    ton::BlockIdExt block_id;
-    ton::SmartContract::State smc_state;
+    ion::BlockIdExt block_id;
+    ion::SmartContract::State smc_state;
   };
-  void finish_dns_resolve(std::string name, td::Bits256 category, td::int32 ttl, td::optional<ton::BlockIdExt> block_id,
+  void finish_dns_resolve(std::string name, td::Bits256 category, td::int32 ttl, td::optional<ion::BlockIdExt> block_id,
                           block::StdAddress address, DnsFinishData dns_finish_data,
                           td::Promise<object_ptr<tonlib_api::dns_resolved>>&& promise);
 
@@ -396,11 +396,11 @@ class TonlibClient : public td::actor::Actor {
   td::Status do_request(const tonlib_api::blocks_getOutMsgQueueSizes& request,
                         td::Promise<object_ptr<tonlib_api::blocks_outMsgQueueSizes>>&& promise);
 
-  void get_config_param(int32_t param, int32_t mode, ton::BlockIdExt block,
+  void get_config_param(int32_t param, int32_t mode, ion::BlockIdExt block,
                         td::Promise<object_ptr<tonlib_api::configInfo>>&& promise);
   td::Status do_request(const tonlib_api::getConfigParam& request,
                         td::Promise<object_ptr<tonlib_api::configInfo>>&& promise);
-  void get_config_all(int32_t mode, ton::BlockIdExt block, td::Promise<object_ptr<tonlib_api::configInfo>>&& promise);
+  void get_config_all(int32_t mode, ion::BlockIdExt block, td::Promise<object_ptr<tonlib_api::configInfo>>&& promise);
   td::Status do_request(const tonlib_api::getConfigAll& request,
                         td::Promise<object_ptr<tonlib_api::configInfo>>&& promise);
 

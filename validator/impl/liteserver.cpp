@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -33,7 +33,7 @@
 #include "td/utils/overloaded.h"
 #include "tl-utils/lite-utils.hpp"
 #include "tl/tlblib.hpp"
-#include "ton/lite-tl.hpp"
+#include "ion/lite-tl.hpp"
 #include "vm/boc.h"
 #include "vm/cells/MerkleProof.h"
 #include "vm/dict.h"
@@ -47,7 +47,7 @@
 #include "signature-set.hpp"
 #include "validator-set.hpp"
 
-namespace ton {
+namespace ion {
 
 namespace validator {
 using td::Ref;
@@ -65,7 +65,7 @@ void LiteQuery::run_query(td::BufferSlice data, td::actor::ActorId<ValidatorMana
 }
 
 void LiteQuery::fetch_account_state(
-    WorkchainId wc, StdSmcAddress acc_addr, td::actor::ActorId<ton::validator::ValidatorManager> manager,
+    WorkchainId wc, StdSmcAddress acc_addr, td::actor::ActorId<ion::validator::ValidatorManager> manager,
     td::Promise<std::tuple<td::Ref<vm::CellSlice>, UnixTime, LogicalTime, std::unique_ptr<block::ConfigInfo>>>
         promise) {
   td::actor::create_actor<LiteQuery>("litequery", wc, acc_addr, std::move(manager), std::move(promise)).release();
@@ -137,7 +137,7 @@ void LiteQuery::start_up() {
     return;
   }
 
-  auto F = fetch_tl_object<ton::lite_api::Function>(query_, true);
+  auto F = fetch_tl_object<ion::lite_api::Function>(query_, true);
   if (F.is_error()) {
     abort_query(F.move_as_error());
     return;
@@ -198,21 +198,21 @@ void LiteQuery::perform() {
           [&](lite_api::liteServer_getMasterchainInfoExt& q) {
             this->perform_getMasterchainInfo(q.mode_ & 0x7fffffff);
           },
-          [&](lite_api::liteServer_getBlock& q) { this->perform_getBlock(ton::create_block_id(q.id_)); },
+          [&](lite_api::liteServer_getBlock& q) { this->perform_getBlock(ion::create_block_id(q.id_)); },
           [&](lite_api::liteServer_getBlockHeader& q) {
-            this->perform_getBlockHeader(ton::create_block_id(q.id_), q.mode_);
+            this->perform_getBlockHeader(ion::create_block_id(q.id_), q.mode_);
           },
-          [&](lite_api::liteServer_getState& q) { this->perform_getState(ton::create_block_id(q.id_)); },
+          [&](lite_api::liteServer_getState& q) { this->perform_getState(ion::create_block_id(q.id_)); },
           [&](lite_api::liteServer_getAccountState& q) {
-            this->perform_getAccountState(ton::create_block_id(q.id_), static_cast<WorkchainId>(q.account_->workchain_),
+            this->perform_getAccountState(ion::create_block_id(q.id_), static_cast<WorkchainId>(q.account_->workchain_),
                                           q.account_->id_, 0);
           },
           [&](lite_api::liteServer_getAccountStatePrunned& q) {
-            this->perform_getAccountState(ton::create_block_id(q.id_), static_cast<WorkchainId>(q.account_->workchain_),
+            this->perform_getAccountState(ion::create_block_id(q.id_), static_cast<WorkchainId>(q.account_->workchain_),
                                           q.account_->id_, 0x40000000);
           },
           [&](lite_api::liteServer_getOneTransaction& q) {
-            this->perform_getOneTransaction(ton::create_block_id(q.id_),
+            this->perform_getOneTransaction(ion::create_block_id(q.id_),
                                             static_cast<WorkchainId>(q.account_->workchain_), q.account_->id_,
                                             static_cast<LogicalTime>(q.lt_));
           },
@@ -222,52 +222,52 @@ void LiteQuery::perform() {
           },
           [&](lite_api::liteServer_sendMessage& q) { this->perform_sendMessage(std::move(q.body_)); },
           [&](lite_api::liteServer_getShardInfo& q) {
-            this->perform_getShardInfo(ton::create_block_id(q.id_),
+            this->perform_getShardInfo(ion::create_block_id(q.id_),
                                        ShardIdFull{q.workchain_, static_cast<ShardId>(q.shard_)}, q.exact_);
           },
           [&](lite_api::liteServer_getAllShardsInfo& q) {
-            this->perform_getAllShardsInfo(ton::create_block_id(q.id_));
+            this->perform_getAllShardsInfo(ion::create_block_id(q.id_));
           },
           [&](lite_api::liteServer_lookupBlock& q) {
-            this->perform_lookupBlock(ton::create_block_id_simple(q.id_), q.mode_, q.lt_, q.utime_);
+            this->perform_lookupBlock(ion::create_block_id_simple(q.id_), q.mode_, q.lt_, q.utime_);
           },
           [&](lite_api::liteServer_lookupBlockWithProof& q) {
-            this->perform_lookupBlockWithProof(ton::create_block_id_simple(q.id_), ton::create_block_id(q.mc_block_id_),
+            this->perform_lookupBlockWithProof(ion::create_block_id_simple(q.id_), ion::create_block_id(q.mc_block_id_),
                                                q.mode_, q.lt_, q.utime_);
           },
           [&](lite_api::liteServer_listBlockTransactions& q) {
-            this->perform_listBlockTransactions(ton::create_block_id(q.id_), q.mode_, q.count_,
+            this->perform_listBlockTransactions(ion::create_block_id(q.id_), q.mode_, q.count_,
                                                 (q.mode_ & 128) ? q.after_->account_ : td::Bits256::zero(),
                                                 static_cast<LogicalTime>((q.mode_ & 128) ? (q.after_->lt_) : 0));
           },
           [&](lite_api::liteServer_listBlockTransactionsExt& q) {
-            this->perform_listBlockTransactionsExt(ton::create_block_id(q.id_), q.mode_, q.count_,
+            this->perform_listBlockTransactionsExt(ion::create_block_id(q.id_), q.mode_, q.count_,
                                                    (q.mode_ & 128) ? q.after_->account_ : td::Bits256::zero(),
                                                    static_cast<LogicalTime>((q.mode_ & 128) ? (q.after_->lt_) : 0));
           },
           [&](lite_api::liteServer_getConfigParams& q) {
-            this->perform_getConfigParams(ton::create_block_id(q.id_), (q.mode_ & 0xffff) | 0x10000, q.param_list_);
+            this->perform_getConfigParams(ion::create_block_id(q.id_), (q.mode_ & 0xffff) | 0x10000, q.param_list_);
           },
           [&](lite_api::liteServer_getConfigAll& q) {
-            this->perform_getConfigParams(ton::create_block_id(q.id_), (q.mode_ & 0xffff) | 0x20000);
+            this->perform_getConfigParams(ion::create_block_id(q.id_), (q.mode_ & 0xffff) | 0x20000);
           },
           [&](lite_api::liteServer_getBlockProof& q) {
-            this->perform_getBlockProof(ton::create_block_id(q.known_block_),
-                                        q.mode_ & 1 ? ton::create_block_id(q.target_block_) : ton::BlockIdExt{},
+            this->perform_getBlockProof(ion::create_block_id(q.known_block_),
+                                        q.mode_ & 1 ? ion::create_block_id(q.target_block_) : ion::BlockIdExt{},
                                         q.mode_);
           },
           [&](lite_api::liteServer_getValidatorStats& q) {
-            this->perform_getValidatorStats(ton::create_block_id(q.id_), q.mode_, q.limit_,
+            this->perform_getValidatorStats(ion::create_block_id(q.id_), q.mode_, q.limit_,
                                             q.mode_ & 1 ? q.start_after_ : td::Bits256::zero(),
                                             q.mode_ & 4 ? q.modified_after_ : 0);
           },
           [&](lite_api::liteServer_runSmcMethod& q) {
-            this->perform_runSmcMethod(ton::create_block_id(q.id_), static_cast<WorkchainId>(q.account_->workchain_),
+            this->perform_runSmcMethod(ion::create_block_id(q.id_), static_cast<WorkchainId>(q.account_->workchain_),
                                        q.account_->id_, q.mode_, q.method_id_, std::move(q.params_));
           },
           [&](lite_api::liteServer_getLibraries& q) { this->perform_getLibraries(q.library_list_); },
           [&](lite_api::liteServer_getLibrariesWithProof& q) {
-            this->perform_getLibrariesWithProof(ton::create_block_id(q.id_), q.mode_, q.library_list_);
+            this->perform_getLibrariesWithProof(ion::create_block_id(q.id_), q.mode_, q.library_list_);
           },
           [&](lite_api::liteServer_getShardBlockProof& q) { this->perform_getShardBlockProof(create_block_id(q.id_)); },
           [&](lite_api::liteServer_nonfinal_getCandidate& q) {
@@ -299,14 +299,14 @@ void LiteQuery::perform() {
 void LiteQuery::perform_getTime() {
   LOG(INFO) << "started a getTime() liteserver query";
   td::int32 now = static_cast<td::int32>(std::time(nullptr));
-  auto b = ton::create_serialize_tl_object<ton::lite_api::liteServer_currentTime>(now);
+  auto b = ion::create_serialize_tl_object<ion::lite_api::liteServer_currentTime>(now);
   finish_query(std::move(b));
 }
 
 void LiteQuery::perform_getVersion() {
   LOG(INFO) << "started a getVersion() liteserver query";
   td::int32 now = static_cast<td::int32>(std::time(nullptr));
-  auto b = ton::create_serialize_tl_object<ton::lite_api::liteServer_version>(0, ls_version, ls_capabilities, now);
+  auto b = ion::create_serialize_tl_object<ion::lite_api::liteServer_version>(0, ls_version, ls_capabilities, now);
   finish_query(std::move(b));
 }
 
@@ -316,9 +316,9 @@ void LiteQuery::perform_getMasterchainInfo(int mode) {
     fatal_error("unsupported getMasterchainInfo mode");
     return;
   }
-  td::actor::send_closure_later(manager_, &ton::validator::ValidatorManager::get_last_liteserver_state_block,
+  td::actor::send_closure_later(manager_, &ion::validator::ValidatorManager::get_last_liteserver_state_block,
                                 [Self = actor_id(this), return_state = bool(acc_state_promise_),
-                                 mode](td::Result<std::pair<Ref<ton::validator::MasterchainState>, BlockIdExt>> res) {
+                                 mode](td::Result<std::pair<Ref<ion::validator::MasterchainState>, BlockIdExt>> res) {
                                   if (res.is_error()) {
                                     td::actor::send_closure(Self, &LiteQuery::abort_query, res.move_as_error());
                                   } else {
@@ -330,15 +330,15 @@ void LiteQuery::perform_getMasterchainInfo(int mode) {
                                 });
 }
 
-void LiteQuery::gotMasterchainInfoForAccountState(Ref<ton::validator::MasterchainState> mc_state, BlockIdExt blkid,
+void LiteQuery::gotMasterchainInfoForAccountState(Ref<ion::validator::MasterchainState> mc_state, BlockIdExt blkid,
                                                   int mode) {
   perform_getAccountState(blkid, acc_workchain_, acc_addr_, 0x80000000);
 }
 
-void LiteQuery::continue_getMasterchainInfo(Ref<ton::validator::MasterchainState> mc_state, BlockIdExt blkid,
+void LiteQuery::continue_getMasterchainInfo(Ref<ion::validator::MasterchainState> mc_state, BlockIdExt blkid,
                                             int mode) {
   LOG(INFO) << "obtained data for getMasterchainInfo() : last block = " << blkid.to_str();
-  auto mc_state_q = Ref<ton::validator::MasterchainStateQ>(std::move(mc_state));
+  auto mc_state_q = Ref<ion::validator::MasterchainStateQ>(std::move(mc_state));
   if (mc_state_q.is_null()) {
     fatal_error("cannot obtain a valid masterchain state");
     return;
@@ -347,10 +347,10 @@ void LiteQuery::continue_getMasterchainInfo(Ref<ton::validator::MasterchainState
   auto zs_tl = create_tl_object<lite_api::tonNode_zeroStateIdExt>(zerostate_id.workchain, zerostate_id.root_hash,
                                                                   zerostate_id.file_hash);
   td::int32 now = static_cast<td::int32>(std::time(nullptr));
-  auto b = (mode == -1) ? ton::create_serialize_tl_object<ton::lite_api::liteServer_masterchainInfo>(
-                              ton::create_tl_lite_block_id(blkid), mc_state_q->root_hash(), std::move(zs_tl))
-                        : ton::create_serialize_tl_object<ton::lite_api::liteServer_masterchainInfoExt>(
-                              mode, ls_version, ls_capabilities, ton::create_tl_lite_block_id(blkid),
+  auto b = (mode == -1) ? ion::create_serialize_tl_object<ion::lite_api::liteServer_masterchainInfo>(
+                              ion::create_tl_lite_block_id(blkid), mc_state_q->root_hash(), std::move(zs_tl))
+                        : ion::create_serialize_tl_object<ion::lite_api::liteServer_masterchainInfoExt>(
+                              mode, ls_version, ls_capabilities, ion::create_tl_lite_block_id(blkid),
                               mc_state_q->get_unix_time(), now, mc_state_q->root_hash(), std::move(zs_tl));
   finish_query(std::move(b));
 }
@@ -362,7 +362,7 @@ void LiteQuery::perform_getBlock(BlockIdExt blkid) {
     return;
   }
   td::actor::send_closure(manager_, &ValidatorManager::get_block_data_for_litequery, blkid,
-                          [Self = actor_id(this), blkid](td::Result<Ref<ton::validator::BlockData>> res) {
+                          [Self = actor_id(this), blkid](td::Result<Ref<ion::validator::BlockData>> res) {
                             if (res.is_error()) {
                               td::actor::send_closure(Self, &LiteQuery::abort_query, res.move_as_error());
                             } else {
@@ -372,10 +372,10 @@ void LiteQuery::perform_getBlock(BlockIdExt blkid) {
                           });
 }
 
-void LiteQuery::continue_getBlock(BlockIdExt blkid, Ref<ton::validator::BlockData> block) {
+void LiteQuery::continue_getBlock(BlockIdExt blkid, Ref<ion::validator::BlockData> block) {
   LOG(INFO) << "obtained data for getBlock(" << blkid.to_str() << ")";
   CHECK(block.not_null());
-  auto b = ton::create_serialize_tl_object<ton::lite_api::liteServer_blockData>(ton::create_tl_lite_block_id(blkid),
+  auto b = ion::create_serialize_tl_object<ion::lite_api::liteServer_blockData>(ion::create_tl_lite_block_id(blkid),
                                                                                 block->data());
 
   finish_query(std::move(b));
@@ -388,7 +388,7 @@ void LiteQuery::perform_getBlockHeader(BlockIdExt blkid, int mode) {
     return;
   }
   td::actor::send_closure(manager_, &ValidatorManager::get_block_data_for_litequery, blkid,
-                          [Self = actor_id(this), blkid, mode](td::Result<Ref<ton::validator::BlockData>> res) {
+                          [Self = actor_id(this), blkid, mode](td::Result<Ref<ion::validator::BlockData>> res) {
                             if (res.is_error()) {
                               td::actor::send_closure(Self, &LiteQuery::abort_query, res.move_as_error());
                             } else {
@@ -421,7 +421,7 @@ static bool visit(Ref<vm::CellSlice> cs_ref) {
   return cs_ref.is_null() || visit(*cs_ref);
 }
 
-void LiteQuery::continue_getBlockHeader(BlockIdExt blkid, int mode, Ref<ton::validator::BlockData> block) {
+void LiteQuery::continue_getBlockHeader(BlockIdExt blkid, int mode, Ref<ion::validator::BlockData> block) {
   LOG(INFO) << "obtained data for getBlockHeader(" << blkid.to_str() << ", " << mode << ")";
   CHECK(block.not_null());
   CHECK(block->block_id() == blkid);
@@ -486,7 +486,7 @@ void LiteQuery::continue_getBlockHeader(BlockIdExt blkid, int mode, Ref<ton::val
     return;
   }
   // send answer
-  auto b = ton::create_serialize_tl_object<ton::lite_api::liteServer_blockHeader>(ton::create_tl_lite_block_id(blkid),
+  auto b = ion::create_serialize_tl_object<ion::lite_api::liteServer_blockHeader>(ion::create_tl_lite_block_id(blkid),
                                                                                   mode, proof_data.move_as_ok());
   finish_query(std::move(b));
 }
@@ -524,7 +524,7 @@ void LiteQuery::perform_getState(BlockIdExt blkid) {
   }
 }
 
-void LiteQuery::continue_getState(BlockIdExt blkid, Ref<ton::validator::ShardState> state) {
+void LiteQuery::continue_getState(BlockIdExt blkid, Ref<ion::validator::ShardState> state) {
   LOG(INFO) << "obtained data for getState(" << blkid.to_str() << ")";
   CHECK(state.not_null());
   auto res = state->serialize();
@@ -535,16 +535,16 @@ void LiteQuery::continue_getState(BlockIdExt blkid, Ref<ton::validator::ShardSta
   auto data = res.move_as_ok();
   FileHash file_hash;
   td::sha256(data, file_hash.as_slice());
-  auto b = ton::create_serialize_tl_object<ton::lite_api::liteServer_blockState>(
-      ton::create_tl_lite_block_id(blkid), state->root_hash(), file_hash, std::move(data));
+  auto b = ion::create_serialize_tl_object<ion::lite_api::liteServer_blockState>(
+      ion::create_tl_lite_block_id(blkid), state->root_hash(), file_hash, std::move(data));
   finish_query(std::move(b));
 }
 
 void LiteQuery::continue_getZeroState(BlockIdExt blkid, td::BufferSlice state) {
   LOG(INFO) << "obtained data for getZeroState(" << blkid.to_str() << ")";
   CHECK(!state.empty());
-  auto b = ton::create_serialize_tl_object<ton::lite_api::liteServer_blockState>(
-      ton::create_tl_lite_block_id(blkid), blkid.root_hash, blkid.file_hash, std::move(state));
+  auto b = ion::create_serialize_tl_object<ion::lite_api::liteServer_blockState>(
+      ion::create_tl_lite_block_id(blkid), blkid.root_hash, blkid.file_hash, std::move(state));
   finish_query(std::move(b));
 }
 
@@ -563,7 +563,7 @@ void LiteQuery::perform_sendMessage(td::BufferSlice data) {
         } else {
           LOG(INFO) << "sending an external message to validator manager";
           td::actor::send_closure_later(manager, &ValidatorManager::send_external_message, res.move_as_ok());
-          auto b = ton::create_serialize_tl_object<ton::lite_api::liteServer_sendMsgStatus>(1);
+          auto b = ion::create_serialize_tl_object<ion::lite_api::liteServer_sendMsgStatus>(1);
           td::actor::send_closure(Self, &LiteQuery::finish_query, std::move(b), false);
         }
       });
@@ -805,7 +805,7 @@ void LiteQuery::perform_getAccountState(BlockIdExt blkid, WorkchainId workchain,
     return;
   }
   if (workchain == blkid.id.workchain &&
-      !ton::shard_contains(blkid.shard_full(), extract_addr_prefix(workchain, addr))) {
+      !ion::shard_contains(blkid.shard_full(), extract_addr_prefix(workchain, addr))) {
     fatal_error("requested account id is not contained in the shard of the reference block");
     return;
   }
@@ -822,8 +822,8 @@ void LiteQuery::perform_getAccountState(BlockIdExt blkid, WorkchainId workchain,
   } else {
     LOG(INFO) << "sending a get_last_liteserver_state_block query to manager";
     td::actor::send_closure_later(
-        manager_, &ton::validator::ValidatorManager::get_last_liteserver_state_block,
-        [Self = actor_id(this)](td::Result<std::pair<Ref<ton::validator::MasterchainState>, BlockIdExt>> res) -> void {
+        manager_, &ion::validator::ValidatorManager::get_last_liteserver_state_block,
+        [Self = actor_id(this)](td::Result<std::pair<Ref<ion::validator::MasterchainState>, BlockIdExt>> res) -> void {
           if (res.is_error()) {
             td::actor::send_closure(Self, &LiteQuery::abort_query, res.move_as_error());
           } else {
@@ -835,7 +835,7 @@ void LiteQuery::perform_getAccountState(BlockIdExt blkid, WorkchainId workchain,
   }
 }
 
-void LiteQuery::continue_getAccountState_0(Ref<ton::validator::MasterchainState> mc_state, BlockIdExt blkid) {
+void LiteQuery::continue_getAccountState_0(Ref<ion::validator::MasterchainState> mc_state, BlockIdExt blkid) {
   LOG(INFO) << "obtained last masterchain block = " << blkid.to_str();
   base_blk_id_ = blkid;
   CHECK(mc_state.not_null());
@@ -899,9 +899,9 @@ void LiteQuery::perform_getLibraries(std::vector<td::Bits256> library_list) {
   sort(library_list.begin(), library_list.end());
   library_list.erase(unique(library_list.begin(), library_list.end()), library_list.end());
   td::actor::send_closure_later(
-      manager_, &ton::validator::ValidatorManager::get_last_liteserver_state_block,
+      manager_, &ion::validator::ValidatorManager::get_last_liteserver_state_block,
       [Self = actor_id(this),
-       library_list](td::Result<std::pair<Ref<ton::validator::MasterchainState>, BlockIdExt>> res) -> void {
+       library_list](td::Result<std::pair<Ref<ion::validator::MasterchainState>, BlockIdExt>> res) -> void {
         if (res.is_error()) {
           td::actor::send_closure(Self, &LiteQuery::abort_query, res.move_as_error());
         } else {
@@ -912,7 +912,7 @@ void LiteQuery::perform_getLibraries(std::vector<td::Bits256> library_list) {
       });
 }
 
-void LiteQuery::continue_getLibraries(Ref<ton::validator::MasterchainState> mc_state, BlockIdExt blkid,
+void LiteQuery::continue_getLibraries(Ref<ion::validator::MasterchainState> mc_state, BlockIdExt blkid,
                                       std::vector<td::Bits256> library_list) {
   LOG(INFO) << "obtained last masterchain block = " << blkid.to_str();
   base_blk_id_ = blkid;
@@ -941,7 +941,7 @@ void LiteQuery::continue_getLibraries(Ref<ton::validator::MasterchainState> mc_s
     }
   }
 
-  std::vector<ton::tl_object_ptr<ton::lite_api::liteServer_libraryEntry>> a;
+  std::vector<ion::tl_object_ptr<ion::lite_api::liteServer_libraryEntry>> a;
   for (const auto& hash : library_list) {
     LOG(INFO) << "looking for library " << hash.to_hex();
     auto libres = config->lookup_library(hash);
@@ -954,9 +954,9 @@ void LiteQuery::continue_getLibraries(Ref<ton::validator::MasterchainState> mc_s
       LOG(WARNING) << "library serialization failed: " << data.move_as_error().to_string();
       continue;
     }
-    a.push_back(ton::create_tl_object<ton::lite_api::liteServer_libraryEntry>(hash, data.move_as_ok()));
+    a.push_back(ion::create_tl_object<ion::lite_api::liteServer_libraryEntry>(hash, data.move_as_ok()));
   }
-  auto b = ton::create_serialize_tl_object<ton::lite_api::liteServer_libraryResult>(std::move(a));
+  auto b = ion::create_serialize_tl_object<ion::lite_api::liteServer_libraryResult>(std::move(a));
   finish_query(std::move(b));
 }
 
@@ -989,7 +989,7 @@ void LiteQuery::continue_getLibrariesWithProof(std::vector<td::Bits256> library_
   }
   auto libraries_dict = vm::Dictionary(state.r1.libraries->prefetch_ref(), 256);
 
-  std::vector<ton::tl_object_ptr<ton::lite_api::liteServer_libraryEntry>> result;
+  std::vector<ion::tl_object_ptr<ion::lite_api::liteServer_libraryEntry>> result;
   std::vector<td::Bits256> result_hashes;
   for (const auto& hash : library_list) {
     LOG(INFO) << "looking for library " << hash.to_hex();
@@ -1047,11 +1047,11 @@ void LiteQuery::continue_getLibrariesWithProof(std::vector<td::Bits256> library_
       }
       libdata = data.move_as_ok();
     }
-    result.push_back(ton::create_tl_object<ton::lite_api::liteServer_libraryEntry>(hash, std::move(libdata)));
+    result.push_back(ion::create_tl_object<ion::lite_api::liteServer_libraryEntry>(hash, std::move(libdata)));
   }
 
-  auto b = ton::create_serialize_tl_object<ton::lite_api::liteServer_libraryResultWithProof>(
-      ton::create_tl_lite_block_id(base_blk_id_), mode, std::move(result), state_proof_boc.move_as_ok(),
+  auto b = ion::create_serialize_tl_object<ion::lite_api::liteServer_libraryResultWithProof>(
+      ion::create_tl_lite_block_id(base_blk_id_), mode, std::move(result), state_proof_boc.move_as_ok(),
       data_proof_boc.move_as_ok());
   finish_query(std::move(b));
 }
@@ -1063,7 +1063,7 @@ void LiteQuery::perform_getOneTransaction(BlockIdExt blkid, WorkchainId workchai
     fatal_error("block id in getOneTransaction() is invalid");
     return;
   }
-  if (!ton::shard_contains(blkid.shard_full(), extract_addr_prefix(workchain, addr))) {
+  if (!ion::shard_contains(blkid.shard_full(), extract_addr_prefix(workchain, addr))) {
     fatal_error("requested account id is not contained in the shard of the specified block");
     return;
   }
@@ -1287,7 +1287,7 @@ void LiteQuery::continue_getAccountState() {
     return;
   }
   Ref<vm::Cell> proof3, proof4;
-  ton::BlockIdExt blkid;
+  ion::BlockIdExt blkid;
   if (!(make_mc_state_root_proof(proof3) &&
         make_shard_info_proof(proof4, blkid, extract_addr_prefix(acc_workchain_, acc_addr_)))) {
     return;
@@ -1301,8 +1301,8 @@ void LiteQuery::continue_getAccountState() {
     // no shard with requested address found
     LOG(INFO) << "getAccountState(" << acc_workchain_ << ":" << acc_addr_.to_hex()
               << ") query completed (unknown workchain/shard)";
-    auto b = ton::create_serialize_tl_object<ton::lite_api::liteServer_accountState>(
-        ton::create_tl_lite_block_id(base_blk_id_), ton::create_tl_lite_block_id(blkid), proof.move_as_ok(),
+    auto b = ion::create_serialize_tl_object<ion::lite_api::liteServer_accountState>(
+        ion::create_tl_lite_block_id(base_blk_id_), ion::create_tl_lite_block_id(blkid), proof.move_as_ok(),
         td::BufferSlice{}, td::BufferSlice{});
     finish_query(std::move(b));
   } else {
@@ -1395,14 +1395,14 @@ void LiteQuery::finish_getAccountState(td::BufferSlice shard_proof) {
     data = res.move_as_ok();
   }
   LOG(INFO) << "getAccountState(" << acc_workchain_ << ":" << acc_addr_.to_hex() << ") query completed";
-  auto b = ton::create_serialize_tl_object<ton::lite_api::liteServer_accountState>(
-      ton::create_tl_lite_block_id(base_blk_id_), ton::create_tl_lite_block_id(blk_id_), std::move(shard_proof),
+  auto b = ion::create_serialize_tl_object<ion::lite_api::liteServer_accountState>(
+      ion::create_tl_lite_block_id(base_blk_id_), ion::create_tl_lite_block_id(blk_id_), std::move(shard_proof),
       proof.move_as_ok(), std::move(data));
   finish_query(std::move(b));
 }
 
 // same as in lite-client/lite-client-common.cpp
-static td::Ref<vm::Tuple> prepare_vm_c7(ton::UnixTime now, ton::LogicalTime lt, td::Ref<vm::CellSlice> my_addr,
+static td::Ref<vm::Tuple> prepare_vm_c7(ion::UnixTime now, ion::LogicalTime lt, td::Ref<vm::CellSlice> my_addr,
                                         const block::CurrencyCollection& balance,
                                         const block::ConfigInfo* config = nullptr, td::Ref<vm::Cell> my_code = {},
                                         td::RefInt256 due_payment = td::zero_refint()) {
@@ -1461,8 +1461,8 @@ void LiteQuery::finish_runSmcMethod(td::BufferSlice shard_proof, td::BufferSlice
     // no such account
     LOG(INFO) << "runSmcMethod(" << acc_workchain_ << ":" << acc_addr_.to_hex()
               << ") query completed: account state is empty";
-    auto b = ton::create_serialize_tl_object<ton::lite_api::liteServer_runMethodResult>(
-        mode, ton::create_tl_lite_block_id(base_blk_id_), ton::create_tl_lite_block_id(blk_id_), std::move(shard_proof),
+    auto b = ion::create_serialize_tl_object<ion::lite_api::liteServer_runMethodResult>(
+        mode, ion::create_tl_lite_block_id(base_blk_id_), ion::create_tl_lite_block_id(blk_id_), std::move(shard_proof),
         std::move(state_proof), td::BufferSlice(), td::BufferSlice(), td::BufferSlice(), -0x100, td::BufferSlice());
     finish_query(std::move(b));
     return;
@@ -1488,8 +1488,8 @@ void LiteQuery::finish_runSmcMethod(td::BufferSlice shard_proof, td::BufferSlice
     } else {
       proof_boc = td::BufferSlice();
     }
-    auto b = ton::create_serialize_tl_object<ton::lite_api::liteServer_runMethodResult>(
-        mode, ton::create_tl_lite_block_id(base_blk_id_), ton::create_tl_lite_block_id(blk_id_), std::move(shard_proof),
+    auto b = ion::create_serialize_tl_object<ion::lite_api::liteServer_runMethodResult>(
+        mode, ion::create_tl_lite_block_id(base_blk_id_), ion::create_tl_lite_block_id(blk_id_), std::move(shard_proof),
         std::move(state_proof), proof_boc.move_as_ok(), td::BufferSlice(), td::BufferSlice(), -0x100,
         td::BufferSlice());
     finish_query(std::move(b));
@@ -1588,8 +1588,8 @@ void LiteQuery::finish_runSmcMethod(td::BufferSlice shard_proof, td::BufferSlice
   } else {
     proof_boc = td::BufferSlice();
   }
-  auto b = ton::create_serialize_tl_object<ton::lite_api::liteServer_runMethodResult>(
-      mode, ton::create_tl_lite_block_id(base_blk_id_), ton::create_tl_lite_block_id(blk_id_), std::move(shard_proof),
+  auto b = ion::create_serialize_tl_object<ion::lite_api::liteServer_runMethodResult>(
+      mode, ion::create_tl_lite_block_id(base_blk_id_), ion::create_tl_lite_block_id(blk_id_), std::move(shard_proof),
       std::move(state_proof), proof_boc.move_as_ok(), std::move(c7_info), td::BufferSlice(), exit_code,
       std::move(result));
   finish_query(std::move(b));
@@ -1621,8 +1621,8 @@ void LiteQuery::continue_getOneTransaction() {
   }
   LOG(INFO) << "getOneTransaction(" << acc_workchain_ << ":" << acc_addr_.to_hex() << "," << trans_lt_
             << ") query completed";
-  auto b = ton::create_serialize_tl_object<ton::lite_api::liteServer_transactionInfo>(
-      ton::create_tl_lite_block_id(blk_id_), proof_boc.move_as_ok(), std::move(data));
+  auto b = ion::create_serialize_tl_object<ion::lite_api::liteServer_transactionInfo>(
+      ion::create_tl_lite_block_id(blk_id_), proof_boc.move_as_ok(), std::move(data));
   finish_query(std::move(b));
 }
 
@@ -1637,7 +1637,7 @@ void LiteQuery::perform_getTransactions(WorkchainId workchain, StdSmcAddress add
     return;
   }
   */
-  if (workchain == ton::workchainInvalid) {
+  if (workchain == ion::workchainInvalid) {
     fatal_error("invalid workchain specified");
     return;
   }
@@ -1653,7 +1653,7 @@ void LiteQuery::continue_getTransactions(unsigned remaining, bool exact) {
   bool redo = true;
   while (remaining && redo && trans_lt_ && block_.not_null()) {
     redo = false;
-    if (!ton::shard_contains(block_->block_id().shard_full(), ton::extract_addr_prefix(acc_workchain_, acc_addr_))) {
+    if (!ion::shard_contains(block_->block_id().shard_full(), ion::extract_addr_prefix(acc_workchain_, acc_addr_))) {
       fatal_error("obtained a block that cannot contain specified account");
       return;
     }
@@ -1712,10 +1712,10 @@ void LiteQuery::continue_getTransactions(unsigned remaining, bool exact) {
   LOG(DEBUG) << "sending get_block_by_lt_from_db() query to manager for " << acc_workchain_ << ":" << acc_addr_.to_hex()
              << " " << trans_lt_;
   td::actor::send_closure_later(
-      manager_, &ValidatorManager::get_block_by_lt_for_litequery, ton::extract_addr_prefix(acc_workchain_, acc_addr_),
+      manager_, &ValidatorManager::get_block_by_lt_for_litequery, ion::extract_addr_prefix(acc_workchain_, acc_addr_),
       trans_lt_, [Self = actor_id(this), remaining, manager = manager_](td::Result<ConstBlockHandle> res) {
         if (res.is_error()) {
-          td::actor::send_closure(Self, &LiteQuery::abort_getTransactions, res.move_as_error(), ton::BlockIdExt{});
+          td::actor::send_closure(Self, &LiteQuery::abort_getTransactions, res.move_as_error(), ion::BlockIdExt{});
         } else {
           auto handle = res.move_as_ok();
           LOG(DEBUG) << "requesting data for block " << handle->id().to_str();
@@ -1743,7 +1743,7 @@ void LiteQuery::continue_getTransactions_2(BlockIdExt blkid, Ref<BlockData> bloc
   continue_getTransactions(remaining, true);
 }
 
-void LiteQuery::abort_getTransactions(td::Status error, ton::BlockIdExt blkid) {
+void LiteQuery::abort_getTransactions(td::Status error, ion::BlockIdExt blkid) {
   LOG(INFO) << "getTransactions() : got error " << error.message() << " from manager";
   if (roots_.empty()) {
     if (blkid.is_valid()) {
@@ -1765,11 +1765,11 @@ void LiteQuery::finish_getTransactions() {
     fatal_error(res.move_as_error());
     return;
   }
-  std::vector<ton::tl_object_ptr<ton::lite_api::tonNode_blockIdExt>> a;
+  std::vector<ion::tl_object_ptr<ion::lite_api::tonNode_blockIdExt>> a;
   for (const auto& id : blk_ids_) {
-    a.push_back(ton::create_tl_lite_block_id(id));
+    a.push_back(ion::create_tl_lite_block_id(id));
   }
-  auto b = ton::create_serialize_tl_object<ton::lite_api::liteServer_transactionList>(std::move(a), res.move_as_ok());
+  auto b = ion::create_serialize_tl_object<ion::lite_api::liteServer_transactionList>(std::move(a), res.move_as_ok());
   finish_query(std::move(b));
 }
 
@@ -1784,8 +1784,8 @@ void LiteQuery::perform_getShardInfo(BlockIdExt blkid, ShardIdFull shard, bool e
   request_mc_block_data_state(blkid);
 }
 
-void LiteQuery::load_prevKeyBlock(ton::BlockIdExt blkid, td::Promise<std::pair<BlockIdExt, Ref<BlockQ>>> promise) {
-  td::actor::send_closure_later(manager_, &ton::validator::ValidatorManager::get_last_liteserver_state_block,
+void LiteQuery::load_prevKeyBlock(ion::BlockIdExt blkid, td::Promise<std::pair<BlockIdExt, Ref<BlockQ>>> promise) {
+  td::actor::send_closure_later(manager_, &ion::validator::ValidatorManager::get_last_liteserver_state_block,
                                 [Self = actor_id(this), blkid, promise = std::move(promise)](
                                     td::Result<std::pair<Ref<MasterchainState>, BlockIdExt>> res) mutable {
                                   td::actor::send_closure_later(Self, &LiteQuery::continue_loadPrevKeyBlock, blkid,
@@ -1793,7 +1793,7 @@ void LiteQuery::load_prevKeyBlock(ton::BlockIdExt blkid, td::Promise<std::pair<B
                                 });
 }
 
-void LiteQuery::continue_loadPrevKeyBlock(ton::BlockIdExt blkid,
+void LiteQuery::continue_loadPrevKeyBlock(ion::BlockIdExt blkid,
                                           td::Result<std::pair<Ref<MasterchainState>, BlockIdExt>> res,
                                           td::Promise<std::pair<BlockIdExt, Ref<BlockQ>>> promise) {
   TRY_RESULT_PROMISE(promise, pair, std::move(res));
@@ -1839,7 +1839,7 @@ void LiteQuery::continue_loadPrevKeyBlock(ton::BlockIdExt blkid,
       });
 }
 
-void LiteQuery::finish_loadPrevKeyBlock(ton::BlockIdExt blkid, td::Result<Ref<BlockData>> res,
+void LiteQuery::finish_loadPrevKeyBlock(ion::BlockIdExt blkid, td::Result<Ref<BlockData>> res,
                                         td::Promise<std::pair<BlockIdExt, Ref<BlockQ>>> promise) {
   TRY_RESULT_PROMISE_PREFIX(promise, data, std::move(res), PSLICE() << "cannot load block " << blkid.to_str() << " : ");
   Ref<BlockQ> data0{std::move(data)};
@@ -1948,8 +1948,8 @@ void LiteQuery::continue_getConfigParams(int mode, std::vector<int> param_list) 
     return;
   }
   LOG(INFO) << "getConfigParams() query completed";
-  auto b = ton::create_serialize_tl_object<ton::lite_api::liteServer_configInfo>(
-      mode & 0xffff, ton::create_tl_lite_block_id(base_blk_id_), res1.move_as_ok(), res2.move_as_ok());
+  auto b = ion::create_serialize_tl_object<ion::lite_api::liteServer_configInfo>(
+      mode & 0xffff, ion::create_tl_lite_block_id(base_blk_id_), res1.move_as_ok(), res2.move_as_ok());
   finish_query(std::move(b));
 }
 
@@ -1995,8 +1995,8 @@ void LiteQuery::continue_getShardInfo(ShardIdFull shard, bool exact) {
     true_id.invalidate_clear();
   }
   LOG(INFO) << "getShardInfo() query completed";
-  auto b = ton::create_serialize_tl_object<ton::lite_api::liteServer_shardInfo>(
-      ton::create_tl_lite_block_id(base_blk_id_), ton::create_tl_lite_block_id(true_id), proof.move_as_ok(),
+  auto b = ion::create_serialize_tl_object<ion::lite_api::liteServer_shardInfo>(
+      ion::create_tl_lite_block_id(base_blk_id_), ion::create_tl_lite_block_id(true_id), proof.move_as_ok(),
       std::move(data));
   finish_query(std::move(b));
 }
@@ -2035,8 +2035,8 @@ void LiteQuery::continue_getAllShardsInfo() {
     return;
   }
   LOG(INFO) << "getAllShardInfo() query completed";
-  auto b = ton::create_serialize_tl_object<ton::lite_api::liteServer_allShardsInfo>(
-      ton::create_tl_lite_block_id(base_blk_id_), proof_boc.move_as_ok(), data.move_as_ok());
+  auto b = ion::create_serialize_tl_object<ion::lite_api::liteServer_allShardsInfo>(
+      ion::create_tl_lite_block_id(base_blk_id_), proof_boc.move_as_ok(), data.move_as_ok());
   finish_query(std::move(b));
 }
 
@@ -2064,7 +2064,7 @@ void LiteQuery::perform_lookupBlockWithProof(BlockId blkid, BlockIdExt mc_blkid,
   LOG(INFO) << "started a lookupBlockWithProof(" << blkid.to_str() << ", " << mc_blkid.to_str() << ", " << mode << ", "
             << lt << ", " << utime << ") liteserver query";
 
-  ton::AccountIdPrefixFull pfx{blkid.workchain, blkid.shard};
+  ion::AccountIdPrefixFull pfx{blkid.workchain, blkid.shard};
   auto P = td::PromiseCreator::lambda([Self = actor_id(this), mc_blkid, manager = manager_,
                                        pfx](td::Result<ConstBlockHandle> res) {
     if (res.is_error()) {
@@ -2105,7 +2105,7 @@ void LiteQuery::perform_lookupBlockWithProof(BlockId blkid, BlockIdExt mc_blkid,
   }
 }
 
-void LiteQuery::continue_lookupBlockWithProof_getHeaderProof(Ref<ton::validator::BlockData> block,
+void LiteQuery::continue_lookupBlockWithProof_getHeaderProof(Ref<ion::validator::BlockData> block,
                                                              AccountIdPrefixFull req_prefix,
                                                              BlockSeqno masterchain_ref_seqno) {
   blk_id_ = block->block_id();
@@ -2137,7 +2137,7 @@ void LiteQuery::continue_lookupBlockWithProof_getHeaderProof(Ref<ton::validator:
   if (include_prev) {
     BlockIdExt prev_blkid;
     for (auto& p : prev) {
-      if (ton::shard_contains(p.shard_full(), req_prefix)) {
+      if (ion::shard_contains(p.shard_full(), req_prefix)) {
         prev_blkid = p;
       }
     }
@@ -2188,7 +2188,7 @@ void LiteQuery::continue_lookupBlockWithProof_gotPrevBlockData(Ref<BlockData> pr
   }
 
   if (!blk_id_.is_masterchain()) {
-    ton::AccountIdPrefixFull pfx{ton::masterchainId, ton::shardIdAll};
+    ion::AccountIdPrefixFull pfx{ion::masterchainId, ion::shardIdAll};
     td::actor::send_closure_later(
         manager_, &ValidatorManager::get_block_by_seqno_from_db, pfx, masterchain_ref_seqno,
         [manager = manager_, Self = actor_id(this)](td::Result<ConstBlockHandle> R) mutable {
@@ -2347,8 +2347,8 @@ void LiteQuery::continue_lookupBlockWithProof_getMcBlockPrev(
                                                                               prev_block_proof.move_as_ok()));
   }
 
-  auto b = ton::create_serialize_tl_object<ton::lite_api::liteServer_lookupBlockResult>(
-      ton::create_tl_lite_block_id(blk_id_), mode_, ton::create_tl_lite_block_id(base_blk_id_alt_),
+  auto b = ion::create_serialize_tl_object<ion::lite_api::liteServer_lookupBlockResult>(
+      ion::create_tl_lite_block_id(blk_id_), mode_, ion::create_tl_lite_block_id(base_blk_id_alt_),
       std::move(mc_state_proof_buf), std::move(client_mc_blk_proof_buf), std::move(links_res),
       std::move(lookup_header_proof_), std::move(lookup_prev_header_proof_));
   finish_query(std::move(b));
@@ -2386,7 +2386,7 @@ void LiteQuery::perform_lookupBlock(BlockId blkid, int mode, LogicalTime lt, Uni
         }
       });
 
-  ton::AccountIdPrefixFull pfx{blkid.workchain, blkid.shard};
+  ion::AccountIdPrefixFull pfx{blkid.workchain, blkid.shard};
   if (mode & 2) {
     td::actor::send_closure_later(manager_, &ValidatorManager::get_block_by_lt_for_litequery, pfx, lt, std::move(P));
   } else if (mode & 4) {
@@ -2472,7 +2472,7 @@ void LiteQuery::finish_listBlockTransactions(int mode, int req_count) {
   mode &= ~256;
   std::vector<tl_object_ptr<lite_api::liteServer_transactionId>> result;
   bool eof = false;
-  ton::LogicalTime reverse = (mode & 64) ? ~0ULL : 0;
+  ion::LogicalTime reverse = (mode & 64) ? ~0ULL : 0;
   try {
     block::gen::Block::Record blk;
     block::gen::BlockExtra::Record extra;
@@ -2554,8 +2554,8 @@ void LiteQuery::finish_listBlockTransactions(int mode, int req_count) {
   }
 
   LOG(INFO) << "listBlockTransactions() query completed";
-  auto b = ton::create_serialize_tl_object<ton::lite_api::liteServer_blockTransactions>(
-      ton::create_tl_lite_block_id(base_blk_id_), req_count, !eof, std::move(result), std::move(proof_data));
+  auto b = ion::create_serialize_tl_object<ion::lite_api::liteServer_blockTransactions>(
+      ion::create_tl_lite_block_id(base_blk_id_), req_count, !eof, std::move(result), std::move(proof_data));
   finish_query(std::move(b));
 }
 
@@ -2626,7 +2626,7 @@ void LiteQuery::finish_listBlockTransactionsExt(int mode, int req_count) {
   }
   std::vector<Ref<vm::Cell>> trans_roots;
   bool eof = false;
-  ton::LogicalTime reverse = (mode & 64) ? ~0ULL : 0;
+  ion::LogicalTime reverse = (mode & 64) ? ~0ULL : 0;
   try {
     block::gen::Block::Record blk;
     block::gen::BlockExtra::Record extra;
@@ -2708,13 +2708,13 @@ void LiteQuery::finish_listBlockTransactionsExt(int mode, int req_count) {
     return;
   }
 
-  auto b = ton::create_serialize_tl_object<ton::lite_api::liteServer_blockTransactionsExt>(
-      ton::create_tl_lite_block_id(base_blk_id_), req_count, !eof, res.move_as_ok(), std::move(proof_data));
+  auto b = ion::create_serialize_tl_object<ion::lite_api::liteServer_blockTransactionsExt>(
+      ion::create_tl_lite_block_id(base_blk_id_), req_count, !eof, res.move_as_ok(), std::move(proof_data));
   LOG(INFO) << "listBlockTransactionsExt() query completed";
   finish_query(std::move(b));
 }
 
-void LiteQuery::perform_getBlockProof(ton::BlockIdExt from, ton::BlockIdExt to, int mode) {
+void LiteQuery::perform_getBlockProof(ion::BlockIdExt from, ion::BlockIdExt to, int mode) {
   if (!(mode & 1)) {
     to.invalidate_clear();
   }
@@ -2742,7 +2742,7 @@ void LiteQuery::perform_getBlockProof(ton::BlockIdExt from, ton::BlockIdExt to, 
                                     });
     } else {
       td::actor::send_closure_later(
-          manager_, &ton::validator::ValidatorManager::get_last_liteserver_state_block,
+          manager_, &ion::validator::ValidatorManager::get_last_liteserver_state_block,
           [Self = actor_id(this), from, to, mode](td::Result<std::pair<Ref<MasterchainState>, BlockIdExt>> res) {
             if (res.is_error()) {
               td::actor::send_closure(Self, &LiteQuery::abort_query, res.move_as_error());
@@ -2755,7 +2755,7 @@ void LiteQuery::perform_getBlockProof(ton::BlockIdExt from, ton::BlockIdExt to, 
     }
   } else if (mode & 2) {
     td::actor::send_closure_later(
-        manager_, &ton::validator::ValidatorManager::get_last_liteserver_state_block,
+        manager_, &ion::validator::ValidatorManager::get_last_liteserver_state_block,
         [Self = actor_id(this), from, mode](td::Result<std::pair<Ref<MasterchainState>, BlockIdExt>> res) {
           if (res.is_error()) {
             td::actor::send_closure(Self, &LiteQuery::abort_query, res.move_as_error());
@@ -2766,7 +2766,7 @@ void LiteQuery::perform_getBlockProof(ton::BlockIdExt from, ton::BlockIdExt to, 
           }
         });
   } else {
-    td::actor::send_closure_later(manager_, &ton::validator::ValidatorManager::get_shard_client_state, false,
+    td::actor::send_closure_later(manager_, &ion::validator::ValidatorManager::get_shard_client_state, false,
                                   [Self = actor_id(this), from, mode](td::Result<BlockIdExt> res) {
                                     if (res.is_error()) {
                                       td::actor::send_closure(Self, &LiteQuery::abort_query, res.move_as_error());
@@ -2778,7 +2778,7 @@ void LiteQuery::perform_getBlockProof(ton::BlockIdExt from, ton::BlockIdExt to, 
   }
 }
 
-void LiteQuery::continue_getBlockProof(ton::BlockIdExt from, ton::BlockIdExt to, int mode, BlockIdExt baseblk,
+void LiteQuery::continue_getBlockProof(ion::BlockIdExt from, ion::BlockIdExt to, int mode, BlockIdExt baseblk,
                                        Ref<MasterchainStateQ> state) {
   base_blk_id_ = baseblk;
   if (!base_blk_id_.is_masterchain_ext()) {
@@ -2828,7 +2828,7 @@ void LiteQuery::continue_getBlockProof(ton::BlockIdExt from, ton::BlockIdExt to,
   construct_proof_chain(from);
 }
 
-bool LiteQuery::construct_proof_chain(ton::BlockIdExt id) {
+bool LiteQuery::construct_proof_chain(ion::BlockIdExt id) {
   CHECK(chain_);
   if (chain_->link_count() >= 16 || id == chain_->to) {
     if (!(chain_->last_link_incomplete() && chain_->last_link().to.seqno())) {
@@ -2867,7 +2867,7 @@ bool LiteQuery::construct_proof_chain(ton::BlockIdExt id) {
 }
 
 // adjust dest_proof and is_key of the last link of existing proof
-bool LiteQuery::adjust_last_proof_link(ton::BlockIdExt cur, Ref<vm::Cell> block_root) {
+bool LiteQuery::adjust_last_proof_link(ion::BlockIdExt cur, Ref<vm::Cell> block_root) {
   CHECK(chain_);
   if (!(chain_->last_link_incomplete() && chain_->last_link().to.seqno())) {
     return true;
@@ -2888,7 +2888,7 @@ bool LiteQuery::adjust_last_proof_link(ton::BlockIdExt cur, Ref<vm::Cell> block_
   return mpb.extract_proof_to(link.dest_proof);
 }
 
-bool LiteQuery::construct_proof_link_forward(ton::BlockIdExt cur, ton::BlockIdExt next) {
+bool LiteQuery::construct_proof_link_forward(ion::BlockIdExt cur, ion::BlockIdExt next) {
   LOG(INFO) << "constructing a forward proof link from " << cur.to_str() << " to " << next.to_str();
   if (!(cur.is_masterchain_ext() && next.is_masterchain_ext() && mc_state0_->check_old_mc_block_id(cur) &&
         mc_state0_->check_old_mc_block_id(next))) {
@@ -2902,14 +2902,14 @@ bool LiteQuery::construct_proof_link_forward(ton::BlockIdExt cur, ton::BlockIdEx
   return (cur.seqno() ? request_proof_link(cur) : request_zero_state(cur)) && request_mc_proof(next);
 }
 
-bool LiteQuery::construct_proof_link_forward_cont(ton::BlockIdExt cur, ton::BlockIdExt next) {
+bool LiteQuery::construct_proof_link_forward_cont(ion::BlockIdExt cur, ion::BlockIdExt next) {
   LOG(INFO) << "continue constructing a forward proof link from " << cur.to_str() << " to " << next.to_str();
   CHECK(cur.seqno() ? proof_link_.not_null() && proof_link_->block_id() == cur : !buffer_.empty());
   CHECK(mc_proof_.not_null() && mc_proof_->block_id() == next);
   try {
     Ref<vm::Cell> cur_root, next_root;
     // virtualize roots
-    ton::validator::ProofQ::VirtualizedProof virt1;
+    ion::validator::ProofQ::VirtualizedProof virt1;
     if (cur.seqno()) {
       auto vres1 = proof_link_->get_virtual_root();
       if (vres1.is_error()) {
@@ -3033,7 +3033,7 @@ bool LiteQuery::construct_proof_link_forward_cont(ton::BlockIdExt cur, ton::Bloc
   return fatal_error("construction of forward proof links not implemented yet");
 }
 
-bool LiteQuery::construct_proof_link_back(ton::BlockIdExt cur, ton::BlockIdExt next) {
+bool LiteQuery::construct_proof_link_back(ion::BlockIdExt cur, ion::BlockIdExt next) {
   LOG(INFO) << "constructing a backward proof link from " << cur.to_str() << " to " << next.to_str();
   CHECK(chain_);
   if (!(cur.is_masterchain_ext() && next.is_masterchain_ext() && mc_state0_->check_old_mc_block_id(cur) &&
@@ -3048,7 +3048,7 @@ bool LiteQuery::construct_proof_link_back(ton::BlockIdExt cur, ton::BlockIdExt n
   return request_proof_link(cur) && request_mc_block_state(cur);
 }
 
-bool LiteQuery::construct_proof_link_back_cont(ton::BlockIdExt cur, ton::BlockIdExt next) {
+bool LiteQuery::construct_proof_link_back_cont(ion::BlockIdExt cur, ion::BlockIdExt next) {
   LOG(INFO) << "continue constructing a backward proof link from " << cur.to_str() << " to " << next.to_str();
   CHECK(mc_state_.not_null() && proof_link_.not_null() && mc_state_->get_block_id() == cur &&
         proof_link_->block_id() == cur);
@@ -3085,7 +3085,7 @@ bool LiteQuery::construct_proof_link_back_cont(ton::BlockIdExt cur, ton::BlockId
   }
 }
 
-bool LiteQuery::finish_proof_chain(ton::BlockIdExt id) {
+bool LiteQuery::finish_proof_chain(ion::BlockIdExt id) {
   CHECK(chain_);
   LOG(INFO) << "finish constructing block proof chain from " << chain_->from.to_str() << " to " << chain_->to.to_str()
             << " (constructed " << chain_->link_count() << " up to " << id.to_str() << ")";
@@ -3103,7 +3103,7 @@ bool LiteQuery::finish_proof_chain(ton::BlockIdExt id) {
     chain_->complete = (id == chain_->to);
     chain_->to = id;
     // serialize answer
-    std::vector<ton::tl_object_ptr<lite_api::liteServer_BlockLink>> a;
+    std::vector<ion::tl_object_ptr<lite_api::liteServer_BlockLink>> a;
     for (auto& link : chain_->links) {
       td::BufferSlice dest_proof_boc;
       if (link.to.seqno()) {
@@ -3122,12 +3122,12 @@ bool LiteQuery::finish_proof_chain(ton::BlockIdExt id) {
       }
       if (link.is_fwd) {
         // serialize forward link
-        std::vector<ton::tl_object_ptr<lite_api::liteServer_signature>> b;
+        std::vector<ion::tl_object_ptr<lite_api::liteServer_signature>> b;
         for (auto& sig : link.signatures) {
           b.push_back(create_tl_object<lite_api::liteServer_signature>(sig.node, std::move(sig.signature)));
         }
         a.push_back(create_tl_object<lite_api::liteServer_blockLinkForward>(
-            link.is_key, ton::create_tl_lite_block_id(link.from), ton::create_tl_lite_block_id(link.to),
+            link.is_key, ion::create_tl_lite_block_id(link.from), ion::create_tl_lite_block_id(link.to),
             std::move(dest_proof_boc), src_proof_boc.move_as_ok(),
             create_tl_object<lite_api::liteServer_signatureSet>(link.validator_set_hash, link.cc_seqno, std::move(b))));
       } else {
@@ -3139,13 +3139,13 @@ bool LiteQuery::finish_proof_chain(ton::BlockIdExt id) {
                              state_proof_boc.move_as_error().to_string());
         }
         a.push_back(create_tl_object<lite_api::liteServer_blockLinkBack>(
-            link.is_key, ton::create_tl_lite_block_id(link.from), ton::create_tl_lite_block_id(link.to),
+            link.is_key, ion::create_tl_lite_block_id(link.from), ion::create_tl_lite_block_id(link.to),
             std::move(dest_proof_boc), src_proof_boc.move_as_ok(), state_proof_boc.move_as_ok()));
       }
     }
     LOG(INFO) << "getBlockProof() query completed";
-    auto c = ton::create_serialize_tl_object<ton::lite_api::liteServer_partialBlockProof>(
-        chain_->complete, ton::create_tl_lite_block_id(chain_->from), ton::create_tl_lite_block_id(chain_->to),
+    auto c = ion::create_serialize_tl_object<ion::lite_api::liteServer_partialBlockProof>(
+        chain_->complete, ion::create_tl_lite_block_id(chain_->from), ion::create_tl_lite_block_id(chain_->to),
         std::move(a));
     return finish_query(std::move(c));
   } catch (vm::VmError& err) {
@@ -3217,8 +3217,8 @@ void LiteQuery::continue_getValidatorStats(int mode, int limit, Bits256 start_af
     return;
   }
   LOG(INFO) << "getValidatorStats() query completed";
-  auto b = ton::create_serialize_tl_object<ton::lite_api::liteServer_validatorStats>(
-      mode & 0xff, ton::create_tl_lite_block_id(base_blk_id_), count, complete, res1.move_as_ok(), res2.move_as_ok());
+  auto b = ion::create_serialize_tl_object<ion::lite_api::liteServer_validatorStats>(
+      mode & 0xff, ion::create_tl_lite_block_id(base_blk_id_), count, complete, res1.move_as_ok(), res2.move_as_ok());
   finish_query(std::move(b));
 }
 
@@ -3355,7 +3355,7 @@ void LiteQuery::continue_getShardBlockProof(Ref<BlockData> cur_block,
 void LiteQuery::perform_getOutMsgQueueSizes(td::optional<ShardIdFull> shard) {
   LOG(INFO) << "started a getOutMsgQueueSizes" << (shard ? shard.value().to_str() : "") << " liteserver query";
   td::actor::send_closure_later(
-      manager_, &ton::validator::ValidatorManager::get_last_liteserver_state_block,
+      manager_, &ion::validator::ValidatorManager::get_last_liteserver_state_block,
       [Self = actor_id(this), shard](td::Result<std::pair<Ref<MasterchainState>, BlockIdExt>> res) {
         if (res.is_error()) {
           td::actor::send_closure(Self, &LiteQuery::abort_query, res.move_as_error());
@@ -3460,8 +3460,8 @@ void LiteQuery::finish_getBlockOutMsgQueueSize() {
     proof = r_proof.move_as_ok();
   }
   LOG(INFO) << "getBlockOutMsgQueueSize(" << blk_id_.to_str() << ", " << mode_ << ") query completed";
-  auto b = ton::create_serialize_tl_object<ton::lite_api::liteServer_blockOutMsgQueueSize>(
-      mode_, ton::create_tl_lite_block_id(blk_id_), size, std::move(proof));
+  auto b = ion::create_serialize_tl_object<ion::lite_api::liteServer_blockOutMsgQueueSize>(
+      mode_, ion::create_tl_lite_block_id(blk_id_), size, std::move(proof));
   finish_query(std::move(b));
 }
 
@@ -3565,8 +3565,8 @@ void LiteQuery::finish_getDispatchQueueInfo(StdSmcAddress after_addr, int max_ac
     proof = r_proof.move_as_ok();
   }
   LOG(INFO) << "getDispatchQueueInfo(" << blk_id_.to_str() << ", " << mode_ << ") query completed";
-  auto b = ton::create_serialize_tl_object<ton::lite_api::liteServer_dispatchQueueInfo>(
-      mode_, ton::create_tl_lite_block_id(blk_id_), std::move(result), complete, std::move(proof));
+  auto b = ion::create_serialize_tl_object<ion::lite_api::liteServer_dispatchQueueInfo>(
+      mode_, ion::create_tl_lite_block_id(blk_id_), std::move(result), complete, std::move(proof));
   finish_query(std::move(b));
 }
 
@@ -3702,8 +3702,8 @@ void LiteQuery::finish_getDispatchQueueMessages(StdSmcAddress addr, LogicalTime 
     messages_boc = r_messages_boc.move_as_ok();
   }
   LOG(INFO) << "getDispatchQueueMessages(" << blk_id_.to_str() << ", " << mode_ << ") query completed";
-  auto b = ton::create_serialize_tl_object<ton::lite_api::liteServer_dispatchQueueMessages>(
-      mode_, ton::create_tl_lite_block_id(blk_id_), std::move(result), complete, std::move(proof),
+  auto b = ion::create_serialize_tl_object<ion::lite_api::liteServer_dispatchQueueMessages>(
+      mode_, ion::create_tl_lite_block_id(blk_id_), std::move(result), complete, std::move(proof),
       std::move(messages_boc));
   finish_query(std::move(b));
 }
@@ -3769,4 +3769,4 @@ void LiteQuery::perform_nonfinal_getPendingShardBlocks(int mode, ShardIdFull sha
 }
 
 }  // namespace validator
-}  // namespace ton
+}  // namespace ion

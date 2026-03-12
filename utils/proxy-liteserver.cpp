@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain source code.
+    This file is part of ION Blockchain source code.
 
-    TON Blockchain is free software; you can redistribute it and/or
+    ION Blockchain is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
     as published by the Free Software Foundation; either version 2
     of the License, or (at your option) any later version.
 
-    TON Blockchain is distributed in the hope that it will be useful,
+    ION Blockchain is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with TON Blockchain.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain.  If not, see <http://www.gnu.org/licenses/>.
 
     In addition, as a special exception, the copyright holders give permission
     to link the code of portions of this program with the OpenSSL library.
@@ -51,7 +51,7 @@
 #include "td/utils/overloaded.h"
 #include "td/utils/tl_storers.h"
 
-using namespace ton;
+using namespace ion;
 
 class ProxyLiteserver : public td::actor::Actor {
  public:
@@ -440,7 +440,7 @@ int main(int argc, char* argv[]) {
         public_key_hash = PublicKeyHash{value};
         return td::Status::OK();
       });
-  p.add_option('C', "global-config", "global TON configuration file",
+  p.add_option('C', "global-config", "global ION configuration file",
                [&](td::Slice arg) { global_config = arg.str(); });
   p.add_option('D', "db", "db root", [&](td::Slice arg) { db_root = arg.str(); });
   p.add_option('d', "daemonize", "set SIGHUP", [&]() {

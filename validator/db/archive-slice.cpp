@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2019-2020 Telegram Systems LLP
 */
@@ -28,7 +28,7 @@
 #include "db-utils.h"
 #include "files-async.hpp"
 
-namespace ton {
+namespace ion {
 
 namespace validator {
 
@@ -59,11 +59,11 @@ class PackageStatistics {
     ss.setf(std::ios::fixed);
     ss.precision(6);
 
-    ss << "ton.pack.open COUNT : " << open_count.exchange(0, std::memory_order_relaxed) << "\n";
-    ss << "ton.pack.close COUNT : " << close_count.exchange(0, std::memory_order_relaxed) << "\n";
+    ss << "ion.pack.open COUNT : " << open_count.exchange(0, std::memory_order_relaxed) << "\n";
+    ss << "ion.pack.close COUNT : " << close_count.exchange(0, std::memory_order_relaxed) << "\n";
 
-    ss << "ton.pack.read.bytes COUNT : " << read_bytes.exchange(0, std::memory_order_relaxed) << "\n";
-    ss << "ton.pack.write.bytes COUNT : " << write_bytes.exchange(0, std::memory_order_relaxed) << "\n";
+    ss << "ion.pack.read.bytes COUNT : " << read_bytes.exchange(0, std::memory_order_relaxed) << "\n";
+    ss << "ion.pack.write.bytes COUNT : " << write_bytes.exchange(0, std::memory_order_relaxed) << "\n";
 
     PercentileStats temp_read_time;
     {
@@ -71,7 +71,7 @@ class PackageStatistics {
       temp_read_time = std::move(read_time);
       read_time.clear();
     }
-    ss << "ton.pack.read.micros " << temp_read_time.to_string() << "\n";
+    ss << "ion.pack.read.micros " << temp_read_time.to_string() << "\n";
 
     PercentileStats temp_write_time;
     {
@@ -79,7 +79,7 @@ class PackageStatistics {
       temp_write_time = std::move(write_time);
       write_time.clear();
     }
-    ss << "ton.pack.write.micros " << temp_write_time.to_string() << "\n";
+    ss << "ion.pack.write.micros " << temp_write_time.to_string() << "\n";
 
     return ss.str();
   }
@@ -904,7 +904,7 @@ td::Result<ArchiveSlice::PackageInfo *> ArchiveSlice::choose_package(BlockSeqno 
     shard_prefix = ShardIdFull{masterchainId};
   } else if (!shard_prefix.is_masterchain()) {
     shard_prefix.shard |= 1;  // In case length is < split depth
-    shard_prefix = ton::shard_prefix(shard_prefix, shard_split_depth_);
+    shard_prefix = ion::shard_prefix(shard_prefix, shard_split_depth_);
   }
   auto it = id_to_package_.find({masterchain_seqno, shard_prefix});
   if (it == id_to_package_.end()) {
@@ -1324,4 +1324,4 @@ void ArchiveLru::enforce_limit() {
 
 }  // namespace validator
 
-}  // namespace ton
+}  // namespace ion

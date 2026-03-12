@@ -35,5 +35,5 @@ readline-5.0-1-lib.zip
 # Work directory for integration tests
 test/integration/.network
 
-test/tontester/tests/tl/generated
-test/tontester/src/tontester/tl
+test/iontester/tests/tl/generated
+test/iontester/src/iontester/tl

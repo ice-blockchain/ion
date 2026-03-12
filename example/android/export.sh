@@ -2,11 +2,11 @@
 pushd .
 mkdir -p build_native
 cd build_native
-cmake -DTON_ONLY_TONLIB=ON -DBUILD_SHARED_LIBS=OFF .. || exit 1
+cmake -DION_ONLY_TONLIB=ON -DBUILD_SHARED_LIBS=OFF .. || exit 1
 cmake --build . --target prepare_cross_compiling || exit 2
 #cmake --build . --target tl_generate_java || exit 1
 popd
-php AddIntDef.php src/drinkless/org/ton/TonApi.java || exit 1
+php AddIntDef.php src/drinkless/org/ion/TonApi.java || exit 1
 
 ./build-all.sh || exit 1
 

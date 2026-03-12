@@ -7,6 +7,6 @@
 -iquote tdactor/
 -iquote tdnet/
 -iquote tdutils/
--iquote ../ton-build/tdutils/
+-iquote ../ion-build/tdutils/
 -iquote crypto/
 -I/opt/local/include/

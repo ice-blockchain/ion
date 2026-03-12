@@ -56,20 +56,20 @@ cmake -GNinja .. \
 -DOPENSSL_CRYPTO_LIBRARY=$opensslPath/libcrypto.so
 
 
-test $? -eq 0 || { echo "Can't configure ton"; exit 1; }
+test $? -eq 0 || { echo "Can't configure ion"; exit 1; }
 
 if [ "$with_tests" = true ]; then
 ninja storage-daemon storage-daemon-cli fift func tolk tonlib tonlibjson tonlib-cli \
       validator-engine lite-client validator-engine-console blockchain-explorer \
       generate-random-id json2tlo dht-server http-proxy rldp-http-proxy dht-ping-servers dht-resolve \
       adnl-proxy create-state emulator proxy-liteserver all-tests
-      test $? -eq 0 || { echo "Can't compile ton"; exit 1; }
+      test $? -eq 0 || { echo "Can't compile ion"; exit 1; }
 else
 ninja storage-daemon storage-daemon-cli fift func tolk tonlib tonlibjson tonlib-cli \
       validator-engine lite-client validator-engine-console blockchain-explorer \
       generate-random-id json2tlo dht-server http-proxy rldp-http-proxy \
       adnl-proxy create-state emulator proxy-liteserver dht-ping-servers dht-resolve
-      test $? -eq 0 || { echo "Can't compile ton"; exit 1; }
+      test $? -eq 0 || { echo "Can't compile ion"; exit 1; }
 fi
 
 # simple binaries' test

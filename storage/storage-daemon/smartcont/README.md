@@ -10,7 +10,7 @@ Simple smart-contract system for conclusion of a storage agreements.
 Storage provider deploy storage agreements fabric. Any client may request fabric to deploy storage agreement contract.
 Fabric provides get-method `get_storage_params` which returns
 - `accept_new_contracts?` - whether provider accepts new contracts
-- `rate_per_mb_day` - price in nanoTON per Megabyte per day
+- `rate_per_mb_day` - price in nanoION per Megabyte per day
 - `max_span` - maximal timespan between proving file storage which will be paid
 - `minimal_file_size` - minimal file size accepted by provider
 - `maximal_file_size` - maximal file size accepted by provider

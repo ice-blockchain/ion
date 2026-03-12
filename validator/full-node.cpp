@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -21,13 +21,13 @@
 #include "td/actor/MultiPromise.h"
 #include "td/actor/coro_utils.h"
 #include "td/utils/Random.h"
-#include "ton/ton-io.hpp"
-#include "ton/ton-tl.hpp"
+#include "ion/ion-io.hpp"
+#include "ion/ion-tl.hpp"
 
 #include "full-node.h"
 #include "full-node.hpp"
 
-namespace ton {
+namespace ion {
 
 namespace validator {
 
@@ -118,7 +118,7 @@ void FullNodeImpl::sign_shard_overlay_certificate(ShardIdFull shard_id, PublicKe
 }
 
 void FullNodeImpl::import_shard_overlay_certificate(ShardIdFull shard_id, PublicKeyHash signed_key,
-                                                    std::shared_ptr<ton::overlay::Certificate> cert,
+                                                    std::shared_ptr<ion::overlay::Certificate> cert,
                                                     td::Promise<td::Unit> promise) {
   auto it = shards_.find(shard_id);
   if (it == shards_.end() || it->second.actor.empty()) {
@@ -665,10 +665,10 @@ void FullNodeImpl::start_up() {
   update_shard_actor(ShardIdFull{masterchainId}, true);
   if (local_id_.is_zero()) {
     if (adnl_id_.is_zero()) {
-      auto pk = ton::PrivateKey{ton::privkeys::Ed25519::random()};
+      auto pk = ion::PrivateKey{ion::privkeys::Ed25519::random()};
       local_id_ = pk.compute_short_id();
 
-      td::actor::send_closure(keyring_, &ton::keyring::Keyring::add_key, std::move(pk), true, [](td::Unit) {});
+      td::actor::send_closure(keyring_, &ion::keyring::Keyring::add_key, std::move(pk), true, [](td::Unit) {});
     } else {
       local_id_ = adnl_id_.pubkey_hash();
     }
@@ -874,7 +874,7 @@ FullNodeImpl::FullNodeImpl(PublicKeyHash local_id, adnl::AdnlNodeIdShort adnl_id
 }
 
 td::actor::ActorOwn<FullNode> FullNode::create(
-    ton::PublicKeyHash local_id, adnl::AdnlNodeIdShort adnl_id, FileHash zero_state_file_hash, FullNodeOptions opts,
+    ion::PublicKeyHash local_id, adnl::AdnlNodeIdShort adnl_id, FileHash zero_state_file_hash, FullNodeOptions opts,
     td::actor::ActorId<keyring::Keyring> keyring, td::actor::ActorId<adnl::Adnl> adnl,
     td::actor::ActorId<rldp::Rldp> rldp, td::actor::ActorId<rldp2::Rldp> rldp2, td::actor::ActorId<dht::Dht> dht,
     td::actor::ActorId<overlay::Overlays> overlays, td::actor::ActorId<ValidatorManagerInterface> validator_manager,
@@ -943,4 +943,4 @@ decltype(FullNodeImpl::limiter_) FullNodeImpl::make_limiter(const FullNodeOption
 
 }  // namespace validator
 
-}  // namespace ton
+}  // namespace ion

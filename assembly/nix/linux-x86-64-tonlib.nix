@@ -39,7 +39,7 @@ let
 
 in
 stdenv227.mkDerivation {
-  pname = "ton";
+  pname = "ion";
   version = "dev-lib";
 
   src = ./.;
@@ -62,9 +62,9 @@ stdenv227.mkDerivation {
   doInstallCheck = false;
 
   cmakeFlags = [
-    "-DTON_USE_ABSEIL=ON"
+    "-DION_USE_ABSEIL=ON"
     "-DNIX=ON"
-    "-DTON_ONLY_TONLIB=ON"
+    "-DION_ONLY_TONLIB=ON"
   ];
 
   LDFLAGS = [

@@ -167,7 +167,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_R_NO_OPERATION_SET                           149
 # define EVP_R_ONLY_ONESHOT_SUPPORTED                     177
 # define EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE   150
-# define EVP_R_OPERATON_NOT_INITIALIZED                   151
+# define EVP_R_OPERAION_NOT_INITIALIZED                   151
 # define EVP_R_PARTIALLY_OVERLAPPING                      162
 # define EVP_R_PBKDF2_ERROR                               181
 # define EVP_R_PKEY_APPLICATION_ASN1_METHOD_ALREADY_REGISTERED 179

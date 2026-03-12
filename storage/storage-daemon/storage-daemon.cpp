@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "adnl/adnl.h"
 #include "auto/tl/ton_api_json.h"
@@ -45,7 +45,7 @@
 
 #include "td/utils/port/rlimit.h"
 
-namespace ton {
+namespace ion {
 
 td::BufferSlice create_query_error(td::CSlice message) {
   return create_serialize_tl_object<ton_api::storage_daemon_queryError>(message.str());
@@ -195,8 +195,8 @@ class StorageDaemon : public td::actor::Actor {
     }
     td::actor::send_closure(adnl_, &adnl::Adnl::register_dht_node, dht_.get());
 
-    rldp_ = ton_rldp::Rldp::create(adnl_.get());
-    td::actor::send_closure(rldp_, &ton_rldp::Rldp::add_id, local_id_);
+    rldp_ = ion_rldp::Rldp::create(adnl_.get());
+    td::actor::send_closure(rldp_, &ion_rldp::Rldp::add_id, local_id_);
     overlays_ = overlay::Overlays::create(db_root_, keyring_.get(), adnl_.get(), dht_.get());
   }
 
@@ -228,7 +228,7 @@ class StorageDaemon : public td::actor::Actor {
      public:
       explicit Callback(td::actor::ActorId<StorageDaemon> id) : self_id_(id) {
       }
-      void receive_message(adnl::AdnlNodeIdShort src, ton::adnl::AdnlNodeIdShort dst, td::BufferSlice data) override {
+      void receive_message(adnl::AdnlNodeIdShort src, ion::adnl::AdnlNodeIdShort dst, td::BufferSlice data) override {
       }
       void receive_query(adnl::AdnlNodeIdShort src, adnl::AdnlNodeIdShort dst, td::BufferSlice data,
                          td::Promise<td::BufferSlice> promise) override {
@@ -600,8 +600,8 @@ class StorageDaemon : public td::actor::Actor {
   }
 
   void run_control_query(ton_api::storage_daemon_importPrivateKey &query, td::Promise<td::BufferSlice> promise) {
-    auto pk = ton::PrivateKey{query.key_};
-    td::actor::send_closure(keyring_, &ton::keyring::Keyring::add_key, std::move(pk), false,
+    auto pk = ion::PrivateKey{query.key_};
+    td::actor::send_closure(keyring_, &ion::keyring::Keyring::add_key, std::move(pk), false,
                             promise.wrap([hash = pk.compute_short_id()](td::Unit) mutable {
                               return create_serialize_tl_object<ton_api::storage_daemon_keyHash>(hash.bits256_value());
                             }));
@@ -912,7 +912,7 @@ class StorageDaemon : public td::actor::Actor {
   td::actor::ActorOwn<adnl::AdnlNetworkManager> adnl_network_manager_;
   td::actor::ActorOwn<adnl::Adnl> adnl_;
   td::actor::ActorOwn<dht::Dht> dht_;
-  td::actor::ActorOwn<ton_rldp::Rldp> rldp_;
+  td::actor::ActorOwn<ion_rldp::Rldp> rldp_;
   td::actor::ActorOwn<overlay::Overlays> overlays_;
   td::actor::ActorOwn<adnl::AdnlExtServer> ext_server_;
 
@@ -941,7 +941,7 @@ class StorageDaemon : public td::actor::Actor {
   }
 };
 
-}  // namespace ton
+}  // namespace ion
 
 int main(int argc, char *argv[]) {
   SET_VERBOSITY_LEVEL(verbosity_WARNING);
@@ -995,7 +995,7 @@ int main(int argc, char *argv[]) {
     TRY_RESULT_ASSIGN(control_port, td::to_integer_safe<td::uint16>(arg));
     return td::Status::OK();
   });
-  p.add_option('C', "global-config", "global TON configuration file",
+  p.add_option('C', "global-config", "global ION configuration file",
                [&](td::Slice arg) { global_config = arg.str(); });
   p.add_option('D', "db", "db root", [&](td::Slice arg) { db_root = arg.str(); });
   p.add_option('d', "daemonize", "set SIGHUP", [&]() {
@@ -1016,7 +1016,7 @@ int main(int argc, char *argv[]) {
 
   scheduler.run_in_context([&] {
     p.run(argc, argv).ensure();
-    td::actor::create_actor<ton::StorageDaemon>("storage-daemon", ip_addr, client_mode, global_config, db_root,
+    td::actor::create_actor<ion::StorageDaemon>("storage-daemon", ip_addr, client_mode, global_config, db_root,
                                                 control_port, enable_storage_provider)
         .release();
   });

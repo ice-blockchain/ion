@@ -10,4 +10,4 @@ int error::access_denied() asm "102 PUSHINT";
 int error::insufficient_balance() asm "103 PUSHINT";
 
 ;; other
-int const::min_tons_for_storage() asm "10000000 PUSHINT"; ;; 0.01 TON
+int const::min_ions_for_storage() asm "10000000 PUSHINT"; ;; 0.01 ION

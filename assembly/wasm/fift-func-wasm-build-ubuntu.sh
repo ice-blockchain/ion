@@ -26,7 +26,7 @@ export CCACHE_DISABLE=1
 
 echo `pwd`
 if [ "$scratch_new" = true ]; then
-  echo Compiling openssl zlib lz4 emsdk libsodium emsdk ton
+  echo Compiling openssl zlib lz4 emsdk libsodium emsdk ion
   rm -rf openssl zlib lz4 emsdk libsodium build openssl_em
 fi
 
@@ -47,13 +47,13 @@ fi
 if [ ! -d "build" ]; then
   mkdir build
   cd build
-  cmake -GNinja -DTON_USE_JEMALLOC=ON .. \
+  cmake -GNinja -DION_USE_JEMALLOC=ON .. \
   -DCMAKE_BUILD_TYPE=Release \
   -DOPENSSL_ROOT_DIR=$opensslPath \
   -DOPENSSL_INCLUDE_DIR=$opensslPath/include \
   -DOPENSSL_CRYPTO_LIBRARY=$opensslPath/libcrypto.so
 
-  test $? -eq 0 || { echo "Can't configure TON build"; exit 1; }
+  test $? -eq 0 || { echo "Can't configure ION build"; exit 1; }
   ninja fift smc-envelope
   test $? -eq 0 || { echo "Can't compile fift "; exit 1; }
   rm -rf * .ninja* CMakeCache.txt
@@ -161,12 +161,12 @@ emcmake cmake -DUSE_EMSCRIPTEN=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_VERBOSE_MAK
 -DSODIUM_LIBRARY_RELEASE=$SODIUM_DIR/src/libsodium/.libs/libsodium.a \
 ..
 
-test $? -eq 0 || { echo "Can't configure TON with emmake "; exit 1; }
+test $? -eq 0 || { echo "Can't configure ION with emmake "; exit 1; }
 cp -R ../crypto/smartcont ../crypto/fift/lib crypto
 
 emmake make -j$(nproc) funcfiftlib func fift tlbc emulator-emscripten
 
-test $? -eq 0 || { echo "Can't compile TON with emmake "; exit 1; }
+test $? -eq 0 || { echo "Can't compile ION with emmake "; exit 1; }
 
 if [ "$with_artifacts" = true ]; then
   echo "Creating artifacts..."

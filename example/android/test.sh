@@ -1,6 +1,6 @@
 #!/bin/sh
-cp -r src/* ./test/ton/src/main/java/
-mkdir -p ./test/ton/src/cpp/prebuilt/
-cp -r libs/* ./test/ton/src/cpp/prebuilt/
+cp -r src/* ./test/ion/src/main/java/
+mkdir -p ./test/ion/src/cpp/prebuilt/
+cp -r libs/* ./test/ion/src/cpp/prebuilt/
 cd test
 ./gradlew connectedAndroidTest

@@ -1,11 +1,11 @@
 [project]
-name = "ton"
+name = "ion"
 version = "0.1.0"
 requires-python = ">=3.13"
 dependencies = [
     "pytest>=9.0.1",
     "pytest-asyncio",
-    "tontester",
+    "iontester",
     "types-gdb>=16.3.0.20250920",
 ]
 
@@ -16,16 +16,16 @@ dev = [
 ]
 
 [tool.uv.sources]
-tontester = { workspace = true }
+iontester = { workspace = true }
 
 [tool.uv.workspace]
 members = [
-    "test/tontester",
+    "test/iontester",
 ]
 
 [tool.ruff]
 line-length = 100
-include = ["test/integration/**/*.py", "test/tontester/**/*.py"]
+include = ["test/integration/**/*.py", "test/iontester/**/*.py"]
 
 [tool.ruff.lint]
 # Default rules with isort
@@ -45,7 +45,7 @@ ignore = [
 ]
 
 [tool.pyright]
-include = ["test/integration", "test/tontester"]
+include = ["test/integration", "test/iontester"]
 
 [tool.pytest]
-testpaths = ["test/tontester/tests"]
+testpaths = ["test/iontester/tests"]

@@ -3,11 +3,11 @@
 
 namespace emulator {
 class TvmEmulator {
-  ton::SmartContract smc_;
-  ton::SmartContract::Args args_;
+  ion::SmartContract smc_;
+  ion::SmartContract::Args args_;
 
  public:
-  using Answer = ton::SmartContract::Answer;
+  using Answer = ion::SmartContract::Answer;
 
   TvmEmulator(td::Ref<vm::Cell> code, td::Ref<vm::Cell> data) : smc_({code, data}) {
   }
@@ -56,7 +56,7 @@ class TvmEmulator {
   }
 
   Answer run_get_method(int method_id, td::Ref<vm::Stack> stack) {
-    ton::SmartContract::Args args = args_;
+    ion::SmartContract::Args args = args_;
     return smc_.run_get_method(args.set_stack(stack).set_method_id(method_id));
   }
 
@@ -65,7 +65,7 @@ class TvmEmulator {
   }
 
   Answer send_internal_message(td::Ref<vm::Cell> message_body, uint64_t amount) {
-    ton::SmartContract::Args args = args_;
+    ion::SmartContract::Args args = args_;
     return smc_.send_internal_message(message_body, args.set_amount(amount));
   }
 };

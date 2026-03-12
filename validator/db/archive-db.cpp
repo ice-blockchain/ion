@@ -6,7 +6,7 @@
 #include "archive-db.hpp"
 #include "files-async.hpp"
 
-namespace ton {
+namespace ion {
 
 namespace validator {
 
@@ -328,4 +328,4 @@ void ArchiveManager::start_up() {
 
 }  // namespace validator
 
-}  // namespace ton
+}  // namespace ion

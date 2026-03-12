@@ -4,7 +4,7 @@
 {-
   # Tuple manipulation primitives
   The names and the types are mostly self-explaining.
-  See [polymorhism with forall](https://ton.org/docs/#/func/functions?id=polymorphism-with-forall)
+  See [polymorhism with forall](https://ion.org/docs/#/func/functions?id=polymorphism-with-forall)
   for more info on the polymorphic functions.
 
   Note that currently values of atomic type `tuple` can't be cast to composite tuple type (e.g. `[int, cell]`)
@@ -112,7 +112,7 @@ int now() asm "NOW";
 slice my_address() asm "MYADDR";
 
 ;;; Returns the balance of the smart contract as a tuple consisting of an int
-;;; (balance in nanotoncoins) and a `cell`
+;;; (balance in nanoioncoins) and a `cell`
 ;;; (a dictionary with 32-bit keys representing the balance of "extra currencies")
 ;;; at the start of Computation Phase.
 ;;; Note that RAW primitives such as [send_raw_message] do not update this field.
@@ -229,7 +229,7 @@ cont bless(slice s) impure asm "BLESS";
 ;;; In other words, the current smart contract agrees to buy some gas to finish the current transaction.
 ;;; This action is required to process external messages, which bring no value (hence no gas) with themselves.
 ;;;
-;;; For more details check [accept_message effects](https://ton.org/docs/#/smart-contracts/accept).
+;;; For more details check [accept_message effects](https://ion.org/docs/#/smart-contracts/accept).
 () accept_message() impure asm "ACCEPT";
 
 ;;; Sets current gas limit `gl` to the minimum of limit and `gm`, and resets the gas credit `gc` to zero.
@@ -246,7 +246,7 @@ cont bless(slice s) impure asm "BLESS";
 ;;; Not implemented
 ;;() buy_gas(int gram) impure asm "BUYGAS";
 
-;;; Computes the amount of gas that can be bought for `amount` nanoTONs,
+;;; Computes the amount of gas that can be bought for `amount` nanoIONs,
 ;;; and sets `gl` accordingly in the same way as [set_gas_limit].
 () buy_gas(int amount) impure asm "BUYGAS";
 
@@ -267,17 +267,17 @@ int abs(int x) asm "ABS";
 
   It is said that a primitive _loads_ some data,
   if it returns the data and the remainder of the slice
-  (so it can also be used as [modifying method](https://ton.org/docs/#/func/statements?id=modifying-methods)).
+  (so it can also be used as [modifying method](https://ion.org/docs/#/func/statements?id=modifying-methods)).
 
   It is said that a primitive _preloads_ some data, if it returns only the data
-  (it can be used as [non-modifying method](https://ton.org/docs/#/func/statements?id=non-modifying-methods)).
+  (it can be used as [non-modifying method](https://ion.org/docs/#/func/statements?id=non-modifying-methods)).
 
   Unless otherwise stated, loading and preloading primitives read the data from a prefix of the slice.
 -}
 
 
 ;;; Converts a `cell` [c] into a `slice`. Notice that [c] must be either an ordinary cell,
-;;; or an exotic cell (see [TVM.pdf](https://ton-blockchain.github.io/docs/tvm.pdf), 3.1.2)
+;;; or an exotic cell (see [TVM.pdf](https://ice-blockchain.github.io/docs/tvm.pdf), 3.1.2)
 ;;; which is automatically loaded to yield an ordinary cell `c'`, converted into a `slice` afterwards.
 slice begin_parse(cell c) asm "CTOS";
 
@@ -401,7 +401,7 @@ int builder_depth(builder b) asm "BDEPTH";
   # Builder primitives
   It is said that a primitive _stores_ a value `x` into a builder `b`
   if it returns a modified version of the builder `b'` with the value `x` stored at the end of it.
-  It can be used as [non-modifying method](https://ton.org/docs/#/func/statements?id=non-modifying-methods).
+  It can be used as [non-modifying method](https://ion.org/docs/#/func/statements?id=non-modifying-methods).
 
   All the primitives below first check whether there is enough space in the `builder`,
   and only then check the range of the value being serialized.
@@ -595,7 +595,7 @@ cell config_param(int x) asm "CONFIGOPTPARAM";
 ;;; Checks whether c is a null. Note, that FunC also has polymorphic null? built-in.
 int cell_null?(cell c) asm "ISNULL";
 
-;;; Creates an output action which would reserve exactly amount nanotoncoins (if mode = 0), at most amount nanotoncoins (if mode = 2), or all but amount nanotoncoins (if mode = 1 or mode = 3), from the remaining balance of the account. It is roughly equivalent to creating an outbound message carrying amount nanotoncoins (or b − amount nanotoncoins, where b is the remaining balance) to oneself, so that the subsequent output actions would not be able to spend more money than the remainder. Bit +2 in mode means that the external action does not fail if the specified amount cannot be reserved; instead, all remaining balance is reserved. Bit +8 in mode means `amount <- -amount` before performing any further actions. Bit +4 in mode means that amount is increased by the original balance of the current account (before the compute phase), including all extra currencies, before performing any other checks and actions. Currently, amount must be a non-negative integer, and mode must be in the range 0..15.
+;;; Creates an output action which would reserve exactly amount nanoioncoins (if mode = 0), at most amount nanoioncoins (if mode = 2), or all but amount nanoioncoins (if mode = 1 or mode = 3), from the remaining balance of the account. It is roughly equivalent to creating an outbound message carrying amount nanoioncoins (or b − amount nanoioncoins, where b is the remaining balance) to oneself, so that the subsequent output actions would not be able to spend more money than the remainder. Bit +2 in mode means that the external action does not fail if the specified amount cannot be reserved; instead, all remaining balance is reserved. Bit +8 in mode means `amount <- -amount` before performing any further actions. Bit +4 in mode means that amount is increased by the original balance of the current account (before the compute phase), including all extra currencies, before performing any other checks and actions. Currently, amount must be a non-negative integer, and mode must be in the range 0..15.
 () raw_reserve(int amount, int mode) impure asm "RAWRESERVE";
 ;;; Similar to raw_reserve, but also accepts a dictionary extra_amount (represented by a cell or null) with extra currencies. In this way currencies other than TonCoin can be reserved.
 () raw_reserve_extra(int amount, cell extra_amount, int mode) impure asm "RAWRESERVEX";

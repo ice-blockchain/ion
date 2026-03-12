@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -24,7 +24,7 @@
 #include "td/utils/Timer.h"
 #include "td/utils/bits.h"
 #include "td/utils/uint128.h"
-#include "ton/ton-shard.h"
+#include "ion/ion-shard.h"
 #include "vm/vm.h"
 
 namespace {
@@ -109,7 +109,7 @@ Ref<vm::Cell> ComputePhaseConfig::lookup_library(td::ConstBitPtr key) const {
  *
  * @returns True if the address was successfully set, false otherwise.
  */
-bool Account::set_address(ton::WorkchainId wc, td::ConstBitPtr new_addr) {
+bool Account::set_address(ion::WorkchainId wc, td::ConstBitPtr new_addr) {
   workchain = wc;
   addr = new_addr;
   return true;
@@ -194,7 +194,7 @@ bool Account::store_maybe_anycast(vm::CellBuilder& cb) const {
  */
 bool Account::unpack_address(vm::CellSlice& addr_cs) {
   int addr_tag = block::gen::t_MsgAddressInt.get_tag(addr_cs);
-  int new_wc = ton::workchainInvalid;
+  int new_wc = ion::workchainInvalid;
   switch (addr_tag) {
     case block::gen::MsgAddressInt::addr_std:
       if (!(addr_cs.advance(2) && parse_maybe_anycast(addr_cs) && addr_cs.fetch_int_to(8, new_wc) &&
@@ -209,15 +209,15 @@ bool Account::unpack_address(vm::CellSlice& addr_cs) {
       return false;
   }
   addr_cs.clear();
-  if (new_wc == ton::workchainInvalid) {
+  if (new_wc == ion::workchainInvalid) {
     return false;
   }
-  if (workchain == ton::workchainInvalid) {
+  if (workchain == ion::workchainInvalid) {
     workchain = new_wc;
     addr = addr_orig;
     addr.bits().copy_from(addr_rewrite.cbits(), addr_rewrite_length);
   } else if (addr_rewrite_length) {
-    ton::StdSmcAddress new_addr = addr_orig;
+    ion::StdSmcAddress new_addr = addr_orig;
     new_addr.bits().copy_from(addr_rewrite.cbits(), addr_rewrite_length);
     if (new_addr != addr) {
       LOG(ERROR) << "error unpacking account " << workchain << ":" << addr.to_hex()
@@ -326,7 +326,7 @@ bool Account::compute_my_addr(bool force) {
   if (!force && my_addr.not_null() && my_addr_exact.not_null()) {
     return true;
   }
-  if (workchain == ton::workchainInvalid) {
+  if (workchain == ion::workchainInvalid) {
     my_addr.clear();
     return false;
   }
@@ -443,7 +443,7 @@ bool Account::init_rewrite_addr(int rewrite_length, td::ConstBitPtr orig_addr_re
  *
  * @returns True if the unpacking is successful, false otherwise.
  */
-bool Account::unpack(Ref<vm::CellSlice> shard_account, ton::UnixTime now, bool special) {
+bool Account::unpack(Ref<vm::CellSlice> shard_account, ion::UnixTime now, bool special) {
   LOG(DEBUG) << "unpacking " << (special ? "special " : "") << "account " << addr.to_hex();
   if (shard_account.is_null()) {
     LOG(ERROR) << "account " << addr.to_hex() << " does not have a valid ShardAccount to unpack";
@@ -520,9 +520,9 @@ bool Account::unpack(Ref<vm::CellSlice> shard_account, ton::UnixTime now, bool s
  *
  * @returns True if the initialization is successful, false otherwise.
  */
-bool Account::init_new(ton::UnixTime now) {
+bool Account::init_new(ion::UnixTime now) {
   // only workchain and addr are initialized at this point
-  if (workchain == ton::workchainInvalid) {
+  if (workchain == ion::workchainInvalid) {
     return false;
   }
   addr_orig = addr;
@@ -722,8 +722,8 @@ bool Account::deactivate() {
  *
  * @returns True if the account belongs to the shard, False otherwise.
  */
-bool Account::belongs_to_shard(ton::ShardIdFull shard) const {
-  return workchain == shard.workchain && ton::shard_is_ancestor(shard.shard, addr);
+bool Account::belongs_to_shard(ion::ShardIdFull shard) const {
+  return workchain == shard.workchain && ion::shard_is_ancestor(shard.shard, addr);
 }
 
 /**
@@ -735,7 +735,7 @@ bool Account::belongs_to_shard(ton::ShardIdFull shard) const {
  * @param storage_used Account storage statistics.
  * @param is_mc A flag indicating whether the account is in the masterchain.
  */
-void add_partial_storage_payment(td::BigInt256& payment, ton::UnixTime delta, const block::StoragePrices& prices,
+void add_partial_storage_payment(td::BigInt256& payment, ion::UnixTime delta, const block::StoragePrices& prices,
                                  const StorageUsed& storage_used, bool is_mc) {
   td::BigInt256 c{(long long)storage_used.cells}, b{(long long)storage_used.bits};
   if (is_mc) {
@@ -765,8 +765,8 @@ void add_partial_storage_payment(td::BigInt256& payment, ton::UnixTime delta, co
  *
  * @returns The computed storage fees as RefInt256.
  */
-td::RefInt256 StoragePrices::compute_storage_fees(ton::UnixTime now, const std::vector<block::StoragePrices>& pricing,
-                                                  const StorageUsed& storage_used, ton::UnixTime last_paid,
+td::RefInt256 StoragePrices::compute_storage_fees(ion::UnixTime now, const std::vector<block::StoragePrices>& pricing,
+                                                  const StorageUsed& storage_used, ion::UnixTime last_paid,
                                                   bool is_special, bool is_masterchain) {
   if (now <= last_paid || !last_paid || is_special || pricing.empty() || now <= pricing[0].valid_since) {
     return td::zero_refint();
@@ -778,10 +778,10 @@ td::RefInt256 StoragePrices::compute_storage_fees(ton::UnixTime now, const std::
   if (i) {
     --i;
   }
-  ton::UnixTime upto = std::max(last_paid, pricing[0].valid_since);
+  ion::UnixTime upto = std::max(last_paid, pricing[0].valid_since);
   td::RefInt256 total{true, 0};
   for (; i < n && upto < now; i++) {
-    ton::UnixTime valid_until = (i < n - 1 ? std::min(now, pricing[i + 1].valid_since) : now);
+    ion::UnixTime valid_until = (i < n - 1 ? std::min(now, pricing[i + 1].valid_since) : now);
     if (upto < valid_until) {
       assert(upto >= pricing[i].valid_since);
       add_partial_storage_payment(total.unique_write(), valid_until - upto, pricing[i], storage_used, is_masterchain);
@@ -799,7 +799,7 @@ td::RefInt256 StoragePrices::compute_storage_fees(ton::UnixTime now, const std::
  *
  * @returns The computed storage fees as RefInt256.
  */
-td::RefInt256 Account::compute_storage_fees(ton::UnixTime now, const std::vector<block::StoragePrices>& pricing) const {
+td::RefInt256 Account::compute_storage_fees(ion::UnixTime now, const std::vector<block::StoragePrices>& pricing) const {
   return StoragePrices::compute_storage_fees(now, pricing, storage_used, last_paid, is_special, is_masterchain());
 }
 
@@ -815,7 +815,7 @@ namespace transaction {
  *
  * @returns None
  */
-Transaction::Transaction(const Account& _account, int ttype, ton::LogicalTime req_start_lt, ton::UnixTime _now,
+Transaction::Transaction(const Account& _account, int ttype, ion::LogicalTime req_start_lt, ion::UnixTime _now,
                          Ref<vm::Cell> _inmsg)
     : trans_type(ttype)
     , is_first(_account.transactions.empty())
@@ -1002,11 +1002,11 @@ bool Transaction::unpack_input_msg(bool ihr_delivered, const ActionPhaseConfig* 
       return false;
   }
   total_fees += in_fwd_fee;
-  if (account.workchain == ton::masterchainId && cfg->mc_blackhole_addr &&
+  if (account.workchain == ion::masterchainId && cfg->mc_blackhole_addr &&
       cfg->mc_blackhole_addr.value() == account.addr) {
     blackhole_burned.grams = msg_balance_remaining.grams;
     msg_balance_remaining.grams = td::zero_refint();
-    LOG(DEBUG) << "Burning " << blackhole_burned.grams << " nanoton (blackhole address)";
+    LOG(DEBUG) << "Burning " << blackhole_burned.grams << " nanoion (blackhole address)";
   }
   return true;
 }
@@ -1205,7 +1205,7 @@ bool ComputePhaseConfig::parse_GasLimitsPrices_internal(Ref<vm::CellSlice> cs, t
  *
  * @returns True if the address is suspended, False otherwise.
  */
-bool ComputePhaseConfig::is_address_suspended(ton::WorkchainId wc, td::Bits256 addr) const {
+bool ComputePhaseConfig::is_address_suspended(ion::WorkchainId wc, td::Bits256 addr) const {
   if (!suspended_addresses) {
     return false;
   }
@@ -1296,7 +1296,7 @@ namespace transaction {
  * This config change also activates new behavior for special accounts in masterchain.
  *
  * In August 2024 it was decided to unlock other old highload wallets that got into the same situation.
- * See https://t.me/tondev_news/129
+ * See https://t.me/iondev_news/129
  * It is activated by setting global version to 9.
  *
  * @param cfg The compute phase configuration.
@@ -1305,26 +1305,26 @@ namespace transaction {
  *
  * @returns Overridden gas limit or empty td::optional
  */
-static td::optional<td::uint64> override_gas_limit(const ComputePhaseConfig& cfg, ton::UnixTime now,
+static td::optional<td::uint64> override_gas_limit(const ComputePhaseConfig& cfg, ion::UnixTime now,
                                                    const Account& account) {
   struct OverridenGasLimit {
     td::uint64 new_limit;
     int from_version;
-    ton::UnixTime until;
+    ion::UnixTime until;
   };
-  static std::map<std::pair<ton::WorkchainId, ton::StdSmcAddress>, OverridenGasLimit> accounts = []() {
-    auto parse_addr = [](const char* s) -> std::pair<ton::WorkchainId, ton::StdSmcAddress> {
+  static std::map<std::pair<ion::WorkchainId, ion::StdSmcAddress>, OverridenGasLimit> accounts = []() {
+    auto parse_addr = [](const char* s) -> std::pair<ion::WorkchainId, ion::StdSmcAddress> {
       auto r_addr = StdAddress::parse(td::Slice(s));
       r_addr.ensure();
       return {r_addr.ok().workchain, r_addr.ok().addr};
     };
-    std::map<std::pair<ton::WorkchainId, ton::StdSmcAddress>, OverridenGasLimit> accounts;
+    std::map<std::pair<ion::WorkchainId, ion::StdSmcAddress>, OverridenGasLimit> accounts;
 
     // Increase limit for EQD_v9j1rlsuHHw2FIhcsCFFSD367ldfDdCKcsNmNpIRzUlu until 2024-02-29 00:00:00 UTC
     accounts[parse_addr("0:FFBFD8F5AE5B2E1C7C3614885CB02145483DFAEE575F0DD08A72C366369211CD")] = {
         .new_limit = 70'000'000, .from_version = 5, .until = 1709164800};
 
-    // Increase limit for multiple accounts (https://t.me/tondev_news/129) until 2025-03-01 00:00:00 UTC
+    // Increase limit for multiple accounts (https://t.me/iondev_news/129) until 2025-03-01 00:00:00 UTC
     accounts[parse_addr("UQBeSl-dumOHieZ3DJkNKVkjeso7wZ0VpzR4LCbLGTQ8xr57")] = {
         .new_limit = 70'000'000, .from_version = 9, .until = 1740787200};
     accounts[parse_addr("EQC3VcQ-43klww9UfimR58TBjBzk7GPupXQ3CNuthoNp-uTR")] = {
@@ -2294,7 +2294,7 @@ int Transaction::try_action_change_library(vm::CellSlice& cs, ActionPhase& ap, c
     return -1;
   }
   Ref<vm::Cell> lib_ref = rec.libref->prefetch_ref();
-  ton::Bits256 hash;
+  ion::Bits256 hash;
   if (lib_ref.not_null()) {
     hash = lib_ref->get_hash().bits();
   } else {
@@ -2512,7 +2512,7 @@ bool Transaction::check_rewrite_dest_addr(Ref<vm::CellSlice>& dest_addr, const A
     LOG(DEBUG) << "destination address does not have a MsgAddressInt tag";
     return false;
   }
-  if (rec.workchain_id != ton::masterchainId) {
+  if (rec.workchain_id != ion::masterchainId) {
     // recover destination workchain info from configuration
     auto it = cfg.workchains->find(rec.workchain_id);
     if (it == cfg.workchains->end()) {
@@ -2555,7 +2555,7 @@ bool Transaction::check_rewrite_dest_addr(Ref<vm::CellSlice>& dest_addr, const A
     }
   }
   if (is_mc) {
-    *is_mc = (rec.workchain_id == ton::masterchainId);
+    *is_mc = (rec.workchain_id == ion::masterchainId);
   }
   if (!repack) {
     return true;
@@ -4055,7 +4055,7 @@ void Transaction::extract_out_msgs(std::vector<LtCellRef>& list) {
  * @param trans_root The root of the transaction cell.
  * @param trans_lt The logical time of the transaction.
  */
-void Account::push_transaction(Ref<vm::Cell> trans_root, ton::LogicalTime trans_lt) {
+void Account::push_transaction(Ref<vm::Cell> trans_root, ion::LogicalTime trans_lt) {
   transactions.emplace_back(trans_lt, std::move(trans_root));
 }
 
@@ -4129,7 +4129,7 @@ td::Status FetchConfigParams::fetch_config_params(
     const block::ConfigInfo& config, Ref<vm::Cell>* old_mparams, std::vector<block::StoragePrices>* storage_prices,
     StoragePhaseConfig* storage_phase_cfg, td::BitArray<256>* rand_seed, ComputePhaseConfig* compute_phase_cfg,
     ActionPhaseConfig* action_phase_cfg, SerializeConfig* serialize_cfg, td::RefInt256* masterchain_create_fee,
-    td::RefInt256* basechain_create_fee, ton::WorkchainId wc, ton::UnixTime now) {
+    td::RefInt256* basechain_create_fee, ion::WorkchainId wc, ion::UnixTime now) {
   auto prev_blocks_info = config.get_prev_blocks_info();
   if (prev_blocks_info.is_error()) {
     return prev_blocks_info.move_as_error_prefix(
@@ -4162,7 +4162,7 @@ td::Status FetchConfigParams::fetch_config_params(
     std::vector<block::StoragePrices>* storage_prices, StoragePhaseConfig* storage_phase_cfg,
     td::BitArray<256>* rand_seed, ComputePhaseConfig* compute_phase_cfg, ActionPhaseConfig* action_phase_cfg,
     SerializeConfig* serialize_cfg, td::RefInt256* masterchain_create_fee, td::RefInt256* basechain_create_fee,
-    ton::WorkchainId wc, ton::UnixTime now) {
+    ion::WorkchainId wc, ion::UnixTime now) {
   *old_mparams = config.get_config_param(9);
   {
     auto res = config.get_storage_prices();
@@ -4179,7 +4179,7 @@ td::Status FetchConfigParams::fetch_config_params(
   TRY_RESULT(size_limits, config.get_size_limits_config());
   {
     // compute compute_phase_cfg / storage_phase_cfg
-    auto cell = config.get_config_param(wc == ton::masterchainId ? 20 : 21);
+    auto cell = config.get_config_param(wc == ion::masterchainId ? 20 : 21);
     if (cell.is_null()) {
       return td::Status::Error(-668, "cannot fetch current gas prices and limits from masterchain configuration");
     }
@@ -4227,7 +4227,7 @@ td::Status FetchConfigParams::fetch_config_params(
         block::MsgPrices{rec.lump_price,           rec.bit_price,          rec.cell_price, rec.ihr_price_factor,
                          (unsigned)rec.first_frac, (unsigned)rec.next_frac};
     action_phase_cfg->workchains = &config.get_workchain_list();
-    action_phase_cfg->bounce_msg_body = (config.has_capability(ton::capBounceMsgBody) ? 256 : 0);
+    action_phase_cfg->bounce_msg_body = (config.has_capability(ion::capBounceMsgBody) ? 256 : 0);
     action_phase_cfg->size_limits = size_limits;
     action_phase_cfg->action_fine_enabled = config.get_global_version() >= 4;
     action_phase_cfg->bounce_on_fail_enabled = config.get_global_version() >= 4;

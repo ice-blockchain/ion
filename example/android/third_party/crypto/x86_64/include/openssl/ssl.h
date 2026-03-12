@@ -748,7 +748,7 @@ void SSL_CTX_set_stateless_cookie_verify_cb(
     int (*verify_stateless_cookie_cb) (SSL *ssl,
                                        const unsigned char *cookie,
                                        size_t cookie_len));
-# ifndef OPENSSL_NO_NEXTPROTONEG
+# ifndef OPENSSL_NO_NEXTPROIONEG
 
 typedef int (*SSL_CTX_npn_advertised_cb_func)(SSL *ssl,
                                               const unsigned char **out,

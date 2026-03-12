@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -25,8 +25,8 @@
 #include "block/block.h"
 #include "block/output-queue-merger.h"
 #include "common/errorlog.h"
-#include "ton/ton-io.hpp"
-#include "ton/ton-tl.hpp"
+#include "ion/ion-io.hpp"
+#include "ion/ion-tl.hpp"
 #include "vm/boc.h"
 #include "vm/cells/MerkleProof.h"
 #include "vm/cells/MerkleUpdate.h"
@@ -37,7 +37,7 @@
 #include "validate-query.hpp"
 #include "validator-set.hpp"
 
-namespace ton {
+namespace ion {
 
 namespace validator {
 using td::Ref;
@@ -82,7 +82,7 @@ ValidateQuery::ValidateQuery(BlockCandidate candidate, ValidateParams params,
     , is_fake_(params.is_fake)
     , parallel_accounts_validation_(params.parallel_validation)
     , shard_pfx_(shard_.shard)
-    , shard_pfx_len_(ton::shard_prefix_length(shard_))
+    , shard_pfx_len_(ion::shard_prefix_length(shard_))
     , optimistic_prev_block_(std::move(params.optimistic_prev_block))
     , perf_timer_("validateblock", 0.1, [manager](double duration) {
       send_closure(manager, &ValidatorManager::add_perf_timer_stat, "validateblock", duration);
@@ -269,7 +269,7 @@ void ValidateQuery::start_up() {
                                 << " different from current shard " << shard_.to_str());
     return;
   }
-  if (workchain() != ton::masterchainId && workchain() != ton::basechainId) {
+  if (workchain() != ion::masterchainId && workchain() != ion::basechainId) {
     soft_reject_query("can validate block candidates only for masterchain (-1) and base workchain (0)");
     return;
   }
@@ -647,7 +647,7 @@ bool ValidateQuery::init_parse() {
   if (info.after_merge && info.after_split) {
     return reject_query("a block cannot be both after merge and after split at the same time");
   }
-  int shard_pfx_len = ton::shard_prefix_length(shard);
+  int shard_pfx_len = ion::shard_prefix_length(shard);
   if (info.after_split && !shard_pfx_len) {
     return reject_query("a block with empty shard prefix cannot be after split");
   }
@@ -1078,9 +1078,9 @@ bool ValidateQuery::try_unpack_mc_state() {
     if (!is_masterchain() && !check_this_shard_mc_info()) {
       return fatal_error("masterchain configuration does not admit creating block "s + id_.to_str());
     }
-    store_out_msg_queue_size_ = config_->has_capability(ton::capStoreOutMsgQueueSize);
-    msg_metadata_enabled_ = config_->has_capability(ton::capMsgMetadata);
-    deferring_messages_enabled_ = config_->has_capability(ton::capDeferMessages);
+    store_out_msg_queue_size_ = config_->has_capability(ion::capStoreOutMsgQueueSize);
+    msg_metadata_enabled_ = config_->has_capability(ion::capMsgMetadata);
+    deferring_messages_enabled_ = config_->has_capability(ion::capDeferMessages);
   } catch (vm::VmError& err) {
     return fatal_error(-666, err.get_msg());
   } catch (vm::VmVirtError& err) {
@@ -1174,7 +1174,7 @@ bool ValidateQuery::fetch_config_params() {
         block::MsgPrices{rec.lump_price,           rec.bit_price,          rec.cell_price, rec.ihr_price_factor,
                          (unsigned)rec.first_frac, (unsigned)rec.next_frac};
     action_phase_cfg_.workchains = &config_->get_workchain_list();
-    action_phase_cfg_.bounce_msg_body = (config_->has_capability(ton::capBounceMsgBody) ? 256 : 0);
+    action_phase_cfg_.bounce_msg_body = (config_->has_capability(ion::capBounceMsgBody) ? 256 : 0);
     action_phase_cfg_.size_limits = size_limits;
     action_phase_cfg_.action_fine_enabled = config_->get_global_version() >= 4;
     action_phase_cfg_.bounce_on_fail_enabled = config_->get_global_version() >= 4;
@@ -1495,7 +1495,7 @@ bool ValidateQuery::compute_next_state() {
     return reject_query("before_split value mismatch in new state and in block header");
   }
   block::ShardId id{info.shard_id};
-  ton::BlockId hdr_id{ton::ShardIdFull(id), info.seq_no};
+  ion::BlockId hdr_id{ion::ShardIdFull(id), info.seq_no};
   if (hdr_id != id_.id) {
     return reject_query("header of new state claims it belongs to block "s + hdr_id.to_str() + " instead of " +
                         id_.id.to_str());
@@ -1602,7 +1602,7 @@ bool ValidateQuery::unpack_prev_state() {
  */
 bool ValidateQuery::unpack_one_prev_state(block::ShardState& ss, BlockIdExt blkid, Ref<vm::Cell> prev_state_root) {
   auto res = ss.unpack_state_ext(blkid, std::move(prev_state_root), global_id_, mc_seqno_, after_split_,
-                                 after_split_ | after_merge_, [this](ton::BlockSeqno mc_seqno) {
+                                 after_split_ | after_merge_, [this](ion::BlockSeqno mc_seqno) {
                                    Ref<MasterchainStateQ> state;
                                    return request_aux_mc_state(mc_seqno, state);
                                  });
@@ -1628,7 +1628,7 @@ bool ValidateQuery::unpack_one_prev_state(block::ShardState& ss, BlockIdExt blki
 bool ValidateQuery::split_prev_state(block::ShardState& ss) {
   LOG(INFO) << "Splitting previous state " << ss.id_.to_str() << " to subshard " << shard_.to_str();
   CHECK(after_split_);
-  auto sib_shard = ton::shard_sibling(shard_);
+  auto sib_shard = ion::shard_sibling(shard_);
   auto res1 = ss.compute_split_out_msg_queue(sib_shard);
   if (res1.is_error()) {
     return fatal_error(res1.move_as_error());
@@ -1655,7 +1655,7 @@ bool ValidateQuery::unpack_next_state() {
   LOG(DEBUG) << "unpacking new state";
   CHECK(state_root_.not_null());
   auto res = ns_.unpack_state_ext(id_, state_root_, global_id_, mc_seqno_, before_split_, false,
-                                  [](ton::BlockSeqno mc_seqno) { return true; });
+                                  [](ion::BlockSeqno mc_seqno) { return true; });
   if (res.is_error()) {
     return reject_query("cannot unpack new state", std::move(res));
   }
@@ -1690,11 +1690,11 @@ bool ValidateQuery::request_neighbor_queues() {
   CHECK(new_shard_conf_);
   auto neighbor_list = new_shard_conf_->get_neighbor_shard_hash_ids(shard_);
   LOG(DEBUG) << "got a preliminary list of " << neighbor_list.size() << " neighbors for " << shard_.to_str();
-  for (ton::BlockId blk_id : neighbor_list) {
+  for (ion::BlockId blk_id : neighbor_list) {
     if (blk_id.seqno == 0 && blk_id.shard_full() != shard_) {
       continue;
     }
-    auto shard_ptr = new_shard_conf_->get_shard_hash(ton::ShardIdFull(blk_id));
+    auto shard_ptr = new_shard_conf_->get_shard_hash(ion::ShardIdFull(blk_id));
     if (shard_ptr.is_null()) {
       return reject_query("cannot obtain shard hash for neighbor "s + blk_id.to_str());
     }
@@ -1926,7 +1926,7 @@ Ref<MasterchainStateQ> ValidateQuery::get_aux_mc_state(BlockSeqno seqno) const {
  * @param blkid The BlockIdExt of the shard state.
  * @param res The result of retrieving the shard state.
  */
-void ValidateQuery::after_get_aux_shard_state(ton::BlockIdExt blkid, td::Result<Ref<ShardState>> res,
+void ValidateQuery::after_get_aux_shard_state(ion::BlockIdExt blkid, td::Result<Ref<ShardState>> res,
                                               td::PerfLogAction token) {
   token.finish(res);
   LOG(DEBUG) << "in ValidateQuery::after_get_aux_shard_state(" << blkid.to_str() << ")";
@@ -1974,7 +1974,7 @@ bool ValidateQuery::check_one_shard(const block::McShardHash& info, const block:
   if (info.next_validator_shard_ != shard.shard) {
     return reject_query("new shard configuration for shard "s + shard.to_str() +
                         " contains different next_validator_shard_ " +
-                        ton::ShardIdFull{shard.workchain, info.next_validator_shard_}.to_str());
+                        ion::ShardIdFull{shard.workchain, info.next_validator_shard_}.to_str());
   }
   auto old = old_shard_conf_->get_shard_hash(shard - 1, false);
   is_new = (old.is_null() || old->top_block_id() != info.top_block_id());
@@ -2138,15 +2138,15 @@ bool ValidateQuery::check_one_shard(const block::McShardHash& info, const block:
       return reject_query("incorrect ShardTopBlockDescr for "s + shard.to_str() +
                           " in collated data : " + err.get_msg());
     }
-    if (ton::shard_is_parent(old->shard(), shard)) {
+    if (ion::shard_is_parent(old->shard(), shard)) {
       // shard has been split
       LOG(INFO) << "detected shard split " << old->shard().to_str() << " -> " << shard.to_str();
       // ...
-    } else if (ton::shard_is_parent(shard, old->shard())) {
+    } else if (ion::shard_is_parent(shard, old->shard())) {
       // shard has been merged
       auto old2 = old_shard_conf_->get_shard_hash(shard + 1, false);
       CHECK(old2.not_null());
-      if (!ton::shard_is_sibling(old->shard(), old2->shard())) {
+      if (!ion::shard_is_sibling(old->shard(), old2->shard())) {
         return reject_query("shard "s + shard.to_str() + " has been impossibly merged from more than two shards " +
                             old->shard().to_str() + ", " + old2->shard().to_str() + " and others");
       }
@@ -2185,7 +2185,7 @@ bool ValidateQuery::check_one_shard(const block::McShardHash& info, const block:
                           " cannot have before_split set immediately after");
     }
   }
-  unsigned depth = ton::shard_prefix_length(shard);
+  unsigned depth = ion::shard_prefix_length(shard);
   bool split_cond = ((info.want_split_ || depth < wc_info->min_split) && depth < wc_info->max_split && depth < 60);
   bool merge_cond = !info.before_split_ && depth > wc_info->min_split &&
                     (info.want_merge_ || depth > wc_info->max_split) && sibling && !sibling->before_split_ &&
@@ -2265,7 +2265,7 @@ bool ValidateQuery::check_one_shard(const block::McShardHash& info, const block:
 bool ValidateQuery::check_shard_layout() {
   prev_now_ = config_->utime;
   if (prev_now_ > now_) {
-    return reject_query(PSTRING() << "creation time is not monotonic: " << now_ << " after " << prev_now_);
+    return reject_query(PSTRING() << "creation time is not monoionic: " << now_ << " after " << prev_now_);
   }
   auto ccvc = new_config_->get_catchain_validators_config();
   const auto& wc_set = new_config_->get_workchain_list();
@@ -2274,7 +2274,7 @@ bool ValidateQuery::check_shard_layout() {
     LOG(INFO) << "catchain_seqno of all shards must be updated";
   }
 
-  WorkchainId wc_id{ton::workchainInvalid};
+  WorkchainId wc_id{ion::workchainInvalid};
   Ref<block::WorkchainInfo> wc_info;
 
   std::vector<BlockIdExt> new_top_shard_blocks;
@@ -2286,7 +2286,7 @@ bool ValidateQuery::check_shard_layout() {
         }
         if (wc_id != cur.workchain()) {
           wc_id = cur.workchain();
-          if (wc_id == ton::workchainInvalid || wc_id == ton::masterchainId) {
+          if (wc_id == ion::workchainInvalid || wc_id == ion::masterchainId) {
             self->reject_query(PSTRING() << "new shard configuration contains shards of invalid workchain " << wc_id);
             return -2;
           }
@@ -2571,7 +2571,7 @@ void ValidateQuery::verified_shard_blocks(td::Status S, td::PerfLogAction token)
  *
  * @returns True if the processed up to information was successfully adjusted, false otherwise.
  */
-bool ValidateQuery::fix_one_processed_upto(block::MsgProcessedUpto& proc, ton::ShardIdFull owner, bool allow_cur) {
+bool ValidateQuery::fix_one_processed_upto(block::MsgProcessedUpto& proc, ion::ShardIdFull owner, bool allow_cur) {
   if (proc.compute_shard_end_lt) {
     return true;
   }
@@ -2586,7 +2586,7 @@ bool ValidateQuery::fix_one_processed_upto(block::MsgProcessedUpto& proc, ton::S
       return fatal_error(
           -666, PSTRING() << "cannot obtain masterchain state with seqno " << seqno << " (originally required "
                           << proc.mc_seqno << ") in a MsgProcessedUpto record for "
-                          << ton::ShardIdFull{owner.workchain, proc.shard}.to_str() << " owned by " << owner.to_str());
+                          << ion::ShardIdFull{owner.workchain, proc.shard}.to_str() << " owned by " << owner.to_str());
     }
     proc.compute_shard_end_lt = state->get_config()->get_compute_shard_end_lt_func();
   }
@@ -2650,10 +2650,10 @@ bool ValidateQuery::add_trivial_neighbor_after_merge() {
   std::size_t n = neighbors_.size();
   for (std::size_t i = 0; i < n; i++) {
     auto& nb = neighbors_.at(i);
-    if (ton::shard_intersects(nb.shard(), shard_)) {
+    if (ion::shard_intersects(nb.shard(), shard_)) {
       ++found;
       LOG(DEBUG) << "neighbor #" << i << " : " << nb.blk_.to_str() << " intersects our shard " << shard_.to_str();
-      if (!ton::shard_is_parent(shard_, nb.shard()) || found > 2) {
+      if (!ion::shard_is_parent(shard_, nb.shard()) || found > 2) {
         return fatal_error("impossible shard configuration in add_trivial_neighbor_after_merge()");
       }
       auto prev_shard = prev_blocks.at(found - 1).shard_full();
@@ -2703,7 +2703,7 @@ bool ValidateQuery::add_trivial_neighbor() {
   CHECK(descr_ref.not_null());
   CHECK(descr_ref->blk_ == prev_blocks[0]);
   CHECK(ps_.out_msg_queue_);
-  ton::ShardIdFull prev_shard = descr_ref->shard();
+  ion::ShardIdFull prev_shard = descr_ref->shard();
   // Possible cases are:
   // 1. prev_shard = shard = one of neighbors
   //    => replace neighbor by (more recent) prev_shard info
@@ -2722,7 +2722,7 @@ bool ValidateQuery::add_trivial_neighbor() {
   std::size_t n = neighbors_.size();
   for (std::size_t i = 0; i < n; i++) {
     auto& nb = neighbors_.at(i);
-    if (ton::shard_intersects(nb.shard(), shard_)) {
+    if (ion::shard_intersects(nb.shard(), shard_)) {
       ++found;
       LOG(DEBUG) << "neighbor #" << i << " : " << nb.blk_.to_str() << " intersects our shard " << shard_.to_str();
       if (nb.shard() == prev_shard) {
@@ -2734,7 +2734,7 @@ bool ValidateQuery::add_trivial_neighbor() {
           nb.processed_upto = ps_.processed_upto_;
           LOG(DEBUG) << "adjusted neighbor #" << i << " : " << nb.blk_.to_str() << " (simple replacement)";
           cs = 1;
-        } else if (ton::shard_is_parent(nb.shard(), shard_)) {
+        } else if (ion::shard_is_parent(nb.shard(), shard_)) {
           // case 2. Immediate after-split.
           CHECK(found == 1);
           CHECK(after_split_);
@@ -2744,7 +2744,7 @@ bool ValidateQuery::add_trivial_neighbor() {
           auto& nb2 = neighbors_.at(i);
           nb2.set_queue_root(sibling_out_msg_queue_->get_root_cell());
           nb2.processed_upto = sibling_processed_upto_;
-          nb2.blk_.id.shard = ton::shard_sibling(shard_.shard);
+          nb2.blk_.id.shard = ion::shard_sibling(shard_.shard);
           LOG(DEBUG) << "adjusted neighbor #" << i << " : " << nb2.blk_.to_str()
                      << " with shard shrinking to our sibling (immediate after-split adjustment)";
           auto& nb1 = neighbors_.at(n);
@@ -2757,7 +2757,7 @@ bool ValidateQuery::add_trivial_neighbor() {
         } else {
           return fatal_error("impossible shard configuration in add_trivial_neighbor()");
         }
-      } else if (ton::shard_is_parent(nb.shard(), shard_) && shard_ == prev_shard) {
+      } else if (ion::shard_is_parent(nb.shard(), shard_) && shard_ == prev_shard) {
         // case 3. Continued after-split
         CHECK(found == 1);
         CHECK(!after_split_);
@@ -2765,14 +2765,14 @@ bool ValidateQuery::add_trivial_neighbor() {
         CHECK(!sibling_processed_upto_);
         neighbors_.emplace_back(*descr_ref);
         auto& nb2 = neighbors_.at(i);
-        auto sib_shard = ton::shard_sibling(shard_);
+        auto sib_shard = ion::shard_sibling(shard_);
         // compute the part of virtual sibling's OutMsgQueue with destinations in our shard
         sibling_out_msg_queue_ =
             std::make_unique<vm::AugmentedDictionary>(nb2.outmsg_root, 352, block::tlb::aug_OutMsgQueue);
         td::BitArray<96> pfx;
         pfx.bits().store_int(shard_.workchain, 32);
         (pfx.bits() + 32).store_uint(shard_.shard, 64);
-        int l = ton::shard_prefix_length(shard_);
+        int l = ion::shard_prefix_length(shard_);
         CHECK(sibling_out_msg_queue_->cut_prefix_subdict(pfx.bits(), 32 + l));
         int res2 = block::filter_out_msg_queue(*sibling_out_msg_queue_, nb2.shard(), sib_shard);
         if (res2 < 0) {
@@ -2782,7 +2782,7 @@ bool ValidateQuery::add_trivial_neighbor() {
         if (!nb2.processed_upto->split(sib_shard)) {
           return fatal_error("error splitting ProcessedUpto for our virtual sibling");
         }
-        nb2.blk_.id.shard = ton::shard_sibling(shard_.shard);
+        nb2.blk_.id.shard = ion::shard_sibling(shard_.shard);
         LOG(DEBUG) << "adjusted neighbor #" << i << " : " << nb2.blk_.to_str()
                    << " with shard shrinking to our sibling (continued after-split adjustment)";
         auto& nb1 = neighbors_.at(n);
@@ -2791,7 +2791,7 @@ bool ValidateQuery::add_trivial_neighbor() {
         LOG(DEBUG) << "created neighbor #" << n << " : " << nb1.blk_.to_str()
                    << " from our preceding state (continued after-split adjustment)";
         cs = 3;
-      } else if (ton::shard_is_parent(shard_, nb.shard()) && shard_ == prev_shard) {
+      } else if (ion::shard_is_parent(shard_, nb.shard()) && shard_ == prev_shard) {
         // case 4. Continued after-merge.
         if (found == 1) {
           cs = 4;
@@ -2928,7 +2928,7 @@ bool ValidateQuery::unpack_precheck_value_flow(Ref<vm::Cell> value_flow_root) {
   if (is_masterchain()) {
     create_fee = masterchain_create_fee_;
   } else if (workchain() == basechainId) {
-    create_fee = (basechain_create_fee_ >> ton::shard_prefix_length(shard_));
+    create_fee = (basechain_create_fee_ >> ion::shard_prefix_length(shard_));
   } else {
     create_fee = td::make_refint(0);
   }
@@ -3156,10 +3156,10 @@ bool ValidateQuery::precheck_account_updates() {
  *
  * @returns True if the transaction passes pre-checks, false otherwise.
  */
-bool ValidateQuery::precheck_one_transaction(td::ConstBitPtr acc_id, ton::LogicalTime trans_lt,
-                                             Ref<vm::CellSlice> trans_csr, ton::Bits256& prev_trans_hash,
-                                             ton::LogicalTime& prev_trans_lt, unsigned& prev_trans_lt_len,
-                                             ton::Bits256& acc_state_hash) {
+bool ValidateQuery::precheck_one_transaction(td::ConstBitPtr acc_id, ion::LogicalTime trans_lt,
+                                             Ref<vm::CellSlice> trans_csr, ion::Bits256& prev_trans_hash,
+                                             ion::LogicalTime& prev_trans_lt, unsigned& prev_trans_lt_len,
+                                             ion::Bits256& acc_state_hash) {
   LOG(DEBUG) << "checking Transaction " << trans_lt;
   if (trans_csr.is_null() || trans_csr->size_ext() != 0x10000) {
     return reject_query(PSTRING() << "transaction " << trans_lt << " of " << acc_id.to_hex(256) << " is invalid");
@@ -3267,7 +3267,7 @@ bool ValidateQuery::precheck_one_account_block(td::ConstBitPtr acc_id, Ref<vm::C
     return reject_query("AccountBlock of "s + acc_id.to_hex(256) + " failed to pass hand-written validity checks");
   }
   unsigned last_trans_lt_len = 1;
-  ton::Bits256 acc_state_hash = hash_upd.old_hash;
+  ion::Bits256 acc_state_hash = hash_upd.old_hash;
   try {
     vm::AugmentedDictionary trans_dict{vm::DictNonEmpty(), std::move(acc_blk.transactions), 64,
                                        block::tlb::aug_AccountTransactions};
@@ -3341,7 +3341,7 @@ bool ValidateQuery::precheck_account_transactions() {
  *
  * @returns A reference to the transaction if found, null otherwise.
  */
-Ref<vm::Cell> ValidateQuery::lookup_transaction(const ton::StdSmcAddress& addr, ton::LogicalTime lt) const {
+Ref<vm::Cell> ValidateQuery::lookup_transaction(const ion::StdSmcAddress& addr, ion::LogicalTime lt) const {
   CHECK(account_blocks_dict_);
   block::gen::AccountBlock::Record ab_rec;
   if (!tlb::csr_unpack_safe(account_blocks_dict_->lookup(addr), ab_rec)) {
@@ -3360,8 +3360,8 @@ Ref<vm::Cell> ValidateQuery::lookup_transaction(const ton::StdSmcAddress& addr, 
  * @returns True if the transaction reference is valid, False otherwise.
  */
 bool ValidateQuery::is_valid_transaction_ref(Ref<vm::Cell> trans_ref) const {
-  ton::StdSmcAddress addr;
-  ton::LogicalTime lt;
+  ion::StdSmcAddress addr;
+  ion::LogicalTime lt;
   if (!block::get_transaction_id(trans_ref, addr, lt)) {
     LOG(DEBUG) << "cannot parse transaction header";
     return false;
@@ -3411,7 +3411,7 @@ bool ValidateQuery::precheck_one_message_queue_update(td::ConstBitPtr out_msg_id
       return reject_query("new EnqueuedMsg with key "s + out_msg_id.to_hex(352) +
                           " failed to pass hand-written validity checks");
     }
-    ton::LogicalTime enqueued_lt = new_value->prefetch_ulong(64);
+    ion::LogicalTime enqueued_lt = new_value->prefetch_ulong(64);
     if (enqueued_lt < start_lt_ || enqueued_lt >= end_lt_) {
       return reject_query(PSTRING() << "new EnqueuedMsg with key "s + out_msg_id.to_hex(352) + " has enqueued_lt="
                                     << enqueued_lt << " outside of this block's range " << start_lt_ << " .. "
@@ -3428,7 +3428,7 @@ bool ValidateQuery::precheck_one_message_queue_update(td::ConstBitPtr out_msg_id
       return reject_query("old EnqueuedMsg with key "s + out_msg_id.to_hex(352) +
                           " failed to pass hand-written validity checks");
     }
-    ton::LogicalTime enqueued_lt = old_value->prefetch_ulong(64);
+    ion::LogicalTime enqueued_lt = old_value->prefetch_ulong(64);
     if (enqueued_lt >= start_lt_) {
       return reject_query(PSTRING() << "old EnqueuedMsg with key "s + out_msg_id.to_hex(352) + " has enqueued_lt="
                                     << enqueued_lt << " greater than or equal to this block's start_lt=" << start_lt_);
@@ -3782,7 +3782,7 @@ bool ValidateQuery::unpack_dispatch_queue_update() {
  *
  * @returns True if the update was successful, false otherwise.
  */
-bool ValidateQuery::update_max_processed_lt_hash(ton::LogicalTime lt, const ton::Bits256& hash) {
+bool ValidateQuery::update_max_processed_lt_hash(ion::LogicalTime lt, const ion::Bits256& hash) {
   if (proc_lt_ < lt || (proc_lt_ == lt && proc_hash_ < hash)) {
     proc_lt_ = lt;
     proc_hash_ = hash;
@@ -3798,7 +3798,7 @@ bool ValidateQuery::update_max_processed_lt_hash(ton::LogicalTime lt, const ton:
  *
  * @returns True if the update was successful, false otherwise.
  */
-bool ValidateQuery::update_min_enqueued_lt_hash(ton::LogicalTime lt, const ton::Bits256& hash) {
+bool ValidateQuery::update_min_enqueued_lt_hash(ion::LogicalTime lt, const ion::Bits256& hash) {
   if (lt < min_enq_lt_ || (lt == min_enq_lt_ && hash < min_enq_hash_)) {
     min_enq_lt_ = lt;
     min_enq_hash_ = hash;
@@ -3816,7 +3816,7 @@ bool ValidateQuery::update_min_enqueued_lt_hash(ton::LogicalTime lt, const ton::
 bool ValidateQuery::check_imported_message(Ref<vm::Cell> msg_env) {
   block::tlb::MsgEnvelope::Record_std env;
   block::gen::CommonMsgInfo::Record_int_msg_info info;
-  ton::AccountIdPrefixFull src_prefix, dest_prefix, cur_prefix, next_prefix;
+  ion::AccountIdPrefixFull src_prefix, dest_prefix, cur_prefix, next_prefix;
   if (!(msg_env.not_null() && tlb::unpack_cell(msg_env, env) && tlb::unpack_cell_inexact(env.msg, info) &&
         block::tlb::t_MsgAddressInt.get_prefix_to(std::move(info.src), src_prefix) &&
         block::tlb::t_MsgAddressInt.get_prefix_to(std::move(info.dest), dest_prefix) &&
@@ -3825,7 +3825,7 @@ bool ValidateQuery::check_imported_message(Ref<vm::Cell> msg_env) {
     return reject_query("cannot unpack MsgEnvelope of an imported internal message with hash "s +
                         (env.msg.not_null() ? env.msg->get_hash().to_hex() : "(unknown)"));
   }
-  if (!ton::shard_contains(shard_, next_prefix)) {
+  if (!ion::shard_contains(shard_, next_prefix)) {
     return reject_query("imported message with hash "s + env.msg->get_hash().to_hex() + " has next hop address " +
                         next_prefix.to_str() + "... not in this shard");
   }
@@ -3898,8 +3898,8 @@ bool ValidateQuery::check_in_msg(td::ConstBitPtr key, Ref<vm::CellSlice> in_msg)
   CHECK(in_msg.not_null());
   int tag = block::gen::t_InMsg.get_tag(*in_msg);
   CHECK(tag >= 0);  // NB: the block has been already checked to be valid TL-B in try_validate()
-  ton::StdSmcAddress src_addr, dest_addr;
-  ton::WorkchainId src_wc, dest_wc;
+  ion::StdSmcAddress src_addr, dest_addr;
+  ion::WorkchainId src_wc, dest_wc;
   Ref<vm::CellSlice> src, dest;
   Ref<vm::Cell> transaction;
   Ref<vm::Cell> msg, msg_env, tr_msg_env;
@@ -3910,7 +3910,7 @@ bool ValidateQuery::check_in_msg(td::ConstBitPtr key, Ref<vm::CellSlice> in_msg)
   //   value:CurrencyCollection extra_flags:(VarUInteger 16) fwd_fee:Grams
   //   created_lt:uint64 created_at:uint32 = CommonMsgInfo;
   block::gen::CommonMsgInfo::Record_int_msg_info info;
-  ton::AccountIdPrefixFull src_prefix, dest_prefix, cur_prefix, next_prefix;
+  ion::AccountIdPrefixFull src_prefix, dest_prefix, cur_prefix, next_prefix;
   td::RefInt256 fwd_fee, orig_fwd_fee;
   bool from_dispatch_queue = false;
   // initial checks and unpack
@@ -3934,7 +3934,7 @@ bool ValidateQuery::check_in_msg(td::ConstBitPtr key, Ref<vm::CellSlice> in_msg)
         return reject_query("destination of inbound external message with hash "s + key.to_hex(256) +
                             " is an invalid blockchain address");
       }
-      if (!ton::shard_contains(shard_, dest_prefix)) {
+      if (!ion::shard_contains(shard_, dest_prefix)) {
         return reject_query("inbound external message with hash "s + key.to_hex(256) + " has destination address " +
                             dest_prefix.to_str() + "... not in this shard");
       }
@@ -4070,7 +4070,7 @@ bool ValidateQuery::check_in_msg(td::ConstBitPtr key, Ref<vm::CellSlice> in_msg)
                           "... than its current address " + cur_prefix.to_str() + "...");
     }
     // next hop address must belong to this shard (otherwise we should never had imported this message)
-    if (!ton::shard_contains(shard_, next_prefix)) {
+    if (!ion::shard_contains(shard_, next_prefix)) {
       return reject_query("next hop address "s + next_prefix.to_str() + "... of inbound internal message with hash " +
                           key.to_hex(256) + " does not belong to the current block's shard " + shard_.to_str());
     }
@@ -4086,14 +4086,14 @@ bool ValidateQuery::check_in_msg(td::ConstBitPtr key, Ref<vm::CellSlice> in_msg)
                           key.to_hex(256) + " must coincide with its current prefix "s + cur_prefix.to_str() + "..."s);
     }
     // if a message is processed by a transaction, it must have destination inside the current shard
-    if (transaction.not_null() && !ton::shard_contains(shard_, dest_prefix)) {
+    if (transaction.not_null() && !ion::shard_contains(shard_, dest_prefix)) {
       return reject_query("inbound internal message with hash "s + key.to_hex(256) + " has destination address " +
                           dest_prefix.to_str() + "... not in this shard, but it is processed nonetheless");
     }
     // if a message is not processed by a transaction, its final destination must be outside this shard,
     // or it is a deferred message (dispatch queue -> out msg queue)
     if (tag != block::gen::InMsg::msg_import_deferred_tr && transaction.is_null() &&
-        ton::shard_contains(shard_, dest_prefix)) {
+        ion::shard_contains(shard_, dest_prefix)) {
       return reject_query("inbound internal message with hash "s + key.to_hex(256) + " has destination address " +
                           dest_prefix.to_str() + "... in this shard, but it is not processed by a transaction");
     }
@@ -4163,8 +4163,8 @@ bool ValidateQuery::check_in_msg(td::ConstBitPtr key, Ref<vm::CellSlice> in_msg)
       return reject_query("InMsg corresponding to inbound message with key "s + key.to_hex(256) +
                           " refers to transaction that does not process this inbound message");
     }
-    ton::StdSmcAddress trans_addr;
-    ton::LogicalTime trans_lt;
+    ion::StdSmcAddress trans_addr;
+    ion::LogicalTime trans_lt;
     CHECK(block::get_transaction_id(transaction, trans_addr, trans_lt));
     if (dest_addr != trans_addr) {
       FLOG(INFO) {
@@ -4458,8 +4458,8 @@ bool ValidateQuery::check_out_msg(td::ConstBitPtr key, Ref<vm::CellSlice> out_ms
   CHECK(out_msg.not_null());
   int tag = block::gen::t_OutMsg.get_tag(*out_msg);
   CHECK(tag >= 0);  // NB: the block has been already checked to be valid TL-B in try_validate()
-  ton::StdSmcAddress src_addr;
-  ton::WorkchainId src_wc;
+  ion::StdSmcAddress src_addr;
+  ion::WorkchainId src_wc;
   Ref<vm::CellSlice> src, dest;
   Ref<vm::Cell> transaction;
   Ref<vm::Cell> msg, msg_env, tr_msg_env, reimport;
@@ -4471,9 +4471,9 @@ bool ValidateQuery::check_out_msg(td::ConstBitPtr key, Ref<vm::CellSlice> out_ms
   //   value:CurrencyCollection extra_flags:(VarUInteger 16) fwd_fee:Grams
   //   created_lt:uint64 created_at:uint32 = CommonMsgInfo;
   block::gen::CommonMsgInfo::Record_int_msg_info info;
-  ton::AccountIdPrefixFull src_prefix, dest_prefix, cur_prefix, next_prefix;
+  ion::AccountIdPrefixFull src_prefix, dest_prefix, cur_prefix, next_prefix;
   td::RefInt256 fwd_fee, orig_fwd_fee;
-  ton::LogicalTime import_lt = ~0ULL;
+  ion::LogicalTime import_lt = ~0ULL;
   unsigned long long created_lt = 0;
   int mode = 0, in_tag = -2;
   bool is_short = false;
@@ -4498,7 +4498,7 @@ bool ValidateQuery::check_out_msg(td::ConstBitPtr key, Ref<vm::CellSlice> out_ms
         return reject_query("source of outbound external message with hash "s + key.to_hex(256) +
                             " is an invalid blockchain address");
       }
-      if (!ton::shard_contains(shard_, src_prefix)) {
+      if (!ion::shard_contains(shard_, src_prefix)) {
         return reject_query("outbound external message with hash "s + key.to_hex(256) + " has source address " +
                             src_prefix.to_str() + "... not in this shard");
       }
@@ -4667,7 +4667,7 @@ bool ValidateQuery::check_out_msg(td::ConstBitPtr key, Ref<vm::CellSlice> out_ms
                             "... than its current address " + cur_prefix.to_str() + "...");
       }
       // current address must belong to this shard (otherwise we should never had exported this message)
-      if (!ton::shard_contains(shard_, cur_prefix)) {
+      if (!ion::shard_contains(shard_, cur_prefix)) {
         return reject_query("current address "s + cur_prefix.to_str() + "... of outbound internal message with hash " +
                             key.to_hex(256) + " does not belong to the current block's shard " + shard_.to_str());
       }
@@ -4681,7 +4681,7 @@ bool ValidateQuery::check_out_msg(td::ConstBitPtr key, Ref<vm::CellSlice> out_ms
       }
     }
     // if a message is created by a transaction, it must have source inside the current shard
-    if (transaction.not_null() && !ton::shard_contains(shard_, src_prefix)) {
+    if (transaction.not_null() && !ion::shard_contains(shard_, src_prefix)) {
       return reject_query("outbound internal message with hash "s + key.to_hex(256) + " has source address " +
                           src_prefix.to_str() +
                           "... not in this shard, but it has been created here by a Transaction nonetheless");
@@ -4714,8 +4714,8 @@ bool ValidateQuery::check_out_msg(td::ConstBitPtr key, Ref<vm::CellSlice> out_ms
       return reject_query("OutMsg corresponding to outbound message with key "s + key.to_hex(256) +
                           " refers to transaction that does not create this outbound message");
     }
-    ton::StdSmcAddress trans_addr;
-    ton::LogicalTime trans_lt;
+    ion::StdSmcAddress trans_addr;
+    ion::LogicalTime trans_lt;
     CHECK(block::get_transaction_id(transaction, trans_addr, trans_lt));
     if (src_addr != trans_addr) {
       FLOG(INFO) {
@@ -4943,7 +4943,7 @@ bool ValidateQuery::check_out_msg(td::ConstBitPtr key, Ref<vm::CellSlice> out_ms
             key.to_hex(256));
       }
       bool delivered = false;
-      ton::LogicalTime deliver_lt = 0;
+      ion::LogicalTime deliver_lt = 0;
       for (const auto& neighbor : neighbors_) {
         // could look up neighbor with shard containing enq_msg_descr.next_prefix more efficiently
         // (instead of checking all neighbors)
@@ -5184,7 +5184,7 @@ bool ValidateQuery::check_dispatch_queue_update() {
  *
  * @returns True if the message is valid, false otherwise.
  */
-bool ValidateQuery::check_neighbor_outbound_message(Ref<vm::CellSlice> enq_msg, ton::LogicalTime lt,
+bool ValidateQuery::check_neighbor_outbound_message(Ref<vm::CellSlice> enq_msg, ion::LogicalTime lt,
                                                     td::ConstBitPtr key, const block::McShardDescr& nb,
                                                     bool& unprocessed, bool& processed_here, td::Bits256& msg_hash) {
   unprocessed = false;
@@ -5550,7 +5550,7 @@ static td::RefInt256 get_ihr_fee(const block::gen::CommonMsgInfo::Record_int_msg
  *
  * @returns True if the transaction is valid, false otherwise.
  */
-bool ValidateQuery::CheckAccountTxs::check_one_transaction(block::Account& account, ton::LogicalTime lt,
+bool ValidateQuery::CheckAccountTxs::check_one_transaction(block::Account& account, ion::LogicalTime lt,
                                                            Ref<vm::Cell> trans_root, bool is_first, bool is_last) {
   if (vq_.timeout && vq_.timeout.is_in_past()) {
     abort_query(td::Status::Error(ErrorCode::timeout, "timeout"));
@@ -6123,12 +6123,12 @@ bool ValidateQuery::CheckAccountTxs::try_check() {
                                        block::tlb::aug_AccountTransactions};
     td::BitArray<64> min_trans, max_trans;
     CHECK(trans_dict.get_minmax_key(min_trans).not_null() && trans_dict.get_minmax_key(max_trans, true).not_null());
-    ton::LogicalTime min_trans_lt = min_trans.to_ulong(), max_trans_lt = max_trans.to_ulong();
+    ion::LogicalTime min_trans_lt = min_trans.to_ulong(), max_trans_lt = max_trans.to_ulong();
     if (!trans_dict.check_for_each_extra(
             [this, &account, min_trans_lt, max_trans_lt](Ref<vm::CellSlice> value, Ref<vm::CellSlice> extra,
                                                          td::ConstBitPtr key, int key_len) {
               CHECK(key_len == 64);
-              ton::LogicalTime lt = key.get_uint(64);
+              ion::LogicalTime lt = key.get_uint(64);
               extra.clear();
               return check_one_transaction(account, lt, value->prefetch_ref(), lt == min_trans_lt, lt == max_trans_lt);
             })) {
@@ -6623,8 +6623,8 @@ bool ValidateQuery::check_new_state() {
   // seq_no:uint32 vert_seq_no:# -> checked in unpack_next_state()
   // gen_utime:uint32 gen_lt:uint64 -> checked in unpack_next_state()
   // min_ref_mc_seqno:uint32
-  ton::BlockSeqno my_mc_seqno = is_masterchain() ? id_.seqno() : mc_seqno_;
-  ton::BlockSeqno ref_mc_seqno =
+  ion::BlockSeqno my_mc_seqno = is_masterchain() ? id_.seqno() : mc_seqno_;
+  ion::BlockSeqno ref_mc_seqno =
       std::min(std::min(my_mc_seqno, min_shard_ref_mc_seqno_), ns_.processed_upto_->min_mc_seqno());
   if (ns_.min_ref_mc_seqno_ != ref_mc_seqno) {
     return reject_query(
@@ -6829,7 +6829,7 @@ bool ValidateQuery::check_config_update(Ref<vm::CellSlice> old_conf_params, Ref<
  *
  * @returns True if the update is valid and consistent, false otherwise.
  */
-bool ValidateQuery::check_one_prev_dict_update(ton::BlockSeqno seqno, Ref<vm::CellSlice> old_val_extra,
+bool ValidateQuery::check_one_prev_dict_update(ion::BlockSeqno seqno, Ref<vm::CellSlice> old_val_extra,
                                                Ref<vm::CellSlice> new_val_extra) {
   if (old_val_extra.not_null() && new_val_extra.is_null()) {
     // if this becomes allowed in some situations, then check necessary conditions and return true
@@ -7541,4 +7541,4 @@ void ValidateQuery::record_stats(bool valid, std::string error_message) {
 
 }  // namespace validator
 
-}  // namespace ton
+}  // namespace ion

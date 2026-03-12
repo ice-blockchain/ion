@@ -5,7 +5,7 @@
 
 <!--- How reliably can you reproduce the issue, what are the steps to do so? -->
 
-<!-- What version of TON are you using, where did you get it (github actions, self-compiled, etc)? -->
+<!-- What version of ION are you using, where did you get it (github actions, self-compiled, etc)? -->
 
 <!-- What type of machine are you observing the error on (OS/CPU and disk type)? -->
 

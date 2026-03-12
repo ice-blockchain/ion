@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain source code.
+    This file is part of ION Blockchain source code.
 
-    TON Blockchain is free software; you can redistribute it and/or
+    ION Blockchain is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
     as published by the Free Software Foundation; either version 2
     of the License, or (at your option) any later version.
 
-    TON Blockchain is distributed in the hope that it will be useful,
+    ION Blockchain is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with TON Blockchain.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain.  If not, see <http://www.gnu.org/licenses/>.
 
     In addition, as a special exception, the copyright holders give permission
     to link the code of portions of this program with the OpenSSL library.
@@ -45,7 +45,7 @@ void DNSResolver::sync() {
                                           td::Result<tonlib_api::object_ptr<tonlib_api::ton_blockIdExt>> R) {
     if (R.is_error()) {
       LOG(WARNING) << "Sync error: " << R.move_as_error();
-      ton::delay_action([SelfId]() { td::actor::send_closure(SelfId, &DNSResolver::sync); }, td::Timestamp::in(5.0));
+      ion::delay_action([SelfId]() { td::actor::send_closure(SelfId, &DNSResolver::sync); }, td::Timestamp::in(5.0));
     }
   });
   td::actor::send_closure(tonlib_client_, &tonlib::TonlibClientWrapper::send_request<tonlib_api::sync>, std::move(obj),
@@ -83,9 +83,9 @@ void DNSResolver::resolve(std::string host, td::Promise<std::string> promise) {
           *obj->entries_[0]->entry_,
           td::overloaded(
               [&](tonlib_api::dns_entryDataAdnlAddress &x) {
-                auto R = ton::adnl::AdnlNodeIdShort::parse(x.adnl_address_->adnl_address_);
+                auto R = ion::adnl::AdnlNodeIdShort::parse(x.adnl_address_->adnl_address_);
                 if (R.is_ok()) {
-                  ton::adnl::AdnlNodeIdShort id = R.move_as_ok();
+                  ion::adnl::AdnlNodeIdShort id = R.move_as_ok();
                   result = id.serialize() + ".adnl";
                 }
               },

@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain source code.
+    This file is part of ION Blockchain source code.
 
-    TON Blockchain is free software; you can redistribute it and/or
+    ION Blockchain is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
     as published by the Free Software Foundation; either version 2
     of the License, or (at your option) any later version.
 
-    TON Blockchain is distributed in the hope that it will be useful,
+    ION Blockchain is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with TON Blockchain.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain.  If not, see <http://www.gnu.org/licenses/>.
 
     In addition, as a special exception, the copyright holders give permission
     to link the code of portions of this program with the OpenSSL library.
@@ -142,7 +142,7 @@ class TonlibCli : public td::actor::Actor {
   td::Promise<td::Slice> cont_;
   td::uint32 wallet_id_;
   td::int32 workchain_id_;
-  ton::tonlib_api::object_ptr<tonlib_api::ton_blockIdExt> current_block_;
+  ion::tonlib_api::object_ptr<tonlib_api::ton_blockIdExt> current_block_;
   enum class BlockMode { Auto, Manual } block_mode_ = BlockMode::Auto;
 
   struct KeyInfo {
@@ -986,7 +986,7 @@ class TonlibCli : public td::actor::Actor {
 
     std::vector<tonlib_api::object_ptr<tonlib_api::dns_entry>> entries;
     entries.push_back(make_object<tonlib_api::dns_entry>(
-        "", ton::DNS_NEXT_RESOLVER_CATEGORY,
+        "", ion::DNS_NEXT_RESOLVER_CATEGORY,
         make_object<tonlib_api::dns_entryDataNextResolver>(std::move(address.address))));
     do_dns_resolve(name.str(), category, 10, make_object<tonlib_api::dns_resolved>(std::move(entries)),
                    std::move(promise));
@@ -995,12 +995,12 @@ class TonlibCli : public td::actor::Actor {
     auto key_id = parser.read_word();
     TRY_RESULT_PROMISE(promise, address, to_account_address(key_id, true));
 
-    std::vector<ton::ManualDns::ActionExt> actions_ext;
+    std::vector<ion::ManualDns::ActionExt> actions_ext;
     if (cmd == "cmd") {
-      TRY_RESULT_PROMISE_ASSIGN(promise, actions_ext, ton::ManualDns::parse(parser.read_all()));
+      TRY_RESULT_PROMISE_ASSIGN(promise, actions_ext, ion::ManualDns::parse(parser.read_all()));
     } else if (cmd == "cmdfile") {
       TRY_RESULT_PROMISE(promise, file_data, td::read_file(parser.read_word().str()));
-      TRY_RESULT_PROMISE_ASSIGN(promise, actions_ext, ton::ManualDns::parse(file_data));
+      TRY_RESULT_PROMISE_ASSIGN(promise, actions_ext, ion::ManualDns::parse(file_data));
     }
 
     std::vector<tonlib_api::object_ptr<tonlib_api::dns_Action>> actions;
@@ -1401,7 +1401,7 @@ class TonlibCli : public td::actor::Actor {
           if (r_obj.is_error()) {
             return promise.set_error(r_obj.move_as_error());
           }
-          promise.set_value(ton::move_tl_object_as<typename QueryT::ReturnType::element_type>(r_obj.move_as_ok()));
+          promise.set_value(ion::move_tl_object_as<typename QueryT::ReturnType::element_type>(r_obj.move_as_ok()));
         };
   }
 
@@ -1412,10 +1412,10 @@ class TonlibCli : public td::actor::Actor {
     }
     auto r_obj = tonlib::TonlibClient::static_request(std::move(query));
     if (r_obj->get_id() == tonlib_api::error::ID) {
-      auto err = ton::move_tl_object_as<tonlib_api::error>(std::move(r_obj));
+      auto err = ion::move_tl_object_as<tonlib_api::error>(std::move(r_obj));
       return td::Status::Error(err->code_, err->message_);
     }
-    return ton::move_tl_object_as<typename QueryT::ReturnType::element_type>(r_obj);
+    return ion::move_tl_object_as<typename QueryT::ReturnType::element_type>(r_obj);
   }
 
   td::Status validate_address(td::Slice addr) {
@@ -1834,7 +1834,7 @@ class TonlibCli : public td::actor::Actor {
                });
   }
 
-  static void print_full_account_state(const ton::tl_object_ptr<ton::tonlib_api::fullAccountState>& state) {
+  static void print_full_account_state(const ion::tl_object_ptr<ion::tonlib_api::fullAccountState>& state) {
     td::StringBuilder balance_str;
     balance_str << "Balance: " << Grams{td::narrow_cast<td::uint64>(state->balance_ * (state->balance_ > 0))};
     for (const auto& extra : state->extra_currencies_) {
@@ -1852,7 +1852,7 @@ class TonlibCli : public td::actor::Actor {
 
     auto address_str = address.address->account_address_;
     send_query(make_object<tonlib_api::getAccountState>(
-                   ton::move_tl_object_as<tonlib_api::accountAddress>(std::move(address.address))),
+                   ion::move_tl_object_as<tonlib_api::accountAddress>(std::move(address.address))),
                promise.wrap([address_str](auto&& state) {
                  td::TerminalIO::out() << "Address: " << address_str << "\n";
                  print_full_account_state(state);
@@ -1868,8 +1868,8 @@ class TonlibCli : public td::actor::Actor {
     auto address_str = address.address->account_address_;
     auto transaction_id = std::make_unique<tonlib_api::internal_transactionId>(lt, std::move(hash));
     send_query(make_object<tonlib_api::getAccountStateByTransaction>(
-                   ton::move_tl_object_as<tonlib_api::accountAddress>(std::move(address.address)),
-                   ton::move_tl_object_as<tonlib_api::internal_transactionId>(std::move(transaction_id))),
+                   ion::move_tl_object_as<tonlib_api::accountAddress>(std::move(address.address)),
+                   ion::move_tl_object_as<tonlib_api::internal_transactionId>(std::move(transaction_id))),
                promise.wrap([address_str](auto&& state) {
                  td::TerminalIO::out() << "Address: " << address_str << "\n";
                  print_full_account_state(state);
@@ -1907,7 +1907,7 @@ class TonlibCli : public td::actor::Actor {
     TRY_RESULT_PROMISE(promise, address, to_account_address(key, false));
 
     send_query(make_object<tonlib_api::getAccountState>(
-                   ton::move_tl_object_as<tonlib_api::accountAddress>(std::move(address.address))),
+                   ion::move_tl_object_as<tonlib_api::accountAddress>(std::move(address.address))),
                promise.send_closure(td::actor::actor_id(this), &TonlibCli::get_history2, key.str()));
   }
 
@@ -1947,8 +1947,8 @@ class TonlibCli : public td::actor::Actor {
                promise.wrap([](tonlib_api::object_ptr<tonlib_api::blocks_outMsgQueueSizes>&& f) {
                  td::TerminalIO::out() << "Outbound message queue sizes:" << std::endl;
                  for (const auto& shard : f->shards_) {
-                   td::TerminalIO::out() << ton::BlockId{shard->id_->workchain_, (ton::ShardId)shard->id_->shard_,
-                                                         (ton::BlockSeqno)shard->id_->seqno_}
+                   td::TerminalIO::out() << ion::BlockId{shard->id_->workchain_, (ion::ShardId)shard->id_->shard_,
+                                                         (ion::BlockSeqno)shard->id_->seqno_}
                                                 .to_str()
                                          << "    " << shard->size_ << std::endl;
                  }
@@ -1968,9 +1968,9 @@ class TonlibCli : public td::actor::Actor {
     }
     auto id = make_object<tonlib_api::internal_transactionId>(lt, hash);
     send_query(make_object<tonlib_api::raw_getTransactionsV2>(
-                   nullptr, ton::move_tl_object_as<tonlib_api::accountAddress>(std::move(address.address)),
+                   nullptr, ion::move_tl_object_as<tonlib_api::accountAddress>(std::move(address.address)),
                    std::move(id), count, false),
-               promise.wrap([](ton::tl_object_ptr<tonlib_api::raw_transactions>&& result) -> td::Result<td::Unit> {
+               promise.wrap([](ion::tl_object_ptr<tonlib_api::raw_transactions>&& result) -> td::Result<td::Unit> {
                  td::TerminalIO::out() << "Found " << result->transactions_.size() << " transactions\n";
                  for (size_t i = 0; i < result->transactions_.size(); ++i) {
                    td::TerminalIO::out() << "Transaction #" << i << "\n";
@@ -2010,7 +2010,7 @@ class TonlibCli : public td::actor::Actor {
     auto input_key = address.input_key(password);
 
     send_query(make_object<tonlib_api::raw_getTransactions>(
-                   std::move(input_key), ton::move_tl_object_as<tonlib_api::accountAddress>(std::move(address.address)),
+                   std::move(input_key), ion::move_tl_object_as<tonlib_api::accountAddress>(std::move(address.address)),
                    std::move(state->last_transaction_id_)),
                promise.wrap([](auto res) {
                  td::StringBuilder sb;
