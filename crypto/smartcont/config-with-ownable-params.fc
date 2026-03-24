@@ -1,7 +1,7 @@
 #pragma version =0.4.6;
 ;; Currently deployed config-contract in mainnet can be found
-;; on https://verifier.ton.org/Ef9VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVbxn
-;; Tests and other artifacts of this contract version are available at https://github.com/ton-blockchain/config-with-ownable-params
+;; on https://verifier.ion.org/Ef9VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVbxn
+;; Tests and other artifacts of this contract version are available at https://github.com/ice-blockchain/config-with-ownable-params
 
 (slice, int) check_exotic(cell c) asm "XCTOS";
 int equal_slice_bits (slice a, slice b) asm "SDEQ";

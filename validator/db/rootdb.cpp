@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -20,14 +20,14 @@
 #include "td/actor/MultiPromise.h"
 #include "td/db/RocksDb.h"
 #include "td/utils/overloaded.h"
-#include "ton/ton-tl.hpp"
+#include "ion/ion-tl.hpp"
 #include "validator/fabric.h"
 #include "validator/stats-merger.h"
 
 #include "archiver.hpp"
 #include "rootdb.hpp"
 
-namespace ton {
+namespace ion {
 
 namespace validator {
 
@@ -206,7 +206,7 @@ void RootDb::get_block_candidate(PublicKey source, BlockIdExt id, FileHash colla
       auto val = f.move_as_ok();
       auto hash = sha256_bits256(val->collated_data_);
 
-      auto key = ton::PublicKey{val->source_};
+      auto key = ion::PublicKey{val->source_};
       auto e_key = Ed25519_PublicKey{key.ed25519_value().raw()};
       promise.set_value(BlockCandidate{e_key, create_block_id(val->id_), hash, std::move(val->data_),
                                        std::move(val->collated_data_)});
@@ -590,4 +590,4 @@ void RootDb::iterate_temp_block_handles(std::function<void(const BlockHandleInte
 
 }  // namespace validator
 
-}  // namespace ton
+}  // namespace ion

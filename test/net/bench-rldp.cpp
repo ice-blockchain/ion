@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain source code.
+    This file is part of ION Blockchain source code.
 
-    TON Blockchain is free software; you can redistribute it and/or
+    ION Blockchain is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
     as published by the Free Software Foundation; either version 2
     of the License, or (at your option) any later version.
 
-    TON Blockchain is distributed in the hope that it will be useful,
+    ION Blockchain is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with TON Blockchain.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <memory>
 #include <thread>
@@ -35,25 +35,25 @@
 
 namespace {
 // Create deterministic Ed25519 private key from a seed byte
-ton::PrivateKey make_private_key(td::uint8 seed) {
+ion::PrivateKey make_private_key(td::uint8 seed) {
   td::uint8 data[32];
   std::memset(data, seed, 32);
-  return ton::PrivateKey{ton::privkeys::Ed25519{td::Slice(data, 32)}};
+  return ion::PrivateKey{ion::privkeys::Ed25519{td::Slice(data, 32)}};
 }
 
 // Fixed keys for benchmarking (lazy initialization)
-const ton::PrivateKey& server_private_key() {
+const ion::PrivateKey& server_private_key() {
   static auto key = make_private_key(1);
   return key;
 }
-const ton::PublicKey& server_public_key() {
+const ion::PublicKey& server_public_key() {
   static auto key = server_private_key().compute_public_key();
   return key;
 }
-ton::PrivateKey client_private_key(td::uint32 client_id = 0) {
+ion::PrivateKey client_private_key(td::uint32 client_id = 0) {
   return make_private_key(static_cast<td::uint8>(2 + client_id));
 }
-ton::PublicKey client_public_key(td::uint32 client_id = 0) {
+ion::PublicKey client_public_key(td::uint32 client_id = 0) {
   return client_private_key(client_id).compute_public_key();
 }
 }  // namespace
@@ -75,7 +75,7 @@ struct Config {
   bool enable_gso = true;
   bool enable_gro = true;
   bool enable_mmsg = true;
-  ton::quic::CongestionControlAlgo cc_algo = ton::quic::CongestionControlAlgo::Bbr;
+  ion::quic::CongestionControlAlgo cc_algo = ion::quic::CongestionControlAlgo::Bbr;
 
   // Network mode options
   td::IPAddress local_addr;
@@ -103,15 +103,15 @@ inline td::uint32 stored_crc(td::Slice msg) {
   return td::as<td::uint32>(msg.end() - 4);
 }
 
-class Server : public ton::adnl::Adnl::Callback {
+class Server : public ion::adnl::Adnl::Callback {
  public:
   Server(td::uint32 response_size) : response_size_(response_size) {
   }
 
-  void receive_message(ton::adnl::AdnlNodeIdShort src, ton::adnl::AdnlNodeIdShort dst, td::BufferSlice data) override {
+  void receive_message(ion::adnl::AdnlNodeIdShort src, ion::adnl::AdnlNodeIdShort dst, td::BufferSlice data) override {
   }
 
-  void receive_query(ton::adnl::AdnlNodeIdShort src, ton::adnl::AdnlNodeIdShort dst, td::BufferSlice data,
+  void receive_query(ion::adnl::AdnlNodeIdShort src, ion::adnl::AdnlNodeIdShort dst, td::BufferSlice data,
                      td::Promise<td::BufferSlice> promise) override {
     auto q = data.as_slice();
     if (q.size() < 9 || compute_crc(q) != stored_crc(q)) {
@@ -133,8 +133,8 @@ class Server : public ton::adnl::Adnl::Callback {
 
 class BenchmarkRunner : public td::actor::Actor {
  public:
-  BenchmarkRunner(Config config, td::actor::ActorId<ton::adnl::AdnlSenderInterface> rldp,
-                  ton::adnl::AdnlNodeIdShort src, ton::adnl::AdnlNodeIdShort dst)
+  BenchmarkRunner(Config config, td::actor::ActorId<ion::adnl::AdnlSenderInterface> rldp,
+                  ion::adnl::AdnlNodeIdShort src, ion::adnl::AdnlNodeIdShort dst)
       : config_(config), rldp_(rldp), src_(src), dst_(dst) {
     query_start_times_.resize(config.num_queries);
   }
@@ -165,9 +165,9 @@ class BenchmarkRunner : public td::actor::Actor {
 
  private:
   Config config_;
-  td::actor::ActorId<ton::adnl::AdnlSenderInterface> rldp_;
-  ton::adnl::AdnlNodeIdShort src_;
-  ton::adnl::AdnlNodeIdShort dst_;
+  td::actor::ActorId<ion::adnl::AdnlSenderInterface> rldp_;
+  ion::adnl::AdnlNodeIdShort src_;
+  ion::adnl::AdnlNodeIdShort dst_;
 
   double start_time_ = 0;
   td::uint32 sent_ = 0;
@@ -197,7 +197,7 @@ class BenchmarkRunner : public td::actor::Actor {
         td::actor::send_closure(self, &BenchmarkRunner::on_response, idx, std::move(R));
       });
 
-      td::actor::send_closure(rldp_, &ton::adnl::AdnlSenderInterface::send_query_ex, src_, dst_, std::string("bench"),
+      td::actor::send_closure(rldp_, &ion::adnl::AdnlSenderInterface::send_query_ex, src_, dst_, std::string("bench"),
                               std::move(promise), td::Timestamp::in(config_.timeout), std::move(query),
                               (td::uint64)config_.response_size + 1024);
       sent_++;
@@ -269,8 +269,8 @@ class BenchmarkRunner : public td::actor::Actor {
     }
 
     if (config_.protocol == Protocol::quic) {
-      auto quic_sender = td::actor::actor_dynamic_cast<ton::quic::QuicSender>(rldp_);
-      td::actor::send_closure(quic_sender, &ton::quic::QuicSender::log_stats, "bench-complete");
+      auto quic_sender = td::actor::actor_dynamic_cast<ion::quic::QuicSender>(rldp_);
+      td::actor::send_closure(quic_sender, &ion::quic::QuicSender::log_stats, "bench-complete");
       exit_pending_ = true;
       alarm_timestamp() = td::Timestamp::in(0.2);
       return;
@@ -282,7 +282,7 @@ class BenchmarkRunner : public td::actor::Actor {
 
 class StatsReporter : public td::actor::Actor {
  public:
-  StatsReporter(td::actor::ActorId<ton::quic::QuicSender> quic_sender, std::string reason, bool enabled,
+  StatsReporter(td::actor::ActorId<ion::quic::QuicSender> quic_sender, std::string reason, bool enabled,
                 double interval_sec)
       : quic_sender_(quic_sender), reason_(std::move(reason)), enabled_(enabled), interval_sec_(interval_sec) {
   }
@@ -293,13 +293,13 @@ class StatsReporter : public td::actor::Actor {
 
   void alarm() override {
     if (enabled_ && !quic_sender_.empty()) {
-      td::actor::send_closure(quic_sender_, &ton::quic::QuicSender::log_stats, reason_);
+      td::actor::send_closure(quic_sender_, &ion::quic::QuicSender::log_stats, reason_);
     }
     alarm_timestamp() = td::Timestamp::in(interval_sec_);
   }
 
  private:
-  td::actor::ActorId<ton::quic::QuicSender> quic_sender_;
+  td::actor::ActorId<ion::quic::QuicSender> quic_sender_;
   std::string reason_;
   bool enabled_{false};
   double interval_sec_{10.0};
@@ -312,76 +312,76 @@ void run_loopback(Config config) {
 
   td::actor::Scheduler scheduler({config.threads});
 
-  td::actor::ActorOwn<ton::keyring::Keyring> keyring;
-  td::actor::ActorOwn<ton::adnl::TestLoopbackNetworkManager> network_manager;
-  td::actor::ActorOwn<ton::adnl::Adnl> adnl;
-  td::actor::ActorOwn<ton::rldp::Rldp> rldp1;
-  td::actor::ActorOwn<ton::rldp2::Rldp> rldp2;
-  td::actor::ActorOwn<ton::quic::QuicSender> quic_sender;
+  td::actor::ActorOwn<ion::keyring::Keyring> keyring;
+  td::actor::ActorOwn<ion::adnl::TestLoopbackNetworkManager> network_manager;
+  td::actor::ActorOwn<ion::adnl::Adnl> adnl;
+  td::actor::ActorOwn<ion::rldp::Rldp> rldp1;
+  td::actor::ActorOwn<ion::rldp2::Rldp> rldp2;
+  td::actor::ActorOwn<ion::quic::QuicSender> quic_sender;
   td::actor::ActorOwn<BenchmarkRunner> runner;
   td::actor::ActorOwn<StatsReporter> stats_reporter;
 
-  ton::adnl::AdnlNodeIdShort src;
-  ton::adnl::AdnlNodeIdShort dst;
+  ion::adnl::AdnlNodeIdShort src;
+  ion::adnl::AdnlNodeIdShort dst;
 
   scheduler.run_in_context([&] {
-    keyring = ton::keyring::Keyring::create(db_root);
-    network_manager = td::actor::create_actor<ton::adnl::TestLoopbackNetworkManager>("net");
-    adnl = ton::adnl::Adnl::create(db_root, keyring.get());
-    td::actor::send_closure(adnl, &ton::adnl::Adnl::register_network_manager, network_manager.get());
+    keyring = ion::keyring::Keyring::create(db_root);
+    network_manager = td::actor::create_actor<ion::adnl::TestLoopbackNetworkManager>("net");
+    adnl = ion::adnl::Adnl::create(db_root, keyring.get());
+    td::actor::send_closure(adnl, &ion::adnl::Adnl::register_network_manager, network_manager.get());
 
     auto max_size = std::max(config.query_size, config.response_size) + 1024;
 
-    rldp1 = ton::rldp::Rldp::create(adnl.get());
-    td::actor::send_closure(rldp1, &ton::rldp::Rldp::set_default_mtu, (td::uint64)max_size);
+    rldp1 = ion::rldp::Rldp::create(adnl.get());
+    td::actor::send_closure(rldp1, &ion::rldp::Rldp::set_default_mtu, (td::uint64)max_size);
 
-    rldp2 = ton::rldp2::Rldp::create(adnl.get());
-    td::actor::send_closure(rldp2, &ton::rldp2::Rldp::set_default_mtu, (td::uint64)max_size);
+    rldp2 = ion::rldp2::Rldp::create(adnl.get());
+    td::actor::send_closure(rldp2, &ion::rldp2::Rldp::set_default_mtu, (td::uint64)max_size);
 
-    auto pk1 = ton::PrivateKey{ton::privkeys::Ed25519::random()};
+    auto pk1 = ion::PrivateKey{ion::privkeys::Ed25519::random()};
     auto pub1 = pk1.compute_public_key();
-    src = ton::adnl::AdnlNodeIdShort{pub1.compute_short_id()};
-    td::actor::send_closure(keyring, &ton::keyring::Keyring::add_key, std::move(pk1), true, [](td::Unit) {});
+    src = ion::adnl::AdnlNodeIdShort{pub1.compute_short_id()};
+    td::actor::send_closure(keyring, &ion::keyring::Keyring::add_key, std::move(pk1), true, [](td::Unit) {});
 
-    auto pk2 = ton::PrivateKey{ton::privkeys::Ed25519::random()};
+    auto pk2 = ion::PrivateKey{ion::privkeys::Ed25519::random()};
     auto pub2 = pk2.compute_public_key();
-    dst = ton::adnl::AdnlNodeIdShort{pub2.compute_short_id()};
-    td::actor::send_closure(keyring, &ton::keyring::Keyring::add_key, std::move(pk2), true, [](td::Unit) {});
+    dst = ion::adnl::AdnlNodeIdShort{pub2.compute_short_id()};
+    td::actor::send_closure(keyring, &ion::keyring::Keyring::add_key, std::move(pk2), true, [](td::Unit) {});
 
-    auto addr = ton::adnl::TestLoopbackNetworkManager::generate_dummy_addr_list();
+    auto addr = ion::adnl::TestLoopbackNetworkManager::generate_dummy_addr_list();
 
-    td::actor::send_closure(adnl, &ton::adnl::Adnl::add_id, ton::adnl::AdnlNodeIdFull{pub1}, addr, td::uint8(0));
-    td::actor::send_closure(adnl, &ton::adnl::Adnl::add_id, ton::adnl::AdnlNodeIdFull{pub2}, addr, td::uint8(0));
+    td::actor::send_closure(adnl, &ion::adnl::Adnl::add_id, ion::adnl::AdnlNodeIdFull{pub1}, addr, td::uint8(0));
+    td::actor::send_closure(adnl, &ion::adnl::Adnl::add_id, ion::adnl::AdnlNodeIdFull{pub2}, addr, td::uint8(0));
 
-    td::actor::send_closure(rldp1, &ton::rldp::Rldp::add_id, src);
-    td::actor::send_closure(rldp1, &ton::rldp::Rldp::add_id, dst);
-    td::actor::send_closure(rldp2, &ton::rldp2::Rldp::add_id, src);
-    td::actor::send_closure(rldp2, &ton::rldp2::Rldp::add_id, dst);
+    td::actor::send_closure(rldp1, &ion::rldp::Rldp::add_id, src);
+    td::actor::send_closure(rldp1, &ion::rldp::Rldp::add_id, dst);
+    td::actor::send_closure(rldp2, &ion::rldp2::Rldp::add_id, src);
+    td::actor::send_closure(rldp2, &ion::rldp2::Rldp::add_id, dst);
 
-    td::actor::send_closure(adnl, &ton::adnl::Adnl::add_peer, src, ton::adnl::AdnlNodeIdFull{pub2}, addr);
+    td::actor::send_closure(adnl, &ion::adnl::Adnl::add_peer, src, ion::adnl::AdnlNodeIdFull{pub2}, addr);
 
-    td::actor::send_closure(network_manager, &ton::adnl::TestLoopbackNetworkManager::add_node_id, src, true, true);
-    td::actor::send_closure(network_manager, &ton::adnl::TestLoopbackNetworkManager::add_node_id, dst, true, true);
+    td::actor::send_closure(network_manager, &ion::adnl::TestLoopbackNetworkManager::add_node_id, src, true, true);
+    td::actor::send_closure(network_manager, &ion::adnl::TestLoopbackNetworkManager::add_node_id, dst, true, true);
 
     // Create QUIC sender for loopback testing
-    quic_sender = td::actor::create_actor<ton::quic::QuicSender>(
-        "quic", td::actor::actor_dynamic_cast<ton::adnl::AdnlPeerTable>(adnl.get()), keyring.get());
-    td::actor::send_closure(quic_sender, &ton::quic::QuicSender::set_udp_offload_options,
-                            ton::quic::QuicServer::Options{.enable_gso = config.enable_gso,
+    quic_sender = td::actor::create_actor<ion::quic::QuicSender>(
+        "quic", td::actor::actor_dynamic_cast<ion::adnl::AdnlPeerTable>(adnl.get()), keyring.get());
+    td::actor::send_closure(quic_sender, &ion::quic::QuicSender::set_udp_offload_options,
+                            ion::quic::QuicServer::Options{.enable_gso = config.enable_gso,
                                                            .enable_gro = config.enable_gro,
                                                            .enable_mmsg = config.enable_mmsg,
                                                            .cc_algo = config.cc_algo});
     // Add both local IDs to QUIC sender
-    td::actor::send_closure(quic_sender, &ton::quic::QuicSender::add_local_id, src);
-    td::actor::send_closure(quic_sender, &ton::quic::QuicSender::add_local_id, dst);
+    td::actor::send_closure(quic_sender, &ion::quic::QuicSender::add_local_id, src);
+    td::actor::send_closure(quic_sender, &ion::quic::QuicSender::add_local_id, dst);
 
     stats_reporter = td::actor::create_actor<StatsReporter>(
         "quic-stats-loopback", quic_sender.get(), "loopback-periodic", config.protocol == Protocol::quic, 10.0);
 
-    td::actor::send_closure(adnl, &ton::adnl::Adnl::subscribe, dst, "B",
+    td::actor::send_closure(adnl, &ion::adnl::Adnl::subscribe, dst, "B",
                             std::make_unique<Server>(config.response_size));
 
-    td::actor::ActorId<ton::adnl::AdnlSenderInterface> sender_id;
+    td::actor::ActorId<ion::adnl::AdnlSenderInterface> sender_id;
     switch (config.protocol) {
       case Protocol::rldp1:
         sender_id = rldp1.get();
@@ -407,60 +407,60 @@ void run_server(Config config) {
 
   td::actor::Scheduler scheduler({config.threads});
 
-  td::actor::ActorOwn<ton::keyring::Keyring> keyring;
-  td::actor::ActorOwn<ton::adnl::AdnlNetworkManager> network_manager;
-  td::actor::ActorOwn<ton::adnl::Adnl> adnl;
-  td::actor::ActorOwn<ton::rldp::Rldp> rldp1;
-  td::actor::ActorOwn<ton::rldp2::Rldp> rldp2;
-  td::actor::ActorOwn<ton::quic::QuicSender> quic_sender;
+  td::actor::ActorOwn<ion::keyring::Keyring> keyring;
+  td::actor::ActorOwn<ion::adnl::AdnlNetworkManager> network_manager;
+  td::actor::ActorOwn<ion::adnl::Adnl> adnl;
+  td::actor::ActorOwn<ion::rldp::Rldp> rldp1;
+  td::actor::ActorOwn<ion::rldp2::Rldp> rldp2;
+  td::actor::ActorOwn<ion::quic::QuicSender> quic_sender;
   td::actor::ActorOwn<StatsReporter> stats_reporter;
 
   scheduler.run_in_context([&] {
-    keyring = ton::keyring::Keyring::create(db_root);
-    network_manager = ton::adnl::AdnlNetworkManager::create(static_cast<td::uint16>(config.local_addr.get_port()));
-    adnl = ton::adnl::Adnl::create(db_root, keyring.get());
-    td::actor::send_closure(adnl, &ton::adnl::Adnl::register_network_manager, network_manager.get());
+    keyring = ion::keyring::Keyring::create(db_root);
+    network_manager = ion::adnl::AdnlNetworkManager::create(static_cast<td::uint16>(config.local_addr.get_port()));
+    adnl = ion::adnl::Adnl::create(db_root, keyring.get());
+    td::actor::send_closure(adnl, &ion::adnl::Adnl::register_network_manager, network_manager.get());
 
-    ton::adnl::AdnlCategoryMask cat_mask;
+    ion::adnl::AdnlCategoryMask cat_mask;
     cat_mask[0] = true;
     const auto& self_addr = config.public_addr.is_valid() ? config.public_addr : config.local_addr;
-    td::actor::send_closure(network_manager, &ton::adnl::AdnlNetworkManager::add_self_addr, self_addr,
+    td::actor::send_closure(network_manager, &ion::adnl::AdnlNetworkManager::add_self_addr, self_addr,
                             std::move(cat_mask), 0);
 
-    auto local_id = ton::adnl::AdnlNodeIdShort{server_public_key().compute_short_id()};
-    td::actor::send_closure(keyring, &ton::keyring::Keyring::add_key, server_private_key(), true, [](td::Unit) {});
+    auto local_id = ion::adnl::AdnlNodeIdShort{server_public_key().compute_short_id()};
+    td::actor::send_closure(keyring, &ion::keyring::Keyring::add_key, server_private_key(), true, [](td::Unit) {});
 
-    ton::adnl::AdnlAddressList addr_list;
+    ion::adnl::AdnlAddressList addr_list;
     addr_list.add_udp_address(self_addr).ensure();
     addr_list.set_version(static_cast<td::int32>(td::Clocks::system()));
-    addr_list.set_reinit_date(ton::adnl::Adnl::adnl_start_time());
+    addr_list.set_reinit_date(ion::adnl::Adnl::adnl_start_time());
 
-    td::actor::send_closure(adnl, &ton::adnl::Adnl::add_id, ton::adnl::AdnlNodeIdFull{server_public_key()}, addr_list,
+    td::actor::send_closure(adnl, &ion::adnl::Adnl::add_id, ion::adnl::AdnlNodeIdFull{server_public_key()}, addr_list,
                             td::uint8(0));
 
     auto max_size = std::max(config.query_size, config.response_size) + 1024;
 
     // Start RLDP v1 and v2
-    rldp1 = ton::rldp::Rldp::create(adnl.get());
-    td::actor::send_closure(rldp1, &ton::rldp::Rldp::set_default_mtu, (td::uint64)max_size);
-    td::actor::send_closure(rldp1, &ton::rldp::Rldp::add_id, local_id);
+    rldp1 = ion::rldp::Rldp::create(adnl.get());
+    td::actor::send_closure(rldp1, &ion::rldp::Rldp::set_default_mtu, (td::uint64)max_size);
+    td::actor::send_closure(rldp1, &ion::rldp::Rldp::add_id, local_id);
 
-    rldp2 = ton::rldp2::Rldp::create(adnl.get());
-    td::actor::send_closure(rldp2, &ton::rldp2::Rldp::set_default_mtu, (td::uint64)max_size);
-    td::actor::send_closure(rldp2, &ton::rldp2::Rldp::add_id, local_id);
+    rldp2 = ion::rldp2::Rldp::create(adnl.get());
+    td::actor::send_closure(rldp2, &ion::rldp2::Rldp::set_default_mtu, (td::uint64)max_size);
+    td::actor::send_closure(rldp2, &ion::rldp2::Rldp::add_id, local_id);
 
     // Start QUIC sender (uses ADNL keys for TLS via RPK)
-    quic_sender = td::actor::create_actor<ton::quic::QuicSender>(
-        "quic", td::actor::actor_dynamic_cast<ton::adnl::AdnlPeerTable>(adnl.get()), keyring.get());
-    td::actor::send_closure(quic_sender, &ton::quic::QuicSender::set_udp_offload_options,
-                            ton::quic::QuicServer::Options{.enable_gso = config.enable_gso,
+    quic_sender = td::actor::create_actor<ion::quic::QuicSender>(
+        "quic", td::actor::actor_dynamic_cast<ion::adnl::AdnlPeerTable>(adnl.get()), keyring.get());
+    td::actor::send_closure(quic_sender, &ion::quic::QuicSender::set_udp_offload_options,
+                            ion::quic::QuicServer::Options{.enable_gso = config.enable_gso,
                                                            .enable_gro = config.enable_gro,
                                                            .enable_mmsg = config.enable_mmsg,
                                                            .cc_algo = config.cc_algo});
     // Use send_lambda to properly start the coroutine task
-    td::actor::send_closure(quic_sender, &ton::quic::QuicSender::add_local_id, local_id);
+    td::actor::send_closure(quic_sender, &ion::quic::QuicSender::add_local_id, local_id);
 
-    td::actor::send_closure(adnl, &ton::adnl::Adnl::subscribe, local_id, "B",
+    td::actor::send_closure(adnl, &ion::adnl::Adnl::subscribe, local_id, "B",
                             std::make_unique<Server>(config.response_size));
 
     stats_reporter = td::actor::create_actor<StatsReporter>("quic-stats-server", quic_sender.get(), "server-periodic",
@@ -479,79 +479,79 @@ void run_client(Config config) {
 
   td::actor::Scheduler scheduler({config.threads});
 
-  td::actor::ActorOwn<ton::keyring::Keyring> keyring;
-  td::actor::ActorOwn<ton::adnl::AdnlNetworkManager> network_manager;
-  td::actor::ActorOwn<ton::adnl::Adnl> adnl;
-  td::actor::ActorOwn<ton::rldp::Rldp> rldp1;
-  td::actor::ActorOwn<ton::rldp2::Rldp> rldp2;
-  td::actor::ActorOwn<ton::quic::QuicSender> quic_sender;
+  td::actor::ActorOwn<ion::keyring::Keyring> keyring;
+  td::actor::ActorOwn<ion::adnl::AdnlNetworkManager> network_manager;
+  td::actor::ActorOwn<ion::adnl::Adnl> adnl;
+  td::actor::ActorOwn<ion::rldp::Rldp> rldp1;
+  td::actor::ActorOwn<ion::rldp2::Rldp> rldp2;
+  td::actor::ActorOwn<ion::quic::QuicSender> quic_sender;
   td::actor::ActorOwn<BenchmarkRunner> runner;
   td::actor::ActorOwn<StatsReporter> stats_reporter;
 
-  ton::adnl::AdnlNodeIdShort src;
-  ton::adnl::AdnlNodeIdShort dst;
+  ion::adnl::AdnlNodeIdShort src;
+  ion::adnl::AdnlNodeIdShort dst;
 
   scheduler.run_in_context([&] {
-    keyring = ton::keyring::Keyring::create(db_root);
-    network_manager = ton::adnl::AdnlNetworkManager::create(static_cast<td::uint16>(config.local_addr.get_port()));
-    adnl = ton::adnl::Adnl::create(db_root, keyring.get());
-    td::actor::send_closure(adnl, &ton::adnl::Adnl::register_network_manager, network_manager.get());
+    keyring = ion::keyring::Keyring::create(db_root);
+    network_manager = ion::adnl::AdnlNetworkManager::create(static_cast<td::uint16>(config.local_addr.get_port()));
+    adnl = ion::adnl::Adnl::create(db_root, keyring.get());
+    td::actor::send_closure(adnl, &ion::adnl::Adnl::register_network_manager, network_manager.get());
 
-    ton::adnl::AdnlCategoryMask cat_mask;
+    ion::adnl::AdnlCategoryMask cat_mask;
     cat_mask[0] = true;
     const auto& self_addr = config.public_addr.is_valid() ? config.public_addr : config.local_addr;
-    td::actor::send_closure(network_manager, &ton::adnl::AdnlNetworkManager::add_self_addr, self_addr,
+    td::actor::send_closure(network_manager, &ion::adnl::AdnlNetworkManager::add_self_addr, self_addr,
                             std::move(cat_mask), 0);
 
     auto client_priv_key = client_private_key(config.client_id);
-    src = ton::adnl::AdnlNodeIdShort{client_priv_key.compute_public_key().compute_short_id()};
-    td::actor::send_closure(keyring, &ton::keyring::Keyring::add_key, std::move(client_priv_key), true,
+    src = ion::adnl::AdnlNodeIdShort{client_priv_key.compute_public_key().compute_short_id()};
+    td::actor::send_closure(keyring, &ion::keyring::Keyring::add_key, std::move(client_priv_key), true,
                             [](td::Unit) {});
 
-    ton::adnl::AdnlAddressList local_addr_list;
+    ion::adnl::AdnlAddressList local_addr_list;
     local_addr_list.add_udp_address(self_addr).ensure();
     local_addr_list.set_version(static_cast<td::int32>(td::Clocks::system()));
-    local_addr_list.set_reinit_date(ton::adnl::Adnl::adnl_start_time());
+    local_addr_list.set_reinit_date(ion::adnl::Adnl::adnl_start_time());
 
-    td::actor::send_closure(adnl, &ton::adnl::Adnl::add_id,
-                            ton::adnl::AdnlNodeIdFull{client_public_key(config.client_id)}, local_addr_list,
+    td::actor::send_closure(adnl, &ion::adnl::Adnl::add_id,
+                            ion::adnl::AdnlNodeIdFull{client_public_key(config.client_id)}, local_addr_list,
                             td::uint8(0));
 
     auto max_size = std::max(config.query_size, config.response_size) + 1024;
 
-    rldp1 = ton::rldp::Rldp::create(adnl.get());
-    td::actor::send_closure(rldp1, &ton::rldp::Rldp::set_default_mtu, (td::uint64)max_size);
-    td::actor::send_closure(rldp1, &ton::rldp::Rldp::add_id, src);
+    rldp1 = ion::rldp::Rldp::create(adnl.get());
+    td::actor::send_closure(rldp1, &ion::rldp::Rldp::set_default_mtu, (td::uint64)max_size);
+    td::actor::send_closure(rldp1, &ion::rldp::Rldp::add_id, src);
 
-    rldp2 = ton::rldp2::Rldp::create(adnl.get());
-    td::actor::send_closure(rldp2, &ton::rldp2::Rldp::set_default_mtu, (td::uint64)max_size);
-    td::actor::send_closure(rldp2, &ton::rldp2::Rldp::add_id, src);
+    rldp2 = ion::rldp2::Rldp::create(adnl.get());
+    td::actor::send_closure(rldp2, &ion::rldp2::Rldp::set_default_mtu, (td::uint64)max_size);
+    td::actor::send_closure(rldp2, &ion::rldp2::Rldp::add_id, src);
 
-    quic_sender = td::actor::create_actor<ton::quic::QuicSender>(
-        "quic", td::actor::actor_dynamic_cast<ton::adnl::AdnlPeerTable>(adnl.get()), keyring.get());
-    td::actor::send_closure(quic_sender, &ton::quic::QuicSender::set_udp_offload_options,
-                            ton::quic::QuicServer::Options{.enable_gso = config.enable_gso,
+    quic_sender = td::actor::create_actor<ion::quic::QuicSender>(
+        "quic", td::actor::actor_dynamic_cast<ion::adnl::AdnlPeerTable>(adnl.get()), keyring.get());
+    td::actor::send_closure(quic_sender, &ion::quic::QuicSender::set_udp_offload_options,
+                            ion::quic::QuicServer::Options{.enable_gso = config.enable_gso,
                                                            .enable_gro = config.enable_gro,
                                                            .enable_mmsg = config.enable_mmsg,
                                                            .cc_algo = config.cc_algo});
     // Use send_lambda to properly start the coroutine task
-    td::actor::send_closure(quic_sender, &ton::quic::QuicSender::add_local_id, src);
+    td::actor::send_closure(quic_sender, &ion::quic::QuicSender::add_local_id, src);
 
     stats_reporter = td::actor::create_actor<StatsReporter>("quic-stats-client", quic_sender.get(), "client-periodic",
                                                             config.protocol == Protocol::quic, 10.0);
 
     // Add server as static node
-    dst = ton::adnl::AdnlNodeIdShort{server_public_key().compute_short_id()};
-    ton::adnl::AdnlAddressList server_addr_list;
+    dst = ion::adnl::AdnlNodeIdShort{server_public_key().compute_short_id()};
+    ion::adnl::AdnlAddressList server_addr_list;
     server_addr_list.add_udp_address(config.server_addr).ensure();
     server_addr_list.set_version(static_cast<td::int32>(td::Clocks::system()));
     server_addr_list.set_reinit_date(0);
 
-    ton::adnl::AdnlNodesList static_nodes;
-    static_nodes.push(ton::adnl::AdnlNode{ton::adnl::AdnlNodeIdFull{server_public_key()}, server_addr_list});
-    td::actor::send_closure(adnl, &ton::adnl::Adnl::add_static_nodes_from_config, std::move(static_nodes));
+    ion::adnl::AdnlNodesList static_nodes;
+    static_nodes.push(ion::adnl::AdnlNode{ion::adnl::AdnlNodeIdFull{server_public_key()}, server_addr_list});
+    td::actor::send_closure(adnl, &ion::adnl::Adnl::add_static_nodes_from_config, std::move(static_nodes));
 
-    td::actor::ActorId<ton::adnl::AdnlSenderInterface> sender_id;
+    td::actor::ActorId<ion::adnl::AdnlSenderInterface> sender_id;
     switch (config.protocol) {
       case Protocol::rldp1:
         sender_id = rldp1.get();
@@ -637,11 +637,11 @@ int main(int argc, char* argv[]) {
   });
   p.add_checked_option('\0', "cc", "congestion control algorithm: cubic, reno, bbr (default: bbr)", [&](td::Slice arg) {
     if (arg == "cubic") {
-      config.cc_algo = ton::quic::CongestionControlAlgo::Cubic;
+      config.cc_algo = ion::quic::CongestionControlAlgo::Cubic;
     } else if (arg == "reno") {
-      config.cc_algo = ton::quic::CongestionControlAlgo::Reno;
+      config.cc_algo = ion::quic::CongestionControlAlgo::Reno;
     } else if (arg == "bbr") {
-      config.cc_algo = ton::quic::CongestionControlAlgo::Bbr;
+      config.cc_algo = ion::quic::CongestionControlAlgo::Bbr;
     } else {
       return td::Status::Error("unknown congestion control algorithm, use: cubic, reno, bbr");
     }

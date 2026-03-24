@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "tolk.h"
 #include "ast.h"
@@ -1681,7 +1681,7 @@ static std::vector<var_idx_t> process_function_call(V<ast_function_call> v, Code
     op.set_impure_flag();
     return transition_to_target_type(std::move(rvect), code, target_type, v);
   }
-  // `ton("0.05")` and others, we even don't need to calculate ir_idx for arguments, just replace with constexpr
+  // `ion("0.05")` and others, we even don't need to calculate ir_idx for arguments, just replace with constexpr
   if (fun_ref->is_compile_time_const_val()) {
     ConstValExpression value = eval_call_to_compile_time_function(v);
     std::vector rvect = pre_compile_constant_expression(value, code, v);

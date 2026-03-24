@@ -42,7 +42,7 @@ cmake -GNinja  -DCMAKE_BUILD_TYPE=Release ^
 -DCMAKE_CXX_FLAGS="/DTD_WINDOWS=1 /EHsc /bigobj" ..
 
 IF %errorlevel% NEQ 0 (
-  echo Can't configure TON
+  echo Can't configure ION
   exit /b %errorlevel%
 )
 
@@ -52,7 +52,7 @@ tonlib-cli validator-engine lite-client validator-engine-console generate-random
 json2tlo dht-server http-proxy rldp-http-proxy adnl-proxy create-state create-hardfork emulator ^
 proxy-liteserver dht-ping-servers dht-resolve all-tests
 IF %errorlevel% NEQ 0 (
-  echo Can't compile TON
+  echo Can't compile ION
   exit /b %errorlevel%
 )
 ) else (
@@ -60,7 +60,7 @@ ninja storage-daemon storage-daemon-cli blockchain-explorer fift func tolk tonli
 tonlib-cli validator-engine lite-client validator-engine-console generate-random-id dht-ping-servers dht-resolve ^
 json2tlo dht-server http-proxy rldp-http-proxy adnl-proxy create-state create-hardfork emulator proxy-liteserver
 IF %errorlevel% NEQ 0 (
-  echo Can't compile TON
+  echo Can't compile ION
   exit /b %errorlevel%
 )
 )

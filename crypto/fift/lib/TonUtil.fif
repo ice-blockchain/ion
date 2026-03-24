@@ -1,4 +1,4 @@
-library TonUtil // TON Blockchain Fift Library
+library TonUtil // ION Blockchain Fift Library
 "Lists.fif" include
 
 -1 constant Masterchain

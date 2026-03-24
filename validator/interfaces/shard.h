@@ -1,26 +1,26 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
 #pragma once
 
 #include "block/validator-set.h"
-#include "ton/ton-shard.h"
-#include "ton/ton-types.h"
+#include "ion/ion-shard.h"
+#include "ion/ion-types.h"
 #include "vm/cells.h"
 
 #include "block.h"
@@ -28,7 +28,7 @@
 #include "message-queue.h"
 #include "proof.h"
 
-namespace ton {
+namespace ion {
 
 namespace validator {
 
@@ -85,9 +85,9 @@ class MasterchainState : virtual public ShardState {
   virtual BlockIdExt next_key_block_id(BlockSeqno seqno) const = 0;
   virtual BlockIdExt prev_key_block_id(BlockSeqno seqno) const = 0;
   virtual bool is_key_state() const = 0;
-  virtual bool get_old_mc_block_id(ton::BlockSeqno seqno, ton::BlockIdExt& blkid,
-                                   ton::LogicalTime* end_lt = nullptr) const = 0;
-  virtual bool check_old_mc_block_id(const ton::BlockIdExt& blkid, bool strict = false) const = 0;
+  virtual bool get_old_mc_block_id(ion::BlockSeqno seqno, ion::BlockIdExt& blkid,
+                                   ion::LogicalTime* end_lt = nullptr) const = 0;
+  virtual bool check_old_mc_block_id(const ion::BlockIdExt& blkid, bool strict = false) const = 0;
   virtual td::Result<td::Ref<ConfigHolder>> get_config_holder() const = 0;
   virtual block::WorkchainSet get_workchain_list() const = 0;
   virtual td::Status prepare() {
@@ -99,4 +99,4 @@ class MasterchainState : virtual public ShardState {
 
 }  // namespace validator
 
-}  // namespace ton
+}  // namespace ion

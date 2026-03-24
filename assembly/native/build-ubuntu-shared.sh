@@ -30,9 +30,9 @@ fi
 if [ "${GITHUB_ACTIONS}" = "true" ] || [ "$with_ccache" = true ]; then
   HOST_ARCH="$(uname -m)"
   if [ "${HOST_ARCH}" = "x86_64" ]; then
-    TON_ARCH="x86-64"
+    ION_ARCH="x86-64"
   elif [ "${HOST_ARCH}" = "aarch64" ] || [ "${HOST_ARCH}" = "arm64" ]; then
-    TON_ARCH="armv8-a"
+    ION_ARCH="armv8-a"
   fi
 fi
 
@@ -45,30 +45,30 @@ else
 fi
 
 CMAKE_EXTRA_ARGS=()
-if [ -n "${TON_ARCH}" ]; then
-  CMAKE_EXTRA_ARGS+=(-DTON_ARCH=${TON_ARCH})
+if [ -n "${ION_ARCH}" ]; then
+  CMAKE_EXTRA_ARGS+=(-DION_ARCH=${ION_ARCH})
 fi
 
 cmake -GNinja .. \
 -DCMAKE_C_COMPILER=clang-21 -DCMAKE_CXX_COMPILER=clang++-21 \
--DTON_USE_JEMALLOC=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$(pwd)/install" \
+-DION_USE_JEMALLOC=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$(pwd)/install" \
 "${CMAKE_EXTRA_ARGS[@]}"
 
 
-test $? -eq 0 || { echo "Can't configure ton"; exit 1; }
+test $? -eq 0 || { echo "Can't configure ion"; exit 1; }
 
 if [ "$with_tests" = true ]; then
 ninja storage-daemon storage-daemon-cli fift func tolk tonlib tonlibjson tonlib-cli \
       validator-engine lite-client validator-engine-console blockchain-explorer \
       generate-random-id json2tlo dht-server http-proxy rldp-http-proxy dht-ping-servers dht-resolve \
       adnl-proxy create-state emulator proxy-liteserver all-tests install
-      test $? -eq 0 || { echo "Can't compile ton"; exit 1; }
+      test $? -eq 0 || { echo "Can't compile ion"; exit 1; }
 else
 ninja storage-daemon storage-daemon-cli fift func tolk tonlib tonlibjson tonlib-cli \
       validator-engine lite-client validator-engine-console blockchain-explorer \
       generate-random-id json2tlo dht-server http-proxy rldp-http-proxy \
       adnl-proxy create-state emulator proxy-liteserver dht-ping-servers dht-resolve
-      test $? -eq 0 || { echo "Can't compile ton"; exit 1; }
+      test $? -eq 0 || { echo "Can't compile ion"; exit 1; }
 fi
 
 # simple binaries' test

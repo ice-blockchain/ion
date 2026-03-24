@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025-2026, TON CORE TECHNOLOGIES CO. L.L.C
+ * Copyright (c) 2025-2026, ION CORE TECHNOLOGIES CO. L.L.C
  *
  * SPDX-License-Identifier: LGPL-2.0-or-later
  */
@@ -9,7 +9,7 @@
 
 #include "bus.h"
 
-namespace ton::validator::consensus::null {
+namespace ion::validator::consensus::null {
 
 namespace {
 
@@ -39,7 +39,7 @@ struct SlotState {
 
 class ConsensusImpl : public runtime::SpawnsWith<Bus>, public runtime::ConnectsTo<Bus> {
  public:
-  TON_RUNTIME_DEFINE_EVENT_HANDLER();
+  ION_RUNTIME_DEFINE_EVENT_HANDLER();
 
   void start_up() {
     auto [awaiter, promise] = td::actor::StartedTask<StartEvent>::make_bridge();
@@ -244,4 +244,4 @@ void Consensus::register_in(runtime::Runtime& runtime) {
   runtime.register_actor<ConsensusImpl>("NullConsensus");
 }
 
-}  // namespace ton::validator::consensus::null
+}  // namespace ion::validator::consensus::null

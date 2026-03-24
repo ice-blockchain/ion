@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025-2026, TON CORE TECHNOLOGIES CO. L.L.C
+ * Copyright (c) 2025-2026, ION CORE TECHNOLOGIES CO. L.L.C
  *
  * SPDX-License-Identifier: LGPL-2.0-or-later
  */
@@ -10,9 +10,9 @@
 
 #include "adnl/adnl-node-id.hpp"
 #include "keys/keys.hpp"
-#include "ton/ton-types.h"
+#include "ion/ion-types.h"
 
-namespace ton::validator::consensus {
+namespace ion::validator::consensus {
 
 namespace tl {
 
@@ -214,4 +214,4 @@ class CollectibleEvent : public Event {
 
 }  // namespace stats
 
-}  // namespace ton::validator::consensus
+}  // namespace ion::validator::consensus

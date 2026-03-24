@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025-2026, TON CORE TECHNOLOGIES CO. L.L.C
+ * Copyright (c) 2025-2026, ION CORE TECHNOLOGIES CO. L.L.C
  *
  * SPDX-License-Identifier: LGPL-2.0-or-later
  */
@@ -12,14 +12,14 @@
 #include "quic/quic-sender.h"
 #include "rldp2/rldp.h"
 #include "td/db/KeyValueAsync.h"
-#include "ton/ton-types.h"
+#include "ion/ion-types.h"
 
 #include "chain-state.h"
 #include "manager-facade.h"
 #include "runtime.h"
 #include "types.h"
 
-namespace ton::validator::consensus {
+namespace ion::validator::consensus {
 
 struct Start {
   ChainStateRef state;
@@ -174,7 +174,7 @@ class Bus : public runtime::Bus {
 
   std::vector<PeerValidator> validator_set;
   ValidatorWeight total_weight;
-  ton::CatchainSeqno cc_seqno;
+  ion::CatchainSeqno cc_seqno;
   td::uint32 validator_set_hash;
   PeerValidator local_id;
 
@@ -212,4 +212,4 @@ struct TraceCollector {
   static void register_in(runtime::Runtime&);
 };
 
-}  // namespace ton::validator::consensus
+}  // namespace ion::validator::consensus

@@ -9,7 +9,7 @@
 
 #include "quic-server.h"
 
-namespace ton::quic {
+namespace ion::quic {
 
 class QuicSender : public adnl::AdnlSenderInterface {
  public:
@@ -88,4 +88,4 @@ class QuicSender : public adnl::AdnlSenderInterface {
   void on_answer(Connection& connection, QuicStreamID stream_id, ton_api::quic_answer& answer);
 };
 
-}  // namespace ton::quic
+}  // namespace ion::quic

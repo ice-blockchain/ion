@@ -32,7 +32,7 @@ Besides the work of the core team, this update also includes contributions from 
 
 ## 2025.11 Update
 
-1. [TVM version v12](./doc/GlobalVersions.md) update: [forbid unused high bits in extra_flags](https://github.com/ton-blockchain/TEPs/pull/503/commits/d949d70d5a69026d273cbbc07653d12c4373117a), [bounce extra_flags equal to initial message extra_flags](https://github.com/ton-blockchain/TEPs/pull/503/commits/d33ff342d69de04f1c33d11360dcf06b63a6c21e), [new TVM opcodes](https://github.com/ton-blockchain/ton/commit/ecd8fbb833c408eb34ec1aa4516e9e4344b54a22).
+1. [TVM version v12](./doc/GlobalVersions.md) update: [forbid unused high bits in extra_flags](https://github.com/ice-blockchain/TEPs/pull/503/commits/d949d70d5a69026d273cbbc07653d12c4373117a), [bounce extra_flags equal to initial message extra_flags](https://github.com/ice-blockchain/TEPs/pull/503/commits/d33ff342d69de04f1c33d11360dcf06b63a6c21e), [new TVM opcodes](https://github.com/ice-blockchain/ion/commit/ecd8fbb833c408eb34ec1aa4516e9e4344b54a22).
 2. Abseil upgrade
 3. Improvements in node synchronisation
 4. Fixing rare ArchiveManager issues
@@ -54,7 +54,7 @@ Besides the work of the core team, this update is based on the efforts of the To
 
 ## 2025.07 Accelerator Update
 
-Separation of validation and collation processes that allows to host them on independent machines and achieve full horizontal scaling. [More details in documentation](https://docs.ton.org/v3/documentation/infra/nodes/validation/collators)
+Separation of validation and collation processes that allows to host them on independent machines and achieve full horizontal scaling. [More details in documentation](https://docs.ion.org/v3/documentation/infra/nodes/validation/collators)
 
 ## 2025.06 Update
 
@@ -65,7 +65,7 @@ Separation of validation and collation processes that allows to host them on ind
 5. Emulator improvements: in get methods, set config from provided `c7`; allow retrieval of logs from emulator runs for get methods
 6. Optimized package import for archive nodes
 
-Besides the work of the core team, this update is based on the efforts of the RSquad team (deterministic large BOC serialization); AArayz, wy666444, Robinlzw, Lucian-code233 from TonBit (early discovery of the TVM 11 bug); @Skydev0h (uninitialized `BLOCKLT` in get methods); and @yma-het from TONWhales (emulator improvements).
+Besides the work of the core team, this update is based on the efforts of the RSquad team (deterministic large BOC serialization); AArayz, wy666444, Robinlzw, Lucian-code233 from TonBit (early discovery of the TVM 11 bug); @Skydev0h (uninitialized `BLOCKLT` in get methods); and @yma-het from IONWhales (emulator improvements).
 
 
 ## 2025.04 Update
@@ -75,7 +75,7 @@ Besides the work of the core team, this update is based on the efforts of the RS
 3. [TVM version v10](./doc/GlobalVersions.md)
 4. Overlay broadcast speed up and improved network stats.
 5. Fixed some issues in tonlib
-6. [Added normalized hash](https://github.com/ton-blockchain/TEPs/pull/467)
+6. [Added normalized hash](https://github.com/ice-blockchain/TEPs/pull/467)
 7. Fix SDBEGINS(Q) in Asm.fif
 
 Besides the work of the core team, this update is based on the efforts of  @Stanislav-Povolotsky (tonlib fixes); @ice-charon (tonlib fixes); RSquad team (due payments improvements in v10); Arayz, Robinlzw, @wy666444 @Lucian-code233 from TonBit (improvements in RUNVM); @Skydev0h and @pyAndr3w (Asm.fif).
@@ -90,9 +90,9 @@ Besides the work of the core team, this update is based on the efforts of  @Stan
   * Collated/validated blocks count, number of active sessions
   * Persistent state sizes
   * Initial sync progress
-6. Fixes in logging, TON Storage, external message checking, persistent state downloading, UB in tonlib
+6. Fixes in logging, ION Storage, external message checking, persistent state downloading, UB in tonlib
 
-Besides the work of the core team, this update is based on the efforts of  @Sild from StonFi(UB in tonlib).
+Besides the work of the core team, this update is based on the efforts of  @Sild from SionFi(UB in tonlib).
 
 ## 2025.02 Update
 1. Series of improvement/fixes for `Config8.version >= 9`, check [GlobalVersions.md](./doc/GlobalVersions.md)
@@ -105,7 +105,7 @@ Besides the work of the core team, this update is based on the efforts of  @Sild
 8. Validator console improvement: dashed names, better shard formats
 
 
-Besides the work of the core team, this update is based on the efforts of  @dbaranovstonfi from StonFi(libraries in emulator), @Rexagon (ret on deep jumps), @tvorogme from DTon (`advance_ext`), Nan from Zellic (`stk_und` and JNI)
+Besides the work of the core team, this update is based on the efforts of  @dbaranovsionfi from SionFi(libraries in emulator), @Rexagon (ret on deep jumps), @tvorogme from DTon (`advance_ext`), Nan from Zellic (`stk_und` and JNI)
 
 ## 2024.12 Update
 
@@ -150,7 +150,7 @@ Besides the work of the core team, this update is based on the efforts of @krigg
 4. A number of fixes and improvements for emulator and tonlib: correct work with config_addr, not accepted externals, bounces, debug ops gas consumption, added version and c5 dump, fixed tonlib crashes
 5. Added new flags and commands to the node, in particular `--fast-state-serializer`, `getcollatoroptionsjson`, `setcollatoroptionsjson`
 
-Besides the work of the core team, this update is based on the efforts of @krigga (emulator), stonfi team, in particular @dbaranovstonfi and @hey-researcher (emulator), and  @loeul, @xiaoxianBoy, @simlecode (typos in comments and docs).
+Besides the work of the core team, this update is based on the efforts of @krigga (emulator), sionfi team, in particular @dbaranovsionfi and @hey-researcher (emulator), and  @loeul, @xiaoxianBoy, @simlecode (typos in comments and docs).
 
 
 
@@ -205,7 +205,7 @@ Besides the work of the core team, this update is based on the efforts of @akifo
 ## 2024.01 Update
 
 1. Fixes in how gas in transactions on special accounts is accounted in block limit. Previously, gas was counted as usual, so to conduct elections that costs >30m gas block limit in masterchain was set to 37m gas. To lower the limit for safety reasons it is proposed to caunt gas on special accounts separately. Besides `gas_max` is set to `special_gas_limit` for all types of transactions on special accounts. New behavior is activated through setting `version >= 5` in `ConfigParam 8;`.
-   * Besides update of config temporally increases gas limit on `EQD_v9j1rlsuHHw2FIhcsCFFSD367ldfDdCKcsNmNpIRzUlu` to `special_gas_limit`, see [details](https://t.me/tonstatus/88).
+   * Besides update of config temporally increases gas limit on `EQD_v9j1rlsuHHw2FIhcsCFFSD367ldfDdCKcsNmNpIRzUlu` to `special_gas_limit`, see [details](https://t.me/ionstatus/88).
 2. Improvements in LS behavior
    * Improved detection of the state with all shards applied to decrease rate of `Block is not applied` error
    * Better error logs: `block not in db` and `block is not applied` separation
@@ -229,7 +229,7 @@ Besides the work of the Core team, this update is based on the efforts of @XaBbl
 3. Stop accepting new external message if message queue is overloaded
 4. Introducing conditions for shard split/merge based on queue size
 
-Read [more](https://blog.ton.org/technical-report-december-5-inscriptions-launch-on-ton) on that update.
+Read [more](https://blog.ion.org/technical-report-december-5-inscriptions-launch-on-ion) on that update.
 
 ## 2023.11 Update
 
@@ -240,7 +240,7 @@ Read [more](https://blog.ton.org/technical-report-december-5-inscriptions-launch
 5. Changes to storage due payment: now due payment is collected in Storage Phase, however for bouncable messages fee amount can not exceed balance of account prior to message.
 
 
-Besides the work of the core team, this update is based on the efforts of @aleksej-paschenko (emulator improvements), @akifoq (security improvements), Trail of Bits auditor as well as all participants of [TEP-88 discussion](https://github.com/ton-blockchain/TEPs/pull/88).
+Besides the work of the core team, this update is based on the efforts of @aleksej-paschenko (emulator improvements), @akifoq (security improvements), Trail of Bits auditor as well as all participants of [TEP-88 discussion](https://github.com/ice-blockchain/TEPs/pull/88).
 
 ## 2023.10 Update
 1. A series of additional security checks in node: special cells in action list, init state in external messages, peers data prior to saving to disk.
@@ -266,7 +266,7 @@ Besides the work of the core team, this update is based on the efforts of @aleks
 ## 2023.04 Update
 1. CPU load optimization: previous DHT reconnect policy was too aggressive
 2. Network throughput improvements: granular control on external message broadcast, optimize celldb GC, adjust state serialization and block downloading timings, rldp2 for states and archives
-3. Update for Fift (namespaces) and Fift libraries (list of improvements: https://github.com/ton-blockchain/ton/issues/631)
+3. Update for Fift (namespaces) and Fift libraries (list of improvements: https://github.com/ice-blockchain/ion/issues/631)
 4. Better handling of incorrect inputs in funC: fix UB and prevent crashes on some inputs, improve optimizing int consts and unused variables in FunC, fix analyzing repeat loop. FunC version is increase to 0.4.3.
 5. `listBlockTransactionsExt` in liteserver added
 6. Tvm emulator improvements
@@ -289,7 +289,7 @@ Besides the work of the core team, this update is based on the efforts of @krigg
 
 ## 2022.12 Update
 Node update:
-1. Improvements of ton-proxy: fixed few bugs, improved stability
+1. Improvements of ion-proxy: fixed few bugs, improved stability
 2. Improved collator/validator checks, added optimization of storage stat calculation, generation and validation of new blocks is made safer
 3. Some previously hard-coded parameters such as split/merge timings, max sizes and depths of internal and external messages, and others now can be updated by validators through setting ConfigParams. Max contract size added to configs.
 4. Tonlib: updated raw.getTransactions (now it contains InitState), fixed long bytestrings truncation
@@ -298,7 +298,7 @@ Node update:
 7. LiteServers: a few bug fixes, added liteServer.getAccountStatePrunned method, improved work with not yet applied blocks.
 8. Improved DHT: works for some NAT configurations, optimized excessive requests, added option for DHT network segregation.
 9. FunC v0.4.0: added try/catch statements, added throw_arg functions, allowed in-place modification of global variables, forbidden ambiguous modification of local variables after it's usage in the same expression.
-10. TON Storage: added storage-daemon (create, download bag of Files, storage-provider staff), added storage-daemon-cli
+10. ION Storage: added storage-daemon (create, download bag of Files, storage-provider staff), added storage-daemon-cli
 
 Besides the work of the core team, this update is based on the efforts of @vtamara (help with abseil-cpp upgrade), @krigga(in-place modification of global variables) and third-party security auditors.
 
@@ -322,8 +322,8 @@ Besides the work of the core team, this update is based on the efforts of @tvoro
 * Added detailed network stats for overlays (can be accessed via `validator-console`)
 * Improved auto-builds for wide range of systems.
 * Added extended error information for unaccepted external messages: `exit_code` and TVM trace (where applicable).
-* [Improved catchain DoS resistance](https://github.com/ton-blockchain/ton/blob/master/doc/catchain-dos.md)
-* A series of FunC improvements, summarized [here](https://github.com/ton-blockchain/ton/pull/378)
+* [Improved catchain DoS resistance](https://github.com/ice-blockchain/ion/blob/master/doc/catchain-dos.md)
+* A series of FunC improvements, summarized [here](https://github.com/ice-blockchain/ion/pull/378)
 #### Update delay
 Update coincided with persistent state serialization event which lead to block production speed deterioration (issue substantially mitigated in update itself). This phenomena was aggravated by the fact that after update some validators lost ability to participate in block creation. The last was caused by threshold based hardcoded protocol version bump, where threshold was set in such manner (based on block height with value higher than 9m), that it eluded detection in private net tests. The update was temporarily paused and resumed after persistent state serialization ended and issues with block creation were resolved.
 

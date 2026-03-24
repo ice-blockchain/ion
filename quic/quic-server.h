@@ -17,7 +17,7 @@
 #include "Ed25519.h"
 #include "quic-common.h"
 
-namespace ton::quic {
+namespace ion::quic {
 struct QuicConnectionPImpl;
 
 struct StreamOptions {
@@ -81,7 +81,7 @@ class QuicServer : public td::actor::Actor, public td::ObserverBase {
              std::optional<size_t> flood_control = DEFAULT_FLOOD_CONTROL);
 
   static td::Result<td::actor::ActorOwn<QuicServer>> create(int port, td::Ed25519::PrivateKey server_key,
-                                                            std::unique_ptr<Callback> callback, td::Slice alpn = "ton",
+                                                            std::unique_ptr<Callback> callback, td::Slice alpn = "ion",
                                                             td::Slice bind_host = "0.0.0.0");
   static td::Result<td::actor::ActorOwn<QuicServer>> create(int port, td::Ed25519::PrivateKey server_key,
                                                             std::unique_ptr<Callback> callback, td::Slice alpn,
@@ -187,4 +187,4 @@ class QuicServer : public td::actor::Actor, public td::ObserverBase {
   UdpStats egress_stats_;
 };
 
-}  // namespace ton::quic
+}  // namespace ion::quic

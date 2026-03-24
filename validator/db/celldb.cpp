@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -25,14 +25,14 @@
 #include "rocksdb/utilities/optimistic_transaction_db.h"
 #include "td/actor/MultiPromise.h"
 #include "td/db/RocksDb.h"
-#include "ton/ton-io.hpp"
-#include "ton/ton-tl.hpp"
+#include "ion/ion-io.hpp"
+#include "ion/ion-tl.hpp"
 
 #include "celldb.hpp"
 #include "files-async.hpp"
 #include "rootdb.hpp"
 
-namespace ton {
+namespace ion {
 
 namespace validator {
 class CellDbAsyncExecutor : public vm::DynamicBagOfCellsDb::AsyncExecutor {
@@ -672,7 +672,7 @@ void CellDbIn::flush_db_stats() {
   auto celldb_stats = prepare_stats();
   td::StringBuilder ss;
   for (auto& [key, value] : celldb_stats) {
-    ss << "ton.celldb." << key << " " << value << "\n";
+    ss << "ion.celldb." << key << " " << value << "\n";
   }
 
   auto stats =
@@ -983,7 +983,7 @@ void CellDb::update_stats(td::Result<std::vector<std::pair<std::string, std::str
 
 void CellDb::flush_db_stats(std::string stats) {
   for (auto& [k, v] : cell_db_statistics_.prepare_stats()) {
-    stats += PSTRING() << "ton.celldb." << k << " " << v << "\n";
+    stats += PSTRING() << "ion.celldb." << k << " " << v << "\n";
   }
   cell_db_statistics_.clear();
   delay_action(
@@ -1129,4 +1129,4 @@ void CellDb::CellDbStatistics::prepare_stats(std::vector<std::pair<std::string, 
 
 }  // namespace validator
 
-}  // namespace ton
+}  // namespace ion

@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "constant-evaluator.h"
 #include "ast.h"
@@ -21,7 +21,7 @@
 #include "openssl/digest.hpp"
 #include "crypto/common/util.h"
 #include "td/utils/crypto.h"
-#include "ton/ton-types.h"
+#include "ion/ion-types.h"
 #include <unordered_map>
 
 namespace tolk {
@@ -39,8 +39,8 @@ static std::unordered_map<GlobalConstPtr, ConstValExpression> computed_constants
 
 // parse address like "EQCRDM9h4k3UJdOePPuyX40mCgA4vxge5Dc5vjBR8djbEKC5"
 // based on unpack_std_smc_addr() from block.cpp
-// (which is not included to avoid linking with ton_crypto)
-static bool parse_friendly_address(const char packed[48], ton::WorkchainId& workchain, ton::StdSmcAddress& addr) {
+// (which is not included to avoid linking with ion_crypto)
+static bool parse_friendly_address(const char packed[48], ion::WorkchainId& workchain, ion::StdSmcAddress& addr) {
   unsigned char buffer[36];
   if (!td::buff_base64_decode(td::MutableSlice{buffer, 36}, td::Slice{packed, 48}, true)) {
     return false;
@@ -56,11 +56,11 @@ static bool parse_friendly_address(const char packed[48], ton::WorkchainId& work
 
 // parse address like "0:527964d55cfa6eb731f4bfc07e9d025098097ef8505519e853986279bd8400d8"
 // based on StdAddress::parse_addr() from block.cpp
-// (which is not included to avoid linking with ton_crypto)
-static bool parse_raw_address(std::string_view acc_string, int& workchain, ton::StdSmcAddress& addr) {
+// (which is not included to avoid linking with ion_crypto)
+static bool parse_raw_address(std::string_view acc_string, int& workchain, ion::StdSmcAddress& addr) {
   size_t pos = acc_string.find(':');
   if (pos != std::string::npos) {
-    td::Result<int> r_wc = td::to_integer_safe<ton::WorkchainId>(td::Slice(acc_string.data(), pos));
+    td::Result<int> r_wc = td::to_integer_safe<ion::WorkchainId>(td::Slice(acc_string.data(), pos));
     if (r_wc.is_error()) {
       return false;
     }
@@ -96,8 +96,8 @@ static bool parse_raw_address(std::string_view acc_string, int& workchain, ton::
 }
 
 static void parse_any_std_address(std::string_view str, SrcRange range, unsigned char (*data)[267]) {
-  ton::WorkchainId workchain;
-  ton::StdSmcAddress addr;
+  ion::WorkchainId workchain;
+  ion::StdSmcAddress addr;
   bool correct = (str.size() == 48 && parse_friendly_address(str.data(), workchain, addr)) ||
                  (str.size() != 48 && parse_raw_address(str, workchain, addr));
   if (!correct) {
@@ -109,11 +109,11 @@ static void parse_any_std_address(std::string_view str, SrcRange range, unsigned
 
   td::bitstring::bits_store_long_top(*data, 0, static_cast<uint64_t>(4) << (64 - 3), 3);
   td::bitstring::bits_store_long_top(*data, 3, static_cast<uint64_t>(workchain) << (64 - 8), 8);
-  td::bitstring::bits_memcpy(*data, 3 + 8, addr.bits().ptr, 0, ton::StdSmcAddress::size());
+  td::bitstring::bits_memcpy(*data, 3 + 8, addr.bits().ptr, 0, ion::StdSmcAddress::size());
 }
 
-// internal helper: for `ton("0.05")`, parse string literal "0.05" to 50000000
-static td::RefInt256 parse_nanotons_as_floating_string(SrcRange range, std::string_view str) {
+// internal helper: for `ion("0.05")`, parse string literal "0.05" to 50000000
+static td::RefInt256 parse_nanoions_as_floating_string(SrcRange range, std::string_view str) {
   bool is_negative = false;
   size_t i = 0;
 
@@ -163,7 +163,7 @@ static td::RefInt256 parse_nanotons_as_floating_string(SrcRange range, std::stri
   return td::make_refint(is_negative ? -result : result);
 }
 
-// given `ton("0.05")` evaluate it to 50000000
+// given `ion("0.05")` evaluate it to 50000000
 // given `stringCrc32("some_str")` evaluate it
 // etc.
 static ConstValExpression parse_vertex_call_to_compile_time_function(V<ast_function_call> v, std::string_view f_name) {
@@ -194,16 +194,16 @@ static ConstValExpression parse_vertex_call_to_compile_time_function(V<ast_funct
   if (auto as_string = v_arg->try_as<ast_string_const>()) {
     str = as_string->str_val;
   } else {
-    // ton(SOME_CONST) is not supported
-    // ton(0.05) is not supported (it can't be represented in AST even)
+    // ion(SOME_CONST) is not supported
+    // ion(0.05) is not supported (it can't be represented in AST even)
     // stringCrc32(SOME_CONST) / stringCrc32(some_var) also, it's compile-time literal-only
   }
   if (str.empty()) {
-    err_const_string_required(f_name, f_name == "ton" ? "0.05" : "some_str").fire(v);
+    err_const_string_required(f_name, f_name == "ion" ? "0.05" : "some_str").fire(v);
   }
 
-  if (f_name == "ton") {
-    return ConstValInt{parse_nanotons_as_floating_string(v_arg->range, str)};
+  if (f_name == "ion") {
+    return ConstValInt{parse_nanoions_as_floating_string(v_arg->range, str)};
   }
 
   if (f_name == "address") {              // previously, postfix "..."a
@@ -379,7 +379,7 @@ class ConstExpressionEvaluator {
     err("operator `as` to `{}` from `{}` can not be used in a constant expression", r, l).fire(v);
   }
 
-  // `ton("0.05")` and other compile-time functions
+  // `ion("0.05")` and other compile-time functions
   static ConstValExpression handle_function_call(V<ast_function_call> v) {
     FunctionPtr fun_ref = v->fun_maybe;
     if (!fun_ref || !fun_ref->is_compile_time_const_val()) {
@@ -554,7 +554,7 @@ std::string eval_string_const_standalone(AnyExprV v_string) {
   return td::hex_encode(str_slice);
 }
 
-// for `ton("0.05")` and similar compile-time only functions, we evaluate them in-place
+// for `ion("0.05")` and similar compile-time only functions, we evaluate them in-place
 // and push already evaluated expression to IR vars
 ConstValExpression eval_call_to_compile_time_function(AnyExprV v_call) {
   auto v = v_call->try_as<ast_function_call>();

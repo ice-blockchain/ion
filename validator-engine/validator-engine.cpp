@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain source code.
+    This file is part of ION Blockchain source code.
 
-    TON Blockchain is free software; you can redistribute it and/or
+    ION Blockchain is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
     as published by the Free Software Foundation; either version 2
     of the License, or (at your option) any later version.
 
-    TON Blockchain is distributed in the hope that it will be useful,
+    ION Blockchain is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with TON Blockchain.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain.  If not, see <http://www.gnu.org/licenses/>.
 
     In addition, as a special exception, the copyright holders give permission
     to link the code of portions of this program with the OpenSSL library.
@@ -56,9 +56,9 @@
 #include "tl-utils/tl-utils.hpp"
 #include "tl/TlObject.h"
 #include "tl/tl_json.h"
-#include "ton/ton-io.hpp"
-#include "ton/ton-tl.hpp"
-#include "ton/ton-types.h"
+#include "ion/ion-io.hpp"
+#include "ion/ion-tl.hpp"
+#include "ion/ion-types.h"
 
 #include "errorcode.h"
 #include "overlay-manager.h"
@@ -84,17 +84,17 @@
 #include "block-parse.h"
 #include "git.h"
 
-#if TON_USE_JEMALLOC
+#if ION_USE_JEMALLOC
 #include <jemalloc/jemalloc.h>
 #endif
 
 Config::Config() {
   out_port = 3278;
-  full_node = ton::PublicKeyHash::zero();
+  full_node = ion::PublicKeyHash::zero();
 }
 
-Config::Config(const ton::ton_api::engine_validator_config &config) {
-  full_node = ton::PublicKeyHash::zero();
+Config::Config(const ion::ton_api::engine_validator_config &config) {
+  full_node = ion::PublicKeyHash::zero();
   out_port = static_cast<td::uint16>(config.out_port_);
   if (!out_port) {
     out_port = 3278;
@@ -102,13 +102,13 @@ Config::Config(const ton::ton_api::engine_validator_config &config) {
   for (auto &addr : config.addrs_) {
     td::IPAddress in_ip;
     td::IPAddress out_ip;
-    std::shared_ptr<ton::adnl::AdnlProxy> proxy = nullptr;
+    std::shared_ptr<ion::adnl::AdnlProxy> proxy = nullptr;
     std::vector<AdnlCategory> categories;
     std::vector<AdnlCategory> priority_categories;
-    ton::ton_api::downcast_call(
+    ion::ton_api::downcast_call(
         *addr,
         td::overloaded(
-            [&](const ton::ton_api::engine_addr &obj) {
+            [&](const ion::ton_api::engine_addr &obj) {
               in_ip.init_ipv4_port(td::IPAddress::ipv4_to_str(obj.ip_), static_cast<td::uint16>(obj.port_)).ensure();
               out_ip = in_ip;
               for (auto cat : obj.categories_) {
@@ -118,13 +118,13 @@ Config::Config(const ton::ton_api::engine_validator_config &config) {
                 priority_categories.push_back(td::narrow_cast<td::uint8>(cat));
               }
             },
-            [&](const ton::ton_api::engine_addrProxy &obj) {
+            [&](const ion::ton_api::engine_addrProxy &obj) {
               in_ip.init_ipv4_port(td::IPAddress::ipv4_to_str(obj.in_ip_), static_cast<td::uint16>(obj.in_port_))
                   .ensure();
               out_ip.init_ipv4_port(td::IPAddress::ipv4_to_str(obj.out_ip_), static_cast<td::uint16>(obj.out_port_))
                   .ensure();
               if (obj.proxy_type_) {
-                auto R = ton::adnl::AdnlProxy::create(*obj.proxy_type_.get());
+                auto R = ion::adnl::AdnlProxy::create(*obj.proxy_type_.get());
                 R.ensure();
                 proxy = R.move_as_ok();
                 for (auto cat : obj.categories_) {
@@ -139,46 +139,46 @@ Config::Config(const ton::ton_api::engine_validator_config &config) {
     config_add_network_addr(in_ip, out_ip, std::move(proxy), categories, priority_categories).ensure();
   }
   for (auto &adnl : config.adnl_) {
-    config_add_adnl_addr(ton::PublicKeyHash{adnl->id_}, td::narrow_cast<td::uint8>(adnl->category_)).ensure();
+    config_add_adnl_addr(ion::PublicKeyHash{adnl->id_}, td::narrow_cast<td::uint8>(adnl->category_)).ensure();
   }
   for (auto &dht : config.dht_) {
-    config_add_dht_node(ton::PublicKeyHash{dht->id_}).ensure();
+    config_add_dht_node(ion::PublicKeyHash{dht->id_}).ensure();
   }
   for (auto &val : config.validators_) {
-    auto key = ton::PublicKeyHash{val->id_};
+    auto key = ion::PublicKeyHash{val->id_};
     config_add_validator_permanent_key(key, val->election_date_, val->expire_at_).ensure();
     for (auto &temp : val->temp_keys_) {
-      config_add_validator_temp_key(key, ton::PublicKeyHash{temp->key_}, temp->expire_at_).ensure();
+      config_add_validator_temp_key(key, ion::PublicKeyHash{temp->key_}, temp->expire_at_).ensure();
     }
     for (auto &adnl : val->adnl_addrs_) {
-      config_add_validator_adnl_id(key, ton::PublicKeyHash{adnl->id_}, adnl->expire_at_).ensure();
+      config_add_validator_adnl_id(key, ion::PublicKeyHash{adnl->id_}, adnl->expire_at_).ensure();
     }
   }
   for (auto &col : config.collators_) {
-    auto id = ton::adnl::AdnlNodeIdShort{col->adnl_id_};
-    ton::ShardIdFull shard = ton::create_shard_id(col->shard_);
+    auto id = ion::adnl::AdnlNodeIdShort{col->adnl_id_};
+    ion::ShardIdFull shard = ion::create_shard_id(col->shard_);
     config_add_collator(id, shard).ensure();
   }
-  config_add_full_node_adnl_id(ton::PublicKeyHash{config.fullnode_}).ensure();
+  config_add_full_node_adnl_id(ion::PublicKeyHash{config.fullnode_}).ensure();
 
   for (auto &s : config.fullnodeslaves_) {
     td::IPAddress ip;
     ip.init_ipv4_port(td::IPAddress::ipv4_to_str(s->ip_), static_cast<td::uint16>(s->port_)).ensure();
-    config_add_full_node_slave(ip, ton::PublicKey{s->adnl_}).ensure();
+    config_add_full_node_slave(ip, ion::PublicKey{s->adnl_}).ensure();
   }
 
   for (auto &s : config.fullnodemasters_) {
-    config_add_full_node_master(s->port_, ton::PublicKeyHash{s->adnl_}).ensure();
+    config_add_full_node_master(s->port_, ion::PublicKeyHash{s->adnl_}).ensure();
   }
 
   if (config.fullnodeconfig_) {
-    full_node_config = ton::validator::fullnode::FullNodeConfig(config.fullnodeconfig_);
+    full_node_config = ion::validator::fullnode::FullNodeConfig(config.fullnodeconfig_);
   }
   if (config.extraconfig_) {
     state_serializer_enabled = config.extraconfig_->state_serializer_enabled_;
     for (auto &f : config.extraconfig_->fast_sync_member_certificates_) {
-      ton::adnl::AdnlNodeIdShort adnl_id{f->adnl_id_};
-      ton::overlay::OverlayMemberCertificate certificate{f->certificate_.get()};
+      ion::adnl::AdnlNodeIdShort adnl_id{f->adnl_id_};
+      ion::overlay::OverlayMemberCertificate certificate{f->certificate_.get()};
       if (!certificate.empty() && !certificate.is_expired()) {
         fast_sync_member_certificates.emplace_back(adnl_id, std::move(certificate));
       }
@@ -190,7 +190,7 @@ Config::Config(const ton::ton_api::engine_validator_config &config) {
       }
     }
     for (auto &client : config.extraconfig_->fast_sync_overlay_clients_) {
-      auto key = ton::adnl::AdnlNodeIdShort{client->adnl_id_};
+      auto key = ion::adnl::AdnlNodeIdShort{client->adnl_id_};
       fast_sync_overlay_clients.emplace_back(std::move(key), client->slot_);
     }
   } else {
@@ -198,145 +198,145 @@ Config::Config(const ton::ton_api::engine_validator_config &config) {
   }
 
   for (auto &serv : config.liteservers_) {
-    config_add_lite_server(ton::PublicKeyHash{serv->id_}, serv->port_).ensure();
+    config_add_lite_server(ion::PublicKeyHash{serv->id_}, serv->port_).ensure();
   }
 
   for (auto &serv : config.control_) {
-    auto key = ton::PublicKeyHash{serv->id_};
+    auto key = ion::PublicKeyHash{serv->id_};
     config_add_control_interface(key, serv->port_).ensure();
 
     for (auto &proc : serv->allowed_) {
-      config_add_control_process(key, serv->port_, ton::PublicKeyHash{proc->id_}, proc->permissions_).ensure();
+      config_add_control_process(key, serv->port_, ion::PublicKeyHash{proc->id_}, proc->permissions_).ensure();
     }
   }
 
   for (auto &shard : config.shards_to_monitor_) {
-    config_add_shard(ton::create_shard_id(shard)).ensure();
+    config_add_shard(ion::create_shard_id(shard)).ensure();
   }
 
   if (config.gc_) {
     for (auto &gc : config.gc_->ids_) {
-      config_add_gc(ton::PublicKeyHash{gc}).ensure();
+      config_add_gc(ion::PublicKeyHash{gc}).ensure();
     }
   }
 }
 
-ton::tl_object_ptr<ton::ton_api::engine_validator_config> Config::tl() const {
-  std::vector<ton::tl_object_ptr<ton::ton_api::engine_Addr>> addrs_vec;
+ion::tl_object_ptr<ion::ton_api::engine_validator_config> Config::tl() const {
+  std::vector<ion::tl_object_ptr<ion::ton_api::engine_Addr>> addrs_vec;
   for (auto &x : addrs) {
     if (x.second.proxy) {
-      addrs_vec.push_back(ton::create_tl_object<ton::ton_api::engine_addrProxy>(
+      addrs_vec.push_back(ion::create_tl_object<ion::ton_api::engine_addrProxy>(
           static_cast<td::int32>(x.second.in_addr.get_ipv4()), x.second.in_addr.get_port(),
           static_cast<td::int32>(x.first.addr.get_ipv4()), x.first.addr.get_port(), x.second.proxy->tl(),
           std::vector<td::int32>(x.second.cats.begin(), x.second.cats.end()),
           std::vector<td::int32>(x.second.priority_cats.begin(), x.second.priority_cats.end())));
     } else {
-      addrs_vec.push_back(ton::create_tl_object<ton::ton_api::engine_addr>(
+      addrs_vec.push_back(ion::create_tl_object<ion::ton_api::engine_addr>(
           static_cast<td::int32>(x.first.addr.get_ipv4()), x.first.addr.get_port(),
           std::vector<td::int32>(x.second.cats.begin(), x.second.cats.end()),
           std::vector<td::int32>(x.second.priority_cats.begin(), x.second.priority_cats.end())));
     }
   }
-  std::vector<ton::tl_object_ptr<ton::ton_api::engine_adnl>> adnl_vec;
+  std::vector<ion::tl_object_ptr<ion::ton_api::engine_adnl>> adnl_vec;
   for (auto &x : adnl_ids) {
-    adnl_vec.push_back(ton::create_tl_object<ton::ton_api::engine_adnl>(x.first.tl(), x.second));
+    adnl_vec.push_back(ion::create_tl_object<ion::ton_api::engine_adnl>(x.first.tl(), x.second));
   }
-  std::vector<ton::tl_object_ptr<ton::ton_api::engine_dht>> dht_vec;
+  std::vector<ion::tl_object_ptr<ion::ton_api::engine_dht>> dht_vec;
   for (auto &x : dht_ids) {
-    dht_vec.push_back(ton::create_tl_object<ton::ton_api::engine_dht>(x.tl()));
+    dht_vec.push_back(ion::create_tl_object<ion::ton_api::engine_dht>(x.tl()));
   }
 
-  std::vector<ton::tl_object_ptr<ton::ton_api::engine_validator>> val_vec;
+  std::vector<ion::tl_object_ptr<ion::ton_api::engine_validator>> val_vec;
   for (auto &val : validators) {
-    std::vector<ton::tl_object_ptr<ton::ton_api::engine_validatorTempKey>> temp_vec;
+    std::vector<ion::tl_object_ptr<ion::ton_api::engine_validatorTempKey>> temp_vec;
     for (auto &t : val.second.temp_keys) {
-      temp_vec.push_back(ton::create_tl_object<ton::ton_api::engine_validatorTempKey>(t.first.tl(), t.second));
+      temp_vec.push_back(ion::create_tl_object<ion::ton_api::engine_validatorTempKey>(t.first.tl(), t.second));
     }
-    std::vector<ton::tl_object_ptr<ton::ton_api::engine_validatorAdnlAddress>> adnl_val_vec;
+    std::vector<ion::tl_object_ptr<ion::ton_api::engine_validatorAdnlAddress>> adnl_val_vec;
     for (auto &t : val.second.adnl_ids) {
-      adnl_val_vec.push_back(ton::create_tl_object<ton::ton_api::engine_validatorAdnlAddress>(t.first.tl(), t.second));
+      adnl_val_vec.push_back(ion::create_tl_object<ion::ton_api::engine_validatorAdnlAddress>(t.first.tl(), t.second));
     }
-    val_vec.push_back(ton::create_tl_object<ton::ton_api::engine_validator>(
+    val_vec.push_back(ion::create_tl_object<ion::ton_api::engine_validator>(
         val.first.tl(), std::move(temp_vec), std::move(adnl_val_vec), val.second.election_date, val.second.expire_at));
   }
-  std::vector<ton::tl_object_ptr<ton::ton_api::engine_collator>> col_vec;
+  std::vector<ion::tl_object_ptr<ion::ton_api::engine_collator>> col_vec;
   for (auto &[col, shards] : collators) {
     for (auto &shard : shards) {
       col_vec.push_back(
-          ton::create_tl_object<ton::ton_api::engine_collator>(col.bits256_value(), ton::create_tl_shard_id(shard)));
+          ion::create_tl_object<ion::ton_api::engine_collator>(col.bits256_value(), ion::create_tl_shard_id(shard)));
     }
   }
 
-  std::vector<ton::tl_object_ptr<ton::ton_api::engine_validator_fullNodeSlave>> full_node_slaves_vec;
+  std::vector<ion::tl_object_ptr<ion::ton_api::engine_validator_fullNodeSlave>> full_node_slaves_vec;
   for (auto &x : full_node_slaves) {
-    full_node_slaves_vec.push_back(ton::create_tl_object<ton::ton_api::engine_validator_fullNodeSlave>(
+    full_node_slaves_vec.push_back(ion::create_tl_object<ion::ton_api::engine_validator_fullNodeSlave>(
         x.addr.get_ipv4(), x.addr.get_port(), x.key.tl()));
   }
-  std::vector<ton::tl_object_ptr<ton::ton_api::engine_validator_fullNodeMaster>> full_node_masters_vec;
+  std::vector<ion::tl_object_ptr<ion::ton_api::engine_validator_fullNodeMaster>> full_node_masters_vec;
   for (auto &x : full_node_masters) {
     full_node_masters_vec.push_back(
-        ton::create_tl_object<ton::ton_api::engine_validator_fullNodeMaster>(x.first, x.second.tl()));
+        ion::create_tl_object<ion::ton_api::engine_validator_fullNodeMaster>(x.first, x.second.tl()));
   }
 
-  ton::tl_object_ptr<ton::ton_api::engine_validator_fullNodeConfig> full_node_config_obj = {};
-  if (full_node_config != ton::validator::fullnode::FullNodeConfig()) {
+  ion::tl_object_ptr<ion::ton_api::engine_validator_fullNodeConfig> full_node_config_obj = {};
+  if (full_node_config != ion::validator::fullnode::FullNodeConfig()) {
     full_node_config_obj = full_node_config.tl();
   }
 
-  ton::tl_object_ptr<ton::ton_api::engine_validator_collatorNodeWhitelist> collator_node_whitelist_obj = {};
+  ion::tl_object_ptr<ion::ton_api::engine_validator_collatorNodeWhitelist> collator_node_whitelist_obj = {};
   if (collator_node_whiltelist_enabled || !collator_node_whitelist.empty()) {
-    collator_node_whitelist_obj = ton::create_tl_object<ton::ton_api::engine_validator_collatorNodeWhitelist>();
+    collator_node_whitelist_obj = ion::create_tl_object<ion::ton_api::engine_validator_collatorNodeWhitelist>();
     collator_node_whitelist_obj->enabled_ = collator_node_whiltelist_enabled;
     for (const auto &id : collator_node_whitelist) {
       collator_node_whitelist_obj->adnl_ids_.push_back(id.bits256_value());
     }
   }
 
-  ton::tl_object_ptr<ton::ton_api::engine_validator_extraConfig> extra_config_obj = {};
+  ion::tl_object_ptr<ion::ton_api::engine_validator_extraConfig> extra_config_obj = {};
   if (!state_serializer_enabled || !fast_sync_member_certificates.empty() || collator_node_whitelist_obj ||
       !fast_sync_overlay_clients.empty()) {
     // Non-default values
-    extra_config_obj = ton::create_tl_object<ton::ton_api::engine_validator_extraConfig>();
+    extra_config_obj = ion::create_tl_object<ion::ton_api::engine_validator_extraConfig>();
     extra_config_obj->state_serializer_enabled_ = state_serializer_enabled;
     for (const auto &[adnl_id, certificate] : fast_sync_member_certificates) {
       extra_config_obj->fast_sync_member_certificates_.push_back(
-          ton::create_tl_object<ton::ton_api::engine_validator_fastSyncMemberCertificate>(adnl_id.bits256_value(),
+          ion::create_tl_object<ion::ton_api::engine_validator_fastSyncMemberCertificate>(adnl_id.bits256_value(),
                                                                                           certificate.tl()));
     }
     extra_config_obj->collator_node_whitelist_ = std::move(collator_node_whitelist_obj);
     for (const auto &client : fast_sync_overlay_clients) {
       extra_config_obj->fast_sync_overlay_clients_.push_back(
-          ton::create_tl_object<ton::ton_api::engine_validator_fastSyncOverlayClient>(client.id.bits256_value(),
+          ion::create_tl_object<ion::ton_api::engine_validator_fastSyncOverlayClient>(client.id.bits256_value(),
                                                                                       client.slot));
     }
   }
 
-  std::vector<ton::tl_object_ptr<ton::ton_api::engine_liteServer>> liteserver_vec;
+  std::vector<ion::tl_object_ptr<ion::ton_api::engine_liteServer>> liteserver_vec;
   for (auto &x : liteservers) {
-    liteserver_vec.push_back(ton::create_tl_object<ton::ton_api::engine_liteServer>(x.second.tl(), x.first));
+    liteserver_vec.push_back(ion::create_tl_object<ion::ton_api::engine_liteServer>(x.second.tl(), x.first));
   }
 
-  std::vector<ton::tl_object_ptr<ton::ton_api::engine_controlInterface>> control_vec;
+  std::vector<ion::tl_object_ptr<ion::ton_api::engine_controlInterface>> control_vec;
   for (auto &x : controls) {
-    std::vector<ton::tl_object_ptr<ton::ton_api::engine_controlProcess>> control_proc_vec;
+    std::vector<ion::tl_object_ptr<ion::ton_api::engine_controlProcess>> control_proc_vec;
     for (auto &y : x.second.clients) {
-      control_proc_vec.push_back(ton::create_tl_object<ton::ton_api::engine_controlProcess>(y.first.tl(), y.second));
+      control_proc_vec.push_back(ion::create_tl_object<ion::ton_api::engine_controlProcess>(y.first.tl(), y.second));
     }
-    control_vec.push_back(ton::create_tl_object<ton::ton_api::engine_controlInterface>(x.second.key.tl(), x.first,
+    control_vec.push_back(ion::create_tl_object<ion::ton_api::engine_controlInterface>(x.second.key.tl(), x.first,
                                                                                        std::move(control_proc_vec)));
   }
 
-  std::vector<ton::tl_object_ptr<ton::ton_api::tonNode_shardId>> shards_vec;
+  std::vector<ion::tl_object_ptr<ion::ton_api::tonNode_shardId>> shards_vec;
   for (auto &shard : shards_to_monitor) {
-    shards_vec.push_back(ton::create_tl_shard_id(shard));
+    shards_vec.push_back(ion::create_tl_shard_id(shard));
   }
 
-  auto gc_vec = ton::create_tl_object<ton::ton_api::engine_gc>(std::vector<td::Bits256>{});
+  auto gc_vec = ion::create_tl_object<ion::ton_api::engine_gc>(std::vector<td::Bits256>{});
   for (auto &id : gc) {
     gc_vec->ids_.push_back(id.tl());
   }
 
-  return ton::create_tl_object<ton::ton_api::engine_validator_config>(
+  return ion::create_tl_object<ion::ton_api::engine_validator_config>(
       out_port, std::move(addrs_vec), std::move(adnl_vec), std::move(dht_vec), std::move(val_vec), std::move(col_vec),
       full_node.tl(), std::move(full_node_slaves_vec), std::move(full_node_masters_vec),
       std::move(full_node_config_obj), std::move(extra_config_obj), std::move(liteserver_vec), std::move(control_vec),
@@ -344,7 +344,7 @@ ton::tl_object_ptr<ton::ton_api::engine_validator_config> Config::tl() const {
 }
 
 td::Result<bool> Config::config_add_network_addr(td::IPAddress in_ip, td::IPAddress out_ip,
-                                                 std::shared_ptr<ton::adnl::AdnlProxy> proxy,
+                                                 std::shared_ptr<ion::adnl::AdnlProxy> proxy,
                                                  std::vector<AdnlCategory> cats, std::vector<AdnlCategory> prio_cats) {
   Addr addr{out_ip};
 
@@ -384,7 +384,7 @@ td::Result<bool> Config::config_add_network_addr(td::IPAddress in_ip, td::IPAddr
   }
 }
 
-td::Result<bool> Config::config_add_adnl_addr(ton::PublicKeyHash addr, AdnlCategory cat) {
+td::Result<bool> Config::config_add_adnl_addr(ion::PublicKeyHash addr, AdnlCategory cat) {
   auto it = adnl_ids.find(addr);
   if (it != adnl_ids.end()) {
     if (it->second != cat) {
@@ -400,29 +400,29 @@ td::Result<bool> Config::config_add_adnl_addr(ton::PublicKeyHash addr, AdnlCateg
   }
 }
 
-td::Result<bool> Config::config_add_dht_node(ton::PublicKeyHash id) {
+td::Result<bool> Config::config_add_dht_node(ion::PublicKeyHash id) {
   if (dht_ids.count(id) > 0) {
     return false;
   }
   if (adnl_ids.count(id) == 0) {
-    return td::Status::Error(ton::ErrorCode::notready, "to-be-added dht node not in adnl nodes list");
+    return td::Status::Error(ion::ErrorCode::notready, "to-be-added dht node not in adnl nodes list");
   }
   incref(id);
   dht_ids.insert(id);
   return true;
 }
 
-td::Result<bool> Config::config_add_validator_permanent_key(ton::PublicKeyHash id, ton::UnixTime election_date,
-                                                            ton::UnixTime expire_at) {
+td::Result<bool> Config::config_add_validator_permanent_key(ion::PublicKeyHash id, ion::UnixTime election_date,
+                                                            ion::UnixTime expire_at) {
   for (auto &x : validators) {
     if (x.second.election_date == election_date && x.first != id) {
-      return td::Status::Error(ton::ErrorCode::protoviolation, "duplicate election date");
+      return td::Status::Error(ion::ErrorCode::protoviolation, "duplicate election date");
     }
   }
   auto it = validators.find(id);
   if (it != validators.end()) {
     if (it->second.election_date != election_date) {
-      return td::Status::Error(ton::ErrorCode::protoviolation, "election date changed");
+      return td::Status::Error(ion::ErrorCode::protoviolation, "election date changed");
     }
     if (it->second.expire_at != expire_at) {
       it->second.expire_at = expire_at;
@@ -437,10 +437,10 @@ td::Result<bool> Config::config_add_validator_permanent_key(ton::PublicKeyHash i
   }
 }
 
-td::Result<bool> Config::config_add_validator_temp_key(ton::PublicKeyHash perm_key, ton::PublicKeyHash id,
-                                                       ton::UnixTime expire_at) {
+td::Result<bool> Config::config_add_validator_temp_key(ion::PublicKeyHash perm_key, ion::PublicKeyHash id,
+                                                       ion::UnixTime expire_at) {
   if (validators.count(perm_key) == 0) {
-    return td::Status::Error(ton::ErrorCode::notready, "unknown permanent validator key");
+    return td::Status::Error(ion::ErrorCode::notready, "unknown permanent validator key");
   }
   auto &v = validators[perm_key];
 
@@ -459,13 +459,13 @@ td::Result<bool> Config::config_add_validator_temp_key(ton::PublicKeyHash perm_k
   }
 }
 
-td::Result<bool> Config::config_add_validator_adnl_id(ton::PublicKeyHash perm_key, ton::PublicKeyHash adnl_id,
-                                                      ton::UnixTime expire_at) {
+td::Result<bool> Config::config_add_validator_adnl_id(ion::PublicKeyHash perm_key, ion::PublicKeyHash adnl_id,
+                                                      ion::UnixTime expire_at) {
   if (adnl_ids.count(adnl_id) == 0) {
-    return td::Status::Error(ton::ErrorCode::notready, "to-be-added validator adnl address not in adnl nodes list");
+    return td::Status::Error(ion::ErrorCode::notready, "to-be-added validator adnl address not in adnl nodes list");
   }
   if (validators.count(perm_key) == 0) {
-    return td::Status::Error(ton::ErrorCode::notready, "unknown permanent validator key");
+    return td::Status::Error(ion::ErrorCode::notready, "unknown permanent validator key");
   }
   auto &v = validators[perm_key];
 
@@ -484,7 +484,7 @@ td::Result<bool> Config::config_add_validator_adnl_id(ton::PublicKeyHash perm_ke
   }
 }
 
-td::Result<bool> Config::config_add_collator(ton::adnl::AdnlNodeIdShort addr, ton::ShardIdFull shard) {
+td::Result<bool> Config::config_add_collator(ion::adnl::AdnlNodeIdShort addr, ion::ShardIdFull shard) {
   if (!shard.is_valid_ext()) {
     return td::Status::Error(PSTRING() << "invalid shard: " << shard.to_str());
   }
@@ -496,7 +496,7 @@ td::Result<bool> Config::config_add_collator(ton::adnl::AdnlNodeIdShort addr, to
   return true;
 }
 
-td::Result<bool> Config::config_del_collator(ton::adnl::AdnlNodeIdShort addr, ton::ShardIdFull shard) {
+td::Result<bool> Config::config_del_collator(ion::adnl::AdnlNodeIdShort addr, ion::ShardIdFull shard) {
   if (!shard.is_valid_ext()) {
     return td::Status::Error(PSTRING() << "invalid shard: " << shard.to_str());
   }
@@ -509,12 +509,12 @@ td::Result<bool> Config::config_del_collator(ton::adnl::AdnlNodeIdShort addr, to
   return true;
 }
 
-td::Result<bool> Config::config_add_full_node_adnl_id(ton::PublicKeyHash id) {
+td::Result<bool> Config::config_add_full_node_adnl_id(ion::PublicKeyHash id) {
   if (full_node == id) {
     return false;
   }
   if (adnl_ids.count(id) == 0) {
-    return td::Status::Error(ton::ErrorCode::notready, "to-be-added full node adnl address not in adnl nodes list");
+    return td::Status::Error(ion::ErrorCode::notready, "to-be-added full node adnl address not in adnl nodes list");
   }
   if (!full_node.is_zero()) {
     decref(full_node);
@@ -526,13 +526,13 @@ td::Result<bool> Config::config_add_full_node_adnl_id(ton::PublicKeyHash id) {
   return true;
 }
 
-td::Result<bool> Config::config_add_full_node_slave(td::IPAddress addr, ton::PublicKey id) {
+td::Result<bool> Config::config_add_full_node_slave(td::IPAddress addr, ion::PublicKey id) {
   for (auto &s : full_node_slaves) {
     if (s.addr == addr) {
       if (s.key == id) {
         return true;
       } else {
-        return td::Status::Error(ton::ErrorCode::error, "duplicate slave ip");
+        return td::Status::Error(ion::ErrorCode::error, "duplicate slave ip");
       }
     }
   }
@@ -540,9 +540,9 @@ td::Result<bool> Config::config_add_full_node_slave(td::IPAddress addr, ton::Pub
   return true;
 }
 
-td::Result<bool> Config::config_add_full_node_master(td::int32 port, ton::PublicKeyHash id) {
+td::Result<bool> Config::config_add_full_node_master(td::int32 port, ion::PublicKeyHash id) {
   if (adnl_ids.count(id) == 0) {
-    return td::Status::Error(ton::ErrorCode::notready,
+    return td::Status::Error(ion::ErrorCode::notready,
                              "to-be-added full node master adnl address not in adnl nodes list");
   }
   auto it = full_node_masters.find(port);
@@ -561,16 +561,16 @@ td::Result<bool> Config::config_add_full_node_master(td::int32 port, ton::Public
   return true;
 }
 
-td::Result<bool> Config::config_add_lite_server(ton::PublicKeyHash key, td::int32 port) {
+td::Result<bool> Config::config_add_lite_server(ion::PublicKeyHash key, td::int32 port) {
   if (controls.count(port) > 0) {
-    return td::Status::Error(ton::ErrorCode::error, "duplicate port");
+    return td::Status::Error(ion::ErrorCode::error, "duplicate port");
   }
   auto it = liteservers.find(port);
   if (it != liteservers.end()) {
     if (it->second == key) {
       return false;
     } else {
-      return td::Status::Error(ton::ErrorCode::error, "duplicate port");
+      return td::Status::Error(ion::ErrorCode::error, "duplicate port");
     }
   } else {
     incref(key);
@@ -579,16 +579,16 @@ td::Result<bool> Config::config_add_lite_server(ton::PublicKeyHash key, td::int3
   }
 }
 
-td::Result<bool> Config::config_add_control_interface(ton::PublicKeyHash key, td::int32 port) {
+td::Result<bool> Config::config_add_control_interface(ion::PublicKeyHash key, td::int32 port) {
   if (liteservers.count(port) > 0) {
-    return td::Status::Error(ton::ErrorCode::error, "duplicate port");
+    return td::Status::Error(ion::ErrorCode::error, "duplicate port");
   }
   auto it = controls.find(port);
   if (it != controls.end()) {
     if (it->second.key == key) {
       return false;
     } else {
-      return td::Status::Error(ton::ErrorCode::error, "duplicate port");
+      return td::Status::Error(ion::ErrorCode::error, "duplicate port");
     }
   } else {
     incref(key);
@@ -597,14 +597,14 @@ td::Result<bool> Config::config_add_control_interface(ton::PublicKeyHash key, td
   }
 }
 
-td::Result<bool> Config::config_add_control_process(ton::PublicKeyHash key, td::int32 port, ton::PublicKeyHash id,
+td::Result<bool> Config::config_add_control_process(ion::PublicKeyHash key, td::int32 port, ion::PublicKeyHash id,
                                                     td::uint32 permissions) {
   if (controls.count(port) == 0) {
-    return td::Status::Error(ton::ErrorCode::error, "unknown control interface");
+    return td::Status::Error(ion::ErrorCode::error, "unknown control interface");
   }
   auto &v = controls[port];
   if (v.key != key) {
-    return td::Status::Error(ton::ErrorCode::error, "unknown control interface");
+    return td::Status::Error(ion::ErrorCode::error, "unknown control interface");
   }
 
   auto it = v.clients.find(id);
@@ -628,7 +628,7 @@ td::Result<bool> Config::config_add_control_process(ton::PublicKeyHash key, td::
   }
 }
 
-td::Result<bool> Config::config_add_shard(ton::ShardIdFull shard) {
+td::Result<bool> Config::config_add_shard(ion::ShardIdFull shard) {
   if (shard.is_masterchain()) {
     return td::Status::Error("masterchain is monitored by default");
   }
@@ -642,7 +642,7 @@ td::Result<bool> Config::config_add_shard(ton::ShardIdFull shard) {
   return true;
 }
 
-td::Result<bool> Config::config_del_shard(ton::ShardIdFull shard) {
+td::Result<bool> Config::config_del_shard(ion::ShardIdFull shard) {
   if (!shard.is_valid_ext()) {
     return td::Status::Error(PSTRING() << "invalid shard " << shard.to_str());
   }
@@ -654,11 +654,11 @@ td::Result<bool> Config::config_del_shard(ton::ShardIdFull shard) {
   return true;
 }
 
-td::Result<bool> Config::config_add_gc(ton::PublicKeyHash key) {
+td::Result<bool> Config::config_add_gc(ion::PublicKeyHash key) {
   return gc.insert(key).second;
 }
 
-void Config::decref(ton::PublicKeyHash key) {
+void Config::decref(ion::PublicKeyHash key) {
   auto v = keys_refcnt[key]--;
   CHECK(v > 0);
   if (v == 1) {
@@ -692,21 +692,21 @@ td::Result<bool> Config::config_del_network_addr(td::IPAddress a, std::vector<Ad
   }
 }
 
-td::Result<bool> Config::config_del_adnl_addr(ton::PublicKeyHash addr) {
+td::Result<bool> Config::config_del_adnl_addr(ion::PublicKeyHash addr) {
   if (adnl_ids.count(addr) == 0) {
     return false;
   }
 
   if (dht_ids.count(addr)) {
-    return td::Status::Error(ton::ErrorCode::error, "adnl addr still in use");
+    return td::Status::Error(ion::ErrorCode::error, "adnl addr still in use");
   }
   if (full_node == addr) {
-    return td::Status::Error(ton::ErrorCode::error, "adnl addr still in use");
+    return td::Status::Error(ion::ErrorCode::error, "adnl addr still in use");
   }
 
   for (auto &x : validators) {
     if (x.second.adnl_ids.count(addr)) {
-      return td::Status::Error(ton::ErrorCode::error, "adnl addr still in use");
+      return td::Status::Error(ion::ErrorCode::error, "adnl addr still in use");
     }
   }
 
@@ -715,7 +715,7 @@ td::Result<bool> Config::config_del_adnl_addr(ton::PublicKeyHash addr) {
   return true;
 }
 
-td::Result<bool> Config::config_del_dht_node(ton::PublicKeyHash id) {
+td::Result<bool> Config::config_del_dht_node(ion::PublicKeyHash id) {
   if (dht_ids.count(id) == 0) {
     return false;
   }
@@ -724,7 +724,7 @@ td::Result<bool> Config::config_del_dht_node(ton::PublicKeyHash id) {
   return true;
 }
 
-td::Result<bool> Config::config_del_validator_permanent_key(ton::PublicKeyHash id) {
+td::Result<bool> Config::config_del_validator_permanent_key(ion::PublicKeyHash id) {
   if (validators.count(id) == 0) {
     return false;
   }
@@ -740,9 +740,9 @@ td::Result<bool> Config::config_del_validator_permanent_key(ton::PublicKeyHash i
   return true;
 }
 
-td::Result<bool> Config::config_del_validator_temp_key(ton::PublicKeyHash perm_key, ton::PublicKeyHash id) {
+td::Result<bool> Config::config_del_validator_temp_key(ion::PublicKeyHash perm_key, ion::PublicKeyHash id) {
   if (validators.count(perm_key) == 0) {
-    return td::Status::Error(ton::ErrorCode::notready, "unknown permanent validator key");
+    return td::Status::Error(ion::ErrorCode::notready, "unknown permanent validator key");
   }
   auto &v = validators[perm_key];
 
@@ -756,9 +756,9 @@ td::Result<bool> Config::config_del_validator_temp_key(ton::PublicKeyHash perm_k
   }
 }
 
-td::Result<bool> Config::config_del_validator_adnl_id(ton::PublicKeyHash perm_key, ton::PublicKeyHash adnl_id) {
+td::Result<bool> Config::config_del_validator_adnl_id(ion::PublicKeyHash perm_key, ion::PublicKeyHash adnl_id) {
   if (validators.count(perm_key) == 0) {
-    return td::Status::Error(ton::ErrorCode::notready, "unknown permanent validator key");
+    return td::Status::Error(ion::ErrorCode::notready, "unknown permanent validator key");
   }
   auto &v = validators[perm_key];
 
@@ -773,7 +773,7 @@ td::Result<bool> Config::config_del_validator_adnl_id(ton::PublicKeyHash perm_ke
 }
 
 td::Result<bool> Config::config_del_full_node_adnl_id() {
-  return config_add_full_node_adnl_id(ton::PublicKeyHash::zero());
+  return config_add_full_node_adnl_id(ion::PublicKeyHash::zero());
 }
 
 td::Result<bool> Config::config_del_lite_server(td::int32 port) {
@@ -798,7 +798,7 @@ td::Result<bool> Config::config_del_control_interface(td::int32 port) {
   }
 }
 
-td::Result<bool> Config::config_del_control_process(td::int32 port, ton::PublicKeyHash id) {
+td::Result<bool> Config::config_del_control_process(td::int32 port, ion::PublicKeyHash id) {
   auto it = controls.find(port);
   if (it != controls.end()) {
     return it->second.clients.erase(id);
@@ -807,15 +807,15 @@ td::Result<bool> Config::config_del_control_process(td::int32 port, ton::PublicK
   }
 }
 
-td::Result<bool> Config::config_del_gc(ton::PublicKeyHash key) {
+td::Result<bool> Config::config_del_gc(ion::PublicKeyHash key) {
   return gc.erase(key);
 }
 
 class ValidatorElectionBidCreator : public td::actor::Actor {
  public:
   ValidatorElectionBidCreator(td::uint32 date, std::string addr, std::string wallet, std::string dir,
-                              std::vector<ton::PublicKeyHash> old_keys, td::actor::ActorId<ValidatorEngine> engine,
-                              td::actor::ActorId<ton::keyring::Keyring> keyring, td::Promise<td::BufferSlice> promise)
+                              std::vector<ion::PublicKeyHash> old_keys, td::actor::ActorId<ValidatorEngine> engine,
+                              td::actor::ActorId<ion::keyring::Keyring> keyring, td::Promise<td::BufferSlice> promise)
       : date_(date)
       , addr_(addr)
       , wallet_(wallet)
@@ -831,25 +831,25 @@ class ValidatorElectionBidCreator : public td::actor::Actor {
     if (old_keys_.size() > 0) {
       CHECK(old_keys_.size() == 3);
 
-      adnl_addr_ = ton::adnl::AdnlNodeIdShort{old_keys_[2]};
+      adnl_addr_ = ion::adnl::AdnlNodeIdShort{old_keys_[2]};
       perm_key_ = old_keys_[0];
 
-      auto P = td::PromiseCreator::lambda([SelfId = actor_id(this)](td::Result<ton::PublicKey> R) {
+      auto P = td::PromiseCreator::lambda([SelfId = actor_id(this)](td::Result<ion::PublicKey> R) {
         if (R.is_error()) {
           td::actor::send_closure(SelfId, &ValidatorElectionBidCreator::abort_query, R.move_as_error());
         } else {
           td::actor::send_closure(SelfId, &ValidatorElectionBidCreator::got_perm_public_key, R.move_as_ok());
         }
       });
-      td::actor::send_closure(keyring_, &ton::keyring::Keyring::get_public_key, perm_key_, std::move(P));
+      td::actor::send_closure(keyring_, &ion::keyring::Keyring::get_public_key, perm_key_, std::move(P));
       return;
     }
-    auto pk1 = ton::PrivateKey{ton::privkeys::Ed25519::random()};
+    auto pk1 = ion::PrivateKey{ion::privkeys::Ed25519::random()};
     perm_key_full_ = pk1.compute_public_key();
     perm_key_ = perm_key_full_.compute_short_id();
 
-    auto pk2 = ton::PrivateKey{ton::privkeys::Ed25519::random()};
-    adnl_key_full_ = ton::adnl::AdnlNodeIdFull{pk2.compute_public_key()};
+    auto pk2 = ion::PrivateKey{ion::privkeys::Ed25519::random()};
+    adnl_key_full_ = ion::adnl::AdnlNodeIdFull{pk2.compute_public_key()};
     adnl_addr_ = adnl_key_full_.compute_short_id();
 
     td::MultiPromise mp;
@@ -865,8 +865,8 @@ class ValidatorElectionBidCreator : public td::actor::Actor {
     auto ig = mp.init_guard();
     ig.add_promise(std::move(P));
 
-    td::actor::send_closure(keyring_, &ton::keyring::Keyring::add_key, std::move(pk1), false, ig.get_promise());
-    td::actor::send_closure(keyring_, &ton::keyring::Keyring::add_key, std::move(pk2), false, ig.get_promise());
+    td::actor::send_closure(keyring_, &ion::keyring::Keyring::add_key, std::move(pk1), false, ig.get_promise());
+    td::actor::send_closure(keyring_, &ion::keyring::Keyring::add_key, std::move(pk2), false, ig.get_promise());
   }
 
   void written_keys() {
@@ -895,7 +895,7 @@ class ValidatorElectionBidCreator : public td::actor::Actor {
                             ttl_, ig.get_promise());
   }
 
-  void got_perm_public_key(ton::PublicKey pub) {
+  void got_perm_public_key(ion::PublicKey pub) {
     perm_key_full_ = pub;
     updated_config();
   }
@@ -931,7 +931,7 @@ class ValidatorElectionBidCreator : public td::actor::Actor {
       return;
     }
 
-    td::actor::send_closure(keyring_, &ton::keyring::Keyring::sign_message, perm_key_,
+    td::actor::send_closure(keyring_, &ion::keyring::Keyring::sign_message, perm_key_,
                             td::BufferSlice{to_signR.move_as_ok().data}, std::move(P));
   }
 
@@ -970,7 +970,7 @@ class ValidatorElectionBidCreator : public td::actor::Actor {
     stop();
   }
   void finish_query() {
-    promise_.set_value(ton::create_serialize_tl_object<ton::ton_api::engine_validator_electionBid>(
+    promise_.set_value(ion::create_serialize_tl_object<ion::ton_api::engine_validator_electionBid>(
         date_, perm_key_.tl(), adnl_addr_.bits256_value(), std::move(result_)));
     stop();
   }
@@ -980,9 +980,9 @@ class ValidatorElectionBidCreator : public td::actor::Actor {
   std::string addr_;
   std::string wallet_;
   std::string dir_;
-  std::vector<ton::PublicKeyHash> old_keys_;
+  std::vector<ion::PublicKeyHash> old_keys_;
   td::actor::ActorId<ValidatorEngine> engine_;
-  td::actor::ActorId<ton::keyring::Keyring> keyring_;
+  td::actor::ActorId<ion::keyring::Keyring> keyring_;
 
   td::Promise<td::BufferSlice> promise_;
 
@@ -990,10 +990,10 @@ class ValidatorElectionBidCreator : public td::actor::Actor {
   AdnlCategory cat_ = 2;
   double frac = 2.7;
 
-  ton::PublicKeyHash perm_key_;
-  ton::PublicKey perm_key_full_;
-  ton::adnl::AdnlNodeIdShort adnl_addr_;
-  ton::adnl::AdnlNodeIdFull adnl_key_full_;
+  ion::PublicKeyHash perm_key_;
+  ion::PublicKey perm_key_full_;
+  ion::adnl::AdnlNodeIdShort adnl_addr_;
+  ion::adnl::AdnlNodeIdFull adnl_key_full_;
 
   td::BufferSlice signature_;
   td::BufferSlice result_;
@@ -1002,7 +1002,7 @@ class ValidatorElectionBidCreator : public td::actor::Actor {
 class ValidatorProposalVoteCreator : public td::actor::Actor {
  public:
   ValidatorProposalVoteCreator(td::BufferSlice proposal, std::string dir, td::actor::ActorId<ValidatorEngine> engine,
-                               td::actor::ActorId<ton::keyring::Keyring> keyring, td::Promise<td::BufferSlice> promise)
+                               td::actor::ActorId<ion::keyring::Keyring> keyring, td::Promise<td::BufferSlice> promise)
       : proposal_(std::move(proposal))
       , dir_(std::move(dir))
       , engine_(engine)
@@ -1011,7 +1011,7 @@ class ValidatorProposalVoteCreator : public td::actor::Actor {
   }
 
   void start_up() override {
-    auto P = td::PromiseCreator::lambda([SelfId = actor_id(this)](td::Result<std::pair<ton::PublicKey, size_t>> R) {
+    auto P = td::PromiseCreator::lambda([SelfId = actor_id(this)](td::Result<std::pair<ion::PublicKey, size_t>> R) {
       if (R.is_error()) {
         td::actor::send_closure(SelfId, &ValidatorProposalVoteCreator::abort_query,
                                 R.move_as_error_prefix("failed to find self permanent key: "));
@@ -1023,7 +1023,7 @@ class ValidatorProposalVoteCreator : public td::actor::Actor {
     td::actor::send_closure(engine_, &ValidatorEngine::get_current_validator_perm_key, std::move(P));
   }
 
-  void got_id(ton::PublicKey pubkey, size_t idx) {
+  void got_id(ion::PublicKey pubkey, size_t idx) {
     pubkey_ = std::move(pubkey);
     idx_ = idx;
     auto codeR = td::read_file_str(dir_ + "/config-proposal-vote-req.fif");
@@ -1055,7 +1055,7 @@ class ValidatorProposalVoteCreator : public td::actor::Actor {
       }
     });
 
-    td::actor::send_closure(keyring_, &ton::keyring::Keyring::sign_message, pubkey_.compute_short_id(),
+    td::actor::send_closure(keyring_, &ion::keyring::Keyring::sign_message, pubkey_.compute_short_id(),
                             std::move(to_sign), std::move(P));
   }
 
@@ -1095,7 +1095,7 @@ class ValidatorProposalVoteCreator : public td::actor::Actor {
     stop();
   }
   void finish_query() {
-    promise_.set_value(ton::create_serialize_tl_object<ton::ton_api::engine_validator_proposalVote>(
+    promise_.set_value(ion::create_serialize_tl_object<ion::ton_api::engine_validator_proposalVote>(
         pubkey_.compute_short_id().bits256_value(), std::move(result_)));
     stop();
   }
@@ -1104,27 +1104,27 @@ class ValidatorProposalVoteCreator : public td::actor::Actor {
   td::BufferSlice proposal_;
   std::string dir_;
 
-  ton::PublicKey pubkey_;
+  ion::PublicKey pubkey_;
   size_t idx_;
 
   td::BufferSlice signature_;
   td::BufferSlice result_;
   td::actor::ActorId<ValidatorEngine> engine_;
-  td::actor::ActorId<ton::keyring::Keyring> keyring_;
+  td::actor::ActorId<ion::keyring::Keyring> keyring_;
 
   td::Promise<td::BufferSlice> promise_;
 
-  ton::PublicKeyHash perm_key_;
-  ton::PublicKey perm_key_full_;
-  ton::adnl::AdnlNodeIdShort adnl_addr_;
-  ton::adnl::AdnlNodeIdFull adnl_key_full_;
+  ion::PublicKeyHash perm_key_;
+  ion::PublicKey perm_key_full_;
+  ion::adnl::AdnlNodeIdShort adnl_addr_;
+  ion::adnl::AdnlNodeIdFull adnl_key_full_;
 };
 
 class ValidatorPunishVoteCreator : public td::actor::Actor {
  public:
   ValidatorPunishVoteCreator(td::uint32 election_id, td::BufferSlice proposal, std::string dir,
                              td::actor::ActorId<ValidatorEngine> engine,
-                             td::actor::ActorId<ton::keyring::Keyring> keyring, td::Promise<td::BufferSlice> promise)
+                             td::actor::ActorId<ion::keyring::Keyring> keyring, td::Promise<td::BufferSlice> promise)
       : election_id_(election_id)
       , proposal_(std::move(proposal))
       , dir_(std::move(dir))
@@ -1134,7 +1134,7 @@ class ValidatorPunishVoteCreator : public td::actor::Actor {
   }
 
   void start_up() override {
-    auto P = td::PromiseCreator::lambda([SelfId = actor_id(this)](td::Result<std::pair<ton::PublicKey, size_t>> R) {
+    auto P = td::PromiseCreator::lambda([SelfId = actor_id(this)](td::Result<std::pair<ion::PublicKey, size_t>> R) {
       if (R.is_error()) {
         td::actor::send_closure(SelfId, &ValidatorPunishVoteCreator::abort_query,
                                 R.move_as_error_prefix("failed to find self permanent key: "));
@@ -1146,7 +1146,7 @@ class ValidatorPunishVoteCreator : public td::actor::Actor {
     td::actor::send_closure(engine_, &ValidatorEngine::get_current_validator_perm_key, std::move(P));
   }
 
-  void got_id(ton::PublicKey pubkey, size_t idx) {
+  void got_id(ion::PublicKey pubkey, size_t idx) {
     pubkey_ = std::move(pubkey);
     idx_ = idx;
     auto codeR = td::read_file_str(dir_ + "/complaint-vote-req.fif");
@@ -1179,7 +1179,7 @@ class ValidatorPunishVoteCreator : public td::actor::Actor {
       }
     });
 
-    td::actor::send_closure(keyring_, &ton::keyring::Keyring::sign_message, pubkey_.compute_short_id(),
+    td::actor::send_closure(keyring_, &ion::keyring::Keyring::sign_message, pubkey_.compute_short_id(),
                             std::move(to_sign), std::move(P));
   }
 
@@ -1220,7 +1220,7 @@ class ValidatorPunishVoteCreator : public td::actor::Actor {
     stop();
   }
   void finish_query() {
-    promise_.set_value(ton::create_serialize_tl_object<ton::ton_api::engine_validator_proposalVote>(
+    promise_.set_value(ion::create_serialize_tl_object<ion::ton_api::engine_validator_proposalVote>(
         pubkey_.compute_short_id().bits256_value(), std::move(result_)));
     stop();
   }
@@ -1230,20 +1230,20 @@ class ValidatorPunishVoteCreator : public td::actor::Actor {
   td::BufferSlice proposal_;
   std::string dir_;
 
-  ton::PublicKey pubkey_;
+  ion::PublicKey pubkey_;
   size_t idx_;
 
   td::BufferSlice signature_;
   td::BufferSlice result_;
   td::actor::ActorId<ValidatorEngine> engine_;
-  td::actor::ActorId<ton::keyring::Keyring> keyring_;
+  td::actor::ActorId<ion::keyring::Keyring> keyring_;
 
   td::Promise<td::BufferSlice> promise_;
 
-  ton::PublicKeyHash perm_key_;
-  ton::PublicKey perm_key_full_;
-  ton::adnl::AdnlNodeIdShort adnl_addr_;
-  ton::adnl::AdnlNodeIdFull adnl_key_full_;
+  ion::PublicKeyHash perm_key_;
+  ion::PublicKey perm_key_full_;
+  ion::adnl::AdnlNodeIdShort adnl_addr_;
+  ion::adnl::AdnlNodeIdFull adnl_key_full_;
 };
 
 class CheckDhtServerStatusQuery : public td::actor::Actor {
@@ -1261,10 +1261,10 @@ class CheckDhtServerStatusQuery : public td::actor::Actor {
 
       auto &E = n.list().at(i);
 
-      td::actor::send_closure(adnl_, &ton::adnl::Adnl::add_peer, local_id_, E.adnl_id(), E.addr_list());
-      td::actor::send_closure(adnl_, &ton::adnl::Adnl::send_query, local_id_, E.adnl_id().compute_short_id(), "ping",
+      td::actor::send_closure(adnl_, &ion::adnl::Adnl::add_peer, local_id_, E.adnl_id(), E.addr_list());
+      td::actor::send_closure(adnl_, &ion::adnl::Adnl::send_query, local_id_, E.adnl_id().compute_short_id(), "ping",
                               std::move(P), td::Timestamp::in(1.0),
-                              ton::create_serialize_tl_object<ton::ton_api::dht_getSignedAddressList>());
+                              ion::create_serialize_tl_object<ion::ton_api::dht_getSignedAddressList>());
     }
   }
 
@@ -1277,35 +1277,35 @@ class CheckDhtServerStatusQuery : public td::actor::Actor {
   }
 
   void finish_query() {
-    std::vector<ton::tl_object_ptr<ton::ton_api::engine_validator_dhtServerStatus>> vec;
+    std::vector<ion::tl_object_ptr<ion::ton_api::engine_validator_dhtServerStatus>> vec;
     auto &n = dht_config_->nodes();
     for (td::uint32 i = 0; i < n.size(); i++) {
       auto &E = n.list().at(i);
-      vec.push_back(ton::create_tl_object<ton::ton_api::engine_validator_dhtServerStatus>(
+      vec.push_back(ion::create_tl_object<ion::ton_api::engine_validator_dhtServerStatus>(
           E.adnl_id().compute_short_id().bits256_value(), result_[i] ? 1 : 0));
     }
     promise_.set_value(
-        ton::create_serialize_tl_object<ton::ton_api::engine_validator_dhtServersStatus>(std::move(vec)));
+        ion::create_serialize_tl_object<ion::ton_api::engine_validator_dhtServersStatus>(std::move(vec)));
     stop();
   }
 
-  CheckDhtServerStatusQuery(std::shared_ptr<ton::dht::DhtGlobalConfig> dht_config, ton::adnl::AdnlNodeIdShort local_id,
-                            td::actor::ActorId<ton::adnl::Adnl> adnl, td::Promise<td::BufferSlice> promise)
+  CheckDhtServerStatusQuery(std::shared_ptr<ion::dht::DhtGlobalConfig> dht_config, ion::adnl::AdnlNodeIdShort local_id,
+                            td::actor::ActorId<ion::adnl::Adnl> adnl, td::Promise<td::BufferSlice> promise)
       : dht_config_(std::move(dht_config)), local_id_(local_id), adnl_(adnl), promise_(std::move(promise)) {
   }
 
  private:
-  std::shared_ptr<ton::dht::DhtGlobalConfig> dht_config_;
+  std::shared_ptr<ion::dht::DhtGlobalConfig> dht_config_;
 
   std::vector<bool> result_;
   td::uint32 pending_;
 
-  ton::adnl::AdnlNodeIdShort local_id_;
-  td::actor::ActorId<ton::adnl::Adnl> adnl_;
+  ion::adnl::AdnlNodeIdShort local_id_;
+  td::actor::ActorId<ion::adnl::Adnl> adnl_;
   td::Promise<td::BufferSlice> promise_;
 };
 
-#if TON_USE_JEMALLOC
+#if ION_USE_JEMALLOC
 class JemallocStatsWriter : public td::actor::Actor {
  public:
   void start_up() override {
@@ -1319,7 +1319,7 @@ class JemallocStatsWriter : public td::actor::Actor {
       LOG(WARNING) << "Jemalloc stats error : " << r_stats.move_as_error();
     } else {
       auto s = r_stats.move_as_ok();
-      LOG(WARNING) << "JEMALLOC_STATS : [ timestamp=" << (ton::UnixTime)td::Clocks::system()
+      LOG(WARNING) << "JEMALLOC_STATS : [ timestamp=" << (ion::UnixTime)td::Clocks::system()
                    << " allocated=" << s.allocated << " active=" << s.active << " metadata=" << s.metadata
                    << " resident=" << s.resident << " ]";
     }
@@ -1369,7 +1369,7 @@ void ValidatorEngine::schedule_shutdown(double at) {
     LOG(DEBUG) << "Scheduled shutdown is in past (" << at << ")";
   } else {
     LOG(INFO) << "Schedule shutdown for " << at << " (in " << ts.in() << "s)";
-    ton::delay_action(
+    ion::delay_action(
         []() {
           LOG(WARNING) << "Shutting down as scheduled";
           std::_Exit(0);
@@ -1379,7 +1379,7 @@ void ValidatorEngine::schedule_shutdown(double at) {
 }
 void ValidatorEngine::start_up() {
   alarm_timestamp() = td::Timestamp::in(1.0 + td::Random::fast(0, 100) * 0.01);
-#if TON_USE_JEMALLOC
+#if ION_USE_JEMALLOC
   td::actor::create_actor<JemallocStatsWriter>("mem-stat").release();
 #endif
 }
@@ -1390,12 +1390,12 @@ void ValidatorEngine::alarm() {
   if (started_) {
     if (!validator_manager_.empty()) {
       auto P = td::PromiseCreator::lambda(
-          [SelfId = actor_id(this)](td::Result<td::Ref<ton::validator::MasterchainState>> R) {
+          [SelfId = actor_id(this)](td::Result<td::Ref<ion::validator::MasterchainState>> R) {
             if (R.is_ok()) {
               td::actor::send_closure(SelfId, &ValidatorEngine::got_state, R.move_as_ok());
             }
           });
-      td::actor::send_closure(validator_manager_, &ton::validator::ValidatorManagerInterface::get_top_masterchain_state,
+      td::actor::send_closure(validator_manager_, &ion::validator::ValidatorManagerInterface::get_top_masterchain_state,
                               std::move(P));
     }
     if (state_.not_null()) {
@@ -1407,14 +1407,14 @@ void ValidatorEngine::alarm() {
       auto cur_t = config->get_validator_set_start_stop(0);
       CHECK(cur_t.first > 0);
 
-      std::set<ton::PublicKeyHash> to_del;
+      std::set<ion::PublicKeyHash> to_del;
       for (auto &val : config_.validators) {
         bool is_validator = false;
         if (validator_set_next_.not_null() &&
-            validator_set_next_->is_validator(ton::NodeIdShort{val.first.bits256_value()})) {
+            validator_set_next_->is_validator(ion::NodeIdShort{val.first.bits256_value()})) {
           is_validator = true;
         }
-        if (validator_set_.not_null() && validator_set_->is_validator(ton::NodeIdShort{val.first.bits256_value()})) {
+        if (validator_set_.not_null() && validator_set_->is_validator(ion::NodeIdShort{val.first.bits256_value()})) {
           is_validator = true;
         }
         if (!is_validator && val.second.election_date < cur_t.first && cur_t.first + 600 < state_->get_unix_time()) {
@@ -1425,18 +1425,18 @@ void ValidatorEngine::alarm() {
       for (auto &x : to_del) {
         config_.config_del_validator_permanent_key(x);
         if (!validator_manager_.empty()) {
-          td::actor::send_closure(validator_manager_, &ton::validator::ValidatorManagerInterface::del_permanent_key, x,
+          td::actor::send_closure(validator_manager_, &ion::validator::ValidatorManagerInterface::del_permanent_key, x,
                                   [](td::Unit) {});
         }
         if (!full_node_.empty()) {
-          td::actor::send_closure(full_node_, &ton::validator::fullnode::FullNode::del_permanent_key, x,
+          td::actor::send_closure(full_node_, &ion::validator::fullnode::FullNode::del_permanent_key, x,
                                   [](td::Unit) {});
         }
         need_write = true;
       }
 
       {
-        std::set<ton::adnl::AdnlNodeIdShort> fs_to_del;
+        std::set<ion::adnl::AdnlNodeIdShort> fs_to_del;
         for (auto &x : config_.fast_sync_member_certificates) {
           if (x.second.is_expired()) {
             fs_to_del.insert(x.first);
@@ -1457,7 +1457,7 @@ void ValidatorEngine::alarm() {
         if (!fs_to_del.empty()) {
           need_write = true;
           std::erase_if(config_.fast_sync_member_certificates,
-                        [&](const std::pair<ton::adnl::AdnlNodeIdShort, ton::overlay::OverlayMemberCertificate> &e) {
+                        [&](const std::pair<ion::adnl::AdnlNodeIdShort, ion::overlay::OverlayMemberCertificate> &e) {
                           return fs_to_del.contains(e.first);
                         });
         }
@@ -1480,13 +1480,13 @@ void ValidatorEngine::alarm() {
           R.ensure();
           td::actor::send_closure(SelfId, &ValidatorEngine::deleted_key, x);
         });
-        td::actor::send_closure(keyring_, &ton::keyring::Keyring::del_key, x, std::move(P));
+        td::actor::send_closure(keyring_, &ion::keyring::Keyring::del_key, x, std::move(P));
       }
     }
   }
 }
 
-void ValidatorEngine::deleted_key(ton::PublicKeyHash x) {
+void ValidatorEngine::deleted_key(ion::PublicKeyHash x) {
   CHECK(running_gc_.count(x) == 1);
   running_gc_.erase(x);
   auto R = config_.config_del_gc(x);
@@ -1496,7 +1496,7 @@ void ValidatorEngine::deleted_key(ton::PublicKeyHash x) {
   }
 }
 
-void ValidatorEngine::got_state(td::Ref<ton::validator::MasterchainState> state) {
+void ValidatorEngine::got_state(td::Ref<ion::validator::MasterchainState> state) {
   if (state_.not_null() && state_->get_block_id() == state->get_block_id()) {
     return;
   }
@@ -1510,57 +1510,57 @@ td::Status ValidatorEngine::load_global_config() {
   TRY_RESULT_PREFIX(conf_data, td::read_file(global_config_), "failed to read: ");
   TRY_RESULT_PREFIX(conf_json, td::json_decode(conf_data.as_slice()), "failed to parse json: ");
 
-  ton::ton_api::config_global conf;
-  TRY_STATUS_PREFIX(ton::ton_api::from_json(conf, conf_json.get_object()), "json does not fit TL scheme: ");
+  ion::ton_api::config_global conf;
+  TRY_STATUS_PREFIX(ion::ton_api::from_json(conf, conf_json.get_object()), "json does not fit TL scheme: ");
 
   // TODO
   // add adnl static nodes
   if (conf.adnl_) {
     if (conf.adnl_->static_nodes_) {
-      TRY_RESULT_PREFIX_ASSIGN(adnl_static_nodes_, ton::adnl::AdnlNodesList::create(conf.adnl_->static_nodes_),
+      TRY_RESULT_PREFIX_ASSIGN(adnl_static_nodes_, ion::adnl::AdnlNodesList::create(conf.adnl_->static_nodes_),
                                "bad static adnl nodes: ");
     }
   }
   if (!conf.dht_) {
-    return td::Status::Error(ton::ErrorCode::error, "does not contain [dht] section");
+    return td::Status::Error(ion::ErrorCode::error, "does not contain [dht] section");
   }
 
-  TRY_RESULT_PREFIX(dht, ton::dht::Dht::create_global_config(std::move(conf.dht_)), "bad [dht] section: ");
+  TRY_RESULT_PREFIX(dht, ion::dht::Dht::create_global_config(std::move(conf.dht_)), "bad [dht] section: ");
   dht_config_ = std::move(dht);
 
   if (!conf.validator_) {
-    return td::Status::Error(ton::ErrorCode::error, "does not contain [validator] section");
+    return td::Status::Error(ion::ErrorCode::error, "does not contain [validator] section");
   }
 
   if (!conf.validator_->zero_state_) {
-    return td::Status::Error(ton::ErrorCode::error, "[validator] section does not contain [zero_state]");
+    return td::Status::Error(ion::ErrorCode::error, "[validator] section does not contain [zero_state]");
   }
 
-  auto zero_state = ton::create_block_id(conf.validator_->zero_state_);
-  if (zero_state.id.workchain != ton::masterchainId || zero_state.id.shard != ton::shardIdAll ||
+  auto zero_state = ion::create_block_id(conf.validator_->zero_state_);
+  if (zero_state.id.workchain != ion::masterchainId || zero_state.id.shard != ion::shardIdAll ||
       zero_state.id.seqno != 0) {
-    return td::Status::Error(ton::ErrorCode::error, "[validator] section contains invalid [zero_state]");
+    return td::Status::Error(ion::ErrorCode::error, "[validator] section contains invalid [zero_state]");
   }
   if (zero_state.root_hash.is_zero() || zero_state.file_hash.is_zero()) {
-    return td::Status::Error(ton::ErrorCode::error, "[validator] section contains incomplete [zero_state]");
+    return td::Status::Error(ion::ErrorCode::error, "[validator] section contains incomplete [zero_state]");
   }
 
-  ton::BlockIdExt init_block;
+  ion::BlockIdExt init_block;
   if (!conf.validator_->init_block_) {
     LOG(INFO) << "no init block in config. using zero state";
     init_block = zero_state;
   } else {
-    init_block = ton::create_block_id(conf.validator_->init_block_);
+    init_block = ion::create_block_id(conf.validator_->init_block_);
     LOG(INFO) << "found init block " << init_block;
-    if (init_block.id.workchain != ton::masterchainId || init_block.id.shard != ton::shardIdAll) {
-      return td::Status::Error(ton::ErrorCode::error, "[validator] section contains invalid [init_block]");
+    if (init_block.id.workchain != ion::masterchainId || init_block.id.shard != ion::shardIdAll) {
+      return td::Status::Error(ion::ErrorCode::error, "[validator] section contains invalid [init_block]");
     }
     if (init_block.root_hash.is_zero() || init_block.file_hash.is_zero()) {
-      return td::Status::Error(ton::ErrorCode::error, "[validator] section contains incomplete [init_block]");
+      return td::Status::Error(ion::ErrorCode::error, "[validator] section contains incomplete [init_block]");
     }
   }
 
-  validator_options_ = ton::validator::ValidatorManagerOptions::create(zero_state, init_block);
+  validator_options_ = ion::validator::ValidatorManagerOptions::create(zero_state, init_block);
   if (state_ttl_ != 0) {
     validator_options_.write().set_state_ttl(state_ttl_);
   }
@@ -1619,15 +1619,15 @@ td::Status ValidatorEngine::load_global_config() {
   validator_options_.write().set_permanent_celldb(permanent_celldb_);
   validator_options_.write().set_initial_sync_disabled(skip_key_sync_);
 
-  std::vector<ton::BlockIdExt> h;
+  std::vector<ion::BlockIdExt> h;
   for (auto &x : conf.validator_->hardforks_) {
-    auto b = ton::create_block_id(x);
+    auto b = ion::create_block_id(x);
     if (!b.is_masterchain()) {
-      return td::Status::Error(ton::ErrorCode::error,
+      return td::Status::Error(ion::ErrorCode::error,
                                "[validator/hardforks] section contains not masterchain block id");
     }
     if (!b.is_valid_full()) {
-      return td::Status::Error(ton::ErrorCode::error, "[validator/hardforks] section contains invalid block_id");
+      return td::Status::Error(ion::ErrorCode::error, "[validator/hardforks] section contains invalid block_id");
     }
     for (auto &y : h) {
       if (y.is_valid() && y.seqno() >= b.seqno()) {
@@ -1652,11 +1652,11 @@ td::Status ValidatorEngine::load_global_config() {
 void ValidatorEngine::set_shard_check_function() {
   if (!not_all_shards_) {
     validator_options_.write().set_shard_check_function(
-        [sync_shards_upto = sync_shards_upto_](ton::ShardIdFull shard, ton::BlockSeqno mc_seqno) -> bool {
+        [sync_shards_upto = sync_shards_upto_](ion::ShardIdFull shard, ion::BlockSeqno mc_seqno) -> bool {
           return shard.is_masterchain() || !sync_shards_upto || mc_seqno <= sync_shards_upto.value();
         });
   } else {
-    std::vector<ton::ShardIdFull> shards = {ton::ShardIdFull(ton::masterchainId)};
+    std::vector<ion::ShardIdFull> shards = {ion::ShardIdFull(ion::masterchainId)};
     for (const auto &[_, collator_shards] : config_.collators) {
       for (const auto &shard : collator_shards) {
         shards.push_back(shard);
@@ -1668,8 +1668,8 @@ void ValidatorEngine::set_shard_check_function() {
     std::sort(shards.begin(), shards.end());
     shards.erase(std::unique(shards.begin(), shards.end()), shards.end());
     validator_options_.write().set_shard_check_function(
-        [shards = std::move(shards), sync_shards_upto = sync_shards_upto_](ton::ShardIdFull shard,
-                                                                           ton::BlockSeqno mc_seqno) -> bool {
+        [shards = std::move(shards), sync_shards_upto = sync_shards_upto_](ion::ShardIdFull shard,
+                                                                           ion::BlockSeqno mc_seqno) -> bool {
           if (!shard.is_masterchain() && sync_shards_upto && mc_seqno > sync_shards_upto.value()) {
             return false;
           }
@@ -1696,14 +1696,14 @@ void ValidatorEngine::load_collators_list() {
     return;
   }
   auto json = json_R.move_as_ok();
-  collators_list_ = ton::create_tl_object<ton::ton_api::engine_validator_collatorsList>();
-  auto S = ton::ton_api::from_json(*collators_list_, json.get_object());
+  collators_list_ = ion::create_tl_object<ion::ton_api::engine_validator_collatorsList>();
+  auto S = ion::ton_api::from_json(*collators_list_, json.get_object());
   if (S.is_error()) {
     LOG(ERROR) << "Failed to parse collators list: " << S;
     collators_list_ = {};
     return;
   }
-  td::Ref<ton::validator::CollatorsList> list{true};
+  td::Ref<ion::validator::CollatorsList> list{true};
   S = list.write().unpack(*collators_list_);
   if (S.is_ok()) {
     validator_options_.write().set_collators_list(std::move(list));
@@ -1726,14 +1726,14 @@ void ValidatorEngine::load_shard_block_verifier_config() {
     return;
   }
   auto json = json_R.move_as_ok();
-  shard_block_verifier_config_ = ton::create_tl_object<ton::ton_api::engine_validator_shardBlockVerifierConfig>();
-  auto S = ton::ton_api::from_json(*shard_block_verifier_config_, json.get_object());
+  shard_block_verifier_config_ = ion::create_tl_object<ion::ton_api::engine_validator_shardBlockVerifierConfig>();
+  auto S = ion::ton_api::from_json(*shard_block_verifier_config_, json.get_object());
   if (S.is_error()) {
     LOG(ERROR) << "Failed to parse shard block verifier config: " << S;
     shard_block_verifier_config_ = {};
     return;
   }
-  td::Ref<ton::validator::ShardBlockVerifierConfig> config{true};
+  td::Ref<ion::validator::ShardBlockVerifierConfig> config{true};
   S = config.write().unpack(*shard_block_verifier_config_);
   if (S.is_ok()) {
     validator_options_.write().set_shard_block_verifier_config(std::move(config));
@@ -1765,26 +1765,26 @@ void ValidatorEngine::load_empty_local_config(td::Promise<td::Unit> promise) {
   }
 
   {
-    auto pk = ton::PrivateKey{ton::privkeys::Ed25519::random()};
+    auto pk = ion::PrivateKey{ion::privkeys::Ed25519::random()};
     keys_.emplace(pk.compute_short_id(), pk.compute_public_key());
     auto id = pk.compute_short_id();
-    td::actor::send_closure(keyring_, &ton::keyring::Keyring::add_key, std::move(pk), false, ig.get_promise());
+    td::actor::send_closure(keyring_, &ion::keyring::Keyring::add_key, std::move(pk), false, ig.get_promise());
     config_.config_add_adnl_addr(id, 0).ensure();
     config_.config_add_dht_node(id).ensure();
   }
 
   {
-    auto adnl_pk = ton::PrivateKey{ton::privkeys::Ed25519::random()};
+    auto adnl_pk = ion::PrivateKey{ion::privkeys::Ed25519::random()};
     keys_.emplace(adnl_pk.compute_short_id(), adnl_pk.compute_public_key());
     auto adnl_short_id = adnl_pk.compute_short_id();
-    td::actor::send_closure(keyring_, &ton::keyring::Keyring::add_key, std::move(adnl_pk), false, ig.get_promise());
+    td::actor::send_closure(keyring_, &ion::keyring::Keyring::add_key, std::move(adnl_pk), false, ig.get_promise());
     config_.config_add_adnl_addr(adnl_short_id, 1).ensure();
     config_.config_add_full_node_adnl_id(adnl_short_id).ensure();
   }
 }
 
 void ValidatorEngine::load_local_config(td::Promise<td::Unit> promise) {
-  for (ton::ShardIdFull shard : add_shard_cmds_) {
+  for (ion::ShardIdFull shard : add_shard_cmds_) {
     auto R = config_.config_add_shard(shard);
     if (R.is_error()) {
       LOG(WARNING) << "Cannot add shard " << shard.to_str() << " : " << R.move_as_error();
@@ -1809,8 +1809,8 @@ void ValidatorEngine::load_local_config(td::Promise<td::Unit> promise) {
   }
   auto conf_json = conf_json_R.move_as_ok();
 
-  ton::ton_api::config_local conf;
-  auto S = ton::ton_api::from_json(conf, conf_json.get_object());
+  ion::ton_api::config_local conf;
+  auto S = ion::ton_api::from_json(conf, conf_json.get_object());
   if (S.is_error()) {
     promise.set_error(S.move_as_error_prefix("json does not fit TL scheme"));
     return;
@@ -1837,34 +1837,34 @@ void ValidatorEngine::load_local_config(td::Promise<td::Unit> promise) {
   }
 
   for (auto &local_id : conf.local_ids_) {
-    ton::PrivateKey pk{local_id->id_};
+    ion::PrivateKey pk{local_id->id_};
     keys_.emplace(pk.compute_short_id(), pk.compute_public_key());
-    td::actor::send_closure(keyring_, &ton::keyring::Keyring::add_key, std::move(pk), false, ig.get_promise());
+    td::actor::send_closure(keyring_, &ion::keyring::Keyring::add_key, std::move(pk), false, ig.get_promise());
   }
 
   td::uint32 max_time = 2000000000;
 
   if (conf.dht_.size() > 0) {
     for (auto &d : conf.dht_) {
-      ton::ton_api::downcast_call(*d.get(), td::overloaded(
-                                                [&](ton::ton_api::dht_config_local &obj) {
-                                                  auto node_id = ton::adnl::AdnlNodeIdShort{obj.id_->id_};
+      ion::ton_api::downcast_call(*d.get(), td::overloaded(
+                                                [&](ion::ton_api::dht_config_local &obj) {
+                                                  auto node_id = ion::adnl::AdnlNodeIdShort{obj.id_->id_};
                                                   auto it = keys_.find(node_id.pubkey_hash());
                                                   if (it == keys_.end()) {
                                                     ig.get_promise().set_error(td::Status::Error(
-                                                        ton::ErrorCode::error, "cannot find private key for dht"));
+                                                        ion::ErrorCode::error, "cannot find private key for dht"));
                                                     return;
                                                   }
 
                                                   config_.config_add_adnl_addr(node_id.pubkey_hash(), 0).ensure();
                                                   config_.config_add_dht_node(node_id.pubkey_hash()).ensure();
                                                 },
-                                                [&](ton::ton_api::dht_config_random_local &obj) {
+                                                [&](ion::ton_api::dht_config_random_local &obj) {
                                                   for (td::int32 i = 0; i < obj.cnt_; i++) {
-                                                    auto pk = ton::PrivateKey{ton::privkeys::Ed25519::random()};
+                                                    auto pk = ion::PrivateKey{ion::privkeys::Ed25519::random()};
                                                     keys_.emplace(pk.compute_short_id(), pk.compute_public_key());
                                                     auto id = pk.compute_short_id();
-                                                    td::actor::send_closure(keyring_, &ton::keyring::Keyring::add_key,
+                                                    td::actor::send_closure(keyring_, &ion::keyring::Keyring::add_key,
                                                                             std::move(pk), false, ig.get_promise());
                                                     config_.config_add_adnl_addr(id, 0).ensure();
                                                     config_.config_add_dht_node(id).ensure();
@@ -1872,24 +1872,24 @@ void ValidatorEngine::load_local_config(td::Promise<td::Unit> promise) {
                                                 }));
     }
   } else {
-    auto pk = ton::PrivateKey{ton::privkeys::Ed25519::random()};
+    auto pk = ion::PrivateKey{ion::privkeys::Ed25519::random()};
     keys_.emplace(pk.compute_short_id(), pk.compute_public_key());
     auto id = pk.compute_short_id();
-    td::actor::send_closure(keyring_, &ton::keyring::Keyring::add_key, std::move(pk), false, ig.get_promise());
+    td::actor::send_closure(keyring_, &ion::keyring::Keyring::add_key, std::move(pk), false, ig.get_promise());
     config_.config_add_adnl_addr(id, 0).ensure();
     config_.config_add_dht_node(id).ensure();
   }
 
   if (conf.validators_.size() > 0) {
     for (auto &val : conf.validators_) {
-      ton::ton_api::downcast_call(
+      ion::ton_api::downcast_call(
           *val.get(), td::overloaded(
-                          [&](ton::ton_api::validator_config_local &obj) {
-                            auto id = ton::PublicKeyHash{obj.id_->id_};
+                          [&](ion::ton_api::validator_config_local &obj) {
+                            auto id = ion::PublicKeyHash{obj.id_->id_};
                             auto it = keys_.find(id);
                             if (it == keys_.end()) {
                               ig.get_promise().set_error(
-                                  td::Status::Error(ton::ErrorCode::error, "cannot find private key for dht"));
+                                  td::Status::Error(ion::ErrorCode::error, "cannot find private key for dht"));
                               return;
                             }
 
@@ -1898,11 +1898,11 @@ void ValidatorEngine::load_local_config(td::Promise<td::Unit> promise) {
                             config_.config_add_validator_temp_key(id, id, max_time).ensure();
                             config_.config_add_validator_adnl_id(id, id, max_time).ensure();
                           },
-                          [&](ton::ton_api::validator_config_random_local &obj) {
-                            auto pk = ton::PrivateKey{ton::privkeys::Ed25519::random()};
+                          [&](ion::ton_api::validator_config_random_local &obj) {
+                            auto pk = ion::PrivateKey{ion::privkeys::Ed25519::random()};
                             keys_.emplace(pk.compute_short_id(), pk.compute_public_key());
                             auto id = pk.compute_short_id();
-                            td::actor::send_closure(keyring_, &ton::keyring::Keyring::add_key, std::move(pk), false,
+                            td::actor::send_closure(keyring_, &ion::keyring::Keyring::add_key, std::move(pk), false,
                                                     ig.get_promise());
 
                             config_.config_add_adnl_addr(id, 2).ensure();
@@ -1916,41 +1916,41 @@ void ValidatorEngine::load_local_config(td::Promise<td::Unit> promise) {
   }
 
   {
-    auto adnl_pk = ton::PrivateKey{ton::privkeys::Ed25519::random()};
+    auto adnl_pk = ion::PrivateKey{ion::privkeys::Ed25519::random()};
     keys_.emplace(adnl_pk.compute_short_id(), adnl_pk.compute_public_key());
     auto adnl_short_id = adnl_pk.compute_short_id();
-    td::actor::send_closure(keyring_, &ton::keyring::Keyring::add_key, std::move(adnl_pk), false, ig.get_promise());
+    td::actor::send_closure(keyring_, &ion::keyring::Keyring::add_key, std::move(adnl_pk), false, ig.get_promise());
     config_.config_add_adnl_addr(adnl_short_id, 1).ensure();
     config_.config_add_full_node_adnl_id(adnl_short_id).ensure();
   }
 
   for (auto &ls : conf.liteservers_) {
-    ton::ton_api::downcast_call(*ls.get(), td::overloaded(
-                                               [&](ton::ton_api::liteserver_config_local &cfg) {
-                                                 ton::PrivateKey pk{cfg.id_};
+    ion::ton_api::downcast_call(*ls.get(), td::overloaded(
+                                               [&](ion::ton_api::liteserver_config_local &cfg) {
+                                                 ion::PrivateKey pk{cfg.id_};
                                                  keys_.emplace(pk.compute_short_id(), pk.compute_public_key());
                                                  auto short_id = pk.compute_short_id();
-                                                 td::actor::send_closure(keyring_, &ton::keyring::Keyring::add_key,
+                                                 td::actor::send_closure(keyring_, &ion::keyring::Keyring::add_key,
                                                                          std::move(pk), false, ig.get_promise());
                                                  config_.config_add_lite_server(short_id, cfg.port_).ensure();
                                                },
-                                               [&](ton::ton_api::liteserver_config_random_local &cfg) {
-                                                 auto pk = ton::PrivateKey{ton::privkeys::Ed25519::random()};
+                                               [&](ion::ton_api::liteserver_config_random_local &cfg) {
+                                                 auto pk = ion::PrivateKey{ion::privkeys::Ed25519::random()};
                                                  auto short_id = pk.compute_short_id();
-                                                 td::actor::send_closure(keyring_, &ton::keyring::Keyring::add_key,
+                                                 td::actor::send_closure(keyring_, &ion::keyring::Keyring::add_key,
                                                                          std::move(pk), false, ig.get_promise());
                                                  config_.config_add_lite_server(short_id, cfg.port_).ensure();
                                                }));
   }
 
   for (auto &ci : conf.control_) {
-    ton::PrivateKey pk{ci->priv_};
+    ion::PrivateKey pk{ci->priv_};
     keys_.emplace(pk.compute_short_id(), pk.compute_public_key());
     auto short_id = pk.compute_short_id();
-    td::actor::send_closure(keyring_, &ton::keyring::Keyring::add_key, std::move(pk), false, ig.get_promise());
+    td::actor::send_closure(keyring_, &ion::keyring::Keyring::add_key, std::move(pk), false, ig.get_promise());
 
     config_.config_add_control_interface(short_id, ci->port_).ensure();
-    config_.config_add_control_process(short_id, ci->port_, ton::PublicKeyHash{ci->pub_}, 0x7fffffff).ensure();
+    config_.config_add_control_process(short_id, ci->port_, ion::PublicKeyHash{ci->pub_}, 0x7fffffff).ensure();
   }
 }
 
@@ -1990,8 +1990,8 @@ void ValidatorEngine::load_config(td::Promise<td::Unit> promise) {
   }
   auto conf_json = conf_json_R.move_as_ok();
 
-  ton::ton_api::engine_validator_config conf;
-  auto S = ton::ton_api::from_json(conf, conf_json.get_object());
+  ion::ton_api::engine_validator_config conf;
+  auto S = ion::ton_api::from_json(conf, conf_json.get_object());
   if (S.is_error()) {
     promise.set_error(S.move_as_error_prefix("json does not fit TL scheme"));
     return;
@@ -2004,10 +2004,10 @@ void ValidatorEngine::load_config(td::Promise<td::Unit> promise) {
   ig.add_promise(std::move(promise));
 
   for (auto &key : config_.keys_refcnt) {
-    td::actor::send_closure(keyring_, &ton::keyring::Keyring::add_key_short, key.first, get_key_promise(ig));
+    td::actor::send_closure(keyring_, &ion::keyring::Keyring::add_key_short, key.first, get_key_promise(ig));
   }
 
-  for (ton::ShardIdFull shard : add_shard_cmds_) {
+  for (ion::ShardIdFull shard : add_shard_cmds_) {
     auto R = config_.config_add_shard(shard);
     if (R.is_error()) {
       LOG(WARNING) << "Cannot add shard " << shard.to_str() << " : " << R.move_as_error();
@@ -2035,9 +2035,9 @@ void ValidatorEngine::write_config(td::Promise<td::Unit> promise) {
   promise.set_value(td::Unit());
 }
 
-td::Promise<ton::PublicKey> ValidatorEngine::get_key_promise(td::MultiPromise::InitGuard &ig) {
+td::Promise<ion::PublicKey> ValidatorEngine::get_key_promise(td::MultiPromise::InitGuard &ig) {
   auto P = td::PromiseCreator::lambda(
-      [SelfId = actor_id(this), promise = ig.get_promise()](td::Result<ton::PublicKey> R) mutable {
+      [SelfId = actor_id(this), promise = ig.get_promise()](td::Result<ion::PublicKey> R) mutable {
         if (R.is_error()) {
           promise.set_error(R.move_as_error());
         } else {
@@ -2048,7 +2048,7 @@ td::Promise<ton::PublicKey> ValidatorEngine::get_key_promise(td::MultiPromise::I
   return std::move(P);
 }
 
-void ValidatorEngine::got_key(ton::PublicKey key) {
+void ValidatorEngine::got_key(ion::PublicKey key) {
   keys_[key.compute_short_id()] = key;
 }
 
@@ -2061,9 +2061,9 @@ void ValidatorEngine::start() {
 }
 
 void ValidatorEngine::start_adnl() {
-  adnl_network_manager_ = ton::adnl::AdnlNetworkManager::create(config_.out_port);
-  adnl_ = ton::adnl::Adnl::create(db_root_, keyring_.get());
-  td::actor::send_closure(adnl_, &ton::adnl::Adnl::register_network_manager, adnl_network_manager_.get());
+  adnl_network_manager_ = ion::adnl::AdnlNetworkManager::create(config_.out_port);
+  adnl_ = ion::adnl::Adnl::create(db_root_, keyring_.get());
+  td::actor::send_closure(adnl_, &ion::adnl::Adnl::register_network_manager, adnl_network_manager_.get());
 
   for (auto &addr : config_.addrs) {
     add_addr(addr.first, addr.second);
@@ -2072,12 +2072,12 @@ void ValidatorEngine::start_adnl() {
     add_adnl(adnl.first, adnl.second);
   }
 
-  td::actor::send_closure(adnl_, &ton::adnl::Adnl::add_static_nodes_from_config, std::move(adnl_static_nodes_));
+  td::actor::send_closure(adnl_, &ion::adnl::Adnl::add_static_nodes_from_config, std::move(adnl_static_nodes_));
   started_adnl();
 }
 
 void ValidatorEngine::add_addr(const Config::Addr &addr, const Config::AddrCats &cats) {
-  ton::adnl::AdnlCategoryMask cat_mask;
+  ion::adnl::AdnlCategoryMask cat_mask;
   for (auto cat : cats.cats) {
     cat_mask[cat] = true;
   }
@@ -2085,10 +2085,10 @@ void ValidatorEngine::add_addr(const Config::Addr &addr, const Config::AddrCats 
     cat_mask[cat] = true;
   }
   if (!cats.proxy) {
-    td::actor::send_closure(adnl_network_manager_, &ton::adnl::AdnlNetworkManager::add_self_addr, addr.addr,
+    td::actor::send_closure(adnl_network_manager_, &ion::adnl::AdnlNetworkManager::add_self_addr, addr.addr,
                             std::move(cat_mask), cats.cats.size() ? 0 : 1);
   } else {
-    td::actor::send_closure(adnl_network_manager_, &ton::adnl::AdnlNetworkManager::add_proxy_addr, cats.in_addr,
+    td::actor::send_closure(adnl_network_manager_, &ion::adnl::AdnlNetworkManager::add_proxy_addr, cats.in_addr,
                             static_cast<td::uint16>(addr.addr.get_port()), cats.proxy, std::move(cat_mask),
                             cats.cats.size() ? 0 : 1);
   }
@@ -2096,32 +2096,32 @@ void ValidatorEngine::add_addr(const Config::Addr &addr, const Config::AddrCats 
   td::uint32 ts = static_cast<td::uint32>(td::Clocks::system());
 
   for (auto cat : cats.cats) {
-    ton::adnl::AdnlAddress x = ton::adnl::AdnlAddressImpl::create(
-        ton::create_tl_object<ton::ton_api::adnl_address_udp>(cats.in_addr.get_ipv4(), cats.in_addr.get_port()));
+    ion::adnl::AdnlAddress x = ion::adnl::AdnlAddressImpl::create(
+        ion::create_tl_object<ion::ton_api::adnl_address_udp>(cats.in_addr.get_ipv4(), cats.in_addr.get_port()));
     addr_lists_[cat].add_addr(std::move(x));
     addr_lists_[cat].set_version(ts);
-    addr_lists_[cat].set_reinit_date(ton::adnl::Adnl::adnl_start_time());
+    addr_lists_[cat].set_reinit_date(ion::adnl::Adnl::adnl_start_time());
   }
   for (auto cat : cats.priority_cats) {
-    ton::adnl::AdnlAddress x = ton::adnl::AdnlAddressImpl::create(
-        ton::create_tl_object<ton::ton_api::adnl_address_udp>(cats.in_addr.get_ipv4(), cats.in_addr.get_port()));
+    ion::adnl::AdnlAddress x = ion::adnl::AdnlAddressImpl::create(
+        ion::create_tl_object<ion::ton_api::adnl_address_udp>(cats.in_addr.get_ipv4(), cats.in_addr.get_port()));
     prio_addr_lists_[cat].add_addr(std::move(x));
     prio_addr_lists_[cat].set_version(ts);
-    prio_addr_lists_[cat].set_reinit_date(ton::adnl::Adnl::adnl_start_time());
+    prio_addr_lists_[cat].set_reinit_date(ion::adnl::Adnl::adnl_start_time());
   }
 }
 
-void ValidatorEngine::add_adnl(ton::PublicKeyHash id, AdnlCategory cat) {
+void ValidatorEngine::add_adnl(ion::PublicKeyHash id, AdnlCategory cat) {
   CHECK(keys_.count(id) > 0);
-  td::actor::send_closure(adnl_, &ton::adnl::Adnl::add_id, ton::adnl::AdnlNodeIdFull{keys_[id]}, addr_lists_[cat], cat);
+  td::actor::send_closure(adnl_, &ion::adnl::Adnl::add_id, ion::adnl::AdnlNodeIdFull{keys_[id]}, addr_lists_[cat], cat);
 }
 
 void ValidatorEngine::started_adnl() {
   start_dht();
 }
 
-void ValidatorEngine::add_dht(ton::PublicKeyHash id) {
-  auto D = ton::dht::Dht::create(ton::adnl::AdnlNodeIdShort{id}, db_root_, dht_config_, keyring_.get(), adnl_.get());
+void ValidatorEngine::add_dht(ion::PublicKeyHash id) {
+  auto D = ion::dht::Dht::create(ion::adnl::AdnlNodeIdShort{id}, db_root_, dht_config_, keyring_.get(), adnl_.get());
   D.ensure();
 
   dht_nodes_[id] = D.move_as_ok();
@@ -2138,7 +2138,7 @@ void ValidatorEngine::start_dht() {
   if (default_dht_node_.is_zero()) {
     LOG(ERROR) << "trying to work without DHT";
   } else {
-    td::actor::send_closure(adnl_, &ton::adnl::Adnl::register_dht_node, dht_nodes_[default_dht_node_].get());
+    td::actor::send_closure(adnl_, &ion::adnl::Adnl::register_dht_node, dht_nodes_[default_dht_node_].get());
   }
 
   started_dht();
@@ -2149,14 +2149,14 @@ void ValidatorEngine::started_dht() {
 }
 
 void ValidatorEngine::start_rldp() {
-  rldp_ = ton::rldp::Rldp::create(adnl_.get());
-  rldp2_ = ton::rldp2::Rldp::create(adnl_.get());
-  auto peer_table = td::actor::actor_dynamic_cast<ton::adnl::AdnlPeerTable>(adnl_.get());
+  rldp_ = ion::rldp::Rldp::create(adnl_.get());
+  rldp2_ = ion::rldp2::Rldp::create(adnl_.get());
+  auto peer_table = td::actor::actor_dynamic_cast<ion::adnl::AdnlPeerTable>(adnl_.get());
   CHECK(!peer_table.empty());
   CHECK(!keyring_.empty());
-  quic_ = td::actor::create_actor<ton::quic::QuicSender>("QuicSender", peer_table, keyring_.get());
-  td::actor::send_closure(rldp_, &ton::rldp::Rldp::set_default_mtu, 2048);
-  td::actor::send_closure(rldp2_, &ton::rldp2::Rldp::set_default_mtu, 2048);
+  quic_ = td::actor::create_actor<ion::quic::QuicSender>("QuicSender", peer_table, keyring_.get());
+  td::actor::send_closure(rldp_, &ion::rldp::Rldp::set_default_mtu, 2048);
+  td::actor::send_closure(rldp2_, &ion::rldp2::Rldp::set_default_mtu, 2048);
   started_rldp();
 }
 
@@ -2166,11 +2166,11 @@ void ValidatorEngine::started_rldp() {
 
 void ValidatorEngine::start_overlays() {
   if (!default_dht_node_.is_zero()) {
-    ton::overlay::OverlayManagerBufferLimits buffer_limits{
+    ion::overlay::OverlayManagerBufferLimits buffer_limits{
         .max_packets = 1024,
         .max_data_size = 2 << 20,
     };
-    overlay_manager_ = ton::overlay::Overlays::create(db_root_, keyring_.get(), adnl_.get(),
+    overlay_manager_ = ion::overlay::Overlays::create(db_root_, keyring_.get(), adnl_.get(),
                                                       dht_nodes_[default_dht_node_].get(), buffer_limits);
   }
   started_overlays();
@@ -2187,25 +2187,25 @@ void ValidatorEngine::start_validator() {
   load_collator_options();
 
   validator_manager_ =
-      ton::validator::ValidatorManagerFactory::create(validator_options_, db_root_, keyring_.get(), adnl_.get(),
+      ion::validator::ValidatorManagerFactory::create(validator_options_, db_root_, keyring_.get(), adnl_.get(),
                                                       rldp_.get(), rldp2_.get(), quic_.get(), overlay_manager_.get());
 
   for (auto &v : config_.validators) {
-    td::actor::send_closure(validator_manager_, &ton::validator::ValidatorManagerInterface::add_permanent_key, v.first,
+    td::actor::send_closure(validator_manager_, &ion::validator::ValidatorManagerInterface::add_permanent_key, v.first,
                             [](td::Unit) {});
 
     for (auto &t : v.second.temp_keys) {
-      td::actor::send_closure(validator_manager_, &ton::validator::ValidatorManagerInterface::add_temp_key, t.first,
+      td::actor::send_closure(validator_manager_, &ion::validator::ValidatorManagerInterface::add_temp_key, t.first,
                               [](td::Unit) {});
     }
   }
 
   if (shard_block_retainer_adnl_id_fullnode_) {
-    shard_block_retainer_adnl_id_ = ton::adnl::AdnlNodeIdShort{config_.full_node};
+    shard_block_retainer_adnl_id_ = ion::adnl::AdnlNodeIdShort{config_.full_node};
   }
   if (!shard_block_retainer_adnl_id_.is_zero()) {
     if (config_.adnl_ids.contains(shard_block_retainer_adnl_id_.pubkey_hash())) {
-      td::actor::send_closure(validator_manager_, &ton::validator::ValidatorManagerInterface::add_shard_block_retainer,
+      td::actor::send_closure(validator_manager_, &ion::validator::ValidatorManagerInterface::add_shard_block_retainer,
                               shard_block_retainer_adnl_id_);
     } else {
       LOG(ERROR) << "Cannot start shard block retainer: no adnl id " << shard_block_retainer_adnl_id_;
@@ -2221,48 +2221,48 @@ void ValidatorEngine::started_validator() {
 
 void ValidatorEngine::start_full_node() {
   if (!config_.full_node.is_zero() || !config_.full_node_slaves.empty()) {
-    full_node_id_ = ton::adnl::AdnlNodeIdShort{config_.full_node};
-    auto pk = ton::PrivateKey{ton::privkeys::Ed25519::random()};
+    full_node_id_ = ion::adnl::AdnlNodeIdShort{config_.full_node};
+    auto pk = ion::PrivateKey{ion::privkeys::Ed25519::random()};
     auto short_id = pk.compute_short_id();
-    td::actor::send_closure(keyring_, &ton::keyring::Keyring::add_key, std::move(pk), true, [](td::Unit) {});
+    td::actor::send_closure(keyring_, &ion::keyring::Keyring::add_key, std::move(pk), true, [](td::Unit) {});
     if (config_.full_node_slaves.size() > 0) {
-      std::vector<std::pair<ton::adnl::AdnlNodeIdFull, td::IPAddress>> vec;
+      std::vector<std::pair<ion::adnl::AdnlNodeIdFull, td::IPAddress>> vec;
       for (auto &x : config_.full_node_slaves) {
-        vec.emplace_back(ton::adnl::AdnlNodeIdFull{x.key}, x.addr);
+        vec.emplace_back(ion::adnl::AdnlNodeIdFull{x.key}, x.addr);
       }
-      class Cb : public ton::adnl::AdnlExtClient::Callback {
+      class Cb : public ion::adnl::AdnlExtClient::Callback {
        public:
         void on_ready() override {
         }
         void on_stop_ready() override {
         }
       };
-      full_node_client_ = ton::adnl::AdnlExtMultiClient::create(std::move(vec), std::make_unique<Cb>());
+      full_node_client_ = ion::adnl::AdnlExtMultiClient::create(std::move(vec), std::make_unique<Cb>());
     }
     auto P = td::PromiseCreator::lambda([SelfId = actor_id(this)](td::Result<td::Unit> R) {
       R.ensure();
       td::actor::send_closure(SelfId, &ValidatorEngine::started_full_node);
     });
-    ton::validator::fullnode::FullNodeOptions full_node_options = full_node_options_;
+    ion::validator::fullnode::FullNodeOptions full_node_options = full_node_options_;
     full_node_options.config_ = config_.full_node_config;
-    full_node_ = ton::validator::fullnode::FullNode::create(
+    full_node_ = ion::validator::fullnode::FullNode::create(
         short_id, full_node_id_, validator_options_->zero_block_id().file_hash, full_node_options, keyring_.get(),
         adnl_.get(), rldp_.get(), rldp2_.get(), quic_.get(),
-        default_dht_node_.is_zero() ? td::actor::ActorId<ton::dht::Dht>{} : dht_nodes_[default_dht_node_].get(),
+        default_dht_node_.is_zero() ? td::actor::ActorId<ion::dht::Dht>{} : dht_nodes_[default_dht_node_].get(),
         overlay_manager_.get(), validator_manager_.get(), full_node_client_.get(), db_root_, std::move(P));
     for (auto &v : config_.validators) {
-      td::actor::send_closure(full_node_, &ton::validator::fullnode::FullNode::add_permanent_key, v.first,
+      td::actor::send_closure(full_node_, &ion::validator::fullnode::FullNode::add_permanent_key, v.first,
                               [](td::Unit) {});
     }
     for (auto &[c, _] : config_.collators) {
-      td::actor::send_closure(full_node_, &ton::validator::fullnode::FullNode::add_collator_adnl_id, c);
+      td::actor::send_closure(full_node_, &ion::validator::fullnode::FullNode::add_collator_adnl_id, c);
     }
     for (auto &x : config_.fast_sync_member_certificates) {
-      td::actor::send_closure(full_node_, &ton::validator::fullnode::FullNode::import_fast_sync_member_certificate,
+      td::actor::send_closure(full_node_, &ion::validator::fullnode::FullNode::import_fast_sync_member_certificate,
                               x.first, x.second);
     }
     if (!validator_telemetry_filename_.empty()) {
-      td::actor::send_closure(full_node_, &ton::validator::fullnode::FullNode::set_validator_telemetry_filename,
+      td::actor::send_closure(full_node_, &ion::validator::fullnode::FullNode::set_validator_telemetry_filename,
                               validator_telemetry_filename_);
     }
     load_custom_overlays_config();
@@ -2276,12 +2276,12 @@ void ValidatorEngine::started_full_node() {
   start_lite_server();
 }
 
-void ValidatorEngine::add_lite_server(ton::PublicKeyHash id, td::uint16 port) {
-  td::actor::send_closure(adnl_, &ton::adnl::Adnl::add_id, ton::adnl::AdnlNodeIdFull{keys_[id]},
-                          ton::adnl::AdnlAddressList{}, static_cast<td::uint8>(255));
-  td::actor::send_closure(validator_manager_, &ton::validator::ValidatorManagerInterface::add_ext_server_id,
-                          ton::adnl::AdnlNodeIdShort{id});
-  td::actor::send_closure(validator_manager_, &ton::validator::ValidatorManagerInterface::add_ext_server_port, port);
+void ValidatorEngine::add_lite_server(ion::PublicKeyHash id, td::uint16 port) {
+  td::actor::send_closure(adnl_, &ion::adnl::Adnl::add_id, ion::adnl::AdnlNodeIdFull{keys_[id]},
+                          ion::adnl::AdnlAddressList{}, static_cast<td::uint8>(255));
+  td::actor::send_closure(validator_manager_, &ion::validator::ValidatorManagerInterface::add_ext_server_id,
+                          ion::adnl::AdnlNodeIdShort{id});
+  td::actor::send_closure(validator_manager_, &ion::validator::ValidatorManagerInterface::add_ext_server_port, port);
 }
 
 void ValidatorEngine::start_lite_server() {
@@ -2299,7 +2299,7 @@ void ValidatorEngine::started_lite_server() {
 void ValidatorEngine::start_collator() {
   for (auto &[id, shards] : config_.collators) {
     for (auto &shard : shards) {
-      td::actor::send_closure(validator_manager_, &ton::validator::ValidatorManagerInterface::add_collator, id, shard);
+      td::actor::send_closure(validator_manager_, &ion::validator::ValidatorManagerInterface::add_collator, id, shard);
     }
   }
 
@@ -2310,13 +2310,13 @@ void ValidatorEngine::started_collator() {
   start_control_interface();
 }
 
-void ValidatorEngine::add_control_interface(ton::PublicKeyHash id, td::uint16 port) {
-  class Callback : public ton::adnl::Adnl::Callback {
+void ValidatorEngine::add_control_interface(ion::PublicKeyHash id, td::uint16 port) {
+  class Callback : public ion::adnl::Adnl::Callback {
    public:
-    void receive_message(ton::adnl::AdnlNodeIdShort src, ton::adnl::AdnlNodeIdShort dst,
+    void receive_message(ion::adnl::AdnlNodeIdShort src, ion::adnl::AdnlNodeIdShort dst,
                          td::BufferSlice data) override {
     }
-    void receive_query(ton::adnl::AdnlNodeIdShort src, ton::adnl::AdnlNodeIdShort dst, td::BufferSlice data,
+    void receive_query(ion::adnl::AdnlNodeIdShort src, ion::adnl::AdnlNodeIdShort dst, td::BufferSlice data,
                        td::Promise<td::BufferSlice> promise) override {
       td::actor::send_closure(id_, &ValidatorEngine::process_control_query, port_, src, dst, std::move(data),
                               std::move(promise));
@@ -2330,32 +2330,32 @@ void ValidatorEngine::add_control_interface(ton::PublicKeyHash id, td::uint16 po
     td::uint16 port_;
   };
 
-  td::actor::send_closure(adnl_, &ton::adnl::Adnl::add_id, ton::adnl::AdnlNodeIdFull{keys_[id]},
-                          ton::adnl::AdnlAddressList{}, static_cast<td::uint8>(255));
-  td::actor::send_closure(adnl_, &ton::adnl::Adnl::subscribe, ton::adnl::AdnlNodeIdShort{id}, std::string(""),
+  td::actor::send_closure(adnl_, &ion::adnl::Adnl::add_id, ion::adnl::AdnlNodeIdFull{keys_[id]},
+                          ion::adnl::AdnlAddressList{}, static_cast<td::uint8>(255));
+  td::actor::send_closure(adnl_, &ion::adnl::Adnl::subscribe, ion::adnl::AdnlNodeIdShort{id}, std::string(""),
                           std::make_unique<Callback>(actor_id(this), port));
-  td::actor::send_closure(control_ext_server_, &ton::adnl::AdnlExtServer::add_local_id, ton::adnl::AdnlNodeIdShort{id});
-  td::actor::send_closure(control_ext_server_, &ton::adnl::AdnlExtServer::add_tcp_port, port);
+  td::actor::send_closure(control_ext_server_, &ion::adnl::AdnlExtServer::add_local_id, ion::adnl::AdnlNodeIdShort{id});
+  td::actor::send_closure(control_ext_server_, &ion::adnl::AdnlExtServer::add_tcp_port, port);
 }
 
-void ValidatorEngine::add_control_process(ton::PublicKeyHash id, td::uint16 port, ton::PublicKeyHash pub,
+void ValidatorEngine::add_control_process(ion::PublicKeyHash id, td::uint16 port, ion::PublicKeyHash pub,
                                           td::int32 permissions) {
   control_permissions_[CI_key{id, port, pub}] |= permissions;
 }
 
 void ValidatorEngine::start_control_interface() {
-  std::vector<ton::adnl::AdnlNodeIdShort> c_ids;
+  std::vector<ion::adnl::AdnlNodeIdShort> c_ids;
 
   std::vector<td::uint16> ports;
   auto P = td::PromiseCreator::lambda(
-      [SelfId = actor_id(this)](td::Result<td::actor::ActorOwn<ton::adnl::AdnlExtServer>> R) {
+      [SelfId = actor_id(this)](td::Result<td::actor::ActorOwn<ion::adnl::AdnlExtServer>> R) {
         R.ensure();
         td::actor::send_closure(SelfId, &ValidatorEngine::started_control_interface, R.move_as_ok());
       });
-  td::actor::send_closure(adnl_, &ton::adnl::Adnl::create_ext_server, std::move(c_ids), std::move(ports), std::move(P));
+  td::actor::send_closure(adnl_, &ion::adnl::Adnl::create_ext_server, std::move(c_ids), std::move(ports), std::move(P));
 }
 
-void ValidatorEngine::started_control_interface(td::actor::ActorOwn<ton::adnl::AdnlExtServer> control_ext_server) {
+void ValidatorEngine::started_control_interface(td::actor::ActorOwn<ion::adnl::AdnlExtServer> control_ext_server) {
   control_ext_server_ = std::move(control_ext_server);
   for (auto &s : config_.controls) {
     add_control_interface(s.second.key, static_cast<td::uint16>(s.first));
@@ -2371,8 +2371,8 @@ void ValidatorEngine::start_full_node_masters() {
   for (auto &x : config_.full_node_masters) {
     full_node_masters_.emplace(
         static_cast<td::uint16>(x.first),
-        ton::validator::fullnode::FullNodeMaster::create(
-            ton::adnl::AdnlNodeIdShort{x.second}, static_cast<td::uint16>(x.first),
+        ion::validator::fullnode::FullNodeMaster::create(
+            ion::adnl::AdnlNodeIdShort{x.second}, static_cast<td::uint16>(x.first),
             validator_options_->zero_block_id().file_hash, keyring_.get(), adnl_.get(), validator_manager_.get()));
   }
   started_full_node_masters();
@@ -2386,9 +2386,9 @@ void ValidatorEngine::started() {
   started_ = true;
 }
 
-void ValidatorEngine::try_add_adnl_node(ton::PublicKeyHash key, AdnlCategory cat, td::Promise<td::Unit> promise) {
+void ValidatorEngine::try_add_adnl_node(ion::PublicKeyHash key, AdnlCategory cat, td::Promise<td::Unit> promise) {
   if (cat > max_cat()) {
-    promise.set_error(td::Status::Error(ton::ErrorCode::protoviolation, "bad category value"));
+    promise.set_error(td::Status::Error(ion::ErrorCode::protoviolation, "bad category value"));
     return;
   }
 
@@ -2408,7 +2408,7 @@ void ValidatorEngine::try_add_adnl_node(ton::PublicKeyHash key, AdnlCategory cat
   write_config(std::move(promise));
 }
 
-void ValidatorEngine::try_add_dht_node(ton::PublicKeyHash key_hash, td::Promise<td::Unit> promise) {
+void ValidatorEngine::try_add_dht_node(ion::PublicKeyHash key_hash, td::Promise<td::Unit> promise) {
   auto R = config_.config_add_dht_node(key_hash);
   if (R.is_error()) {
     promise.set_error(R.move_as_error());
@@ -2425,7 +2425,7 @@ void ValidatorEngine::try_add_dht_node(ton::PublicKeyHash key_hash, td::Promise<
   write_config(std::move(promise));
 }
 
-void ValidatorEngine::try_add_validator_permanent_key(ton::PublicKeyHash key_hash, td::uint32 election_date,
+void ValidatorEngine::try_add_validator_permanent_key(ion::PublicKeyHash key_hash, td::uint32 election_date,
                                                       td::uint32 ttl, td::Promise<td::Unit> promise) {
   auto R = config_.config_add_validator_permanent_key(key_hash, election_date, ttl);
   if (R.is_error()) {
@@ -2443,18 +2443,18 @@ void ValidatorEngine::try_add_validator_permanent_key(ton::PublicKeyHash key_has
   ig.add_promise(std::move(promise));
 
   if (!validator_manager_.empty()) {
-    td::actor::send_closure(validator_manager_, &ton::validator::ValidatorManagerInterface::add_permanent_key, key_hash,
+    td::actor::send_closure(validator_manager_, &ion::validator::ValidatorManagerInterface::add_permanent_key, key_hash,
                             ig.get_promise());
   }
   if (!full_node_.empty()) {
-    td::actor::send_closure(full_node_, &ton::validator::fullnode::FullNode::add_permanent_key, key_hash,
+    td::actor::send_closure(full_node_, &ion::validator::fullnode::FullNode::add_permanent_key, key_hash,
                             ig.get_promise());
   }
 
   write_config(ig.get_promise());
 }
 
-void ValidatorEngine::try_add_validator_temp_key(ton::PublicKeyHash perm_key, ton::PublicKeyHash temp_key,
+void ValidatorEngine::try_add_validator_temp_key(ion::PublicKeyHash perm_key, ion::PublicKeyHash temp_key,
                                                  td::uint32 ttl, td::Promise<td::Unit> promise) {
   auto R = config_.config_add_validator_temp_key(perm_key, temp_key, ttl);
   if (R.is_error()) {
@@ -2472,13 +2472,13 @@ void ValidatorEngine::try_add_validator_temp_key(ton::PublicKeyHash perm_key, to
   ig.add_promise(std::move(promise));
 
   if (!validator_manager_.empty()) {
-    td::actor::send_closure(validator_manager_, &ton::validator::ValidatorManagerInterface::add_temp_key, temp_key,
+    td::actor::send_closure(validator_manager_, &ion::validator::ValidatorManagerInterface::add_temp_key, temp_key,
                             ig.get_promise());
   }
   write_config(ig.get_promise());
 }
 
-void ValidatorEngine::try_add_validator_adnl_addr(ton::PublicKeyHash perm_key, ton::PublicKeyHash adnl_id,
+void ValidatorEngine::try_add_validator_adnl_addr(ion::PublicKeyHash perm_key, ion::PublicKeyHash adnl_id,
                                                   td::uint32 ttl, td::Promise<td::Unit> promise) {
   auto R = config_.config_add_validator_adnl_id(perm_key, adnl_id, ttl);
   if (R.is_error()) {
@@ -2494,7 +2494,7 @@ void ValidatorEngine::try_add_validator_adnl_addr(ton::PublicKeyHash perm_key, t
   write_config(std::move(promise));
 }
 
-void ValidatorEngine::try_add_full_node_adnl_addr(ton::PublicKeyHash id, td::Promise<td::Unit> promise) {
+void ValidatorEngine::try_add_full_node_adnl_addr(ion::PublicKeyHash id, td::Promise<td::Unit> promise) {
   auto R = config_.config_add_full_node_adnl_id(id);
   if (R.is_error()) {
     promise.set_error(R.move_as_error());
@@ -2507,13 +2507,13 @@ void ValidatorEngine::try_add_full_node_adnl_addr(ton::PublicKeyHash id, td::Pro
   }
 
   if (!full_node_.empty() && id != full_node_id_.pubkey_hash()) {
-    td::actor::send_closure(adnl_.get(), &ton::adnl::Adnl::unsubscribe, full_node_id_,
-                            ton::adnl::Adnl::int_to_bytestring(ton::ton_api::tonNode_newFastSyncMemberCertificate::ID));
+    td::actor::send_closure(adnl_.get(), &ion::adnl::Adnl::unsubscribe, full_node_id_,
+                            ion::adnl::Adnl::int_to_bytestring(ion::ton_api::tonNode_newFastSyncMemberCertificate::ID));
     td::actor::send_closure(
-        adnl_.get(), &ton::adnl::Adnl::unsubscribe, full_node_id_,
-        ton::adnl::Adnl::int_to_bytestring(ton::ton_api::tonNode_requestFastSyncOverlayMemberCertificate::ID));
-    full_node_id_ = ton::adnl::AdnlNodeIdShort{id};
-    td::actor::send_closure(full_node_, &ton::validator::fullnode::FullNode::update_adnl_id, full_node_id_,
+        adnl_.get(), &ion::adnl::Adnl::unsubscribe, full_node_id_,
+        ion::adnl::Adnl::int_to_bytestring(ion::ton_api::tonNode_requestFastSyncOverlayMemberCertificate::ID));
+    full_node_id_ = ion::adnl::AdnlNodeIdShort{id};
+    td::actor::send_closure(full_node_, &ion::validator::fullnode::FullNode::update_adnl_id, full_node_id_,
                             [](td::Unit) {});
     register_fast_sync_certificate_callback();
   }
@@ -2521,7 +2521,7 @@ void ValidatorEngine::try_add_full_node_adnl_addr(ton::PublicKeyHash id, td::Pro
   write_config(std::move(promise));
 }
 
-void ValidatorEngine::try_add_liteserver(ton::PublicKeyHash id, td::int32 port, td::Promise<td::Unit> promise) {
+void ValidatorEngine::try_add_liteserver(ion::PublicKeyHash id, td::int32 port, td::Promise<td::Unit> promise) {
   auto R = config_.config_add_lite_server(id, port);
   if (R.is_error()) {
     promise.set_error(R.move_as_error());
@@ -2538,7 +2538,7 @@ void ValidatorEngine::try_add_liteserver(ton::PublicKeyHash id, td::int32 port, 
   write_config(std::move(promise));
 }
 
-void ValidatorEngine::try_add_control_interface(ton::PublicKeyHash id, td::int32 port, td::Promise<td::Unit> promise) {
+void ValidatorEngine::try_add_control_interface(ion::PublicKeyHash id, td::int32 port, td::Promise<td::Unit> promise) {
   auto R = config_.config_add_control_interface(id, port);
   if (R.is_error()) {
     promise.set_error(R.move_as_error());
@@ -2555,7 +2555,7 @@ void ValidatorEngine::try_add_control_interface(ton::PublicKeyHash id, td::int32
   write_config(std::move(promise));
 }
 
-void ValidatorEngine::try_add_control_process(ton::PublicKeyHash id, td::int32 port, ton::PublicKeyHash pub,
+void ValidatorEngine::try_add_control_process(ion::PublicKeyHash id, td::int32 port, ion::PublicKeyHash pub,
                                               td::int32 permissions, td::Promise<td::Unit> promise) {
   auto R = config_.config_add_control_process(id, port, pub, permissions);
   if (R.is_error()) {
@@ -2573,7 +2573,7 @@ void ValidatorEngine::try_add_control_process(ton::PublicKeyHash id, td::int32 p
   write_config(std::move(promise));
 }
 
-void ValidatorEngine::try_del_adnl_node(ton::PublicKeyHash pub, td::Promise<td::Unit> promise) {
+void ValidatorEngine::try_del_adnl_node(ion::PublicKeyHash pub, td::Promise<td::Unit> promise) {
   auto R = config_.config_del_adnl_addr(pub);
   if (R.is_error()) {
     promise.set_error(R.move_as_error());
@@ -2585,14 +2585,14 @@ void ValidatorEngine::try_del_adnl_node(ton::PublicKeyHash pub, td::Promise<td::
     return;
   }
 
-  td::actor::send_closure(adnl_, &ton::adnl::Adnl::del_id, ton::adnl::AdnlNodeIdShort{pub}, [](td::Unit) {});
+  td::actor::send_closure(adnl_, &ion::adnl::Adnl::del_id, ion::adnl::AdnlNodeIdShort{pub}, [](td::Unit) {});
 
   write_config(std::move(promise));
 }
 
-void ValidatorEngine::try_del_dht_node(ton::PublicKeyHash pub, td::Promise<td::Unit> promise) {
+void ValidatorEngine::try_del_dht_node(ion::PublicKeyHash pub, td::Promise<td::Unit> promise) {
   if (dht_nodes_.size() == 1 && pub == default_dht_node_) {
-    promise.set_error(td::Status::Error(ton::ErrorCode::error, "cannot remove last dht node"));
+    promise.set_error(td::Status::Error(ion::ErrorCode::error, "cannot remove last dht node"));
     return;
   }
   auto R = config_.config_del_dht_node(pub);
@@ -2610,10 +2610,10 @@ void ValidatorEngine::try_del_dht_node(ton::PublicKeyHash pub, td::Promise<td::U
     default_dht_node_ = *config_.dht_ids.begin();
     auto d = dht_nodes_[default_dht_node_].get();
     CHECK(!d.empty());
-    td::actor::send_closure(adnl_, &ton::adnl::Adnl::register_dht_node, d);
-    td::actor::send_closure(overlay_manager_, &ton::overlay::Overlays::update_dht_node, d);
+    td::actor::send_closure(adnl_, &ion::adnl::Adnl::register_dht_node, d);
+    td::actor::send_closure(overlay_manager_, &ion::overlay::Overlays::update_dht_node, d);
     if (!full_node_.empty()) {
-      td::actor::send_closure(full_node_, &ton::validator::fullnode::FullNode::update_dht_node, d);
+      td::actor::send_closure(full_node_, &ion::validator::fullnode::FullNode::update_dht_node, d);
     }
   }
   dht_nodes_.erase(pub);
@@ -2621,7 +2621,7 @@ void ValidatorEngine::try_del_dht_node(ton::PublicKeyHash pub, td::Promise<td::U
   write_config(std::move(promise));
 }
 
-void ValidatorEngine::try_del_validator_permanent_key(ton::PublicKeyHash pub, td::Promise<td::Unit> promise) {
+void ValidatorEngine::try_del_validator_permanent_key(ion::PublicKeyHash pub, td::Promise<td::Unit> promise) {
   auto R = config_.config_del_validator_permanent_key(pub);
   if (R.is_error()) {
     promise.set_error(R.move_as_error());
@@ -2634,17 +2634,17 @@ void ValidatorEngine::try_del_validator_permanent_key(ton::PublicKeyHash pub, td
   }
 
   if (!validator_manager_.empty()) {
-    td::actor::send_closure(validator_manager_, &ton::validator::ValidatorManagerInterface::del_permanent_key, pub,
+    td::actor::send_closure(validator_manager_, &ion::validator::ValidatorManagerInterface::del_permanent_key, pub,
                             [](td::Unit) {});
   }
   if (!full_node_.empty()) {
-    td::actor::send_closure(full_node_, &ton::validator::fullnode::FullNode::del_permanent_key, pub, [](td::Unit) {});
+    td::actor::send_closure(full_node_, &ion::validator::fullnode::FullNode::del_permanent_key, pub, [](td::Unit) {});
   }
 
   write_config(std::move(promise));
 }
 
-void ValidatorEngine::try_del_validator_temp_key(ton::PublicKeyHash perm, ton::PublicKeyHash temp_key,
+void ValidatorEngine::try_del_validator_temp_key(ion::PublicKeyHash perm, ion::PublicKeyHash temp_key,
                                                  td::Promise<td::Unit> promise) {
   auto R = config_.config_del_validator_temp_key(perm, temp_key);
   if (R.is_error()) {
@@ -2658,14 +2658,14 @@ void ValidatorEngine::try_del_validator_temp_key(ton::PublicKeyHash perm, ton::P
   }
 
   if (!validator_manager_.empty()) {
-    td::actor::send_closure(validator_manager_, &ton::validator::ValidatorManagerInterface::del_temp_key, temp_key,
+    td::actor::send_closure(validator_manager_, &ion::validator::ValidatorManagerInterface::del_temp_key, temp_key,
                             [](td::Unit) {});
   }
 
   write_config(std::move(promise));
 }
 
-void ValidatorEngine::try_del_validator_adnl_addr(ton::PublicKeyHash perm, ton::PublicKeyHash adnl_id,
+void ValidatorEngine::try_del_validator_adnl_addr(ion::PublicKeyHash perm, ion::PublicKeyHash adnl_id,
                                                   td::Promise<td::Unit> promise) {
   auto R = config_.config_del_validator_adnl_id(perm, adnl_id);
   if (R.is_error()) {
@@ -2733,7 +2733,7 @@ void ValidatorEngine::try_del_listening_port(td::uint32 ip, td::int32 port, std:
 }
 
 void ValidatorEngine::try_add_proxy(td::uint32 in_ip, td::int32 in_port, td::uint32 out_ip, td::int32 out_port,
-                                    std::shared_ptr<ton::adnl::AdnlProxy> proxy, std::vector<AdnlCategory> cats,
+                                    std::shared_ptr<ion::adnl::AdnlProxy> proxy, std::vector<AdnlCategory> cats,
                                     std::vector<AdnlCategory> prio_cats, td::Promise<td::Unit> promise) {
   td::IPAddress in_addr;
   in_addr.init_ipv4_port(td::IPAddress::ipv4_to_str(in_ip), static_cast<td::uint16>(in_port)).ensure();
@@ -2776,19 +2776,19 @@ void ValidatorEngine::try_del_proxy(td::uint32 ip, td::int32 port, std::vector<A
 }
 
 void ValidatorEngine::register_fast_sync_certificate_callback() {
-  class Callback : public ton::adnl::Adnl::Callback {
+  class Callback : public ion::adnl::Adnl::Callback {
    public:
     explicit Callback(td::actor::ActorId<ValidatorEngine> validator_engine)
         : validator_engine_(std::move(validator_engine)) {
     }
-    void receive_message(ton::adnl::AdnlNodeIdShort src, ton::adnl::AdnlNodeIdShort dst,
+    void receive_message(ion::adnl::AdnlNodeIdShort src, ion::adnl::AdnlNodeIdShort dst,
                          td::BufferSlice data) override {
-      auto R = ton::fetch_tl_object<ton::ton_api::tonNode_newFastSyncMemberCertificate>(std::move(data), true);
+      auto R = ion::fetch_tl_object<ion::ton_api::tonNode_newFastSyncMemberCertificate>(std::move(data), true);
       if (R.is_error()) {
         return;
       }
       auto res = R.move_as_ok();
-      auto cert = ton::overlay::OverlayMemberCertificate(res->certificate_.get());
+      auto cert = ion::overlay::OverlayMemberCertificate(res->certificate_.get());
       if (cert.empty()) {
         return;
       }
@@ -2800,51 +2800,51 @@ void ValidatorEngine::register_fast_sync_certificate_callback() {
                                 }
                               }));
     }
-    void receive_query(ton::adnl::AdnlNodeIdShort src, ton::adnl::AdnlNodeIdShort dst, td::BufferSlice data,
+    void receive_query(ion::adnl::AdnlNodeIdShort src, ion::adnl::AdnlNodeIdShort dst, td::BufferSlice data,
                        td::Promise<td::BufferSlice> promise) override {
       auto R =
-          ton::fetch_tl_object<ton::ton_api::tonNode_requestFastSyncOverlayMemberCertificate>(std::move(data), true);
+          ion::fetch_tl_object<ion::ton_api::tonNode_requestFastSyncOverlayMemberCertificate>(std::move(data), true);
       if (R.is_error()) {
         return;
       }
       auto q = R.move_as_ok();
       td::actor::send_closure(
           validator_engine_, &ValidatorEngine::process_fast_sync_overlay_certificate_request,
-          ton::PublicKeyHash{q->sign_by_}, ton::adnl::AdnlNodeIdShort{q->adnl_id_}, 0, q->slot_,
+          ion::PublicKeyHash{q->sign_by_}, ion::adnl::AdnlNodeIdShort{q->adnl_id_}, 0, q->slot_,
           (td::int32)td::Clocks::system() + 3600,
           td::PromiseCreator::lambda(
-              [promise = std::move(promise)](td::Result<ton::overlay::OverlayMemberCertificate> R) mutable {
+              [promise = std::move(promise)](td::Result<ion::overlay::OverlayMemberCertificate> R) mutable {
                 if (R.is_error()) {
                   promise.set_error(R.move_as_error());
                   return;
                 }
                 auto cert = R.move_as_ok();
-                promise.set_value(ton::serialize_tl_object(cert.tl(), true));
+                promise.set_value(ion::serialize_tl_object(cert.tl(), true));
               }));
     }
 
    private:
     td::actor::ActorId<ValidatorEngine> validator_engine_;
   };
-  td::actor::send_closure(adnl_.get(), &ton::adnl::Adnl::subscribe, full_node_id_,
-                          ton::adnl::Adnl::int_to_bytestring(ton::ton_api::tonNode_newFastSyncMemberCertificate::ID),
+  td::actor::send_closure(adnl_.get(), &ion::adnl::Adnl::subscribe, full_node_id_,
+                          ion::adnl::Adnl::int_to_bytestring(ion::ton_api::tonNode_newFastSyncMemberCertificate::ID),
                           std::make_unique<Callback>(actor_id(this)));
   td::actor::send_closure(
-      adnl_.get(), &ton::adnl::Adnl::subscribe, full_node_id_,
-      ton::adnl::Adnl::int_to_bytestring(ton::ton_api::tonNode_requestFastSyncOverlayMemberCertificate::ID),
+      adnl_.get(), &ion::adnl::Adnl::subscribe, full_node_id_,
+      ion::adnl::Adnl::int_to_bytestring(ion::ton_api::tonNode_requestFastSyncOverlayMemberCertificate::ID),
       std::make_unique<Callback>(actor_id(this)));
 }
 
-void ValidatorEngine::try_import_fast_sync_member_certificate(ton::adnl::AdnlNodeIdShort id,
-                                                              ton::overlay::OverlayMemberCertificate certificate,
+void ValidatorEngine::try_import_fast_sync_member_certificate(ion::adnl::AdnlNodeIdShort id,
+                                                              ion::overlay::OverlayMemberCertificate certificate,
                                                               td::Promise<td::Unit> promise) {
   if (!started_ || state_.is_null()) {
     return promise.set_error(td::Status::Error("not started"));
   }
   if (certificate.slot() < 0 ||
-      certificate.slot() >= ton::validator::fullnode::FullNode::MAX_FAST_SYNC_OVERLAY_CLIENTS) {
+      certificate.slot() >= ion::validator::fullnode::FullNode::MAX_FAST_SYNC_OVERLAY_CLIENTS) {
     return promise.set_error(td::Status::Error(
-        PSTRING() << "invalid slot (max " << ton::validator::fullnode::FullNode::MAX_FAST_SYNC_OVERLAY_CLIENTS
+        PSTRING() << "invalid slot (max " << ion::validator::fullnode::FullNode::MAX_FAST_SYNC_OVERLAY_CLIENTS
                   << " clients)"));
   }
   if (certificate.expire_at() < td::Clocks::system() + 60) {
@@ -2852,7 +2852,7 @@ void ValidatorEngine::try_import_fast_sync_member_certificate(ton::adnl::AdnlNod
   }
   TRY_STATUS_PROMISE_PREFIX(promise, certificate.check_signature(id), "invalid certificate: ");
 
-  auto cert_score = [this](ton::overlay::OverlayMemberCertificate &cert) -> td::int64 {
+  auto cert_score = [this](ion::overlay::OverlayMemberCertificate &cert) -> td::int64 {
     auto issued_by = cert.issued_by().compute_short_id().bits256_value();
     if (validator_set_next_.not_null() && validator_set_next_->is_validator(issued_by)) {
       return cert.expire_at() + (1ll << 32);
@@ -2871,7 +2871,7 @@ void ValidatorEngine::try_import_fast_sync_member_certificate(ton::adnl::AdnlNod
       if (x.second.issued_by() == certificate.issued_by()) {
         if (x.second.expire_at() < certificate.expire_at()) {
           x.second = std::move(certificate);
-          td::actor::send_closure(full_node_, &ton::validator::fullnode::FullNode::import_fast_sync_member_certificate,
+          td::actor::send_closure(full_node_, &ion::validator::fullnode::FullNode::import_fast_sync_member_certificate,
                                   x.first, x.second);
           write_config(std::move(promise));
           return;
@@ -2884,7 +2884,7 @@ void ValidatorEngine::try_import_fast_sync_member_certificate(ton::adnl::AdnlNod
       auto old_score = cert_score(x.second);
       if (new_score > old_score) {
         x.second = std::move(certificate);
-        td::actor::send_closure(full_node_, &ton::validator::fullnode::FullNode::import_fast_sync_member_certificate,
+        td::actor::send_closure(full_node_, &ion::validator::fullnode::FullNode::import_fast_sync_member_certificate,
                                 x.first, x.second);
         write_config(std::move(promise));
         return;
@@ -2903,7 +2903,7 @@ void ValidatorEngine::try_import_fast_sync_member_certificate(ton::adnl::AdnlNod
   }
 
   auto &x = config_.fast_sync_member_certificates.emplace_back(std::move(id), std::move(certificate));
-  td::actor::send_closure(full_node_, &ton::validator::fullnode::FullNode::import_fast_sync_member_certificate, x.first,
+  td::actor::send_closure(full_node_, &ion::validator::fullnode::FullNode::import_fast_sync_member_certificate, x.first,
                           x.second);
   write_config(std::move(promise));
 }
@@ -2921,7 +2921,7 @@ void ValidatorEngine::issue_fast_sync_overlay_certificates() {
   for (auto &client : config_.fast_sync_overlay_clients) {
     issue_fast_sync_overlay_certificate(
         issue_by, client.id, 0, client.slot, expire_at,
-        [src, dst = client.id, adnl = adnl_.get()](td::Result<ton::overlay::OverlayMemberCertificate> R) {
+        [src, dst = client.id, adnl = adnl_.get()](td::Result<ion::overlay::OverlayMemberCertificate> R) {
           if (R.is_error()) {
             LOG(WARNING) << "cannot issue fast sync overlay certificate for " << dst << ": " << R.move_as_error();
             return;
@@ -2929,69 +2929,69 @@ void ValidatorEngine::issue_fast_sync_overlay_certificates() {
           auto cert = R.move_as_ok();
           LOG(INFO) << "Sending fast sync overlay certificate issued by " << cert.issued_by().compute_short_id()
                     << " to " << dst << " slot " << cert.slot();
-          td::actor::send_closure(adnl, &ton::adnl::Adnl::send_message, src, dst,
-                                  ton::create_serialize_tl_object<ton::ton_api::tonNode_newFastSyncMemberCertificate>(
+          td::actor::send_closure(adnl, &ion::adnl::Adnl::send_message, src, dst,
+                                  ion::create_serialize_tl_object<ion::ton_api::tonNode_newFastSyncMemberCertificate>(
                                       dst.bits256_value(), cert.tl()));
         });
   }
 }
 
-void ValidatorEngine::issue_fast_sync_overlay_certificate(ton::PublicKeyHash issue_by,
-                                                          ton::adnl::AdnlNodeIdShort issue_to, td::uint32 flags,
+void ValidatorEngine::issue_fast_sync_overlay_certificate(ion::PublicKeyHash issue_by,
+                                                          ion::adnl::AdnlNodeIdShort issue_to, td::uint32 flags,
                                                           td::int32 slot, td::int32 expire_at,
-                                                          td::Promise<ton::overlay::OverlayMemberCertificate> promise) {
+                                                          td::Promise<ion::overlay::OverlayMemberCertificate> promise) {
   if (issue_by.is_zero()) {
     issue_by = find_local_validator_for_cert_issuing();
     if (issue_by.is_zero()) {
-      return promise.set_error(td::Status::Error(ton::ErrorCode::notready, "cannot find a local validator"));
+      return promise.set_error(td::Status::Error(ion::ErrorCode::notready, "cannot find a local validator"));
     }
   }
   if (expire_at < td::Clocks::system() + 10) {
-    return promise.set_error(td::Status::Error(ton::ErrorCode::error, "expire at is in too near future"));
+    return promise.set_error(td::Status::Error(ion::ErrorCode::error, "expire at is in too near future"));
   }
-  ton::overlay::OverlayMemberCertificate cert(ton::PublicKey(), flags, slot, expire_at, td::BufferSlice());
+  ion::overlay::OverlayMemberCertificate cert(ion::PublicKey(), flags, slot, expire_at, td::BufferSlice());
   auto to_sign = cert.to_sign_data(issue_to);
-  td::actor::send_closure(keyring_, &ton::keyring::Keyring::sign_add_get_public_key, issue_by, std::move(to_sign),
+  td::actor::send_closure(keyring_, &ion::keyring::Keyring::sign_add_get_public_key, issue_by, std::move(to_sign),
                           [slot, flags, expire_at, promise = std::move(promise)](
-                              td::Result<std::pair<td::BufferSlice, ton::PublicKey>> R) mutable {
+                              td::Result<std::pair<td::BufferSlice, ion::PublicKey>> R) mutable {
                             TRY_RESULT_PROMISE_PREFIX(promise, res, std::move(R), "failed to sign certificate: ");
-                            ton::overlay::OverlayMemberCertificate cert(std::move(res.second), flags, slot, expire_at,
+                            ion::overlay::OverlayMemberCertificate cert(std::move(res.second), flags, slot, expire_at,
                                                                         std::move(res.first));
                             promise.set_value(std::move(cert));
                           });
 }
 
 void ValidatorEngine::process_fast_sync_overlay_certificate_request(
-    ton::PublicKeyHash issue_by, ton::adnl::AdnlNodeIdShort issue_to, td::uint32 flags, td::int32 slot,
-    td::int32 expire_at, td::Promise<ton::overlay::OverlayMemberCertificate> promise) {
+    ion::PublicKeyHash issue_by, ion::adnl::AdnlNodeIdShort issue_to, td::uint32 flags, td::int32 slot,
+    td::int32 expire_at, td::Promise<ion::overlay::OverlayMemberCertificate> promise) {
   for (auto &client : config_.fast_sync_overlay_clients) {
     if (client.id == issue_to && (slot < 0 || slot == client.slot)) {
       return issue_fast_sync_overlay_certificate(std::move(issue_by), std::move(issue_to), flags, client.slot,
                                                  expire_at, std::move(promise));
     }
   }
-  promise.set_error(td::Status::Error(ton::ErrorCode::error, "cannot issue certificate to unknown adnl id"));
+  promise.set_error(td::Status::Error(ion::ErrorCode::error, "cannot issue certificate to unknown adnl id"));
 }
 
-ton::PublicKeyHash ValidatorEngine::find_local_validator_for_cert_issuing() {
+ion::PublicKeyHash ValidatorEngine::find_local_validator_for_cert_issuing() {
   if (state_.is_null()) {
-    return ton::PublicKeyHash{};
+    return ion::PublicKeyHash{};
   }
   for (auto &val_set : {validator_set_, validator_set_next_, validator_set_prev_}) {
     if (val_set.is_null()) {
       continue;
     }
     for (auto &[val_id, _] : config_.validators) {
-      if (val_set->is_validator(ton::NodeIdShort{val_id.bits256_value()})) {
+      if (val_set->is_validator(ion::NodeIdShort{val_id.bits256_value()})) {
         return val_id;
       }
     }
   }
-  return ton::PublicKeyHash::zero();
+  return ion::PublicKeyHash::zero();
 }
 
 void ValidatorEngine::load_custom_overlays_config() {
-  custom_overlays_config_ = ton::create_tl_object<ton::ton_api::engine_validator_customOverlaysConfig>();
+  custom_overlays_config_ = ion::create_tl_object<ion::ton_api::engine_validator_customOverlaysConfig>();
   auto data_R = td::read_file(custom_overlays_config_file());
   if (data_R.is_error()) {
     return;
@@ -3003,15 +3003,15 @@ void ValidatorEngine::load_custom_overlays_config() {
     return;
   }
   auto json = json_R.move_as_ok();
-  auto S = ton::ton_api::from_json(*custom_overlays_config_, json.get_object());
+  auto S = ion::ton_api::from_json(*custom_overlays_config_, json.get_object());
   if (S.is_error()) {
     LOG(ERROR) << "Failed to parse custom overlays config: " << S;
     return;
   }
 
   for (auto &overlay : custom_overlays_config_->overlays_) {
-    td::actor::send_closure(full_node_, &ton::validator::fullnode::FullNode::add_custom_overlay,
-                            ton::validator::fullnode::CustomOverlayParams::fetch(*overlay),
+    td::actor::send_closure(full_node_, &ion::validator::fullnode::FullNode::add_custom_overlay,
+                            ion::validator::fullnode::CustomOverlayParams::fetch(*overlay),
                             [](td::Result<td::Unit> R) { R.ensure(); });
   }
 }
@@ -3023,7 +3023,7 @@ td::Status ValidatorEngine::write_custom_overlays_config() {
 }
 
 void ValidatorEngine::add_custom_overlay_to_config(
-    ton::tl_object_ptr<ton::ton_api::engine_validator_customOverlay> overlay, td::Promise<td::Unit> promise) {
+    ion::tl_object_ptr<ion::ton_api::engine_validator_customOverlay> overlay, td::Promise<td::Unit> promise) {
   custom_overlays_config_->overlays_.push_back(std::move(overlay));
   TRY_STATUS_PROMISE(promise, write_custom_overlays_config());
   promise.set_result(td::Unit());
@@ -3042,12 +3042,12 @@ void ValidatorEngine::del_custom_overlay_from_config(std::string name, td::Promi
   promise.set_error(td::Status::Error(PSTRING() << "no overlay \"" << name << "\" in config"));
 }
 
-static td::Result<td::Ref<ton::validator::CollatorOptions>> parse_collator_options(td::MutableSlice json_str) {
-  td::Ref<ton::validator::CollatorOptions> ref{true};
-  ton::validator::CollatorOptions &opts = ref.write();
+static td::Result<td::Ref<ion::validator::CollatorOptions>> parse_collator_options(td::MutableSlice json_str) {
+  td::Ref<ion::validator::CollatorOptions> ref{true};
+  ion::validator::CollatorOptions &opts = ref.write();
 
   // Set default values (from_json leaves missing fields as is)
-  ton::ton_api::engine_validator_collatorOptions f;
+  ion::ton_api::engine_validator_collatorOptions f;
   f.deferring_enabled_ = opts.deferring_enabled;
   f.defer_out_queue_size_limit_ = opts.defer_out_queue_size_limit;
   f.defer_messages_after_ = opts.defer_messages_after;
@@ -3060,7 +3060,7 @@ static td::Result<td::Ref<ton::validator::CollatorOptions>> parse_collator_optio
   f.ignore_collated_data_limits_ = false;
 
   TRY_RESULT_PREFIX(json, td::json_decode(json_str), "failed to parse json: ");
-  TRY_STATUS_PREFIX(ton::ton_api::from_json(f, json.get_object()), "json does not fit TL scheme: ");
+  TRY_STATUS_PREFIX(ion::ton_api::from_json(f, json.get_object()), "json does not fit TL scheme: ");
 
   if (f.defer_messages_after_ <= 0) {
     return td::Status::Error("defer_messages_after should be positive");
@@ -3117,13 +3117,13 @@ void ValidatorEngine::load_collator_options() {
   validator_options_.write().set_collator_options(r_collator_options.move_as_ok());
 }
 
-void ValidatorEngine::check_key(ton::PublicKeyHash id, td::Promise<td::Unit> promise) {
+void ValidatorEngine::check_key(ion::PublicKeyHash id, td::Promise<td::Unit> promise) {
   if (keys_.count(id) == 1) {
     promise.set_value(td::Unit());
     return;
   }
   auto P = td::PromiseCreator::lambda(
-      [SelfId = actor_id(this), promise = std::move(promise)](td::Result<ton::PublicKey> R) mutable {
+      [SelfId = actor_id(this), promise = std::move(promise)](td::Result<ion::PublicKey> R) mutable {
         if (R.is_error()) {
           promise.set_error(R.move_as_error());
         } else {
@@ -3131,100 +3131,100 @@ void ValidatorEngine::check_key(ton::PublicKeyHash id, td::Promise<td::Unit> pro
           promise.set_value(td::Unit());
         }
       });
-  td::actor::send_closure(keyring_, &ton::keyring::Keyring::get_public_key, id, std::move(P));
+  td::actor::send_closure(keyring_, &ion::keyring::Keyring::get_public_key, id, std::move(P));
 }
 
 td::BufferSlice ValidatorEngine::create_control_query_error(td::Status error) {
-  return ton::serialize_tl_object(
-      ton::create_tl_object<ton::ton_api::engine_validator_controlQueryError>(error.code(), error.message().str()),
+  return ion::serialize_tl_object(
+      ion::create_tl_object<ion::ton_api::engine_validator_controlQueryError>(error.code(), error.message().str()),
       true);
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_getTime &query, td::BufferSlice data,
-                                        ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_getTime &query, td::BufferSlice data,
+                                        ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_default)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
-  auto obj = ton::create_tl_object<ton::ton_api::engine_validator_time>(static_cast<td::int32>(td::Clocks::system()));
-  promise.set_value(ton::serialize_tl_object(obj, true));
+  auto obj = ion::create_tl_object<ion::ton_api::engine_validator_time>(static_cast<td::int32>(td::Clocks::system()));
+  promise.set_value(ion::serialize_tl_object(obj, true));
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_importPrivateKey &query, td::BufferSlice data,
-                                        ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_importPrivateKey &query, td::BufferSlice data,
+                                        ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_default)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (keyring_.empty()) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started keyring")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started keyring")));
     return;
   }
 
-  auto pk = ton::PrivateKey{query.key_};
+  auto pk = ion::PrivateKey{query.key_};
   auto P = td::PromiseCreator::lambda(
       [promise = std::move(promise), hash = pk.compute_short_id()](td::Result<td::Unit> R) mutable {
         if (R.is_error()) {
           promise.set_value(create_control_query_error(R.move_as_error()));
         } else {
           promise.set_value(
-              ton::serialize_tl_object(ton::create_tl_object<ton::ton_api::engine_validator_keyHash>(hash.tl()), true));
+              ion::serialize_tl_object(ion::create_tl_object<ion::ton_api::engine_validator_keyHash>(hash.tl()), true));
         }
       });
 
-  td::actor::send_closure(keyring_, &ton::keyring::Keyring::add_key, std::move(pk), false, std::move(P));
+  td::actor::send_closure(keyring_, &ion::keyring::Keyring::add_key, std::move(pk), false, std::move(P));
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_exportPrivateKey &query, td::BufferSlice data,
-                                        ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_exportPrivateKey &query, td::BufferSlice data,
+                                        ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_unsafe)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (keyring_.empty()) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started keyring")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started keyring")));
     return;
   }
 
-  promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not implemented")));
+  promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not implemented")));
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_exportPublicKey &query, td::BufferSlice data,
-                                        ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_exportPublicKey &query, td::BufferSlice data,
+                                        ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_default)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (keyring_.empty()) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started keyring")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started keyring")));
     return;
   }
 
-  auto P = td::PromiseCreator::lambda([promise = std::move(promise)](td::Result<ton::PublicKey> R) mutable {
+  auto P = td::PromiseCreator::lambda([promise = std::move(promise)](td::Result<ion::PublicKey> R) mutable {
     if (R.is_error()) {
       promise.set_value(create_control_query_error(R.move_as_error()));
     } else {
       auto pub = R.move_as_ok();
-      promise.set_value(ton::serialize_tl_object(pub.tl(), true));
+      promise.set_value(ion::serialize_tl_object(pub.tl(), true));
     }
   });
 
-  td::actor::send_closure(keyring_, &ton::keyring::Keyring::get_public_key, ton::PublicKeyHash{query.key_hash_},
+  td::actor::send_closure(keyring_, &ion::keyring::Keyring::get_public_key, ion::PublicKeyHash{query.key_hash_},
                           std::move(P));
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_generateKeyPair &query, td::BufferSlice data,
-                                        ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_generateKeyPair &query, td::BufferSlice data,
+                                        ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_default)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (keyring_.empty()) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started keyring")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started keyring")));
     return;
   }
 
-  auto pk = ton::PrivateKey{ton::privkeys::Ed25519::random()};
+  auto pk = ion::PrivateKey{ion::privkeys::Ed25519::random()};
 
   auto P = td::PromiseCreator::lambda(
       [promise = std::move(promise), hash = pk.compute_short_id()](td::Result<td::Unit> R) mutable {
@@ -3232,25 +3232,25 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_generateK
           promise.set_value(create_control_query_error(R.move_as_error()));
         } else {
           promise.set_value(
-              ton::serialize_tl_object(ton::create_tl_object<ton::ton_api::engine_validator_keyHash>(hash.tl()), true));
+              ion::serialize_tl_object(ion::create_tl_object<ion::ton_api::engine_validator_keyHash>(hash.tl()), true));
         }
       });
 
-  td::actor::send_closure(keyring_, &ton::keyring::Keyring::add_key, std::move(pk), false, std::move(P));
+  td::actor::send_closure(keyring_, &ion::keyring::Keyring::add_key, std::move(pk), false, std::move(P));
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_addAdnlId &query, td::BufferSlice data,
-                                        ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_addAdnlId &query, td::BufferSlice data,
+                                        ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_modify)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (!started_) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
 
-  auto id = ton::PublicKeyHash{query.key_hash_};
+  auto id = ion::PublicKeyHash{query.key_hash_};
   TRY_RESULT_PROMISE(promise, cat, td::narrow_cast_safe<td::uint8>(query.category_));
 
   auto P = td::PromiseCreator::lambda(
@@ -3264,7 +3264,7 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_addAdnlId
             promise.set_value(create_control_query_error(R.move_as_error_prefix("failed to add adnl node: ")));
           } else {
             promise.set_value(
-                ton::serialize_tl_object(ton::create_tl_object<ton::ton_api::engine_validator_success>(), true));
+                ion::serialize_tl_object(ion::create_tl_object<ion::ton_api::engine_validator_success>(), true));
           }
         });
         td::actor::send_closure(SelfId, &ValidatorEngine::try_add_adnl_node, id, cat, std::move(P));
@@ -3273,18 +3273,18 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_addAdnlId
   check_key(id, std::move(P));
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_addDhtId &query, td::BufferSlice data,
-                                        ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_addDhtId &query, td::BufferSlice data,
+                                        ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_modify)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (!started_) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
 
-  auto id = ton::PublicKeyHash{query.key_hash_};
+  auto id = ion::PublicKeyHash{query.key_hash_};
 
   auto P = td::PromiseCreator::lambda(
       [SelfId = actor_id(this), id, promise = std::move(promise)](td::Result<td::Unit> R) mutable {
@@ -3297,7 +3297,7 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_addDhtId 
             promise.set_value(create_control_query_error(R.move_as_error_prefix("failed to add dht node: ")));
           } else {
             promise.set_value(
-                ton::serialize_tl_object(ton::create_tl_object<ton::ton_api::engine_validator_success>(), true));
+                ion::serialize_tl_object(ion::create_tl_object<ion::ton_api::engine_validator_success>(), true));
           }
         });
         td::actor::send_closure(SelfId, &ValidatorEngine::try_add_dht_node, id, std::move(P));
@@ -3306,19 +3306,19 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_addDhtId 
   check_key(id, std::move(P));
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_addValidatorPermanentKey &query,
-                                        td::BufferSlice data, ton::PublicKeyHash src, td::uint32 perm,
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_addValidatorPermanentKey &query,
+                                        td::BufferSlice data, ion::PublicKeyHash src, td::uint32 perm,
                                         td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_modify)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (!started_) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
 
-  auto id = ton::PublicKeyHash{query.key_hash_};
+  auto id = ion::PublicKeyHash{query.key_hash_};
 
   auto P = td::PromiseCreator::lambda([SelfId = actor_id(this), id, election_date = query.election_date_,
                                        ttl = query.ttl_, promise = std::move(promise)](td::Result<td::Unit> R) mutable {
@@ -3332,7 +3332,7 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_addValida
             create_control_query_error(R.move_as_error_prefix("failed to add validator permanent key: ")));
       } else {
         promise.set_value(
-            ton::serialize_tl_object(ton::create_tl_object<ton::ton_api::engine_validator_success>(), true));
+            ion::serialize_tl_object(ion::create_tl_object<ion::ton_api::engine_validator_success>(), true));
       }
     });
     td::actor::send_closure(SelfId, &ValidatorEngine::try_add_validator_permanent_key, id, election_date, ttl,
@@ -3342,21 +3342,21 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_addValida
   check_key(id, std::move(P));
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_addValidatorTempKey &query, td::BufferSlice data,
-                                        ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_addValidatorTempKey &query, td::BufferSlice data,
+                                        ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_modify)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (!started_) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
 
-  auto id = ton::PublicKeyHash{query.key_hash_};
+  auto id = ion::PublicKeyHash{query.key_hash_};
 
   auto P =
-      td::PromiseCreator::lambda([SelfId = actor_id(this), perm_key = ton::PublicKeyHash{query.permanent_key_hash_}, id,
+      td::PromiseCreator::lambda([SelfId = actor_id(this), perm_key = ion::PublicKeyHash{query.permanent_key_hash_}, id,
                                   ttl = query.ttl_, promise = std::move(promise)](td::Result<td::Unit> R) mutable {
         if (R.is_error()) {
           promise.set_value(create_control_query_error(R.move_as_error_prefix("failed to get public key: ")));
@@ -3367,7 +3367,7 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_addValida
             promise.set_value(create_control_query_error(R.move_as_error_prefix("failed to add validator temp key: ")));
           } else {
             promise.set_value(
-                ton::serialize_tl_object(ton::create_tl_object<ton::ton_api::engine_validator_success>(), true));
+                ion::serialize_tl_object(ion::create_tl_object<ion::ton_api::engine_validator_success>(), true));
           }
         });
         td::actor::send_closure(SelfId, &ValidatorEngine::try_add_validator_temp_key, perm_key, id, ttl, std::move(P));
@@ -3376,22 +3376,22 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_addValida
   check_key(id, std::move(P));
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_addValidatorAdnlAddress &query,
-                                        td::BufferSlice data, ton::PublicKeyHash src, td::uint32 perm,
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_addValidatorAdnlAddress &query,
+                                        td::BufferSlice data, ion::PublicKeyHash src, td::uint32 perm,
                                         td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_modify)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (!started_) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
 
-  auto id = ton::PublicKeyHash{query.key_hash_};
+  auto id = ion::PublicKeyHash{query.key_hash_};
 
   auto P = td::PromiseCreator::lambda([SelfId = actor_id(this),
-                                       perm_key = ton::PublicKeyHash{query.permanent_key_hash_}, id, ttl = query.ttl_,
+                                       perm_key = ion::PublicKeyHash{query.permanent_key_hash_}, id, ttl = query.ttl_,
                                        promise = std::move(promise)](td::Result<td::Unit> R) mutable {
     if (R.is_error()) {
       promise.set_value(create_control_query_error(R.move_as_error_prefix("failed to get public key: ")));
@@ -3402,7 +3402,7 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_addValida
         promise.set_value(create_control_query_error(R.move_as_error_prefix("failed to add validator adnl address: ")));
       } else {
         promise.set_value(
-            ton::serialize_tl_object(ton::create_tl_object<ton::ton_api::engine_validator_success>(), true));
+            ion::serialize_tl_object(ion::create_tl_object<ion::ton_api::engine_validator_success>(), true));
       }
     });
     td::actor::send_closure(SelfId, &ValidatorEngine::try_add_validator_adnl_addr, perm_key, id, ttl, std::move(P));
@@ -3411,19 +3411,19 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_addValida
   check_key(id, std::move(P));
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_changeFullNodeAdnlAddress &query,
-                                        td::BufferSlice data, ton::PublicKeyHash src, td::uint32 perm,
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_changeFullNodeAdnlAddress &query,
+                                        td::BufferSlice data, ion::PublicKeyHash src, td::uint32 perm,
                                         td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_modify)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (!started_) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
 
-  auto id = ton::PublicKeyHash{query.adnl_id_};
+  auto id = ion::PublicKeyHash{query.adnl_id_};
 
   auto P = td::PromiseCreator::lambda([SelfId = actor_id(this), id,
                                        promise = std::move(promise)](td::Result<td::Unit> R) mutable {
@@ -3436,7 +3436,7 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_changeFul
         promise.set_value(create_control_query_error(R.move_as_error_prefix("failed to change full node address: ")));
       } else {
         promise.set_value(
-            ton::serialize_tl_object(ton::create_tl_object<ton::ton_api::engine_validator_success>(), true));
+            ion::serialize_tl_object(ion::create_tl_object<ion::ton_api::engine_validator_success>(), true));
       }
     });
     td::actor::send_closure(SelfId, &ValidatorEngine::try_add_full_node_adnl_addr, id, std::move(P));
@@ -3445,18 +3445,18 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_changeFul
   check_key(id, std::move(P));
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_addLiteserver &query, td::BufferSlice data,
-                                        ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_addLiteserver &query, td::BufferSlice data,
+                                        ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_modify)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (!started_) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
 
-  auto id = ton::PublicKeyHash{query.key_hash_};
+  auto id = ion::PublicKeyHash{query.key_hash_};
 
   auto P = td::PromiseCreator::lambda([SelfId = actor_id(this), id, port = static_cast<td::uint16>(query.port_),
                                        promise = std::move(promise)](td::Result<td::Unit> R) mutable {
@@ -3469,7 +3469,7 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_addLitese
         promise.set_value(create_control_query_error(R.move_as_error_prefix("failed to add liteserver: ")));
       } else {
         promise.set_value(
-            ton::serialize_tl_object(ton::create_tl_object<ton::ton_api::engine_validator_success>(), true));
+            ion::serialize_tl_object(ion::create_tl_object<ion::ton_api::engine_validator_success>(), true));
       }
     });
     td::actor::send_closure(SelfId, &ValidatorEngine::try_add_liteserver, id, port, std::move(P));
@@ -3478,18 +3478,18 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_addLitese
   check_key(id, std::move(P));
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_addControlInterface &query, td::BufferSlice data,
-                                        ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_addControlInterface &query, td::BufferSlice data,
+                                        ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_modify)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (!started_) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
 
-  auto id = ton::PublicKeyHash{query.key_hash_};
+  auto id = ion::PublicKeyHash{query.key_hash_};
 
   auto P = td::PromiseCreator::lambda([SelfId = actor_id(this), id, port = static_cast<td::uint16>(query.port_),
                                        promise = std::move(promise)](td::Result<td::Unit> R) mutable {
@@ -3502,7 +3502,7 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_addContro
         promise.set_value(create_control_query_error(R.move_as_error_prefix("failed to add control interface: ")));
       } else {
         promise.set_value(
-            ton::serialize_tl_object(ton::create_tl_object<ton::ton_api::engine_validator_success>(), true));
+            ion::serialize_tl_object(ion::create_tl_object<ion::ton_api::engine_validator_success>(), true));
       }
     });
     td::actor::send_closure(SelfId, &ValidatorEngine::try_add_control_interface, id, port, std::move(P));
@@ -3511,137 +3511,137 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_addContro
   check_key(id, std::move(P));
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_delAdnlId &query, td::BufferSlice data,
-                                        ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_delAdnlId &query, td::BufferSlice data,
+                                        ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_modify)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (!started_) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
 
-  auto id = ton::PublicKeyHash{query.key_hash_};
+  auto id = ion::PublicKeyHash{query.key_hash_};
 
   auto P = td::PromiseCreator::lambda([promise = std::move(promise)](td::Result<td::Unit> R) mutable {
     if (R.is_error()) {
       promise.set_value(create_control_query_error(R.move_as_error_prefix("failed to del adnl node: ")));
     } else {
       promise.set_value(
-          ton::serialize_tl_object(ton::create_tl_object<ton::ton_api::engine_validator_success>(), true));
+          ion::serialize_tl_object(ion::create_tl_object<ion::ton_api::engine_validator_success>(), true));
     }
   });
 
   try_del_adnl_node(id, std::move(P));
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_delDhtId &query, td::BufferSlice data,
-                                        ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_delDhtId &query, td::BufferSlice data,
+                                        ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_modify)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (!started_) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
 
-  auto id = ton::PublicKeyHash{query.key_hash_};
+  auto id = ion::PublicKeyHash{query.key_hash_};
 
   auto P = td::PromiseCreator::lambda([promise = std::move(promise)](td::Result<td::Unit> R) mutable {
     if (R.is_error()) {
       promise.set_value(create_control_query_error(R.move_as_error_prefix("failed to del adnl node: ")));
     } else {
       promise.set_value(
-          ton::serialize_tl_object(ton::create_tl_object<ton::ton_api::engine_validator_success>(), true));
+          ion::serialize_tl_object(ion::create_tl_object<ion::ton_api::engine_validator_success>(), true));
     }
   });
   try_del_dht_node(id, std::move(P));
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_delValidatorPermanentKey &query,
-                                        td::BufferSlice data, ton::PublicKeyHash src, td::uint32 perm,
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_delValidatorPermanentKey &query,
+                                        td::BufferSlice data, ion::PublicKeyHash src, td::uint32 perm,
                                         td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_modify)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (!started_) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
 
-  auto id = ton::PublicKeyHash{query.key_hash_};
+  auto id = ion::PublicKeyHash{query.key_hash_};
 
   auto P = td::PromiseCreator::lambda([promise = std::move(promise)](td::Result<td::Unit> R) mutable {
     if (R.is_error()) {
       promise.set_value(create_control_query_error(R.move_as_error_prefix("failed to del validator permanent key: ")));
     } else {
       promise.set_value(
-          ton::serialize_tl_object(ton::create_tl_object<ton::ton_api::engine_validator_success>(), true));
+          ion::serialize_tl_object(ion::create_tl_object<ion::ton_api::engine_validator_success>(), true));
     }
   });
   try_del_validator_permanent_key(id, std::move(P));
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_delValidatorTempKey &query, td::BufferSlice data,
-                                        ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_delValidatorTempKey &query, td::BufferSlice data,
+                                        ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_modify)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (!started_) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
 
-  auto id = ton::PublicKeyHash{query.key_hash_};
+  auto id = ion::PublicKeyHash{query.key_hash_};
 
   auto P = td::PromiseCreator::lambda([promise = std::move(promise)](td::Result<td::Unit> R) mutable {
     if (R.is_error()) {
       promise.set_value(create_control_query_error(R.move_as_error_prefix("failed to del validator temp key: ")));
     } else {
       promise.set_value(
-          ton::serialize_tl_object(ton::create_tl_object<ton::ton_api::engine_validator_success>(), true));
+          ion::serialize_tl_object(ion::create_tl_object<ion::ton_api::engine_validator_success>(), true));
     }
   });
-  try_del_validator_temp_key(ton::PublicKeyHash{query.permanent_key_hash_}, id, std::move(P));
+  try_del_validator_temp_key(ion::PublicKeyHash{query.permanent_key_hash_}, id, std::move(P));
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_delValidatorAdnlAddress &query,
-                                        td::BufferSlice data, ton::PublicKeyHash src, td::uint32 perm,
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_delValidatorAdnlAddress &query,
+                                        td::BufferSlice data, ion::PublicKeyHash src, td::uint32 perm,
                                         td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_modify)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (!started_) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
 
-  auto id = ton::PublicKeyHash{query.key_hash_};
+  auto id = ion::PublicKeyHash{query.key_hash_};
 
   auto P = td::PromiseCreator::lambda([promise = std::move(promise)](td::Result<td::Unit> R) mutable {
     if (R.is_error()) {
       promise.set_value(create_control_query_error(R.move_as_error_prefix("failed to del validator adnl addr: ")));
     } else {
       promise.set_value(
-          ton::serialize_tl_object(ton::create_tl_object<ton::ton_api::engine_validator_success>(), true));
+          ion::serialize_tl_object(ion::create_tl_object<ion::ton_api::engine_validator_success>(), true));
     }
   });
-  try_del_validator_adnl_addr(ton::PublicKeyHash{query.permanent_key_hash_}, id, std::move(P));
+  try_del_validator_adnl_addr(ion::PublicKeyHash{query.permanent_key_hash_}, id, std::move(P));
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_addListeningPort &query, td::BufferSlice data,
-                                        ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_addListeningPort &query, td::BufferSlice data,
+                                        ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_modify)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (!started_) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
 
@@ -3650,7 +3650,7 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_addListen
       promise.set_value(create_control_query_error(R.move_as_error_prefix("failed to add listening port: ")));
     } else {
       promise.set_value(
-          ton::serialize_tl_object(ton::create_tl_object<ton::ton_api::engine_validator_success>(), true));
+          ion::serialize_tl_object(ion::create_tl_object<ion::ton_api::engine_validator_success>(), true));
     }
   });
 
@@ -3667,14 +3667,14 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_addListen
   try_add_listening_port(query.ip_, query.port_, std::move(cats), std::move(prio_cats), std::move(P));
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_delListeningPort &query, td::BufferSlice data,
-                                        ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_delListeningPort &query, td::BufferSlice data,
+                                        ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_modify)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (!started_) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
 
@@ -3683,7 +3683,7 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_delListen
       promise.set_value(create_control_query_error(R.move_as_error_prefix("failed to del listening port: ")));
     } else {
       promise.set_value(
-          ton::serialize_tl_object(ton::create_tl_object<ton::ton_api::engine_validator_success>(), true));
+          ion::serialize_tl_object(ion::create_tl_object<ion::ton_api::engine_validator_success>(), true));
     }
   });
 
@@ -3700,18 +3700,18 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_delListen
   try_del_listening_port(query.ip_, query.port_, std::move(cats), std::move(prio_cats), std::move(P));
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_addProxy &query, td::BufferSlice data,
-                                        ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_addProxy &query, td::BufferSlice data,
+                                        ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_modify)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (!started_) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
 
-  auto R = ton::adnl::AdnlProxy::create(*query.proxy_.get());
+  auto R = ion::adnl::AdnlProxy::create(*query.proxy_.get());
   if (R.is_error()) {
     promise.set_value(create_control_query_error(R.move_as_error_prefix("bad proxy type: ")));
     return;
@@ -3722,7 +3722,7 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_addProxy 
       promise.set_value(create_control_query_error(R.move_as_error_prefix("failed to add listening proxy: ")));
     } else {
       promise.set_value(
-          ton::serialize_tl_object(ton::create_tl_object<ton::ton_api::engine_validator_success>(), true));
+          ion::serialize_tl_object(ion::create_tl_object<ion::ton_api::engine_validator_success>(), true));
     }
   });
 
@@ -3740,14 +3740,14 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_addProxy 
                 std::move(prio_cats), std::move(P));
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_delProxy &query, td::BufferSlice data,
-                                        ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_delProxy &query, td::BufferSlice data,
+                                        ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_modify)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (!started_) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
 
@@ -3756,7 +3756,7 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_delProxy 
       promise.set_value(create_control_query_error(R.move_as_error_prefix("failed to del listening proxy: ")));
     } else {
       promise.set_value(
-          ton::serialize_tl_object(ton::create_tl_object<ton::ton_api::engine_validator_success>(), true));
+          ion::serialize_tl_object(ion::create_tl_object<ion::ton_api::engine_validator_success>(), true));
     }
   });
 
@@ -3774,25 +3774,25 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_delProxy 
   try_del_proxy(query.out_ip_, query.out_port_, std::move(cats), std::move(prio_cats), std::move(P));
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_getConfig &query, td::BufferSlice data,
-                                        ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_getConfig &query, td::BufferSlice data,
+                                        ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_default)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
 
   auto s = td::json_encode<std::string>(td::ToJson(*config_.tl().get()), true);
-  promise.set_value(ton::create_serialize_tl_object<ton::ton_api::engine_validator_jsonConfig>(s));
+  promise.set_value(ion::create_serialize_tl_object<ion::ton_api::engine_validator_jsonConfig>(s));
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_sign &query, td::BufferSlice data,
-                                        ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_sign &query, td::BufferSlice data,
+                                        ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_unsafe)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (!started_) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
 
@@ -3803,37 +3803,37 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_sign &que
     if (R.is_error()) {
       promise.set_value(create_control_query_error(R.move_as_error()));
     } else {
-      promise.set_value(ton::serialize_tl_object(
-          ton::create_tl_object<ton::ton_api::engine_validator_signature>(R.move_as_ok()), true));
+      promise.set_value(ion::serialize_tl_object(
+          ion::create_tl_object<ion::ton_api::engine_validator_signature>(R.move_as_ok()), true));
     }
   });
-  td::actor::send_closure(keyring_, &ton::keyring::Keyring::sign_message, ton::PublicKeyHash{query.key_hash_},
+  td::actor::send_closure(keyring_, &ion::keyring::Keyring::sign_message, ion::PublicKeyHash{query.key_hash_},
                           std::move(query.data_), std::move(P));
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_exportAllPrivateKeys &query,
-                                        td::BufferSlice data, ton::PublicKeyHash src, td::uint32 perm,
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_exportAllPrivateKeys &query,
+                                        td::BufferSlice data, ion::PublicKeyHash src, td::uint32 perm,
                                         td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_unsafe)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (keyring_.empty()) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started keyring")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started keyring")));
     return;
   }
 
-  ton::PublicKey client_pubkey = ton::PublicKey{query.encryption_key_};
+  ion::PublicKey client_pubkey = ion::PublicKey{query.encryption_key_};
   if (!client_pubkey.is_ed25519()) {
     promise.set_value(
-        create_control_query_error(td::Status::Error(ton::ErrorCode::protoviolation, "encryption key is not Ed25519")));
+        create_control_query_error(td::Status::Error(ion::ErrorCode::protoviolation, "encryption key is not Ed25519")));
     return;
   }
 
   td::actor::send_closure(
-      keyring_, &ton::keyring::Keyring::export_all_private_keys,
+      keyring_, &ion::keyring::Keyring::export_all_private_keys,
       [promise = std::move(promise),
-       client_pubkey = std::move(client_pubkey)](td::Result<std::vector<ton::PrivateKey>> R) mutable {
+       client_pubkey = std::move(client_pubkey)](td::Result<std::vector<ion::PrivateKey>> R) mutable {
         if (R.is_error()) {
           promise.set_value(create_control_query_error(R.move_as_error()));
           return;
@@ -3842,7 +3842,7 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_exportAll
         // non-secure buffers (not td::SecureString)
         std::vector<td::SecureString> serialized_keys;
         size_t data_size = 32;
-        for (const ton::PrivateKey &key : R.ok()) {
+        for (const ion::PrivateKey &key : R.ok()) {
           serialized_keys.push_back(key.export_as_slice());
           data_size += serialized_keys.back().size() + 4;
         }
@@ -3870,39 +3870,39 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_exportAll
           promise.set_value(create_control_query_error(r_encrypted.move_as_error_prefix("cannot encrypt data: ")));
           return;
         }
-        promise.set_value(ton::create_serialize_tl_object<ton::ton_api::engine_validator_exportedPrivateKeys>(
+        promise.set_value(ion::create_serialize_tl_object<ion::ton_api::engine_validator_exportedPrivateKeys>(
             r_encrypted.move_as_ok()));
       });
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_setVerbosity &query, td::BufferSlice data,
-                                        ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_setVerbosity &query, td::BufferSlice data,
+                                        ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_default)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
 
   if (query.verbosity_ < 0 || query.verbosity_ > 10) {
     promise.set_value(
-        create_control_query_error(td::Status::Error(ton::ErrorCode::error, "verbosity should be in range [0..10]")));
+        create_control_query_error(td::Status::Error(ion::ErrorCode::error, "verbosity should be in range [0..10]")));
     return;
   }
 
   SET_VERBOSITY_LEVEL(VERBOSITY_NAME(ERROR) + query.verbosity_);
 
-  promise.set_value(ton::serialize_tl_object(ton::create_tl_object<ton::ton_api::engine_validator_success>(), true));
+  promise.set_value(ion::serialize_tl_object(ion::create_tl_object<ion::ton_api::engine_validator_success>(), true));
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_getStats &query, td::BufferSlice data,
-                                        ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_getStats &query, td::BufferSlice data,
+                                        ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_default)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
 
   if (validator_manager_.empty()) {
     promise.set_value(
-        create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "validator manager not started")));
+        create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "validator manager not started")));
     return;
   }
 
@@ -3912,38 +3912,38 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_getStats 
           promise.set_value(create_control_query_error(R.move_as_error()));
         } else {
           auto r = R.move_as_ok();
-          std::vector<ton::tl_object_ptr<ton::ton_api::engine_validator_oneStat>> vec;
+          std::vector<ion::tl_object_ptr<ion::ton_api::engine_validator_oneStat>> vec;
           for (auto &s : r) {
-            vec.push_back(ton::create_tl_object<ton::ton_api::engine_validator_oneStat>(s.first, s.second));
+            vec.push_back(ion::create_tl_object<ion::ton_api::engine_validator_oneStat>(s.first, s.second));
           }
-          promise.set_value(ton::create_serialize_tl_object<ton::ton_api::engine_validator_stats>(std::move(vec)));
+          promise.set_value(ion::create_serialize_tl_object<ion::ton_api::engine_validator_stats>(std::move(vec)));
         }
       });
-  td::actor::send_closure(validator_manager_, &ton::validator::ValidatorManagerInterface::prepare_stats, std::move(P));
+  td::actor::send_closure(validator_manager_, &ion::validator::ValidatorManagerInterface::prepare_stats, std::move(P));
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_createElectionBid &query, td::BufferSlice data,
-                                        ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_createElectionBid &query, td::BufferSlice data,
+                                        ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_default)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (!started_) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
 
   if (fift_dir_.empty()) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "no fift dir")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "no fift dir")));
     return;
   }
 
-  std::vector<ton::PublicKeyHash> v;
+  std::vector<ion::PublicKeyHash> v;
   for (auto &x : config_.validators) {
-    if (x.second.election_date == static_cast<ton::UnixTime>(query.election_date_)) {
+    if (x.second.election_date == static_cast<ion::UnixTime>(query.election_date_)) {
       if (x.second.temp_keys.size() == 0 || x.second.adnl_ids.size() == 0) {
         promise.set_value(
-            create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "prev bid is partial")));
+            create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "prev bid is partial")));
         return;
       }
       v.push_back(x.first);
@@ -3958,49 +3958,49 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_createEle
       .release();
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_checkDhtServers &query, td::BufferSlice data,
-                                        ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_checkDhtServers &query, td::BufferSlice data,
+                                        ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_default)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (keyring_.empty()) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "keyring not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "keyring not started")));
     return;
   }
   if (!dht_config_) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "no dht config")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "no dht config")));
     return;
   }
 
-  if (config_.adnl_ids.count(ton::PublicKeyHash{query.id_}) == 0) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "no dht config")));
+  if (config_.adnl_ids.count(ion::PublicKeyHash{query.id_}) == 0) {
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "no dht config")));
     return;
   }
 
-  td::actor::create_actor<CheckDhtServerStatusQuery>("pinger", dht_config_, ton::adnl::AdnlNodeIdShort{query.id_},
+  td::actor::create_actor<CheckDhtServerStatusQuery>("pinger", dht_config_, ion::adnl::AdnlNodeIdShort{query.id_},
                                                      adnl_.get(), std::move(promise))
       .release();
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_createProposalVote &query, td::BufferSlice data,
-                                        ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_createProposalVote &query, td::BufferSlice data,
+                                        ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_modify)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (keyring_.empty()) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "keyring not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "keyring not started")));
     return;
   }
 
   if (!started_) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
 
   if (fift_dir_.empty()) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "no fift dir")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "no fift dir")));
     return;
   }
 
@@ -4009,24 +4009,24 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_createPro
       .release();
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_createComplaintVote &query, td::BufferSlice data,
-                                        ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_createComplaintVote &query, td::BufferSlice data,
+                                        ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_modify)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (keyring_.empty()) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "keyring not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "keyring not started")));
     return;
   }
 
   if (!started_) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
 
   if (fift_dir_.empty()) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "no fift dir")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "no fift dir")));
     return;
   }
 
@@ -4035,22 +4035,22 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_createCom
       .release();
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_importCertificate &query, td::BufferSlice data,
-                                        ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_importCertificate &query, td::BufferSlice data,
+                                        ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_modify)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (keyring_.empty()) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "keyring not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "keyring not started")));
     return;
   }
 
   if (!started_) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
-  auto r = ton::overlay::Certificate::create(std::move(query.cert_));
+  auto r = ion::overlay::Certificate::create(std::move(query.cert_));
   if (r.is_error()) {
     promise.set_value(create_control_query_error(r.move_as_error_prefix("Invalid certificate: ")));
   }
@@ -4061,34 +4061,34 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_importCer
           promise.set_value(create_control_query_error(R.move_as_error()));
         } else {
           promise.set_value(
-            ton::serialize_tl_object(ton::create_tl_object<ton::ton_api::engine_validator_success>(), true));
+            ion::serialize_tl_object(ion::create_tl_object<ion::ton_api::engine_validator_success>(), true));
         }
       });
   */
-  td::actor::send_closure(overlay_manager_, &ton::overlay::Overlays::update_certificate,
-                          ton::adnl::AdnlNodeIdShort{query.local_id_->id_},
-                          ton::overlay::OverlayIdShort{query.overlay_id_},
-                          ton::PublicKeyHash{query.signed_key_->key_hash_}, r.move_as_ok());
-  promise.set_value(ton::serialize_tl_object(ton::create_tl_object<ton::ton_api::engine_validator_success>(), true));
+  td::actor::send_closure(overlay_manager_, &ion::overlay::Overlays::update_certificate,
+                          ion::adnl::AdnlNodeIdShort{query.local_id_->id_},
+                          ion::overlay::OverlayIdShort{query.overlay_id_},
+                          ion::PublicKeyHash{query.signed_key_->key_hash_}, r.move_as_ok());
+  promise.set_value(ion::serialize_tl_object(ion::create_tl_object<ion::ton_api::engine_validator_success>(), true));
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_importShardOverlayCertificate &query,
-                                        td::BufferSlice data, ton::PublicKeyHash src, td::uint32 perm,
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_importShardOverlayCertificate &query,
+                                        td::BufferSlice data, ion::PublicKeyHash src, td::uint32 perm,
                                         td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_modify)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (keyring_.empty()) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "keyring not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "keyring not started")));
     return;
   }
 
   if (!started_) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
-  auto r = ton::overlay::Certificate::create(std::move(query.cert_));
+  auto r = ion::overlay::Certificate::create(std::move(query.cert_));
   if (r.is_error()) {
     promise.set_value(create_control_query_error(r.move_as_error_prefix("Invalid certificate: ")));
   }
@@ -4097,31 +4097,31 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_importSha
       promise.set_value(create_control_query_error(R.move_as_error_prefix("failed to import cert: ")));
     } else {
       promise.set_value(
-          ton::serialize_tl_object(ton::create_tl_object<ton::ton_api::engine_validator_success>(), true));
+          ion::serialize_tl_object(ion::create_tl_object<ion::ton_api::engine_validator_success>(), true));
     }
   });
-  ton::ShardIdFull shard_id{ton::WorkchainId{query.workchain_}, static_cast<ton::ShardId>(query.shard_)};
-  td::actor::send_closure(full_node_, &ton::validator::fullnode::FullNode::import_shard_overlay_certificate, shard_id,
-                          ton::PublicKeyHash{query.signed_key_->key_hash_}, r.move_as_ok(), std::move(P));
+  ion::ShardIdFull shard_id{ion::WorkchainId{query.workchain_}, static_cast<ion::ShardId>(query.shard_)};
+  td::actor::send_closure(full_node_, &ion::validator::fullnode::FullNode::import_shard_overlay_certificate, shard_id,
+                          ion::PublicKeyHash{query.signed_key_->key_hash_}, r.move_as_ok(), std::move(P));
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_signShardOverlayCertificate &query,
-                                        td::BufferSlice data, ton::PublicKeyHash src, td::uint32 perm,
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_signShardOverlayCertificate &query,
+                                        td::BufferSlice data, ion::PublicKeyHash src, td::uint32 perm,
                                         td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_modify)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (keyring_.empty()) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "keyring not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "keyring not started")));
     return;
   }
 
   if (!started_) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
-  ton::ShardIdFull shard_id{ton::WorkchainId{query.workchain_}, static_cast<ton::ShardId>(query.shard_)};
+  ion::ShardIdFull shard_id{ion::WorkchainId{query.workchain_}, static_cast<ion::ShardId>(query.shard_)};
   auto P = td::PromiseCreator::lambda([promise = std::move(promise)](td::Result<td::BufferSlice> R) mutable {
     if (R.is_error()) {
       promise.set_value(create_control_query_error(R.move_as_error_prefix("failed to import cert: ")));
@@ -4129,50 +4129,50 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_signShard
       promise.set_value(R.move_as_ok());
     }
   });
-  td::actor::send_closure(full_node_, &ton::validator::fullnode::FullNode::sign_shard_overlay_certificate, shard_id,
-                          ton::PublicKeyHash{query.signed_key_->key_hash_}, query.expire_at_, query.max_size_,
+  td::actor::send_closure(full_node_, &ion::validator::fullnode::FullNode::sign_shard_overlay_certificate, shard_id,
+                          ion::PublicKeyHash{query.signed_key_->key_hash_}, query.expire_at_, query.max_size_,
                           std::move(P));
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_getOverlaysStats &query, td::BufferSlice data,
-                                        ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_getOverlaysStats &query, td::BufferSlice data,
+                                        ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_default)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
 
   if (keyring_.empty()) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "keyring not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "keyring not started")));
     return;
   }
 
   if (!started_) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
 
-  td::actor::send_closure(overlay_manager_, &ton::overlay::Overlays::get_stats,
+  td::actor::send_closure(overlay_manager_, &ion::overlay::Overlays::get_stats,
                           [promise = std::move(promise)](
-                              td::Result<ton::tl_object_ptr<ton::ton_api::engine_validator_overlaysStats>> R) mutable {
+                              td::Result<ion::tl_object_ptr<ion::ton_api::engine_validator_overlaysStats>> R) mutable {
                             if (R.is_ok()) {
-                              promise.set_value(ton::serialize_tl_object(R.move_as_ok(), true));
+                              promise.set_value(ion::serialize_tl_object(R.move_as_ok(), true));
                             } else {
                               promise.set_value(create_control_query_error(
-                                  td::Status::Error(ton::ErrorCode::notready, "overlay manager not ready")));
+                                  td::Status::Error(ion::ErrorCode::notready, "overlay manager not ready")));
                             }
                           });
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_getActorTextStats &query, td::BufferSlice data,
-                                        ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_getActorTextStats &query, td::BufferSlice data,
+                                        ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_default)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
 
   if (validator_manager_.empty()) {
     promise.set_value(
-        create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "validator manager not started")));
+        create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "validator manager not started")));
     return;
   }
 
@@ -4181,38 +4181,38 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_getActorT
       promise.set_value(create_control_query_error(R.move_as_error()));
     } else {
       auto r = R.move_as_ok();
-      promise.set_value(ton::create_serialize_tl_object<ton::ton_api::engine_validator_textStats>(std::move(r)));
+      promise.set_value(ion::create_serialize_tl_object<ion::ton_api::engine_validator_textStats>(std::move(r)));
     }
   });
-  td::actor::send_closure(validator_manager_, &ton::validator::ValidatorManagerInterface::prepare_actor_stats,
+  td::actor::send_closure(validator_manager_, &ion::validator::ValidatorManagerInterface::prepare_actor_stats,
                           std::move(P));
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_getPerfTimerStats &query, td::BufferSlice data,
-                                        ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_getPerfTimerStats &query, td::BufferSlice data,
+                                        ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_default)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
 
   if (validator_manager_.empty()) {
     promise.set_value(
-        create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "validator manager not started")));
+        create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "validator manager not started")));
     return;
   }
 
   auto P = td::PromiseCreator::lambda([promise = std::move(promise), query = std::move(query)](
-                                          td::Result<std::vector<ton::validator::PerfTimerStats>> R) mutable {
+                                          td::Result<std::vector<ion::validator::PerfTimerStats>> R) mutable {
     const std::vector<int> times{60, 300, 3600};
     double now = td::Time::now();
     if (R.is_error()) {
       promise.set_value(create_control_query_error(R.move_as_error()));
     } else {
       auto r = R.move_as_ok();
-      std::vector<ton::tl_object_ptr<ton::ton_api::engine_validator_perfTimerStatsByName>> by_name;
+      std::vector<ion::tl_object_ptr<ion::ton_api::engine_validator_perfTimerStatsByName>> by_name;
       for (const auto &stats : r) {
         if (stats.name == query.name_ || query.name_.empty()) {
-          std::vector<ton::tl_object_ptr<ton::ton_api::engine_validator_onePerfTimerStat>> by_time;
+          std::vector<ion::tl_object_ptr<ion::ton_api::engine_validator_onePerfTimerStat>> by_time;
           for (const auto &t : times) {
             double min = std::numeric_limits<double>::lowest();
             double max = std::numeric_limits<double>::max();
@@ -4228,85 +4228,85 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_getPerfTi
                 ++cnt;
               }
             }
-            by_time.push_back(ton::create_tl_object<ton::ton_api::engine_validator_onePerfTimerStat>(
+            by_time.push_back(ion::create_tl_object<ion::ton_api::engine_validator_onePerfTimerStat>(
                 t, min, sum / static_cast<double>(cnt), max));
           }
-          by_name.push_back(ton::create_tl_object<ton::ton_api::engine_validator_perfTimerStatsByName>(
+          by_name.push_back(ion::create_tl_object<ion::ton_api::engine_validator_perfTimerStatsByName>(
               stats.name, std::move(by_time)));
         }
       }
       promise.set_value(
-          ton::create_serialize_tl_object<ton::ton_api::engine_validator_perfTimerStats>(std::move(by_name)));
+          ion::create_serialize_tl_object<ion::ton_api::engine_validator_perfTimerStats>(std::move(by_name)));
     }
   });
-  td::actor::send_closure(validator_manager_, &ton::validator::ValidatorManagerInterface::prepare_perf_timer_stats,
+  td::actor::send_closure(validator_manager_, &ion::validator::ValidatorManagerInterface::prepare_perf_timer_stats,
                           std::move(P));
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_getShardOutQueueSize &query,
-                                        td::BufferSlice data, ton::PublicKeyHash src, td::uint32 perm,
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_getShardOutQueueSize &query,
+                                        td::BufferSlice data, ion::PublicKeyHash src, td::uint32 perm,
                                         td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_default)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
 
   if (validator_manager_.empty()) {
     promise.set_value(
-        create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "validator manager not started")));
+        create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "validator manager not started")));
     return;
   }
 
-  ton::BlockId block_id = ton::create_block_id_simple(query.block_id_);
+  ion::BlockId block_id = ion::create_block_id_simple(query.block_id_);
   if (!block_id.is_valid_ext()) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "invalid block id")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "invalid block id")));
     return;
   }
-  td::optional<ton::ShardIdFull> dest;
+  td::optional<ion::ShardIdFull> dest;
   if (query.flags_ & 1) {
-    dest = ton::ShardIdFull{query.dest_wc_, (ton::ShardId)query.dest_shard_};
+    dest = ion::ShardIdFull{query.dest_wc_, (ion::ShardId)query.dest_shard_};
     if (!dest.value().is_valid_ext()) {
-      promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "invalid shard")));
+      promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "invalid shard")));
       return;
     }
   }
 
   td::actor::send_closure(
-      validator_manager_, &ton::validator::ValidatorManagerInterface::get_block_by_seqno_from_db,
-      ton::AccountIdPrefixFull{block_id.workchain, block_id.shard}, block_id.seqno,
+      validator_manager_, &ion::validator::ValidatorManagerInterface::get_block_by_seqno_from_db,
+      ion::AccountIdPrefixFull{block_id.workchain, block_id.shard}, block_id.seqno,
       [=, promise = std::move(promise),
-       manager = validator_manager_.get()](td::Result<ton::validator::ConstBlockHandle> R) mutable {
+       manager = validator_manager_.get()](td::Result<ion::validator::ConstBlockHandle> R) mutable {
         if (R.is_error()) {
           promise.set_value(create_control_query_error(R.move_as_error()));
           return;
         }
         auto handle = R.move_as_ok();
         if (handle->id().id != block_id) {
-          promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "no such block")));
+          promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "no such block")));
           return;
         }
         if (!dest) {
           td::actor::send_closure(
-              manager, &ton::validator::ValidatorManagerInterface::get_out_msg_queue_size, handle->id(),
+              manager, &ion::validator::ValidatorManagerInterface::get_out_msg_queue_size, handle->id(),
               [promise = std::move(promise)](td::Result<td::uint64> R) mutable {
                 if (R.is_error()) {
                   promise.set_value(create_control_query_error(R.move_as_error_prefix("failed to get queue size: ")));
                 } else {
-                  promise.set_value(ton::create_serialize_tl_object<ton::ton_api::engine_validator_shardOutQueueSize>(
+                  promise.set_value(ion::create_serialize_tl_object<ion::ton_api::engine_validator_shardOutQueueSize>(
                       R.move_as_ok()));
                 }
               });
           return;
         }
         td::actor::send_closure(
-            manager, &ton::validator::ValidatorManagerInterface::get_shard_state_from_db, handle,
-            [=, promise = std::move(promise)](td::Result<td::Ref<ton::validator::ShardState>> R) mutable {
+            manager, &ion::validator::ValidatorManagerInterface::get_shard_state_from_db, handle,
+            [=, promise = std::move(promise)](td::Result<td::Ref<ion::validator::ShardState>> R) mutable {
               auto res = [&]() -> td::Result<td::BufferSlice> {
                 TRY_RESULT(state, std::move(R));
                 TRY_RESULT(outq_descr, state->message_queue());
                 block::gen::OutMsgQueueInfo::Record qinfo;
                 if (!tlb::unpack_cell(outq_descr->root_cell(), qinfo)) {
-                  return td::Status::Error(ton::ErrorCode::error, "invalid message queue");
+                  return td::Status::Error(ion::ErrorCode::error, "invalid message queue");
                 }
                 auto queue = std::make_unique<vm::AugmentedDictionary>(qinfo.out_queue->prefetch_ref(0), 352,
                                                                        block::tlb::aug_OutMsgQueue);
@@ -4317,7 +4317,7 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_getShardO
                   ptr.advance(32);
                   ptr.store_uint(dest.value().shard, 64);
                   if (!queue->cut_prefix_subdict(prefix.bits(), 32 + dest.value().pfx_len())) {
-                    return td::Status::Error(ton::ErrorCode::error, "invalid message queue");
+                    return td::Status::Error(ion::ErrorCode::error, "invalid message queue");
                   }
                 }
                 int size = 0;
@@ -4325,7 +4325,7 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_getShardO
                   ++size;
                   return true;
                 });
-                return ton::create_serialize_tl_object<ton::ton_api::engine_validator_shardOutQueueSize>(size);
+                return ion::create_serialize_tl_object<ion::ton_api::engine_validator_shardOutQueueSize>(size);
               }();
               if (res.is_error()) {
                 promise.set_value(create_control_query_error(res.move_as_error()));
@@ -4336,56 +4336,56 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_getShardO
       });
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_setExtMessagesBroadcastDisabled &query,
-                                        td::BufferSlice data, ton::PublicKeyHash src, td::uint32 perm,
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_setExtMessagesBroadcastDisabled &query,
+                                        td::BufferSlice data, ion::PublicKeyHash src, td::uint32 perm,
                                         td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_modify)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (!started_) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
 
   if (config_.full_node_config.ext_messages_broadcast_disabled_ == query.disabled_) {
-    promise.set_value(ton::create_serialize_tl_object<ton::ton_api::engine_validator_success>());
+    promise.set_value(ion::create_serialize_tl_object<ion::ton_api::engine_validator_success>());
     return;
   }
   config_.full_node_config.ext_messages_broadcast_disabled_ = query.disabled_;
-  td::actor::send_closure(full_node_, &ton::validator::fullnode::FullNode::set_config, config_.full_node_config);
+  td::actor::send_closure(full_node_, &ion::validator::fullnode::FullNode::set_config, config_.full_node_config);
   write_config([promise = std::move(promise)](td::Result<td::Unit> R) mutable {
     if (R.is_error()) {
       promise.set_value(create_control_query_error(R.move_as_error()));
     } else {
-      promise.set_value(ton::create_serialize_tl_object<ton::ton_api::engine_validator_success>());
+      promise.set_value(ion::create_serialize_tl_object<ion::ton_api::engine_validator_success>());
     }
   });
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_addCustomOverlay &query, td::BufferSlice data,
-                                        ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_addCustomOverlay &query, td::BufferSlice data,
+                                        ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_modify)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (!started_ || full_node_.empty()) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
 
   auto &overlay = query.overlay_;
-  std::vector<ton::adnl::AdnlNodeIdShort> nodes;
-  std::map<ton::adnl::AdnlNodeIdShort, int> senders;
+  std::vector<ion::adnl::AdnlNodeIdShort> nodes;
+  std::map<ion::adnl::AdnlNodeIdShort, int> senders;
   for (const auto &node : overlay->nodes_) {
     nodes.emplace_back(node->adnl_id_);
     if (node->msg_sender_) {
-      senders[ton::adnl::AdnlNodeIdShort{node->adnl_id_}] = node->msg_sender_priority_;
+      senders[ion::adnl::AdnlNodeIdShort{node->adnl_id_}] = node->msg_sender_priority_;
     }
   }
-  auto params = ton::validator::fullnode::CustomOverlayParams::fetch(*query.overlay_);
+  auto params = ion::validator::fullnode::CustomOverlayParams::fetch(*query.overlay_);
   td::actor::send_closure(
-      full_node_, &ton::validator::fullnode::FullNode::add_custom_overlay, std::move(params),
+      full_node_, &ion::validator::fullnode::FullNode::add_custom_overlay, std::move(params),
       [SelfId = actor_id(this), overlay = std::move(query.overlay_),
        promise = std::move(promise)](td::Result<td::Unit> R) mutable {
         if (R.is_error()) {
@@ -4399,23 +4399,23 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_addCustom
                 promise.set_value(create_control_query_error(R.move_as_error()));
                 return;
               }
-              promise.set_value(ton::create_serialize_tl_object<ton::ton_api::engine_validator_success>());
+              promise.set_value(ion::create_serialize_tl_object<ion::ton_api::engine_validator_success>());
             });
       });
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_delCustomOverlay &query, td::BufferSlice data,
-                                        ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_delCustomOverlay &query, td::BufferSlice data,
+                                        ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_modify)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (!started_ || full_node_.empty()) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
   td::actor::send_closure(
-      full_node_, &ton::validator::fullnode::FullNode::del_custom_overlay, query.name_,
+      full_node_, &ion::validator::fullnode::FullNode::del_custom_overlay, query.name_,
       [SelfId = actor_id(this), name = query.name_, promise = std::move(promise)](td::Result<td::Unit> R) mutable {
         if (R.is_error()) {
           promise.set_value(create_control_query_error(R.move_as_error()));
@@ -4428,63 +4428,63 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_delCustom
                 promise.set_value(create_control_query_error(R.move_as_error()));
                 return;
               }
-              promise.set_value(ton::create_serialize_tl_object<ton::ton_api::engine_validator_success>());
+              promise.set_value(ion::create_serialize_tl_object<ion::ton_api::engine_validator_success>());
             });
       });
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_showCustomOverlays &query, td::BufferSlice data,
-                                        ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_showCustomOverlays &query, td::BufferSlice data,
+                                        ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_default)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (!started_ || full_node_.empty()) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
 
   promise.set_value(
-      ton::serialize_tl_object<ton::ton_api::engine_validator_customOverlaysConfig>(custom_overlays_config_, true));
+      ion::serialize_tl_object<ion::ton_api::engine_validator_customOverlaysConfig>(custom_overlays_config_, true));
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_setStateSerializerEnabled &query,
-                                        td::BufferSlice data, ton::PublicKeyHash src, td::uint32 perm,
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_setStateSerializerEnabled &query,
+                                        td::BufferSlice data, ion::PublicKeyHash src, td::uint32 perm,
                                         td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_modify)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (!started_) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
   if (query.enabled_ == validator_options_->get_state_serializer_enabled()) {
-    promise.set_value(ton::create_serialize_tl_object<ton::ton_api::engine_validator_success>());
+    promise.set_value(ion::create_serialize_tl_object<ion::ton_api::engine_validator_success>());
     return;
   }
   validator_options_.write().set_state_serializer_enabled(query.enabled_ && !state_serializer_disabled_flag_);
-  td::actor::send_closure(validator_manager_, &ton::validator::ValidatorManagerInterface::update_options,
+  td::actor::send_closure(validator_manager_, &ion::validator::ValidatorManagerInterface::update_options,
                           validator_options_);
   config_.state_serializer_enabled = query.enabled_;
   write_config([promise = std::move(promise)](td::Result<td::Unit> R) mutable {
     if (R.is_error()) {
       promise.set_value(create_control_query_error(R.move_as_error()));
     } else {
-      promise.set_value(ton::create_serialize_tl_object<ton::ton_api::engine_validator_success>());
+      promise.set_value(ion::create_serialize_tl_object<ion::ton_api::engine_validator_success>());
     }
   });
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_setCollatorOptionsJson &query,
-                                        td::BufferSlice data, ton::PublicKeyHash src, td::uint32 perm,
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_setCollatorOptionsJson &query,
+                                        td::BufferSlice data, ion::PublicKeyHash src, td::uint32 perm,
                                         td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_modify)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (!started_) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
   auto r_collator_options = parse_collator_options(query.json_);
@@ -4498,151 +4498,151 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_setCollat
     return;
   }
   validator_options_.write().set_collator_options(r_collator_options.move_as_ok());
-  td::actor::send_closure(validator_manager_, &ton::validator::ValidatorManagerInterface::update_options,
+  td::actor::send_closure(validator_manager_, &ion::validator::ValidatorManagerInterface::update_options,
                           validator_options_);
-  promise.set_value(ton::create_serialize_tl_object<ton::ton_api::engine_validator_success>());
+  promise.set_value(ion::create_serialize_tl_object<ion::ton_api::engine_validator_success>());
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_collatorNodeSetWhitelistedValidator &query,
-                                        td::BufferSlice data, ton::PublicKeyHash src, td::uint32 perm,
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_collatorNodeSetWhitelistedValidator &query,
+                                        td::BufferSlice data, ion::PublicKeyHash src, td::uint32 perm,
                                         td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_modify)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (!started_) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
-  ton::adnl::AdnlNodeIdShort adnl_id{query.adnl_id_};
+  ion::adnl::AdnlNodeIdShort adnl_id{query.adnl_id_};
   if (query.add_) {
     if (!config_.collator_node_whitelist.insert(adnl_id).second) {
-      promise.set_value(ton::create_serialize_tl_object<ton::ton_api::engine_validator_success>());
+      promise.set_value(ion::create_serialize_tl_object<ion::ton_api::engine_validator_success>());
       return;
     }
   } else {
     if (config_.collator_node_whitelist.erase(adnl_id) == 0) {
-      promise.set_value(ton::create_serialize_tl_object<ton::ton_api::engine_validator_success>());
+      promise.set_value(ion::create_serialize_tl_object<ion::ton_api::engine_validator_success>());
       return;
     }
   }
 
   validator_options_.write().set_collator_node_whitelisted_validator(adnl_id, query.add_);
-  td::actor::send_closure(validator_manager_, &ton::validator::ValidatorManagerInterface::update_options,
+  td::actor::send_closure(validator_manager_, &ion::validator::ValidatorManagerInterface::update_options,
                           validator_options_);
   write_config([promise = std::move(promise)](td::Result<td::Unit> R) mutable {
     if (R.is_error()) {
       promise.set_value(create_control_query_error(R.move_as_error()));
     } else {
       promise.set_value(
-          ton::serialize_tl_object(ton::create_tl_object<ton::ton_api::engine_validator_success>(), true));
+          ion::serialize_tl_object(ion::create_tl_object<ion::ton_api::engine_validator_success>(), true));
     }
   });
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_collatorNodeSetWhitelistEnabled &query,
-                                        td::BufferSlice data, ton::PublicKeyHash src, td::uint32 perm,
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_collatorNodeSetWhitelistEnabled &query,
+                                        td::BufferSlice data, ion::PublicKeyHash src, td::uint32 perm,
                                         td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_modify)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (!started_) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
   if (config_.collator_node_whiltelist_enabled == query.enabled_) {
-    promise.set_value(ton::create_serialize_tl_object<ton::ton_api::engine_validator_success>());
+    promise.set_value(ion::create_serialize_tl_object<ion::ton_api::engine_validator_success>());
     return;
   }
   config_.collator_node_whiltelist_enabled = query.enabled_;
   validator_options_.write().set_collator_node_whitelist_enabled(query.enabled_);
-  td::actor::send_closure(validator_manager_, &ton::validator::ValidatorManagerInterface::update_options,
+  td::actor::send_closure(validator_manager_, &ion::validator::ValidatorManagerInterface::update_options,
                           validator_options_);
   write_config([promise = std::move(promise)](td::Result<td::Unit> R) mutable {
     if (R.is_error()) {
       promise.set_value(create_control_query_error(R.move_as_error()));
     } else {
       promise.set_value(
-          ton::serialize_tl_object(ton::create_tl_object<ton::ton_api::engine_validator_success>(), true));
+          ion::serialize_tl_object(ion::create_tl_object<ion::ton_api::engine_validator_success>(), true));
     }
   });
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_showCollatorNodeWhitelist &query,
-                                        td::BufferSlice data, ton::PublicKeyHash src, td::uint32 perm,
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_showCollatorNodeWhitelist &query,
+                                        td::BufferSlice data, ion::PublicKeyHash src, td::uint32 perm,
                                         td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_default)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (!started_) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
-  ton::tl_object_ptr<ton::ton_api::engine_validator_collatorNodeWhitelist> result = {};
-  result = ton::create_tl_object<ton::ton_api::engine_validator_collatorNodeWhitelist>();
+  ion::tl_object_ptr<ion::ton_api::engine_validator_collatorNodeWhitelist> result = {};
+  result = ion::create_tl_object<ion::ton_api::engine_validator_collatorNodeWhitelist>();
   result->enabled_ = config_.collator_node_whiltelist_enabled;
   for (const auto &id : config_.collator_node_whitelist) {
     result->adnl_ids_.push_back(id.bits256_value());
   }
-  promise.set_value(ton::serialize_tl_object(result, true));
+  promise.set_value(ion::serialize_tl_object(result, true));
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_getCollatorOptionsJson &query,
-                                        td::BufferSlice data, ton::PublicKeyHash src, td::uint32 perm,
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_getCollatorOptionsJson &query,
+                                        td::BufferSlice data, ion::PublicKeyHash src, td::uint32 perm,
                                         td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_default)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (!started_) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
   auto r_data = td::read_file(collator_options_file());
   if (r_data.is_error()) {
-    promise.set_value(ton::create_serialize_tl_object<ton::ton_api::engine_validator_jsonConfig>("{}"));
+    promise.set_value(ion::create_serialize_tl_object<ion::ton_api::engine_validator_jsonConfig>("{}"));
   } else {
     promise.set_value(
-        ton::create_serialize_tl_object<ton::ton_api::engine_validator_jsonConfig>(r_data.ok().as_slice().str()));
+        ion::create_serialize_tl_object<ion::ton_api::engine_validator_jsonConfig>(r_data.ok().as_slice().str()));
   }
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_getAdnlStats &query, td::BufferSlice data,
-                                        ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_getAdnlStats &query, td::BufferSlice data,
+                                        ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_default)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (adnl_.empty()) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
   td::actor::send_closure(
-      adnl_, &ton::adnl::Adnl::get_stats, query.all_,
-      [promise = std::move(promise)](td::Result<ton::tl_object_ptr<ton::ton_api::adnl_stats>> R) mutable {
+      adnl_, &ion::adnl::Adnl::get_stats, query.all_,
+      [promise = std::move(promise)](td::Result<ion::tl_object_ptr<ion::ton_api::adnl_stats>> R) mutable {
         if (R.is_ok()) {
-          promise.set_value(ton::serialize_tl_object(R.move_as_ok(), true));
+          promise.set_value(ion::serialize_tl_object(R.move_as_ok(), true));
         } else {
           promise.set_value(
-              create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "failed to get adnl stats")));
+              create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "failed to get adnl stats")));
         }
       });
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_addShard &query, td::BufferSlice data,
-                                        ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_addShard &query, td::BufferSlice data,
+                                        ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_modify)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (!started_) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
 
-  auto shard = ton::create_shard_id(query.shard_);
+  auto shard = ion::create_shard_id(query.shard_);
   auto R = config_.config_add_shard(shard);
   if (R.is_error()) {
     promise.set_value(create_control_query_error(R.move_as_error()));
@@ -4650,7 +4650,7 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_addShard 
   }
   set_shard_check_function();
   if (!validator_manager_.empty()) {
-    td::actor::send_closure(validator_manager_, &ton::validator::ValidatorManagerInterface::update_options,
+    td::actor::send_closure(validator_manager_, &ion::validator::ValidatorManagerInterface::update_options,
                             validator_options_);
   }
   write_config([promise = std::move(promise)](td::Result<td::Unit> R) mutable {
@@ -4658,23 +4658,23 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_addShard 
       promise.set_value(create_control_query_error(R.move_as_error()));
     } else {
       promise.set_value(
-          ton::serialize_tl_object(ton::create_tl_object<ton::ton_api::engine_validator_success>(), true));
+          ion::serialize_tl_object(ion::create_tl_object<ion::ton_api::engine_validator_success>(), true));
     }
   });
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_delShard &query, td::BufferSlice data,
-                                        ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_delShard &query, td::BufferSlice data,
+                                        ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_modify)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (!started_) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
 
-  auto shard = ton::create_shard_id(query.shard_);
+  auto shard = ion::create_shard_id(query.shard_);
   auto R = config_.config_del_shard(shard);
   if (R.is_error()) {
     promise.set_value(create_control_query_error(R.move_as_error()));
@@ -4686,7 +4686,7 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_delShard 
   }
   set_shard_check_function();
   if (!validator_manager_.empty()) {
-    td::actor::send_closure(validator_manager_, &ton::validator::ValidatorManagerInterface::update_options,
+    td::actor::send_closure(validator_manager_, &ion::validator::ValidatorManagerInterface::update_options,
                             validator_options_);
   }
   write_config([promise = std::move(promise)](td::Result<td::Unit> R) mutable {
@@ -4694,23 +4694,23 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_delShard 
       promise.set_value(create_control_query_error(R.move_as_error()));
     } else {
       promise.set_value(
-          ton::serialize_tl_object(ton::create_tl_object<ton::ton_api::engine_validator_success>(), true));
+          ion::serialize_tl_object(ion::create_tl_object<ion::ton_api::engine_validator_success>(), true));
     }
   });
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_setCollatorsList &query, td::BufferSlice data,
-                                        ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_setCollatorsList &query, td::BufferSlice data,
+                                        ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_modify)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (!started_) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
 
-  td::Ref<ton::validator::CollatorsList> list{true};
+  td::Ref<ion::validator::CollatorsList> list{true};
   auto S = list.write().unpack(*query.list_);
   if (S.is_error()) {
     promise.set_value(create_control_query_error(S.move_as_error_prefix("Invalid collators list: ")));
@@ -4724,19 +4724,19 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_setCollat
   }
   collators_list_ = std::move(query.list_);
   validator_options_.write().set_collators_list(std::move(list));
-  td::actor::send_closure(validator_manager_, &ton::validator::ValidatorManagerInterface::update_options,
+  td::actor::send_closure(validator_manager_, &ion::validator::ValidatorManagerInterface::update_options,
                           validator_options_);
-  promise.set_value(ton::serialize_tl_object(ton::create_tl_object<ton::ton_api::engine_validator_success>(), true));
+  promise.set_value(ion::serialize_tl_object(ion::create_tl_object<ion::ton_api::engine_validator_success>(), true));
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_clearCollatorsList &query, td::BufferSlice data,
-                                        ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_clearCollatorsList &query, td::BufferSlice data,
+                                        ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_modify)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (!started_) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
 
@@ -4746,108 +4746,108 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_clearColl
     return;
   }
 
-  td::Ref<ton::validator::CollatorsList> list{true, ton::validator::CollatorsList::default_list()};
+  td::Ref<ion::validator::CollatorsList> list{true, ion::validator::CollatorsList::default_list()};
   collators_list_ = {};
   validator_options_.write().set_collators_list(std::move(list));
-  td::actor::send_closure(validator_manager_, &ton::validator::ValidatorManagerInterface::update_options,
+  td::actor::send_closure(validator_manager_, &ion::validator::ValidatorManagerInterface::update_options,
                           validator_options_);
-  promise.set_value(ton::serialize_tl_object(ton::create_tl_object<ton::ton_api::engine_validator_success>(), true));
+  promise.set_value(ion::serialize_tl_object(ion::create_tl_object<ion::ton_api::engine_validator_success>(), true));
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_showCollatorsList &query, td::BufferSlice data,
-                                        ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_showCollatorsList &query, td::BufferSlice data,
+                                        ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_default)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (!started_) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
   if (collators_list_) {
-    promise.set_value(ton::serialize_tl_object(collators_list_, true));
+    promise.set_value(ion::serialize_tl_object(collators_list_, true));
   } else {
     promise.set_value(create_control_query_error(td::Status::Error("collators list is empty")));
   }
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_getCollationManagerStats &query,
-                                        td::BufferSlice data, ton::PublicKeyHash src, td::uint32 perm,
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_getCollationManagerStats &query,
+                                        td::BufferSlice data, ion::PublicKeyHash src, td::uint32 perm,
                                         td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_default)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (!started_) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
   td::actor::send_closure(
-      validator_manager_, &ton::validator::ValidatorManagerInterface::get_collation_manager_stats,
+      validator_manager_, &ion::validator::ValidatorManagerInterface::get_collation_manager_stats,
       [promise = std::move(promise)](
-          td::Result<ton::tl_object_ptr<ton::ton_api::engine_validator_collationManagerStats>> R) mutable {
+          td::Result<ion::tl_object_ptr<ion::ton_api::engine_validator_collationManagerStats>> R) mutable {
         if (R.is_ok()) {
-          promise.set_value(ton::serialize_tl_object(R.move_as_ok(), true));
+          promise.set_value(ion::serialize_tl_object(R.move_as_ok(), true));
         } else {
           promise.set_value(create_control_query_error(R.move_as_error()));
         }
       });
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_addCollator &query, td::BufferSlice data,
-                                        ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_addCollator &query, td::BufferSlice data,
+                                        ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_modify)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (!started_) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
 
-  auto id = ton::adnl::AdnlNodeIdShort{query.adnl_id_};
-  auto shard = ton::create_shard_id(query.shard_);
+  auto id = ion::adnl::AdnlNodeIdShort{query.adnl_id_};
+  auto shard = ion::create_shard_id(query.shard_);
   auto R = config_.config_add_collator(id, shard);
   if (R.is_error()) {
     promise.set_value(create_control_query_error(R.move_as_error()));
     return;
   }
   if (!R.move_as_ok()) {
-    promise.set_value(ton::serialize_tl_object(ton::create_tl_object<ton::ton_api::engine_validator_success>(), true));
+    promise.set_value(ion::serialize_tl_object(ion::create_tl_object<ion::ton_api::engine_validator_success>(), true));
     return;
   }
   set_shard_check_function();
   if (!validator_manager_.empty()) {
-    td::actor::send_closure(validator_manager_, &ton::validator::ValidatorManagerInterface::update_options,
+    td::actor::send_closure(validator_manager_, &ion::validator::ValidatorManagerInterface::update_options,
                             validator_options_);
-    td::actor::send_closure(validator_manager_, &ton::validator::ValidatorManagerInterface::add_collator, id, shard);
+    td::actor::send_closure(validator_manager_, &ion::validator::ValidatorManagerInterface::add_collator, id, shard);
   }
   if (!full_node_.empty()) {
-    td::actor::send_closure(full_node_, &ton::validator::fullnode::FullNode::add_collator_adnl_id, id);
+    td::actor::send_closure(full_node_, &ion::validator::fullnode::FullNode::add_collator_adnl_id, id);
   }
   write_config([promise = std::move(promise)](td::Result<td::Unit> R) mutable {
     if (R.is_error()) {
       promise.set_value(create_control_query_error(R.move_as_error()));
     } else {
       promise.set_value(
-          ton::serialize_tl_object(ton::create_tl_object<ton::ton_api::engine_validator_success>(), true));
+          ion::serialize_tl_object(ion::create_tl_object<ion::ton_api::engine_validator_success>(), true));
     }
   });
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_delCollator &query, td::BufferSlice data,
-                                        ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_delCollator &query, td::BufferSlice data,
+                                        ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_modify)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (!started_) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
 
-  auto id = ton::adnl::AdnlNodeIdShort{query.adnl_id_};
-  auto shard = ton::create_shard_id(query.shard_);
+  auto id = ion::adnl::AdnlNodeIdShort{query.adnl_id_};
+  auto shard = ion::create_shard_id(query.shard_);
   auto R = config_.config_del_collator(id, shard);
   if (R.is_error()) {
     promise.set_value(create_control_query_error(R.move_as_error()));
@@ -4858,73 +4858,73 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_delCollat
     return;
   }
   if (!R.move_as_ok()) {
-    promise.set_value(ton::serialize_tl_object(ton::create_tl_object<ton::ton_api::engine_validator_success>(), true));
+    promise.set_value(ion::serialize_tl_object(ion::create_tl_object<ion::ton_api::engine_validator_success>(), true));
     return;
   }
   set_shard_check_function();
   if (!validator_manager_.empty()) {
-    td::actor::send_closure(validator_manager_, &ton::validator::ValidatorManagerInterface::update_options,
+    td::actor::send_closure(validator_manager_, &ion::validator::ValidatorManagerInterface::update_options,
                             validator_options_);
-    td::actor::send_closure(validator_manager_, &ton::validator::ValidatorManagerInterface::del_collator, id, shard);
+    td::actor::send_closure(validator_manager_, &ion::validator::ValidatorManagerInterface::del_collator, id, shard);
   }
   if (!full_node_.empty()) {
-    td::actor::send_closure(full_node_, &ton::validator::fullnode::FullNode::del_collator_adnl_id, id);
+    td::actor::send_closure(full_node_, &ion::validator::fullnode::FullNode::del_collator_adnl_id, id);
   }
   write_config([promise = std::move(promise)](td::Result<td::Unit> R) mutable {
     if (R.is_error()) {
       promise.set_value(create_control_query_error(R.move_as_error()));
     } else {
       promise.set_value(
-          ton::serialize_tl_object(ton::create_tl_object<ton::ton_api::engine_validator_success>(), true));
+          ion::serialize_tl_object(ion::create_tl_object<ion::ton_api::engine_validator_success>(), true));
     }
   });
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_signOverlayMemberCertificate &query,
-                                        td::BufferSlice data, ton::PublicKeyHash src, td::uint32 perm,
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_signOverlayMemberCertificate &query,
+                                        td::BufferSlice data, ion::PublicKeyHash src, td::uint32 perm,
                                         td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_modify)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (!started_) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
 
-  ton::PublicKeyHash public_key_hash{query.sign_by_};
-  ton::adnl::AdnlNodeIdShort adnl_id{query.adnl_id_};
+  ion::PublicKeyHash public_key_hash{query.sign_by_};
+  ion::adnl::AdnlNodeIdShort adnl_id{query.adnl_id_};
   int slot = query.slot_;
   int expire_at = query.expire_at_;
 
   issue_fast_sync_overlay_certificate(
       public_key_hash, adnl_id, 0, slot, expire_at,
-      [promise = std::move(promise)](td::Result<ton::overlay::OverlayMemberCertificate> R) mutable {
+      [promise = std::move(promise)](td::Result<ion::overlay::OverlayMemberCertificate> R) mutable {
         if (R.is_error()) {
           promise.set_value(create_control_query_error(R.move_as_error()));
           return;
         }
         auto cert = R.move_as_ok();
-        promise.set_value(ton::serialize_tl_object(cert.tl(), true));
+        promise.set_value(ion::serialize_tl_object(cert.tl(), true));
       });
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_importFastSyncMemberCertificate &query,
-                                        td::BufferSlice data, ton::PublicKeyHash src, td::uint32 perm,
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_importFastSyncMemberCertificate &query,
+                                        td::BufferSlice data, ion::PublicKeyHash src, td::uint32 perm,
                                         td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_modify)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (!started_) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
 
-  ton::adnl::AdnlNodeIdShort adnl_id{query.adnl_id_};
-  ton::overlay::OverlayMemberCertificate certificate{query.certificate_.get()};
+  ion::adnl::AdnlNodeIdShort adnl_id{query.adnl_id_};
+  ion::overlay::OverlayMemberCertificate certificate{query.certificate_.get()};
   if (certificate.empty()) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "certificate is empty")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "certificate is empty")));
     return;
   }
   td::Status S = certificate.check_signature(adnl_id);
@@ -4939,27 +4939,27 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_importFas
           promise.set_value(create_control_query_error(R.move_as_error()));
         } else {
           promise.set_value(
-              ton::serialize_tl_object(ton::create_tl_object<ton::ton_api::engine_validator_success>(), true));
+              ion::serialize_tl_object(ion::create_tl_object<ion::ton_api::engine_validator_success>(), true));
         }
       });
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_addFastSyncClient &query, td::BufferSlice data,
-                                        ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_addFastSyncClient &query, td::BufferSlice data,
+                                        ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_modify)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (!started_) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
 
-  ton::adnl::AdnlNodeIdShort adnl_id{query.adnl_id_};
+  ion::adnl::AdnlNodeIdShort adnl_id{query.adnl_id_};
   td::int32 slot = query.slot_;
-  if (slot < 0 || slot >= ton::validator::fullnode::FullNode::MAX_FAST_SYNC_OVERLAY_CLIENTS) {
+  if (slot < 0 || slot >= ion::validator::fullnode::FullNode::MAX_FAST_SYNC_OVERLAY_CLIENTS) {
     promise.set_value(create_control_query_error(td::Status::Error(
-        PSTRING() << "invalid slot (max " << ton::validator::fullnode::FullNode::MAX_FAST_SYNC_OVERLAY_CLIENTS
+        PSTRING() << "invalid slot (max " << ion::validator::fullnode::FullNode::MAX_FAST_SYNC_OVERLAY_CLIENTS
                   << " clients)")));
     return;
   }
@@ -4969,7 +4969,7 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_addFastSy
     if (c.slot == slot) {
       if (c.id == adnl_id) {
         promise.set_value(
-            ton::serialize_tl_object(ton::create_tl_object<ton::ton_api::engine_validator_success>(), true));
+            ion::serialize_tl_object(ion::create_tl_object<ion::ton_api::engine_validator_success>(), true));
         issue_fast_sync_overlay_certificates();
       } else {
         promise.set_value(create_control_query_error(td::Status::Error("duplicate slot")));
@@ -4989,24 +4989,24 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_addFastSy
       promise.set_value(create_control_query_error(R.move_as_error()));
     } else {
       promise.set_value(
-          ton::serialize_tl_object(ton::create_tl_object<ton::ton_api::engine_validator_success>(), true));
+          ion::serialize_tl_object(ion::create_tl_object<ion::ton_api::engine_validator_success>(), true));
     }
   });
   issue_fast_sync_overlay_certificates();
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_delFastSyncClient &query, td::BufferSlice data,
-                                        ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_delFastSyncClient &query, td::BufferSlice data,
+                                        ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_modify)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (!started_) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
 
-  ton::adnl::AdnlNodeIdShort adnl_id{query.adnl_id_};
+  ion::adnl::AdnlNodeIdShort adnl_id{query.adnl_id_};
   for (auto &c : config_.fast_sync_overlay_clients) {
     if (c.id == adnl_id) {
       std::swap(c, config_.fast_sync_overlay_clients.back());
@@ -5019,24 +5019,24 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_delFastSy
       promise.set_value(create_control_query_error(R.move_as_error()));
     } else {
       promise.set_value(
-          ton::serialize_tl_object(ton::create_tl_object<ton::ton_api::engine_validator_success>(), true));
+          ion::serialize_tl_object(ion::create_tl_object<ion::ton_api::engine_validator_success>(), true));
     }
   });
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_setShardBlockVerifierConfig &query,
-                                        td::BufferSlice data, ton::PublicKeyHash src, td::uint32 perm,
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_setShardBlockVerifierConfig &query,
+                                        td::BufferSlice data, ion::PublicKeyHash src, td::uint32 perm,
                                         td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_modify)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (!started_) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
 
-  td::Ref<ton::validator::ShardBlockVerifierConfig> config{true};
+  td::Ref<ion::validator::ShardBlockVerifierConfig> config{true};
   auto S = config.write().unpack(*query.config_);
   if (S.is_error()) {
     promise.set_value(create_control_query_error(S.move_as_error_prefix("Invalid config: ")));
@@ -5050,70 +5050,70 @@ void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_setShardB
   }
   shard_block_verifier_config_ = std::move(query.config_);
   validator_options_.write().set_shard_block_verifier_config(std::move(config));
-  td::actor::send_closure(validator_manager_, &ton::validator::ValidatorManagerInterface::update_options,
+  td::actor::send_closure(validator_manager_, &ion::validator::ValidatorManagerInterface::update_options,
                           validator_options_);
-  promise.set_value(ton::serialize_tl_object(ton::create_tl_object<ton::ton_api::engine_validator_success>(), true));
+  promise.set_value(ion::serialize_tl_object(ion::create_tl_object<ion::ton_api::engine_validator_success>(), true));
 }
 
-void ValidatorEngine::run_control_query(ton::ton_api::engine_validator_showShardBlockVerifierConfig &query,
-                                        td::BufferSlice data, ton::PublicKeyHash src, td::uint32 perm,
+void ValidatorEngine::run_control_query(ion::ton_api::engine_validator_showShardBlockVerifierConfig &query,
+                                        td::BufferSlice data, ion::PublicKeyHash src, td::uint32 perm,
                                         td::Promise<td::BufferSlice> promise) {
   if (!(perm & ValidatorEnginePermissions::vep_default)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (!started_) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
   if (shard_block_verifier_config_) {
-    promise.set_value(ton::serialize_tl_object(shard_block_verifier_config_, true));
+    promise.set_value(ion::serialize_tl_object(shard_block_verifier_config_, true));
   } else {
     promise.set_value(create_control_query_error(td::Status::Error("shard block verifier config is empty")));
   }
 }
 
-void ValidatorEngine::process_control_query(td::uint16 port, ton::adnl::AdnlNodeIdShort src,
-                                            ton::adnl::AdnlNodeIdShort dst, td::BufferSlice data,
+void ValidatorEngine::process_control_query(td::uint16 port, ion::adnl::AdnlNodeIdShort src,
+                                            ion::adnl::AdnlNodeIdShort dst, td::BufferSlice data,
                                             td::Promise<td::BufferSlice> promise) {
   auto it = control_permissions_.find(CI_key{dst.pubkey_hash(), port, src.pubkey_hash()});
   if (it == control_permissions_.end()) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "forbidden")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "forbidden")));
     return;
   }
 
-  auto E = ton::fetch_tl_object<ton::lite_api::liteServer_query>(data.clone(), true);
+  auto E = ion::fetch_tl_object<ion::lite_api::liteServer_query>(data.clone(), true);
   if (E.is_ok()) {
     if (!started_) {
       return;
     }
-    td::actor::send_closure(validator_manager_, &ton::validator::ValidatorManagerInterface::run_ext_query,
+    td::actor::send_closure(validator_manager_, &ion::validator::ValidatorManagerInterface::run_ext_query,
                             std::move(data), std::move(promise));
     return;
   }
 
-  auto G = ton::fetch_tl_object<ton::ton_api::engine_validator_controlQuery>(std::move(data), true);
+  auto G = ion::fetch_tl_object<ion::ton_api::engine_validator_controlQuery>(std::move(data), true);
   if (G.is_error()) {
     promise.set_value(create_control_query_error(G.move_as_error_prefix("failed to parse validator query: ")));
     return;
   }
 
   data = std::move(G.move_as_ok()->data_);
-  auto F = ton::fetch_tl_object<ton::ton_api::Function>(data.clone(), true);
+  auto F = ion::fetch_tl_object<ion::ton_api::Function>(data.clone(), true);
   if (F.is_error()) {
     promise.set_value(create_control_query_error(F.move_as_error_prefix("failed to parse validator query: ")));
     return;
   }
   auto f = F.move_as_ok();
 
-  ton::ton_api::downcast_call(*f, [&](auto &obj) {
+  ion::ton_api::downcast_call(*f, [&](auto &obj) {
     run_control_query(obj, std::move(data), src.pubkey_hash(), it->second, std::move(promise));
   });
 }
 
 void ValidatorEngine::run() {
   td::mkdir(db_root_).ensure();
-  ton::errorlog::ErrorLog::create(db_root_);
+  ion::errorlog::ErrorLog::create(db_root_);
 
   auto Sr = load_global_config();
   if (Sr.is_error()) {
@@ -5121,7 +5121,7 @@ void ValidatorEngine::run() {
     std::_Exit(2);
   }
 
-  keyring_ = ton::keyring::Keyring::create(db_root_ + "/keyring");
+  keyring_ = ion::keyring::Keyring::create(db_root_ + "/keyring");
   // TODO wait for password
   started_keyring_ = true;
 
@@ -5136,9 +5136,9 @@ void ValidatorEngine::run() {
   load_config(std::move(P));
 }
 
-void ValidatorEngine::get_current_validator_perm_key(td::Promise<std::pair<ton::PublicKey, size_t>> promise) {
+void ValidatorEngine::get_current_validator_perm_key(td::Promise<std::pair<ion::PublicKey, size_t>> promise) {
   if (state_.is_null()) {
-    promise.set_error(td::Status::Error(ton::ErrorCode::notready, "not started"));
+    promise.set_error(td::Status::Error(ion::ErrorCode::notready, "not started"));
     return;
   }
 
@@ -5146,7 +5146,7 @@ void ValidatorEngine::get_current_validator_perm_key(td::Promise<std::pair<ton::
   auto vec = validator_set_->export_vector();
   for (size_t idx = 0; idx < vec.size(); idx++) {
     auto &el = vec[idx];
-    ton::PublicKey pub{ton::pubkeys::Ed25519{el.key.as_bits256()}};
+    ion::PublicKey pub{ion::pubkeys::Ed25519{el.key.as_bits256()}};
     auto pubkey_hash = pub.compute_short_id();
 
     auto it = config_.validators.find(pubkey_hash);
@@ -5155,7 +5155,7 @@ void ValidatorEngine::get_current_validator_perm_key(td::Promise<std::pair<ton::
       return;
     }
   }
-  promise.set_error(td::Status::Error(ton::ErrorCode::notready, "not a validator"));
+  promise.set_error(td::Status::Error(ion::ErrorCode::notready, "not a validator"));
 }
 
 std::atomic<bool> need_stats_flag{false};
@@ -5197,7 +5197,7 @@ void dump_memprof_stats() {
 }
 
 void dump_jemalloc_prof() {
-#if TON_USE_JEMALLOC
+#if ION_USE_JEMALLOC
   const char *filename = "/tmp/validator-jemalloc.dump";
   if (mallctl("prof.dump", nullptr, nullptr, &filename, sizeof(const char *)) == 0) {
     LOG(ERROR) << "Written jemalloc dump to " << filename;
@@ -5230,7 +5230,7 @@ int main(int argc, char *argv[]) {
   std::vector<std::function<void()>> acts;
 
   td::OptionParser p;
-  p.set_description("validator or full node for TON network");
+  p.set_description("validator or full node for ION network");
   p.add_option('v', "verbosity", "set verbosity level", [&](td::Slice arg) {
     int v = VERBOSITY_NAME(FATAL) + (td::to_integer<int>(arg));
     SET_VERBOSITY_LEVEL(v);
@@ -5335,7 +5335,7 @@ int main(int argc, char *argv[]) {
                        });
   p.add_option('T', "truncate-db", "truncate db (with specified seqno as new top masterchain block seqno)",
                [&](td::Slice fname) {
-                 auto v = td::to_integer<ton::BlockSeqno>(fname);
+                 auto v = td::to_integer<ion::BlockSeqno>(fname);
                  acts.push_back([&x, v]() { td::actor::send_closure(x, &ValidatorEngine::set_truncate_seqno, v); });
                });
   p.add_option('\0', "session-logs", "file for validator session stats (default: {logname}.session-stats)",
@@ -5343,17 +5343,17 @@ int main(int argc, char *argv[]) {
   acts.push_back([&]() { td::actor::send_closure(x, &ValidatorEngine::set_session_logs_file, session_logs_file); });
   p.add_checked_option(
       'U', "unsafe-catchain-restore", "use SLOW and DANGEROUS catchain recover method", [&](td::Slice id) {
-        TRY_RESULT(seq, td::to_integer_safe<ton::CatchainSeqno>(id));
+        TRY_RESULT(seq, td::to_integer_safe<ion::CatchainSeqno>(id));
         acts.push_back([&x, seq]() { td::actor::send_closure(x, &ValidatorEngine::add_unsafe_catchain, seq); });
         return td::Status::OK();
       });
   p.add_checked_option('F', "unsafe-catchain-rotate", "use forceful and DANGEROUS catchain rotation",
                        [&](td::Slice params) {
                          auto pos1 = params.find(':');
-                         TRY_RESULT(b_seq, td::to_integer_safe<ton::BlockSeqno>(params.substr(0, pos1)));
+                         TRY_RESULT(b_seq, td::to_integer_safe<ion::BlockSeqno>(params.substr(0, pos1)));
                          params = params.substr(++pos1, params.size());
                          auto pos2 = params.find(':');
-                         TRY_RESULT(cc_seq, td::to_integer_safe<ton::CatchainSeqno>(params.substr(0, pos2)));
+                         TRY_RESULT(cc_seq, td::to_integer_safe<ion::CatchainSeqno>(params.substr(0, pos2)));
                          params = params.substr(++pos2, params.size());
                          auto h = std::stoi(params.substr(0, params.size()).str());
                          acts.push_back([&x, b_seq, cc_seq, h]() {
@@ -5373,7 +5373,7 @@ int main(int argc, char *argv[]) {
           return td::Status::Error(PSTRING() << "invalid shard " << str);
         }
         acts.push_back([=, &x]() {
-          td::actor::send_closure(x, &ValidatorEngine::add_shard_cmd, ton::ShardIdFull{wc, (ton::ShardId)shard});
+          td::actor::send_closure(x, &ValidatorEngine::add_shard_cmd, ion::ShardIdFull{wc, (ion::ShardId)shard});
         });
         return td::Status::OK();
       });
@@ -5384,10 +5384,10 @@ int main(int argc, char *argv[]) {
                          try {
                            v = std::stoi(arg.str());
                          } catch (...) {
-                           return td::Status::Error(ton::ErrorCode::error, "bad value for --threads: not a number");
+                           return td::Status::Error(ion::ErrorCode::error, "bad value for --threads: not a number");
                          }
                          if (v <= 0) {
-                           return td::Status::Error(ton::ErrorCode::error, "bad value for --threads: should be > 0");
+                           return td::Status::Error(ion::ErrorCode::error, "bad value for --threads: should be > 0");
                          }
                          if (v > 127) {
                            LOG(WARNING) << "`--threads " << v << "` is too big, effective value will be 127";
@@ -5604,7 +5604,7 @@ int main(int argc, char *argv[]) {
       });
   p.add_checked_option(
       '\0', "sync-shards-upto", "stop syncing shards on this masterchain seqno", [&](td::Slice s) -> td::Status {
-        TRY_RESULT(v, td::to_integer_safe<ton::BlockSeqno>(s));
+        TRY_RESULT(v, td::to_integer_safe<ion::BlockSeqno>(s));
         acts.push_back([&x, v]() { td::actor::send_closure(x, &ValidatorEngine::set_sync_shards_upto, v); });
         return td::Status::OK();
       });
@@ -5622,7 +5622,7 @@ int main(int argc, char *argv[]) {
                            }
                            acts.push_back([&x, v]() {
                              td::actor::send_closure(x, &ValidatorEngine::set_shard_block_retainer_adnl_id,
-                                                     ton::adnl::AdnlNodeIdShort{v});
+                                                     ion::adnl::AdnlNodeIdShort{v});
                            });
                          }
                          return td::Status::OK();

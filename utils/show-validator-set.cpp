@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2026, TON CORE TECHNOLOGIES CO. L.L.C
+ * Copyright (c) 2026, ION CORE TECHNOLOGIES CO. L.L.C
  *
  * SPDX-License-Identifier: LGPL-2.0-or-later
  */
@@ -17,9 +17,9 @@
 
 int main(int argc, char** argv) {
   std::string filename;
-  ton::WorkchainId workchain = ton::workchainInvalid;
+  ion::WorkchainId workchain = ion::workchainInvalid;
   td::uint64 shard = 0;
-  ton::CatchainSeqno cc_seqno = 0;
+  ion::CatchainSeqno cc_seqno = 0;
 
   td::OptionParser p;
   p.set_description("Display validator set for a given shard from an MC key block BOC file");
@@ -32,7 +32,7 @@ int main(int argc, char** argv) {
   });
   p.add_option('f', "file", "masterchain key block BOC file", [&](td::Slice arg) { filename = arg.str(); });
   p.add_checked_option('w', "workchain", "workchain id", [&](td::Slice arg) {
-    TRY_RESULT_ASSIGN(workchain, td::to_integer_safe<ton::WorkchainId>(arg));
+    TRY_RESULT_ASSIGN(workchain, td::to_integer_safe<ion::WorkchainId>(arg));
     return td::Status::OK();
   });
   p.add_checked_option('s', "shard", "shard id (hex, e.g. 8000000000000000)", [&](td::Slice arg) {
@@ -40,7 +40,7 @@ int main(int argc, char** argv) {
     return td::Status::OK();
   });
   p.add_checked_option('c', "cc-seqno", "catchain seqno", [&](td::Slice arg) {
-    TRY_RESULT_ASSIGN(cc_seqno, td::to_integer_safe<ton::CatchainSeqno>(arg));
+    TRY_RESULT_ASSIGN(cc_seqno, td::to_integer_safe<ion::CatchainSeqno>(arg));
     return td::Status::OK();
   });
 
@@ -49,13 +49,13 @@ int main(int argc, char** argv) {
     std::cerr << "Error: " << status.move_as_error().to_string() << std::endl;
     return 1;
   }
-  if (filename.empty() || workchain == ton::workchainInvalid) {
+  if (filename.empty() || workchain == ion::workchainInvalid) {
     std::cerr << "Usage: show-validator-set -f <key-block.boc> -w <workchain> -s <shard-hex> -c <cc-seqno>"
               << std::endl;
     return 1;
   }
 
-  ton::ShardIdFull shard_id{workchain, static_cast<ton::ShardId>(shard)};
+  ion::ShardIdFull shard_id{workchain, static_cast<ion::ShardId>(shard)};
 
   auto data_r = td::read_file(filename);
   if (data_r.is_error()) {
@@ -98,7 +98,7 @@ int main(int argc, char** argv) {
 
   for (size_t i = 0; i < nodes.size(); i++) {
     const auto& node = nodes[i];
-    auto pubkey = ton::PublicKey{ton::pubkeys::Ed25519{node.key.as_bits256()}};
+    auto pubkey = ion::PublicKey{ion::pubkeys::Ed25519{node.key.as_bits256()}};
     auto short_id = pubkey.compute_short_id();
     auto hash = short_id.bits256_value();
 

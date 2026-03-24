@@ -16,7 +16,7 @@ set(EMULATOR_EMSCRIPTEN_SOURCE
 include(GenerateExportHeader)
 
 add_library(emulator_static STATIC ${EMULATOR_STATIC_SOURCE})
-target_link_libraries(emulator_static PUBLIC ton_crypto smc-envelope)
+target_link_libraries(emulator_static PUBLIC ion_crypto smc-envelope)
 
 if (EMULATOR_STATIC OR USE_EMSCRIPTEN)
   add_library(emulator STATIC ${EMULATOR_SOURCE})

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2026, TON CORE TECHNOLOGIES CO. L.L.C
+ * Copyright (c) 2026, ION CORE TECHNOLOGIES CO. L.L.C
  *
  * SPDX-License-Identifier: LGPL-2.0-or-later
  */
@@ -9,7 +9,7 @@
 
 #include "votes.h"
 
-namespace ton::validator::consensus::simplex::stats {
+namespace ion::validator::consensus::simplex::stats {
 
 namespace tl {
 
@@ -75,7 +75,7 @@ struct Flow {
 
 class MetricCollector final : public consensus::stats::MetricCollector {
  public:
-  MetricCollector(ValidatorSessionId session_id, PublicKeyHash self_id, std::unique_ptr<ton::stats::Recorder> recorder);
+  MetricCollector(ValidatorSessionId session_id, PublicKeyHash self_id, std::unique_ptr<ion::stats::Recorder> recorder);
 
   void collect_collate_started(const consensus::stats::CollateStarted& event) override;
   void collect_collate_finished(const consensus::stats::CollateFinished& event) override;
@@ -97,7 +97,7 @@ class MetricCollector final : public consensus::stats::MetricCollector {
   std::map<td::uint32, double> collate_started_by_slot_;
   td::uint32 first_non_accepted_slot_ = 0;
 
-  std::unique_ptr<ton::stats::Recorder> recorder_;
+  std::unique_ptr<ion::stats::Recorder> recorder_;
 };
 
-}  // namespace ton::validator::consensus::simplex::stats
+}  // namespace ion::validator::consensus::simplex::stats

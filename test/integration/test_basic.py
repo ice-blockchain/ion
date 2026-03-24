@@ -3,8 +3,8 @@ import logging
 import shutil
 from pathlib import Path
 
-from tontester.install import Install
-from tontester.network import FullNode, Network
+from iontester.install import Install
+from iontester.network import FullNode, Network
 
 
 async def main():

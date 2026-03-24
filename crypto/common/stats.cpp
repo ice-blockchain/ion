@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2026, TON CORE TECHNOLOGIES CO. L.L.C
+ * Copyright (c) 2026, ION CORE TECHNOLOGIES CO. L.L.C
  *
  * SPDX-License-Identifier: LGPL-2.0-or-later
  */
@@ -8,7 +8,7 @@
 
 #include "stats.h"
 
-namespace ton::stats {
+namespace ion::stats {
 
 namespace {
 
@@ -43,4 +43,4 @@ std::unique_ptr<Recorder> recorder_for(const Tag& tag) {
   return s_callback->get_recorder(tag);
 }
 
-}  // namespace ton::stats
+}  // namespace ion::stats

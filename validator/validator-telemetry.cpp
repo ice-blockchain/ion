@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain source code.
+    This file is part of ION Blockchain source code.
 
-    TON Blockchain is free software; you can redistribute it and/or
+    ION Blockchain is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
     as published by the Free Software Foundation; either version 2
     of the License, or (at your option) any later version.
 
-    TON Blockchain is distributed in the hope that it will be useful,
+    ION Blockchain is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with TON Blockchain.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain.  If not, see <http://www.gnu.org/licenses/>.
 
     In addition, as a special exception, the copyright holders give permission
     to link the code of portions of this program with the OpenSSL library.
@@ -30,7 +30,7 @@
 #include "git.h"
 #include "validator-telemetry.hpp"
 
-namespace ton::validator {
+namespace ion::validator {
 
 void ValidatorTelemetry::start_up() {
   node_version_ = PSTRING() << "validator-engine, Commit: " << GitMetadata::CommitSHA1()
@@ -85,4 +85,4 @@ void ValidatorTelemetry::send_telemetry() {
   callback_->send_telemetry(std::move(telemetry));
 }
 
-}  // namespace ton::validator
+}  // namespace ion::validator

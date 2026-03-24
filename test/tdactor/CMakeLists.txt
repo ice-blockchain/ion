@@ -6,4 +6,4 @@ target_link_libraries(test-scheduler-stop PRIVATE
     td-test-main
 )
 
-ton_test(test-scheduler-stop)
+ion_test(test-scheduler-stop)

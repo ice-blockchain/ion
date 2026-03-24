@@ -11,8 +11,8 @@ namespace tonlib {
 
 class FFIEngineConsoleClient {
  public:
-  FFIEngineConsoleClient(FFIEventLoop& loop, td::IPAddress address, ton::PublicKey server_public_key,
-                         ton::PrivateKey client_private_key);
+  FFIEngineConsoleClient(FFIEventLoop& loop, td::IPAddress address, ion::PublicKey server_public_key,
+                         ion::PrivateKey client_private_key);
 
   FFIEngineConsoleClient(FFIEngineConsoleClient&&) = default;
 
@@ -22,8 +22,8 @@ class FFIEngineConsoleClient {
     }
   }
 
-  void request(ton::tl_object_ptr<ton::ton_api::Function> query,
-               td::Promise<ton::tl_object_ptr<ton::ton_api::Object>> promise);
+  void request(ion::tl_object_ptr<ion::ton_api::Function> query,
+               td::Promise<ion::tl_object_ptr<ion::ton_api::Object>> promise);
 
   FFIEventLoop& loop() {
     return loop_;

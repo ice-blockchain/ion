@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -25,7 +25,7 @@
 
 #include "dht-types.h"
 
-namespace ton {
+namespace ion {
 
 namespace dht {
 
@@ -376,7 +376,7 @@ td::Status DhtUpdateRuleOverlayNodes::update_value(DhtValue &value, DhtValue &&n
   return td::Status::OK();
 }
 
-bool DhtUpdateRuleOverlayNodes::check_is_acceptable(const ton::dht::DhtValue &value) {
+bool DhtUpdateRuleOverlayNodes::check_is_acceptable(const ion::dht::DhtValue &value) {
   auto F = fetch_tl_object<ton_api::overlay_nodes>(value.value().clone_as_buffer_slice(), true);
   if (F.is_error()) {
     return false;
@@ -411,4 +411,4 @@ td::Result<std::shared_ptr<DhtUpdateRule>> DhtUpdateRule::create(tl_object_ptr<t
 
 }  // namespace dht
 
-}  // namespace ton
+}  // namespace ion

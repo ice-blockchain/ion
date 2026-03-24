@@ -67,7 +67,7 @@ td::Result<tonlib::FFIEngineConsoleClient> create_ffi_client(TonlibEventLoop *lo
     return td::Status::Error("Config must be a JSON object");
   }
 
-  ton::ton_api::engineConsoleClient_config parsed_config;
+  ion::ton_api::engineConsoleClient_config parsed_config;
   TRY_STATUS(from_json(parsed_config, json.get_object()));
 
   td::IPAddress parsed_address;
@@ -76,26 +76,26 @@ td::Result<tonlib::FFIEngineConsoleClient> create_ffi_client(TonlibEventLoop *lo
   if (!parsed_config.server_public_key_) {
     return td::Status::Error("server_public_key is required in config");
   }
-  auto server_public_key_slice = ton::serialize_tl_object(parsed_config.server_public_key_.get(), true);
-  TRY_RESULT(parsed_server_public_key, ton::PublicKey::import(server_public_key_slice));
+  auto server_public_key_slice = ion::serialize_tl_object(parsed_config.server_public_key_.get(), true);
+  TRY_RESULT(parsed_server_public_key, ion::PublicKey::import(server_public_key_slice));
 
   if (!parsed_config.client_private_key_) {
     return td::Status::Error("client_private_key is required in config");
   }
-  auto client_private_key_slice = ton::serialize_tl_object(parsed_config.client_private_key_.get(), true);
-  TRY_RESULT(parsed_client_private_key, ton::PrivateKey::import(client_private_key_slice));
+  auto client_private_key_slice = ion::serialize_tl_object(parsed_config.client_private_key_.get(), true);
+  TRY_RESULT(parsed_client_private_key, ion::PrivateKey::import(client_private_key_slice));
 
   return tonlib::FFIEngineConsoleClient{*loop, parsed_address, parsed_server_public_key, parsed_client_private_key};
 }
 
-td::Result<ton::tl_object_ptr<ton::ton_api::Function>> parse_query(const char *query) {
+td::Result<ion::tl_object_ptr<ion::ton_api::Function>> parse_query(const char *query) {
   std::string query_str = query;
   TRY_RESULT(json, td::json_decode(query_str));
   if (json.type() != td::JsonValue::Type::Object) {
     return td::Status::Error("Query must be a JSON object");
   }
 
-  ton::tl_object_ptr<ton::ton_api::Function> parsed_query;
+  ion::tl_object_ptr<ion::ton_api::Function> parsed_query;
   TRY_STATUS(from_json(parsed_query, std::move(json)));
 
   if (!tonlib::is_engine_console_query(parsed_query)) {
@@ -140,12 +140,12 @@ TonlibResponse *tonlib_engine_console_request(TonlibEngineConsole *console, cons
     return TonlibResponse::create_resolved(client.loop(), query_or_sync_error.move_as_error());
   }
 
-  auto transform = [](ton::tl_object_ptr<ton::ton_api::Object> object) -> std::string {
+  auto transform = [](ion::tl_object_ptr<ion::ton_api::Object> object) -> std::string {
     return td::json_encode<std::string>(td::ToJson(object));
   };
 
   auto [response, promise] =
-      TonlibResponse::create_bridge<ton::tl_object_ptr<ton::ton_api::Object>>(client.loop(), transform);
+      TonlibResponse::create_bridge<ion::tl_object_ptr<ion::ton_api::Object>>(client.loop(), transform);
   client.request(query_or_sync_error.move_as_ok(), std::move(promise));
   return response;
 }

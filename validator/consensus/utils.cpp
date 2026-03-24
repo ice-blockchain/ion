@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025-2026, TON CORE TECHNOLOGIES CO. L.L.C
+ * Copyright (c) 2025-2026, ION CORE TECHNOLOGIES CO. L.L.C
  *
  * SPDX-License-Identifier: LGPL-2.0-or-later
  */
@@ -11,7 +11,7 @@
 #include "fabric.h"
 #include "utils.h"
 
-namespace ton::validator::consensus {
+namespace ion::validator::consensus {
 
 td::Result<double> get_candidate_gen_utime_exact(const BlockCandidate& candidate) {
   TRY_RESULT(cdata_roots, vm::std_boc_deserialize_multi(candidate.collated_data));
@@ -26,4 +26,4 @@ td::Result<double> get_candidate_gen_utime_exact(const BlockCandidate& candidate
   return td::Status::Error("no ConsensusExtraData in candidate");
 }
 
-}  // namespace ton::validator::consensus
+}  // namespace ion::validator::consensus

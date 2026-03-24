@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025-2026, TON CORE TECHNOLOGIES CO. L.L.C
+ * Copyright (c) 2025-2026, ION CORE TECHNOLOGIES CO. L.L.C
  *
  * SPDX-License-Identifier: LGPL-2.0-or-later
  */
@@ -14,7 +14,7 @@
 
 #include "runtime.h"
 
-namespace ton::validator {
+namespace ion::validator {
 
 namespace consensus {
 namespace {
@@ -388,4 +388,4 @@ td::actor::ActorOwn<IValidatorGroup> IValidatorGroup::create_bridge(
   return td::actor::create_actor<consensus::BridgeImpl>(name_with_seqno, std::move(params));
 }
 
-}  // namespace ton::validator
+}  // namespace ion::validator

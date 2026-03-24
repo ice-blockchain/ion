@@ -1,11 +1,11 @@
 include(AndroidThirdParty)
 
-get_filename_component(TON_SOURCE_DIR "${CMAKE_CURRENT_LIST_DIR}/.." ABSOLUTE)
-set(TON_THIRD_PARTY_SOURCE_DIR "${TON_SOURCE_DIR}/third-party")
-set(TON_THIRD_PARTY_BINARY_DIR "${CMAKE_BINARY_DIR}/third-party")
+get_filename_component(ION_SOURCE_DIR "${CMAKE_CURRENT_LIST_DIR}/.." ABSOLUTE)
+set(ION_THIRD_PARTY_SOURCE_DIR "${ION_SOURCE_DIR}/third-party")
+set(ION_THIRD_PARTY_BINARY_DIR "${CMAKE_BINARY_DIR}/third-party")
 
-set(SODIUM_SOURCE_DIR ${TON_THIRD_PARTY_SOURCE_DIR}/sodium)
-set(SODIUM_BINARY_DIR ${TON_THIRD_PARTY_BINARY_DIR}/sodium)
+set(SODIUM_SOURCE_DIR ${ION_THIRD_PARTY_SOURCE_DIR}/sodium)
+set(SODIUM_BINARY_DIR ${ION_THIRD_PARTY_BINARY_DIR}/sodium)
 
 if (USE_EMSCRIPTEN OR EMSCRIPTEN)
   set(SODIUM_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3pp_emscripten/libsodium)
@@ -48,7 +48,7 @@ elseif (MSVC)
     OUTPUT ${SODIUM_LIBRARY}
   )
 elseif (ANDROID)
-  set(SODIUM_BINARY_DIR ${TON_ANDROID_THIRD_PARTY_DIR}/libsodium/${TON_ANDROID_SODIUM_DIR})
+  set(SODIUM_BINARY_DIR ${ION_ANDROID_THIRD_PARTY_DIR}/libsodium/${ION_ANDROID_SODIUM_DIR})
   set(SODIUM_INCLUDE_DIR ${SODIUM_BINARY_DIR}/include)
   set(SODIUM_LIBRARY ${SODIUM_BINARY_DIR}/lib/libsodium.a CACHE FILEPATH "Sodium release library" FORCE)
   set(SODIUM_LIBRARY_RELEASE ${SODIUM_LIBRARY} CACHE FILEPATH "Sodium release library" FORCE)
@@ -59,8 +59,8 @@ elseif (ANDROID)
   file(MAKE_DIRECTORY ${SODIUM_BINARY_DIR})
   file(MAKE_DIRECTORY "${SODIUM_BINARY_DIR}/include")
 
-  set(SODIUM_AR ${TON_ANDROID_AR})
-  set(SODIUM_RANLIB ${TON_ANDROID_RANLIB})
+  set(SODIUM_AR ${ION_ANDROID_AR})
+  set(SODIUM_RANLIB ${ION_ANDROID_RANLIB})
   if (CMAKE_C_FLAGS)
     set(SODIUM_CFLAGS "${CMAKE_C_FLAGS} -fPIC")
   else()
@@ -75,40 +75,40 @@ elseif (ANDROID)
       WORKING_DIRECTORY ${SODIUM_SOURCE_DIR}
       COMMAND ${CMAKE_COMMAND} -E rm -f ${SODIUM_LIBRARY}
       COMMAND ${CMAKE_COMMAND} -E env
-        CC=${TON_ANDROID_CC}
-        CXX=${TON_ANDROID_CXX}
+        CC=${ION_ANDROID_CC}
+        CXX=${ION_ANDROID_CXX}
         AR=${SODIUM_AR}
         RANLIB=${SODIUM_RANLIB}
         CFLAGS=${SODIUM_CFLAGS}
         CXXFLAGS=${SODIUM_CXXFLAGS}
         ./autogen.sh
       COMMAND ${CMAKE_COMMAND} -E env
-        CC=${TON_ANDROID_CC}
-        CXX=${TON_ANDROID_CXX}
+        CC=${ION_ANDROID_CC}
+        CXX=${ION_ANDROID_CXX}
         AR=${SODIUM_AR}
         RANLIB=${SODIUM_RANLIB}
         CFLAGS=${SODIUM_CFLAGS}
         CXXFLAGS=${SODIUM_CXXFLAGS}
-        ./configure --host=${TON_ANDROID_HOST} --prefix=${SODIUM_BINARY_DIR} --with-pic --enable-static --disable-shared
+        ./configure --host=${ION_ANDROID_HOST} --prefix=${SODIUM_BINARY_DIR} --with-pic --enable-static --disable-shared
       COMMAND ${CMAKE_COMMAND} -E env
-        CC=${TON_ANDROID_CC}
-        CXX=${TON_ANDROID_CXX}
+        CC=${ION_ANDROID_CC}
+        CXX=${ION_ANDROID_CXX}
         AR=${SODIUM_AR}
         RANLIB=${SODIUM_RANLIB}
         CFLAGS=${SODIUM_CFLAGS}
         CXXFLAGS=${SODIUM_CXXFLAGS}
         make clean
       COMMAND ${CMAKE_COMMAND} -E env
-        CC=${TON_ANDROID_CC}
-        CXX=${TON_ANDROID_CXX}
+        CC=${ION_ANDROID_CC}
+        CXX=${ION_ANDROID_CXX}
         AR=${SODIUM_AR}
         RANLIB=${SODIUM_RANLIB}
         CFLAGS=${SODIUM_CFLAGS}
         CXXFLAGS=${SODIUM_CXXFLAGS}
         make -j16
       COMMAND ${CMAKE_COMMAND} -E env
-        CC=${TON_ANDROID_CC}
-        CXX=${TON_ANDROID_CXX}
+        CC=${ION_ANDROID_CC}
+        CXX=${ION_ANDROID_CXX}
         AR=${SODIUM_AR}
         RANLIB=${SODIUM_RANLIB}
         CFLAGS=${SODIUM_CFLAGS}

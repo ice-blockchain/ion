@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2026, TON CORE TECHNOLOGIES CO. L.L.C
+ * Copyright (c) 2026, ION CORE TECHNOLOGIES CO. L.L.C
  *
  * SPDX-License-Identifier: LGPL-2.0-or-later
  */
@@ -11,7 +11,7 @@
 
 #include "manager-facade.h"
 
-namespace ton::validator::consensus {
+namespace ion::validator::consensus {
 
 class ChainState : public td::CntObject {
  public:
@@ -142,4 +142,4 @@ using ChainStateRef = td::Ref<ChainState>;
 
 td::StringBuilder& operator<<(td::StringBuilder& sb, const ChainState& state);
 
-}  // namespace ton::validator::consensus
+}  // namespace ion::validator::consensus

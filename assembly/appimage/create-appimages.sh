@@ -25,7 +25,7 @@ for file in ../artifacts/*; do
     sed -i "s/app/$appName/g" $appName.AppDir/AppRun
     chmod +x ./$appName.AppDir/AppRun
     printf '[Desktop Entry]\nName='$appName'\nExec='$appName'\nIcon='$appName'\nType=Application\nCategories=Utility;\n' > $appName.AppDir/$appName.desktop
-    cp ../ton.png $appName.AppDir/$appName.png
+    cp ../ion.png $appName.AppDir/$appName.png
     cp $file $appName.AppDir/usr/bin/
     cp /lib/$ARCH-linux-gnu/libatomic.so.1 \
       /lib/$ARCH-linux-gnu/libreadline.so.8 \

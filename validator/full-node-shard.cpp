@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -34,8 +34,8 @@
 #include "td/utils/buffer.h"
 #include "td/utils/overloaded.h"
 #include "tl/tl_json.h"
-#include "ton/ton-shard.h"
-#include "ton/ton-tl.hpp"
+#include "ion/ion-shard.h"
+#include "ion/ion-tl.hpp"
 
 #include "checksum.h"
 #include "full-node-serializer.hpp"
@@ -43,7 +43,7 @@
 #include "full-node-shard.hpp"
 #include "overlays.h"
 
-namespace ton {
+namespace ion {
 
 namespace validator {
 
@@ -154,7 +154,7 @@ void FullNodeShardImpl::remove_neighbour(adnl::AdnlNodeIdShort id) {
 }
 
 void FullNodeShardImpl::update_adnl_id(adnl::AdnlNodeIdShort adnl_id, td::Promise<td::Unit> promise) {
-  td::actor::send_closure(overlays_, &ton::overlay::Overlays::delete_overlay, adnl_id_, overlay_id_);
+  td::actor::send_closure(overlays_, &ion::overlay::Overlays::delete_overlay, adnl_id_, overlay_id_);
   adnl_id_ = adnl_id;
   local_id_ = adnl_id_.pubkey_hash();
   create_overlay();
@@ -168,7 +168,7 @@ void FullNodeShardImpl::set_active(bool active) {
     return;
   }
   active_ = active;
-  td::actor::send_closure(overlays_, &ton::overlay::Overlays::delete_overlay, adnl_id_, overlay_id_);
+  td::actor::send_closure(overlays_, &ion::overlay::Overlays::delete_overlay, adnl_id_, overlay_id_);
   create_overlay();
 }
 
@@ -726,7 +726,7 @@ void FullNodeShardImpl::receive_query(adnl::AdnlNodeIdShort src, td::BufferSlice
   }
   auto B = fetch_tl_object<ton_api::Function>(std::move(query), true);
   if (B.is_error()) {
-    promise.set_error(td::Status::Error(ErrorCode::protoviolation, "cannot parse tonnode query"));
+    promise.set_error(td::Status::Error(ErrorCode::protoviolation, "cannot parse ionnode query"));
     return;
   }
   auto fun_ptr = B.move_as_ok();
@@ -1171,7 +1171,7 @@ void FullNodeShardImpl::start_up() {
 }
 
 void FullNodeShardImpl::tear_down() {
-  td::actor::send_closure(overlays_, &ton::overlay::Overlays::delete_overlay, adnl_id_, overlay_id_);
+  td::actor::send_closure(overlays_, &ion::overlay::Overlays::delete_overlay, adnl_id_, overlay_id_);
 }
 
 void FullNodeShardImpl::sign_new_certificate(PublicKeyHash sign_by) {
@@ -1179,7 +1179,7 @@ void FullNodeShardImpl::sign_new_certificate(PublicKeyHash sign_by) {
     return;
   }
 
-  ton::overlay::Certificate cert{
+  ion::overlay::Certificate cert{
       sign_by, static_cast<td::int32>(td::Clocks::system() + 3600), overlay::Overlays::max_fec_broadcast_size(),
       overlay::CertificateFlags::Trusted | overlay::CertificateFlags::AllowFec, td::BufferSlice{}};
   auto to_sign = cert.to_sign(overlay_id_, local_id_);
@@ -1196,11 +1196,11 @@ void FullNodeShardImpl::sign_new_certificate(PublicKeyHash sign_by) {
           td::actor::send_closure(SelfId, &FullNodeShardImpl::signed_new_certificate, std::move(cert));
         }
       });
-  td::actor::send_closure(keyring_, &ton::keyring::Keyring::sign_add_get_public_key, sign_by, std::move(to_sign),
+  td::actor::send_closure(keyring_, &ion::keyring::Keyring::sign_add_get_public_key, sign_by, std::move(to_sign),
                           std::move(P));
 }
 
-void FullNodeShardImpl::signed_new_certificate(ton::overlay::Certificate cert) {
+void FullNodeShardImpl::signed_new_certificate(ion::overlay::Certificate cert) {
   LOG(WARNING) << "updated certificate";
   cert_ = std::make_shared<overlay::Certificate>(std::move(cert));
   td::actor::send_closure(overlays_, &overlay::Overlays::update_certificate, adnl_id_, overlay_id_, local_id_, cert_);
@@ -1214,7 +1214,7 @@ void FullNodeShardImpl::sign_overlay_certificate(PublicKeyHash signed_key, td::u
     return;
   }
 
-  ton::overlay::Certificate cert{sign_by, static_cast<td::int32>(expire_at), max_size,
+  ion::overlay::Certificate cert{sign_by, static_cast<td::int32>(expire_at), max_size,
                                  overlay::CertificateFlags::Trusted | overlay::CertificateFlags::AllowFec,
                                  td::BufferSlice{}};
   auto to_sign = cert.to_sign(overlay_id_, signed_key);
@@ -1226,19 +1226,19 @@ void FullNodeShardImpl::sign_overlay_certificate(PublicKeyHash signed_key, td::u
           promise.set_error(R.move_as_error_prefix("failed to create certificate: failed to sign: "));
         } else {
           auto p = R.move_as_ok();
-          auto c = ton::create_serialize_tl_object<ton::ton_api::overlay_certificate>(
+          auto c = ion::create_serialize_tl_object<ion::ton_api::overlay_certificate>(
               p.second.tl(), static_cast<td::int32>(expire_at), max_size, std::move(p.first));
           promise.set_value(std::move(c));
         }
       });
-  td::actor::send_closure(keyring_, &ton::keyring::Keyring::sign_add_get_public_key, sign_by, std::move(to_sign),
+  td::actor::send_closure(keyring_, &ion::keyring::Keyring::sign_add_get_public_key, sign_by, std::move(to_sign),
                           std::move(P));
 }
 
 void FullNodeShardImpl::import_overlay_certificate(PublicKeyHash signed_key,
-                                                   std::shared_ptr<ton::overlay::Certificate> cert,
+                                                   std::shared_ptr<ion::overlay::Certificate> cert,
                                                    td::Promise<td::Unit> promise) {
-  td::actor::send_closure(overlays_, &ton::overlay::Overlays::update_certificate, adnl_id_, overlay_id_, signed_key,
+  td::actor::send_closure(overlays_, &ion::overlay::Overlays::update_certificate, adnl_id_, overlay_id_, signed_key,
                           cert);
   promise.set_value(td::Unit());
 }
@@ -1476,7 +1476,7 @@ td::actor::ActorOwn<FullNodeShard> FullNodeShard::create(
     td::actor::ActorId<adnl::Adnl> adnl, td::actor::ActorId<rldp::Rldp> rldp, td::actor::ActorId<rldp2::Rldp> rldp2,
     td::actor::ActorId<overlay::Overlays> overlays, td::actor::ActorId<ValidatorManagerInterface> validator_manager,
     td::actor::ActorId<adnl::AdnlExtClient> client, td::actor::ActorId<FullNode> full_node, bool active) {
-  return td::actor::create_actor<FullNodeShardImpl>(PSTRING() << "tonnode" << shard.to_str(), shard, local_id, adnl_id,
+  return td::actor::create_actor<FullNodeShardImpl>(PSTRING() << "ionnode" << shard.to_str(), shard, local_id, adnl_id,
                                                     zero_state_file_hash, opts, std::move(limiter), keyring, adnl, rldp,
                                                     rldp2, overlays, validator_manager, client, full_node, active);
 }
@@ -1485,4 +1485,4 @@ td::actor::ActorOwn<FullNodeShard> FullNodeShard::create(
 
 }  // namespace validator
 
-}  // namespace ton
+}  // namespace ion

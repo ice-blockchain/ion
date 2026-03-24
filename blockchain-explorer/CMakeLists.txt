@@ -20,7 +20,7 @@ if (NOT MHD_FOUND AND NOT USE_EMSCRIPTEN AND NOT EMSCRIPTEN)
 endif()
 
 target_include_directories(blockchain-explorer PUBLIC ${MHD_INCLUDE_DIR})
-target_link_libraries(blockchain-explorer tdactor adnllite tl_lite_api tl-lite-utils ton_crypto ${MHD_LIBRARY})
+target_link_libraries(blockchain-explorer tdactor adnllite tl_lite_api tl-lite-utils ion_crypto ${MHD_LIBRARY})
 target_link_libraries(blockchain-explorer lite-client-common)
 if (TARGET mhd)
   add_dependencies(blockchain-explorer mhd)

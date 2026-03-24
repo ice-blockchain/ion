@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025-2026, TON CORE TECHNOLOGIES CO. L.L.C
+ * Copyright (c) 2025-2026, ION CORE TECHNOLOGIES CO. L.L.C
  *
  * SPDX-License-Identifier: LGPL-2.0-or-later
  */
@@ -19,9 +19,9 @@
 
 #include "block-auto.h"
 
-using namespace ton;
-using namespace ton::validator;
-using namespace ton::validator::consensus;
+using namespace ion;
+using namespace ion::validator;
+using namespace ion::validator::consensus;
 
 namespace {
 td::Bits256 from_hex(td::Slice s) {
@@ -174,7 +174,7 @@ td::actor::ActorOwn<TestOverlay> test_overlay;
 
 class TestOverlayNode : public runtime::SpawnsWith<Bus>, public runtime::ConnectsTo<Bus> {
  public:
-  TON_RUNTIME_DEFINE_EVENT_HANDLER();
+  ION_RUNTIME_DEFINE_EVENT_HANDLER();
 
   void start_up() override {
     instance_idx_ = dynamic_cast<const TestSimplexBus &>(*owning_bus()).instance_idx;

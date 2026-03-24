@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025-2026, TON CORE TECHNOLOGIES CO. L.L.C
+ * Copyright (c) 2025-2026, ION CORE TECHNOLOGIES CO. L.L.C
  *
  * SPDX-License-Identifier: LGPL-2.0-or-later
  */
@@ -8,7 +8,7 @@
 
 #include "crypto/common/refcnt.hpp"
 
-namespace ton::validator::consensus {
+namespace ion::validator::consensus {
 
 class Misbehavior : public td::CntObject {
  public:
@@ -17,4 +17,4 @@ class Misbehavior : public td::CntObject {
 
 using MisbehaviorRef = td::Ref<Misbehavior>;
 
-}  // namespace ton::validator::consensus
+}  // namespace ion::validator::consensus

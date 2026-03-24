@@ -83,13 +83,13 @@ if (NOT SECP256K1_LIBRARY)
           OUTPUT ${SECP256K1_LIBRARY}
       )
     elseif (ANDROID)
-      set(SECP256K1_BINARY_DIR ${TON_ANDROID_THIRD_PARTY_DIR}/secp256k1/${TON_ANDROID_ARCH_DIR})
+      set(SECP256K1_BINARY_DIR ${ION_ANDROID_THIRD_PARTY_DIR}/secp256k1/${ION_ANDROID_ARCH_DIR})
       set(SECP256K1_LIBRARY ${SECP256K1_BINARY_DIR}/lib/libsecp256k1.a)
-      set(SECP256K1_INCLUDE_DIR ${TON_ANDROID_THIRD_PARTY_DIR}/secp256k1/include)
+      set(SECP256K1_INCLUDE_DIR ${ION_ANDROID_THIRD_PARTY_DIR}/secp256k1/include)
       set(SECP256K1_LIBRARY ${SECP256K1_LIBRARY} CACHE FILEPATH "Secp256k1 library" FORCE)
       set(SECP256K1_INCLUDE_DIR ${SECP256K1_INCLUDE_DIR} CACHE PATH "Secp256k1 include dir" FORCE)
-      set(SECP256K1_AR ${TON_ANDROID_AR})
-      set(SECP256K1_RANLIB ${TON_ANDROID_RANLIB})
+      set(SECP256K1_AR ${ION_ANDROID_AR})
+      set(SECP256K1_RANLIB ${ION_ANDROID_RANLIB})
       if (CMAKE_C_FLAGS)
         set(SECP256K1_CFLAGS "${CMAKE_C_FLAGS} -fPIC")
       else()
@@ -103,36 +103,36 @@ if (NOT SECP256K1_LIBRARY)
           COMMAND ${CMAKE_COMMAND} -E rm -rf .libs src/.libs config.cache config.status config.log Makefile libtool
           COMMAND ${CMAKE_COMMAND} -E rm -f libsecp256k1.la libsecp256k1_precomputed.la libsecp256k1_common.la libsecp256k1.pc libsecp256k1-config
           COMMAND ${CMAKE_COMMAND} -E env
-            CC=${TON_ANDROID_CC}
-            CXX=${TON_ANDROID_CXX}
+            CC=${ION_ANDROID_CC}
+            CXX=${ION_ANDROID_CXX}
             AR=${SECP256K1_AR}
             RANLIB=${SECP256K1_RANLIB}
             CFLAGS=${SECP256K1_CFLAGS}
             ./autogen.sh
           COMMAND ${CMAKE_COMMAND} -E env
-            CC=${TON_ANDROID_CC}
-            CXX=${TON_ANDROID_CXX}
+            CC=${ION_ANDROID_CC}
+            CXX=${ION_ANDROID_CXX}
             AR=${SECP256K1_AR}
             RANLIB=${SECP256K1_RANLIB}
             CFLAGS=${SECP256K1_CFLAGS}
-            ./configure -q --disable-option-checking --enable-module-recovery --enable-module-extrakeys --prefix ${SECP256K1_BINARY_DIR} --with-pic --disable-shared --enable-static --disable-tests --disable-benchmark --host=${TON_ANDROID_HOST}
+            ./configure -q --disable-option-checking --enable-module-recovery --enable-module-extrakeys --prefix ${SECP256K1_BINARY_DIR} --with-pic --disable-shared --enable-static --disable-tests --disable-benchmark --host=${ION_ANDROID_HOST}
           COMMAND ${CMAKE_COMMAND} -E env
-            CC=${TON_ANDROID_CC}
-            CXX=${TON_ANDROID_CXX}
+            CC=${ION_ANDROID_CC}
+            CXX=${ION_ANDROID_CXX}
             AR=${SECP256K1_AR}
             RANLIB=${SECP256K1_RANLIB}
             CFLAGS=${SECP256K1_CFLAGS}
             make clean
           COMMAND ${CMAKE_COMMAND} -E env
-            CC=${TON_ANDROID_CC}
-            CXX=${TON_ANDROID_CXX}
+            CC=${ION_ANDROID_CC}
+            CXX=${ION_ANDROID_CXX}
             AR=${SECP256K1_AR}
             RANLIB=${SECP256K1_RANLIB}
             CFLAGS=${SECP256K1_CFLAGS}
             make -j16
           COMMAND ${CMAKE_COMMAND} -E env
-            CC=${TON_ANDROID_CC}
-            CXX=${TON_ANDROID_CXX}
+            CC=${ION_ANDROID_CC}
+            CXX=${ION_ANDROID_CXX}
             AR=${SECP256K1_AR}
             RANLIB=${SECP256K1_RANLIB}
             CFLAGS=${SECP256K1_CFLAGS}

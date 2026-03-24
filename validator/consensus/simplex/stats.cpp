@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2026, TON CORE TECHNOLOGIES CO. L.L.C
+ * Copyright (c) 2026, ION CORE TECHNOLOGIES CO. L.L.C
  *
  * SPDX-License-Identifier: LGPL-2.0-or-later
  */
@@ -7,7 +7,7 @@
 #include "stats.h"
 #include "validator-session-types.h"
 
-namespace ton::validator::consensus::simplex::stats {
+namespace ion::validator::consensus::simplex::stats {
 
 std::unique_ptr<Voted> Voted::create(Vote vote) {
   return std::unique_ptr<Voted>(new Voted(std::move(vote)));
@@ -59,7 +59,7 @@ bool Flow::is_normal() const {
 }
 
 MetricCollector::MetricCollector(ValidatorSessionId session_id, PublicKeyHash self_id,
-                                 std::unique_ptr<ton::stats::Recorder> recorder)
+                                 std::unique_ptr<ion::stats::Recorder> recorder)
     : session_id_(session_id), self_id_(self_id), recorder_(std::move(recorder)) {
 }
 
@@ -228,4 +228,4 @@ void MetricCollector::log_fake_catchain_stats(const Flow& flow) {
   recorder_->add(stats.tl());
 }
 
-}  // namespace ton::validator::consensus::simplex::stats
+}  // namespace ion::validator::consensus::simplex::stats

@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain source code.
+    This file is part of ION Blockchain source code.
 
-    TON Blockchain is free software; you can redistribute it and/or
+    ION Blockchain is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
     as published by the Free Software Foundation; either version 2
     of the License, or (at your option) any later version.
 
-    TON Blockchain is distributed in the hope that it will be useful,
+    ION Blockchain is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with TON Blockchain.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain.  If not, see <http://www.gnu.org/licenses/>.
 
     In addition, as a special exception, the copyright holders give permission
     to link the code of portions of this program with the OpenSSL library.
@@ -60,122 +60,122 @@ struct Config {
   };
   struct AddrCats {
     td::IPAddress in_addr;
-    std::shared_ptr<ton::adnl::AdnlProxy> proxy;
+    std::shared_ptr<ion::adnl::AdnlProxy> proxy;
     std::set<AdnlCategory> cats;
     std::set<AdnlCategory> priority_cats;
   };
   struct Validator {
-    std::map<ton::PublicKeyHash, ton::UnixTime> temp_keys;
-    std::map<ton::PublicKeyHash, ton::UnixTime> adnl_ids;
-    ton::UnixTime election_date;
-    ton::UnixTime expire_at;
+    std::map<ion::PublicKeyHash, ion::UnixTime> temp_keys;
+    std::map<ion::PublicKeyHash, ion::UnixTime> adnl_ids;
+    ion::UnixTime election_date;
+    ion::UnixTime expire_at;
   };
   struct Control {
-    ton::PublicKeyHash key;
-    std::map<ton::PublicKeyHash, td::uint32> clients;
+    ion::PublicKeyHash key;
+    std::map<ion::PublicKeyHash, td::uint32> clients;
   };
   struct FullNodeSlave {
-    ton::PublicKey key;
+    ion::PublicKey key;
     td::IPAddress addr;
   };
   struct FastSyncOverlayClient {
     FastSyncOverlayClient() = default;
-    FastSyncOverlayClient(ton::adnl::AdnlNodeIdShort id, td::int32 slot) : id(id), slot(slot) {
+    FastSyncOverlayClient(ion::adnl::AdnlNodeIdShort id, td::int32 slot) : id(id), slot(slot) {
     }
-    ton::adnl::AdnlNodeIdShort id;
+    ion::adnl::AdnlNodeIdShort id;
     td::int32 slot;
   };
 
-  std::map<ton::PublicKeyHash, td::uint32> keys_refcnt;
+  std::map<ion::PublicKeyHash, td::uint32> keys_refcnt;
   td::uint16 out_port;
   std::map<Addr, AddrCats> addrs;
-  std::map<ton::PublicKeyHash, AdnlCategory> adnl_ids;
-  std::set<ton::PublicKeyHash> dht_ids;
-  std::map<ton::PublicKeyHash, Validator> validators;
-  std::map<ton::adnl::AdnlNodeIdShort, std::vector<ton::ShardIdFull>> collators;
+  std::map<ion::PublicKeyHash, AdnlCategory> adnl_ids;
+  std::set<ion::PublicKeyHash> dht_ids;
+  std::map<ion::PublicKeyHash, Validator> validators;
+  std::map<ion::adnl::AdnlNodeIdShort, std::vector<ion::ShardIdFull>> collators;
   bool collator_node_whiltelist_enabled = false;
-  std::set<ton::adnl::AdnlNodeIdShort> collator_node_whitelist;
-  ton::PublicKeyHash full_node = ton::PublicKeyHash::zero();
+  std::set<ion::adnl::AdnlNodeIdShort> collator_node_whitelist;
+  ion::PublicKeyHash full_node = ion::PublicKeyHash::zero();
   std::vector<FullNodeSlave> full_node_slaves;
-  std::map<td::int32, ton::PublicKeyHash> full_node_masters;
-  std::map<td::int32, ton::PublicKeyHash> liteservers;
-  ton::validator::fullnode::FullNodeConfig full_node_config;
+  std::map<td::int32, ion::PublicKeyHash> full_node_masters;
+  std::map<td::int32, ion::PublicKeyHash> liteservers;
+  ion::validator::fullnode::FullNodeConfig full_node_config;
   std::map<td::int32, Control> controls;
-  std::set<ton::PublicKeyHash> gc;
-  std::vector<ton::ShardIdFull> shards_to_monitor;
+  std::set<ion::PublicKeyHash> gc;
+  std::vector<ion::ShardIdFull> shards_to_monitor;
   std::vector<FastSyncOverlayClient> fast_sync_overlay_clients;
 
   bool state_serializer_enabled = true;
-  std::vector<std::pair<ton::adnl::AdnlNodeIdShort, ton::overlay::OverlayMemberCertificate>>
+  std::vector<std::pair<ion::adnl::AdnlNodeIdShort, ion::overlay::OverlayMemberCertificate>>
       fast_sync_member_certificates;
 
-  void decref(ton::PublicKeyHash key);
-  void incref(ton::PublicKeyHash key) {
+  void decref(ion::PublicKeyHash key);
+  void incref(ion::PublicKeyHash key) {
     keys_refcnt[key]++;
   }
 
   td::Result<bool> config_add_network_addr(td::IPAddress in_addr, td::IPAddress out_addr,
-                                           std::shared_ptr<ton::adnl::AdnlProxy> proxy, std::vector<AdnlCategory> cats,
+                                           std::shared_ptr<ion::adnl::AdnlProxy> proxy, std::vector<AdnlCategory> cats,
                                            std::vector<AdnlCategory> prio_cats);
-  td::Result<bool> config_add_adnl_addr(ton::PublicKeyHash addr, AdnlCategory cat);
-  td::Result<bool> config_add_dht_node(ton::PublicKeyHash id);
-  td::Result<bool> config_add_validator_permanent_key(ton::PublicKeyHash id, ton::UnixTime election_date,
-                                                      ton::UnixTime expire_at);
-  td::Result<bool> config_add_validator_temp_key(ton::PublicKeyHash perm_key, ton::PublicKeyHash id,
-                                                 ton::UnixTime expire_at);
-  td::Result<bool> config_add_validator_adnl_id(ton::PublicKeyHash perm_key, ton::PublicKeyHash adnl_id,
-                                                ton::UnixTime expire_at);
-  td::Result<bool> config_add_collator(ton::adnl::AdnlNodeIdShort addr, ton::ShardIdFull shard);
-  td::Result<bool> config_del_collator(ton::adnl::AdnlNodeIdShort addr, ton::ShardIdFull shard);
-  td::Result<bool> config_add_full_node_adnl_id(ton::PublicKeyHash id);
-  td::Result<bool> config_add_full_node_slave(td::IPAddress addr, ton::PublicKey id);
-  td::Result<bool> config_add_full_node_master(td::int32 port, ton::PublicKeyHash id);
-  td::Result<bool> config_add_lite_server(ton::PublicKeyHash key, td::int32 port);
-  td::Result<bool> config_add_control_interface(ton::PublicKeyHash key, td::int32 port);
-  td::Result<bool> config_add_control_process(ton::PublicKeyHash key, td::int32 port, ton::PublicKeyHash id,
+  td::Result<bool> config_add_adnl_addr(ion::PublicKeyHash addr, AdnlCategory cat);
+  td::Result<bool> config_add_dht_node(ion::PublicKeyHash id);
+  td::Result<bool> config_add_validator_permanent_key(ion::PublicKeyHash id, ion::UnixTime election_date,
+                                                      ion::UnixTime expire_at);
+  td::Result<bool> config_add_validator_temp_key(ion::PublicKeyHash perm_key, ion::PublicKeyHash id,
+                                                 ion::UnixTime expire_at);
+  td::Result<bool> config_add_validator_adnl_id(ion::PublicKeyHash perm_key, ion::PublicKeyHash adnl_id,
+                                                ion::UnixTime expire_at);
+  td::Result<bool> config_add_collator(ion::adnl::AdnlNodeIdShort addr, ion::ShardIdFull shard);
+  td::Result<bool> config_del_collator(ion::adnl::AdnlNodeIdShort addr, ion::ShardIdFull shard);
+  td::Result<bool> config_add_full_node_adnl_id(ion::PublicKeyHash id);
+  td::Result<bool> config_add_full_node_slave(td::IPAddress addr, ion::PublicKey id);
+  td::Result<bool> config_add_full_node_master(td::int32 port, ion::PublicKeyHash id);
+  td::Result<bool> config_add_lite_server(ion::PublicKeyHash key, td::int32 port);
+  td::Result<bool> config_add_control_interface(ion::PublicKeyHash key, td::int32 port);
+  td::Result<bool> config_add_control_process(ion::PublicKeyHash key, td::int32 port, ion::PublicKeyHash id,
                                               td::uint32 permissions);
-  td::Result<bool> config_add_shard(ton::ShardIdFull shard);
-  td::Result<bool> config_del_shard(ton::ShardIdFull shard);
-  td::Result<bool> config_add_gc(ton::PublicKeyHash key);
+  td::Result<bool> config_add_shard(ion::ShardIdFull shard);
+  td::Result<bool> config_del_shard(ion::ShardIdFull shard);
+  td::Result<bool> config_add_gc(ion::PublicKeyHash key);
   td::Result<bool> config_del_network_addr(td::IPAddress addr, std::vector<AdnlCategory> cats,
                                            std::vector<AdnlCategory> prio_cats);
-  td::Result<bool> config_del_adnl_addr(ton::PublicKeyHash addr);
-  td::Result<bool> config_del_dht_node(ton::PublicKeyHash id);
-  td::Result<bool> config_del_validator_permanent_key(ton::PublicKeyHash id);
-  td::Result<bool> config_del_validator_temp_key(ton::PublicKeyHash perm_id, ton::PublicKeyHash id);
-  td::Result<bool> config_del_validator_adnl_id(ton::PublicKeyHash perm_id, ton::PublicKeyHash adnl_id);
+  td::Result<bool> config_del_adnl_addr(ion::PublicKeyHash addr);
+  td::Result<bool> config_del_dht_node(ion::PublicKeyHash id);
+  td::Result<bool> config_del_validator_permanent_key(ion::PublicKeyHash id);
+  td::Result<bool> config_del_validator_temp_key(ion::PublicKeyHash perm_id, ion::PublicKeyHash id);
+  td::Result<bool> config_del_validator_adnl_id(ion::PublicKeyHash perm_id, ion::PublicKeyHash adnl_id);
   td::Result<bool> config_del_full_node_adnl_id();
   td::Result<bool> config_del_lite_server(td::int32 port);
   td::Result<bool> config_del_control_interface(td::int32 port);
-  td::Result<bool> config_del_control_process(td::int32 port, ton::PublicKeyHash id);
-  td::Result<bool> config_del_gc(ton::PublicKeyHash key);
+  td::Result<bool> config_del_control_process(td::int32 port, ion::PublicKeyHash id);
+  td::Result<bool> config_del_gc(ion::PublicKeyHash key);
 
-  ton::tl_object_ptr<ton::ton_api::engine_validator_config> tl() const;
+  ion::tl_object_ptr<ion::ton_api::engine_validator_config> tl() const;
 
   Config();
-  Config(const ton::ton_api::engine_validator_config &config);
+  Config(const ion::ton_api::engine_validator_config &config);
 };
 
 class ValidatorEngine : public td::actor::Actor {
  private:
-  td::actor::ActorOwn<ton::keyring::Keyring> keyring_;
-  td::actor::ActorOwn<ton::adnl::AdnlNetworkManager> adnl_network_manager_;
-  td::actor::ActorOwn<ton::adnl::Adnl> adnl_;
-  td::actor::ActorOwn<ton::rldp::Rldp> rldp_;
-  td::actor::ActorOwn<ton::rldp2::Rldp> rldp2_;
-  td::actor::ActorOwn<ton::quic::QuicSender> quic_;
-  std::map<ton::PublicKeyHash, td::actor::ActorOwn<ton::dht::Dht>> dht_nodes_;
-  ton::PublicKeyHash default_dht_node_ = ton::PublicKeyHash::zero();
-  td::actor::ActorOwn<ton::overlay::Overlays> overlay_manager_;
-  td::actor::ActorOwn<ton::validator::ValidatorManagerInterface> validator_manager_;
-  td::actor::ActorOwn<ton::adnl::AdnlExtClient> full_node_client_;
-  td::actor::ActorOwn<ton::validator::fullnode::FullNode> full_node_;
-  ton::adnl::AdnlNodeIdShort full_node_id_ = ton::adnl::AdnlNodeIdShort::zero();
-  std::map<td::uint16, td::actor::ActorOwn<ton::validator::fullnode::FullNodeMaster>> full_node_masters_;
-  td::actor::ActorOwn<ton::adnl::AdnlExtServer> control_ext_server_;
+  td::actor::ActorOwn<ion::keyring::Keyring> keyring_;
+  td::actor::ActorOwn<ion::adnl::AdnlNetworkManager> adnl_network_manager_;
+  td::actor::ActorOwn<ion::adnl::Adnl> adnl_;
+  td::actor::ActorOwn<ion::rldp::Rldp> rldp_;
+  td::actor::ActorOwn<ion::rldp2::Rldp> rldp2_;
+  td::actor::ActorOwn<ion::quic::QuicSender> quic_;
+  std::map<ion::PublicKeyHash, td::actor::ActorOwn<ion::dht::Dht>> dht_nodes_;
+  ion::PublicKeyHash default_dht_node_ = ion::PublicKeyHash::zero();
+  td::actor::ActorOwn<ion::overlay::Overlays> overlay_manager_;
+  td::actor::ActorOwn<ion::validator::ValidatorManagerInterface> validator_manager_;
+  td::actor::ActorOwn<ion::adnl::AdnlExtClient> full_node_client_;
+  td::actor::ActorOwn<ion::validator::fullnode::FullNode> full_node_;
+  ion::adnl::AdnlNodeIdShort full_node_id_ = ion::adnl::AdnlNodeIdShort::zero();
+  std::map<td::uint16, td::actor::ActorOwn<ion::validator::fullnode::FullNodeMaster>> full_node_masters_;
+  td::actor::ActorOwn<ion::adnl::AdnlExtServer> control_ext_server_;
 
   std::string local_config_ = "";
-  std::string global_config_ = "ton-global.config";
+  std::string global_config_ = "ion-global.config";
   std::string config_file_;
   std::string temp_config_file() const {
     return config_file_ + ".tmp";
@@ -183,41 +183,41 @@ class ValidatorEngine : public td::actor::Actor {
 
   std::string fift_dir_ = "";
 
-  std::string db_root_ = "/var/ton-work/db/";
+  std::string db_root_ = "/var/ion-work/db/";
 
   std::vector<td::IPAddress> addrs_;
   std::vector<td::IPAddress> proxy_addrs_;
 
-  ton::adnl::AdnlNodesList adnl_static_nodes_;
-  std::shared_ptr<ton::dht::DhtGlobalConfig> dht_config_;
-  td::Ref<ton::validator::ValidatorManagerOptions> validator_options_;
+  ion::adnl::AdnlNodesList adnl_static_nodes_;
+  std::shared_ptr<ion::dht::DhtGlobalConfig> dht_config_;
+  td::Ref<ion::validator::ValidatorManagerOptions> validator_options_;
   Config config_;
-  ton::tl_object_ptr<ton::ton_api::engine_validator_customOverlaysConfig> custom_overlays_config_;
-  ton::tl_object_ptr<ton::ton_api::engine_validator_collatorsList> collators_list_;
-  ton::tl_object_ptr<ton::ton_api::engine_validator_shardBlockVerifierConfig> shard_block_verifier_config_;
+  ion::tl_object_ptr<ion::ton_api::engine_validator_customOverlaysConfig> custom_overlays_config_;
+  ion::tl_object_ptr<ion::ton_api::engine_validator_collatorsList> collators_list_;
+  ion::tl_object_ptr<ion::ton_api::engine_validator_shardBlockVerifierConfig> shard_block_verifier_config_;
 
-  std::set<ton::PublicKeyHash> running_gc_;
+  std::set<ion::PublicKeyHash> running_gc_;
 
-  std::map<ton::PublicKeyHash, ton::PublicKey> keys_;
+  std::map<ion::PublicKeyHash, ion::PublicKey> keys_;
 
-  td::Ref<ton::validator::MasterchainState> state_;
+  td::Ref<ion::validator::MasterchainState> state_;
   td::Ref<block::ValidatorSet> validator_set_, validator_set_prev_, validator_set_next_;
   td::Timestamp issue_fast_sync_overlay_certificates_at_ = td::Timestamp::now();
 
-  td::Promise<ton::PublicKey> get_key_promise(td::MultiPromise::InitGuard &ig);
-  void got_key(ton::PublicKey key);
-  void deleted_key(ton::PublicKeyHash key);
-  void got_state(td::Ref<ton::validator::MasterchainState> state);
+  td::Promise<ion::PublicKey> get_key_promise(td::MultiPromise::InitGuard &ig);
+  void got_key(ion::PublicKey key);
+  void deleted_key(ion::PublicKeyHash key);
+  void got_state(td::Ref<ion::validator::MasterchainState> state);
 
   void write_config(td::Promise<td::Unit> promise);
 
-  std::map<td::uint32, ton::adnl::AdnlAddressList> addr_lists_;
-  std::map<td::uint32, ton::adnl::AdnlAddressList> prio_addr_lists_;
+  std::map<td::uint32, ion::adnl::AdnlAddressList> addr_lists_;
+  std::map<td::uint32, ion::adnl::AdnlAddressList> prio_addr_lists_;
 
   struct CI_key {
-    ton::PublicKeyHash id;
+    ion::PublicKeyHash id;
     td::uint16 port;
-    ton::PublicKeyHash pub;
+    ion::PublicKeyHash pub;
     bool operator<(const CI_key &with) const {
       return id < with.id || (id == with.id && port < with.port) ||
              (id == with.id && port == with.port && pub < with.pub);
@@ -245,21 +245,21 @@ class ValidatorEngine : public td::actor::Actor {
   bool read_config_ = false;
   bool started_keyring_ = false;
   bool started_ = false;
-  ton::BlockSeqno truncate_seqno_{0};
+  ion::BlockSeqno truncate_seqno_{0};
   std::string session_logs_file_;
   std::string validator_telemetry_filename_;
   bool not_all_shards_ = false;
-  std::vector<ton::ShardIdFull> add_shard_cmds_;
+  std::vector<ion::ShardIdFull> add_shard_cmds_;
   bool state_serializer_disabled_flag_ = false;
   double broadcast_speed_multiplier_catchain_ = 3.33;
   bool permanent_celldb_ = false;
   bool skip_key_sync_ = false;
-  td::optional<ton::BlockSeqno> sync_shards_upto_;
-  ton::adnl::AdnlNodeIdShort shard_block_retainer_adnl_id_ = ton::adnl::AdnlNodeIdShort::zero();
+  td::optional<ion::BlockSeqno> sync_shards_upto_;
+  ion::adnl::AdnlNodeIdShort shard_block_retainer_adnl_id_ = ion::adnl::AdnlNodeIdShort::zero();
   bool shard_block_retainer_adnl_id_fullnode_ = false;
   bool parallel_validation_ = false;
   std::string db_event_fifo_path_;
-  ton::validator::fullnode::FullNodeOptions full_node_options_ = {.config_ = {},
+  ion::validator::fullnode::FullNodeOptions full_node_options_ = {.config_ = {},
                                                                   .public_broadcast_speed_multiplier_ = 3.33,
                                                                   .private_broadcast_speed_multiplier_ = 3.33,
                                                                   .fast_sync_broadcast_speed_multiplier_ = 3.33,
@@ -269,18 +269,18 @@ class ValidatorEngine : public td::actor::Actor {
                                                                   .ratelimit_heavy_ = 0,
                                                                   .ratelimit_medium_ = 0};
 
-  std::set<ton::CatchainSeqno> unsafe_catchains_;
-  std::map<ton::BlockSeqno, std::pair<ton::CatchainSeqno, td::uint32>> unsafe_catchain_rotations_;
+  std::set<ion::CatchainSeqno> unsafe_catchains_;
+  std::map<ion::BlockSeqno, std::pair<ion::CatchainSeqno, td::uint32>> unsafe_catchain_rotations_;
 
  public:
   static constexpr td::uint8 max_cat() {
     return 250;
   }
 
-  void add_unsafe_catchain(ton::CatchainSeqno seq) {
+  void add_unsafe_catchain(ion::CatchainSeqno seq) {
     unsafe_catchains_.insert(seq);
   }
-  void add_unsafe_catchain_rotation(ton::BlockSeqno b_seqno, ton::CatchainSeqno cc_seqno, td::uint32 value) {
+  void add_unsafe_catchain_rotation(ion::BlockSeqno b_seqno, ion::CatchainSeqno cc_seqno, td::uint32 value) {
     unsafe_catchain_rotations_.insert({b_seqno, {cc_seqno, value}});
   }
   void set_local_config(std::string str);
@@ -307,7 +307,7 @@ class ValidatorEngine : public td::actor::Actor {
   void set_key_proof_ttl(double t) {
     key_proof_ttl_ = t;
   }
-  void set_truncate_seqno(ton::BlockSeqno seqno) {
+  void set_truncate_seqno(ion::BlockSeqno seqno) {
     truncate_seqno_ = seqno;
   }
   void set_session_logs_file(std::string f) {
@@ -316,7 +316,7 @@ class ValidatorEngine : public td::actor::Actor {
   void add_ip(td::IPAddress addr) {
     addrs_.push_back(addr);
   }
-  void add_key_to_set(ton::PublicKey key) {
+  void add_key_to_set(ion::PublicKey key) {
     keys_[key.compute_short_id()] = key;
   }
   void schedule_shutdown(double at);
@@ -362,7 +362,7 @@ class ValidatorEngine : public td::actor::Actor {
   void set_not_all_shards() {
     not_all_shards_ = true;
   }
-  void add_shard_cmd(ton::ShardIdFull shard) {
+  void add_shard_cmd(ion::ShardIdFull shard) {
     add_shard_cmds_.push_back(shard);
   }
   void set_state_serializer_disabled_flag() {
@@ -386,10 +386,10 @@ class ValidatorEngine : public td::actor::Actor {
   void set_skip_key_sync(bool value) {
     skip_key_sync_ = value;
   }
-  void set_sync_shards_upto(ton::BlockSeqno seqno) {
+  void set_sync_shards_upto(ion::BlockSeqno seqno) {
     sync_shards_upto_ = seqno;
   }
-  void set_shard_block_retainer_adnl_id(ton::adnl::AdnlNodeIdShort id) {
+  void set_shard_block_retainer_adnl_id(ion::adnl::AdnlNodeIdShort id) {
     shard_block_retainer_adnl_id_ = id;
   }
   void set_shard_block_retainer_adnl_id_fullnode() {
@@ -434,11 +434,11 @@ class ValidatorEngine : public td::actor::Actor {
 
   void start_adnl();
   void add_addr(const Config::Addr &addr, const Config::AddrCats &cats);
-  void add_adnl(ton::PublicKeyHash id, AdnlCategory cat);
+  void add_adnl(ion::PublicKeyHash id, AdnlCategory cat);
   void started_adnl();
 
   void start_dht();
-  void add_dht(ton::PublicKeyHash id);
+  void add_dht(ion::PublicKeyHash id);
   void started_dht();
 
   void start_rldp();
@@ -453,16 +453,16 @@ class ValidatorEngine : public td::actor::Actor {
   void start_full_node();
   void started_full_node();
 
-  void add_lite_server(ton::PublicKeyHash id, td::uint16 port);
+  void add_lite_server(ion::PublicKeyHash id, td::uint16 port);
   void start_lite_server();
   void started_lite_server();
   void start_collator();
   void started_collator();
 
-  void add_control_interface(ton::PublicKeyHash id, td::uint16 port);
-  void add_control_process(ton::PublicKeyHash id, td::uint16 port, ton::PublicKeyHash pub, td::int32 permissions);
+  void add_control_interface(ion::PublicKeyHash id, td::uint16 port);
+  void add_control_process(ion::PublicKeyHash id, td::uint16 port, ion::PublicKeyHash pub, td::int32 permissions);
   void start_control_interface();
-  void started_control_interface(td::actor::ActorOwn<ton::adnl::AdnlExtServer> control_ext_server);
+  void started_control_interface(td::actor::ActorOwn<ion::adnl::AdnlExtServer> control_ext_server);
 
   void start_full_node_masters();
   void started_full_node_masters();
@@ -472,26 +472,26 @@ class ValidatorEngine : public td::actor::Actor {
   void alarm() override;
   void run();
 
-  void get_current_validator_perm_key(td::Promise<std::pair<ton::PublicKey, size_t>> promise);
+  void get_current_validator_perm_key(td::Promise<std::pair<ion::PublicKey, size_t>> promise);
 
-  void try_add_adnl_node(ton::PublicKeyHash pub, AdnlCategory cat, td::Promise<td::Unit> promise);
-  void try_add_dht_node(ton::PublicKeyHash pub, td::Promise<td::Unit> promise);
-  void try_add_validator_permanent_key(ton::PublicKeyHash key_hash, td::uint32 election_date, td::uint32 ttl,
+  void try_add_adnl_node(ion::PublicKeyHash pub, AdnlCategory cat, td::Promise<td::Unit> promise);
+  void try_add_dht_node(ion::PublicKeyHash pub, td::Promise<td::Unit> promise);
+  void try_add_validator_permanent_key(ion::PublicKeyHash key_hash, td::uint32 election_date, td::uint32 ttl,
                                        td::Promise<td::Unit> promise);
-  void try_add_validator_temp_key(ton::PublicKeyHash perm_key, ton::PublicKeyHash temp_key, td::uint32 ttl,
+  void try_add_validator_temp_key(ion::PublicKeyHash perm_key, ion::PublicKeyHash temp_key, td::uint32 ttl,
                                   td::Promise<td::Unit> promise);
-  void try_add_validator_adnl_addr(ton::PublicKeyHash perm_key, ton::PublicKeyHash adnl_id, td::uint32 ttl,
+  void try_add_validator_adnl_addr(ion::PublicKeyHash perm_key, ion::PublicKeyHash adnl_id, td::uint32 ttl,
                                    td::Promise<td::Unit> promise);
-  void try_add_full_node_adnl_addr(ton::PublicKeyHash id, td::Promise<td::Unit> promise);
-  void try_add_liteserver(ton::PublicKeyHash id, td::int32 port, td::Promise<td::Unit> promise);
-  void try_add_control_interface(ton::PublicKeyHash id, td::int32 port, td::Promise<td::Unit> promise);
-  void try_add_control_process(ton::PublicKeyHash id, td::int32 port, ton::PublicKeyHash pub, td::int32 permissions,
+  void try_add_full_node_adnl_addr(ion::PublicKeyHash id, td::Promise<td::Unit> promise);
+  void try_add_liteserver(ion::PublicKeyHash id, td::int32 port, td::Promise<td::Unit> promise);
+  void try_add_control_interface(ion::PublicKeyHash id, td::int32 port, td::Promise<td::Unit> promise);
+  void try_add_control_process(ion::PublicKeyHash id, td::int32 port, ion::PublicKeyHash pub, td::int32 permissions,
                                td::Promise<td::Unit> promise);
-  void try_del_adnl_node(ton::PublicKeyHash pub, td::Promise<td::Unit> promise);
-  void try_del_dht_node(ton::PublicKeyHash pub, td::Promise<td::Unit> promise);
-  void try_del_validator_permanent_key(ton::PublicKeyHash pub, td::Promise<td::Unit> promise);
-  void try_del_validator_temp_key(ton::PublicKeyHash perm, ton::PublicKeyHash temp_key, td::Promise<td::Unit> promise);
-  void try_del_validator_adnl_addr(ton::PublicKeyHash perm, ton::PublicKeyHash adnl_id, td::Promise<td::Unit> promise);
+  void try_del_adnl_node(ion::PublicKeyHash pub, td::Promise<td::Unit> promise);
+  void try_del_dht_node(ion::PublicKeyHash pub, td::Promise<td::Unit> promise);
+  void try_del_validator_permanent_key(ion::PublicKeyHash pub, td::Promise<td::Unit> promise);
+  void try_del_validator_temp_key(ion::PublicKeyHash perm, ion::PublicKeyHash temp_key, td::Promise<td::Unit> promise);
+  void try_del_validator_adnl_addr(ion::PublicKeyHash perm, ion::PublicKeyHash adnl_id, td::Promise<td::Unit> promise);
 
   void reload_adnl_addrs();
   void try_add_listening_port(td::uint32 ip, td::int32 port, std::vector<AdnlCategory> cats,
@@ -499,24 +499,24 @@ class ValidatorEngine : public td::actor::Actor {
   void try_del_listening_port(td::uint32 ip, td::int32 port, std::vector<AdnlCategory> cats,
                               std::vector<AdnlCategory> prio_cats, td::Promise<td::Unit> promise);
   void try_add_proxy(td::uint32 in_ip, td::int32 in_port, td::uint32 out_ip, td::int32 out_port,
-                     std::shared_ptr<ton::adnl::AdnlProxy> proxy, std::vector<AdnlCategory> cats,
+                     std::shared_ptr<ion::adnl::AdnlProxy> proxy, std::vector<AdnlCategory> cats,
                      std::vector<AdnlCategory> prio_cats, td::Promise<td::Unit> promise);
   void try_del_proxy(td::uint32 ip, td::int32 port, std::vector<AdnlCategory> cats, std::vector<AdnlCategory> prio_cats,
                      td::Promise<td::Unit> promise);
 
   void register_fast_sync_certificate_callback();
-  void try_import_fast_sync_member_certificate(ton::adnl::AdnlNodeIdShort id,
-                                               ton::overlay::OverlayMemberCertificate certificate,
+  void try_import_fast_sync_member_certificate(ion::adnl::AdnlNodeIdShort id,
+                                               ion::overlay::OverlayMemberCertificate certificate,
                                                td::Promise<td::Unit> promise);
 
   void issue_fast_sync_overlay_certificates();
-  void issue_fast_sync_overlay_certificate(ton::PublicKeyHash issue_by, ton::adnl::AdnlNodeIdShort issue_to,
+  void issue_fast_sync_overlay_certificate(ion::PublicKeyHash issue_by, ion::adnl::AdnlNodeIdShort issue_to,
                                            td::uint32 flags, td::int32 slot, td::int32 expire_at,
-                                           td::Promise<ton::overlay::OverlayMemberCertificate> promise);
-  void process_fast_sync_overlay_certificate_request(ton::PublicKeyHash issue_by, ton::adnl::AdnlNodeIdShort issue_to,
+                                           td::Promise<ion::overlay::OverlayMemberCertificate> promise);
+  void process_fast_sync_overlay_certificate_request(ion::PublicKeyHash issue_by, ion::adnl::AdnlNodeIdShort issue_to,
                                                      td::uint32 flags, td::int32 slot, td::int32 expire_at,
-                                                     td::Promise<ton::overlay::OverlayMemberCertificate> promise);
-  ton::PublicKeyHash find_local_validator_for_cert_issuing();
+                                                     td::Promise<ion::overlay::OverlayMemberCertificate> promise);
+  ion::PublicKeyHash find_local_validator_for_cert_issuing();
 
   std::string custom_overlays_config_file() const {
     return db_root_ + "/custom-overlays.json";
@@ -533,148 +533,148 @@ class ValidatorEngine : public td::actor::Actor {
 
   void load_custom_overlays_config();
   td::Status write_custom_overlays_config();
-  void add_custom_overlay_to_config(ton::tl_object_ptr<ton::ton_api::engine_validator_customOverlay> overlay,
+  void add_custom_overlay_to_config(ion::tl_object_ptr<ion::ton_api::engine_validator_customOverlay> overlay,
                                     td::Promise<td::Unit> promise);
   void del_custom_overlay_from_config(std::string name, td::Promise<td::Unit> promise);
   void load_collator_options();
 
-  void check_key(ton::PublicKeyHash id, td::Promise<td::Unit> promise);
+  void check_key(ion::PublicKeyHash id, td::Promise<td::Unit> promise);
 
   static td::BufferSlice create_control_query_error(td::Status error);
 
-  void run_control_query(ton::ton_api::engine_validator_getTime &query, td::BufferSlice data, ton::PublicKeyHash src,
+  void run_control_query(ion::ton_api::engine_validator_getTime &query, td::BufferSlice data, ion::PublicKeyHash src,
                          td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_importPrivateKey &query, td::BufferSlice data,
-                         ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_exportPrivateKey &query, td::BufferSlice data,
-                         ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_exportPublicKey &query, td::BufferSlice data,
-                         ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_generateKeyPair &query, td::BufferSlice data,
-                         ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_addAdnlId &query, td::BufferSlice data, ton::PublicKeyHash src,
+  void run_control_query(ion::ton_api::engine_validator_importPrivateKey &query, td::BufferSlice data,
+                         ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
+  void run_control_query(ion::ton_api::engine_validator_exportPrivateKey &query, td::BufferSlice data,
+                         ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
+  void run_control_query(ion::ton_api::engine_validator_exportPublicKey &query, td::BufferSlice data,
+                         ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
+  void run_control_query(ion::ton_api::engine_validator_generateKeyPair &query, td::BufferSlice data,
+                         ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
+  void run_control_query(ion::ton_api::engine_validator_addAdnlId &query, td::BufferSlice data, ion::PublicKeyHash src,
                          td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_addDhtId &query, td::BufferSlice data, ton::PublicKeyHash src,
+  void run_control_query(ion::ton_api::engine_validator_addDhtId &query, td::BufferSlice data, ion::PublicKeyHash src,
                          td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_addValidatorPermanentKey &query, td::BufferSlice data,
-                         ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_addValidatorTempKey &query, td::BufferSlice data,
-                         ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_addValidatorAdnlAddress &query, td::BufferSlice data,
-                         ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_changeFullNodeAdnlAddress &query, td::BufferSlice data,
-                         ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_addLiteserver &query, td::BufferSlice data,
-                         ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_addControlInterface &query, td::BufferSlice data,
-                         ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_delAdnlId &query, td::BufferSlice data, ton::PublicKeyHash src,
+  void run_control_query(ion::ton_api::engine_validator_addValidatorPermanentKey &query, td::BufferSlice data,
+                         ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
+  void run_control_query(ion::ton_api::engine_validator_addValidatorTempKey &query, td::BufferSlice data,
+                         ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
+  void run_control_query(ion::ton_api::engine_validator_addValidatorAdnlAddress &query, td::BufferSlice data,
+                         ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
+  void run_control_query(ion::ton_api::engine_validator_changeFullNodeAdnlAddress &query, td::BufferSlice data,
+                         ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
+  void run_control_query(ion::ton_api::engine_validator_addLiteserver &query, td::BufferSlice data,
+                         ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
+  void run_control_query(ion::ton_api::engine_validator_addControlInterface &query, td::BufferSlice data,
+                         ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
+  void run_control_query(ion::ton_api::engine_validator_delAdnlId &query, td::BufferSlice data, ion::PublicKeyHash src,
                          td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_delDhtId &query, td::BufferSlice data, ton::PublicKeyHash src,
+  void run_control_query(ion::ton_api::engine_validator_delDhtId &query, td::BufferSlice data, ion::PublicKeyHash src,
                          td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_delValidatorPermanentKey &query, td::BufferSlice data,
-                         ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_delValidatorTempKey &query, td::BufferSlice data,
-                         ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_delValidatorAdnlAddress &query, td::BufferSlice data,
-                         ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_addListeningPort &query, td::BufferSlice data,
-                         ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_delListeningPort &query, td::BufferSlice data,
-                         ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_addProxy &query, td::BufferSlice data, ton::PublicKeyHash src,
+  void run_control_query(ion::ton_api::engine_validator_delValidatorPermanentKey &query, td::BufferSlice data,
+                         ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
+  void run_control_query(ion::ton_api::engine_validator_delValidatorTempKey &query, td::BufferSlice data,
+                         ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
+  void run_control_query(ion::ton_api::engine_validator_delValidatorAdnlAddress &query, td::BufferSlice data,
+                         ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
+  void run_control_query(ion::ton_api::engine_validator_addListeningPort &query, td::BufferSlice data,
+                         ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
+  void run_control_query(ion::ton_api::engine_validator_delListeningPort &query, td::BufferSlice data,
+                         ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
+  void run_control_query(ion::ton_api::engine_validator_addProxy &query, td::BufferSlice data, ion::PublicKeyHash src,
                          td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_delProxy &query, td::BufferSlice data, ton::PublicKeyHash src,
+  void run_control_query(ion::ton_api::engine_validator_delProxy &query, td::BufferSlice data, ion::PublicKeyHash src,
                          td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_getConfig &query, td::BufferSlice data, ton::PublicKeyHash src,
+  void run_control_query(ion::ton_api::engine_validator_getConfig &query, td::BufferSlice data, ion::PublicKeyHash src,
                          td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_sign &query, td::BufferSlice data, ton::PublicKeyHash src,
+  void run_control_query(ion::ton_api::engine_validator_sign &query, td::BufferSlice data, ion::PublicKeyHash src,
                          td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_exportAllPrivateKeys &query, td::BufferSlice data,
-                         ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_setVerbosity &query, td::BufferSlice data,
-                         ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_getStats &query, td::BufferSlice data, ton::PublicKeyHash src,
+  void run_control_query(ion::ton_api::engine_validator_exportAllPrivateKeys &query, td::BufferSlice data,
+                         ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
+  void run_control_query(ion::ton_api::engine_validator_setVerbosity &query, td::BufferSlice data,
+                         ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
+  void run_control_query(ion::ton_api::engine_validator_getStats &query, td::BufferSlice data, ion::PublicKeyHash src,
                          td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_createElectionBid &query, td::BufferSlice data,
-                         ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_checkDhtServers &query, td::BufferSlice data,
-                         ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_createProposalVote &query, td::BufferSlice data,
-                         ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_createComplaintVote &query, td::BufferSlice data,
-                         ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_importCertificate &query, td::BufferSlice data,
-                         ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_signShardOverlayCertificate &query, td::BufferSlice data,
-                         ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_importShardOverlayCertificate &query, td::BufferSlice data,
-                         ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_getOverlaysStats &query, td::BufferSlice data,
-                         ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_getActorTextStats &query, td::BufferSlice data,
-                         ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_addShard &query, td::BufferSlice data, ton::PublicKeyHash src,
+  void run_control_query(ion::ton_api::engine_validator_createElectionBid &query, td::BufferSlice data,
+                         ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
+  void run_control_query(ion::ton_api::engine_validator_checkDhtServers &query, td::BufferSlice data,
+                         ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
+  void run_control_query(ion::ton_api::engine_validator_createProposalVote &query, td::BufferSlice data,
+                         ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
+  void run_control_query(ion::ton_api::engine_validator_createComplaintVote &query, td::BufferSlice data,
+                         ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
+  void run_control_query(ion::ton_api::engine_validator_importCertificate &query, td::BufferSlice data,
+                         ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
+  void run_control_query(ion::ton_api::engine_validator_signShardOverlayCertificate &query, td::BufferSlice data,
+                         ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
+  void run_control_query(ion::ton_api::engine_validator_importShardOverlayCertificate &query, td::BufferSlice data,
+                         ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
+  void run_control_query(ion::ton_api::engine_validator_getOverlaysStats &query, td::BufferSlice data,
+                         ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
+  void run_control_query(ion::ton_api::engine_validator_getActorTextStats &query, td::BufferSlice data,
+                         ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
+  void run_control_query(ion::ton_api::engine_validator_addShard &query, td::BufferSlice data, ion::PublicKeyHash src,
                          td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_delShard &query, td::BufferSlice data, ton::PublicKeyHash src,
+  void run_control_query(ion::ton_api::engine_validator_delShard &query, td::BufferSlice data, ion::PublicKeyHash src,
                          td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_addCollator &query, td::BufferSlice data,
-                         ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_delCollator &query, td::BufferSlice data,
-                         ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_getPerfTimerStats &query, td::BufferSlice data,
-                         ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_getShardOutQueueSize &query, td::BufferSlice data,
-                         ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_setExtMessagesBroadcastDisabled &query, td::BufferSlice data,
-                         ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_addCustomOverlay &query, td::BufferSlice data,
-                         ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_delCustomOverlay &query, td::BufferSlice data,
-                         ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_showCustomOverlays &query, td::BufferSlice data,
-                         ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_setStateSerializerEnabled &query, td::BufferSlice data,
-                         ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_setCollatorOptionsJson &query, td::BufferSlice data,
-                         ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_collatorNodeSetWhitelistedValidator &query,
-                         td::BufferSlice data, ton::PublicKeyHash src, td::uint32 perm,
+  void run_control_query(ion::ton_api::engine_validator_addCollator &query, td::BufferSlice data,
+                         ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
+  void run_control_query(ion::ton_api::engine_validator_delCollator &query, td::BufferSlice data,
+                         ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
+  void run_control_query(ion::ton_api::engine_validator_getPerfTimerStats &query, td::BufferSlice data,
+                         ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
+  void run_control_query(ion::ton_api::engine_validator_getShardOutQueueSize &query, td::BufferSlice data,
+                         ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
+  void run_control_query(ion::ton_api::engine_validator_setExtMessagesBroadcastDisabled &query, td::BufferSlice data,
+                         ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
+  void run_control_query(ion::ton_api::engine_validator_addCustomOverlay &query, td::BufferSlice data,
+                         ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
+  void run_control_query(ion::ton_api::engine_validator_delCustomOverlay &query, td::BufferSlice data,
+                         ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
+  void run_control_query(ion::ton_api::engine_validator_showCustomOverlays &query, td::BufferSlice data,
+                         ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
+  void run_control_query(ion::ton_api::engine_validator_setStateSerializerEnabled &query, td::BufferSlice data,
+                         ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
+  void run_control_query(ion::ton_api::engine_validator_setCollatorOptionsJson &query, td::BufferSlice data,
+                         ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
+  void run_control_query(ion::ton_api::engine_validator_collatorNodeSetWhitelistedValidator &query,
+                         td::BufferSlice data, ion::PublicKeyHash src, td::uint32 perm,
                          td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_collatorNodeSetWhitelistEnabled &query, td::BufferSlice data,
-                         ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_showCollatorNodeWhitelist &query, td::BufferSlice data,
-                         ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_setCollatorsList &query, td::BufferSlice data,
-                         ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_clearCollatorsList &query, td::BufferSlice data,
-                         ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_showCollatorsList &query, td::BufferSlice data,
-                         ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_getCollationManagerStats &query, td::BufferSlice data,
-                         ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_signOverlayMemberCertificate &query, td::BufferSlice data,
-                         ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_importFastSyncMemberCertificate &query, td::BufferSlice data,
-                         ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_getCollatorOptionsJson &query, td::BufferSlice data,
-                         ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_getAdnlStats &query, td::BufferSlice data,
-                         ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_addFastSyncClient &query, td::BufferSlice data,
-                         ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_delFastSyncClient &query, td::BufferSlice data,
-                         ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_setShardBlockVerifierConfig &query, td::BufferSlice data,
-                         ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
-  void run_control_query(ton::ton_api::engine_validator_showShardBlockVerifierConfig &query, td::BufferSlice data,
-                         ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
+  void run_control_query(ion::ton_api::engine_validator_collatorNodeSetWhitelistEnabled &query, td::BufferSlice data,
+                         ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
+  void run_control_query(ion::ton_api::engine_validator_showCollatorNodeWhitelist &query, td::BufferSlice data,
+                         ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
+  void run_control_query(ion::ton_api::engine_validator_setCollatorsList &query, td::BufferSlice data,
+                         ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
+  void run_control_query(ion::ton_api::engine_validator_clearCollatorsList &query, td::BufferSlice data,
+                         ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
+  void run_control_query(ion::ton_api::engine_validator_showCollatorsList &query, td::BufferSlice data,
+                         ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
+  void run_control_query(ion::ton_api::engine_validator_getCollationManagerStats &query, td::BufferSlice data,
+                         ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
+  void run_control_query(ion::ton_api::engine_validator_signOverlayMemberCertificate &query, td::BufferSlice data,
+                         ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
+  void run_control_query(ion::ton_api::engine_validator_importFastSyncMemberCertificate &query, td::BufferSlice data,
+                         ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
+  void run_control_query(ion::ton_api::engine_validator_getCollatorOptionsJson &query, td::BufferSlice data,
+                         ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
+  void run_control_query(ion::ton_api::engine_validator_getAdnlStats &query, td::BufferSlice data,
+                         ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
+  void run_control_query(ion::ton_api::engine_validator_addFastSyncClient &query, td::BufferSlice data,
+                         ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
+  void run_control_query(ion::ton_api::engine_validator_delFastSyncClient &query, td::BufferSlice data,
+                         ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
+  void run_control_query(ion::ton_api::engine_validator_setShardBlockVerifierConfig &query, td::BufferSlice data,
+                         ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
+  void run_control_query(ion::ton_api::engine_validator_showShardBlockVerifierConfig &query, td::BufferSlice data,
+                         ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise);
   template <class T>
-  void run_control_query(T &query, td::BufferSlice data, ton::PublicKeyHash src, td::uint32 perm,
+  void run_control_query(T &query, td::BufferSlice data, ion::PublicKeyHash src, td::uint32 perm,
                          td::Promise<td::BufferSlice> promise) {
     promise.set_value(
-        create_control_query_error(td::Status::Error(ton::ErrorCode::protoviolation, "query not supported")));
+        create_control_query_error(td::Status::Error(ion::ErrorCode::protoviolation, "query not supported")));
   }
-  void process_control_query(td::uint16 port, ton::adnl::AdnlNodeIdShort src, ton::adnl::AdnlNodeIdShort dst,
+  void process_control_query(td::uint16 port, ion::adnl::AdnlNodeIdShort src, ion::adnl::AdnlNodeIdShort dst,
                              td::BufferSlice data, td::Promise<td::BufferSlice> promise);
 };

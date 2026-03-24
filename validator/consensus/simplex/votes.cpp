@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025-2026, TON CORE TECHNOLOGIES CO. L.L.C
+ * Copyright (c) 2025-2026, ION CORE TECHNOLOGIES CO. L.L.C
  *
  * SPDX-License-Identifier: LGPL-2.0-or-later
  */
@@ -9,7 +9,7 @@
 
 #include "votes.h"
 
-namespace ton::validator::consensus::simplex {
+namespace ion::validator::consensus::simplex {
 
 NotarizeVote NotarizeVote::from_tl(const tl::notarizeVote& vote) {
   return {CandidateId::from_tl(vote.id_)};
@@ -99,4 +99,4 @@ template struct Signed<SkipVote>;
 template struct Signed<FinalizeVote>;
 template struct Signed<Vote>;
 
-}  // namespace ton::validator::consensus::simplex
+}  // namespace ion::validator::consensus::simplex

@@ -49,8 +49,8 @@ cd build-$ARCH
 
 echo "[build.sh] configure (ARCH=${ARCH})"
 cmake .. -GNinja \
--DTON_ONLY_TONLIB=ON  \
--DTON_ARCH="" \
+-DION_ONLY_TONLIB=ON  \
+-DION_ARCH="" \
 -DANDROID_PLATFORM=${ANDROID_PLATFORM_LEVEL} \
 -DANDROID_NDK=${ANDROID_NDK_ROOT} \
 -DCMAKE_TOOLCHAIN_FILE=${ANDROID_NDK_ROOT}/build/cmake/android.toolchain.cmake  \

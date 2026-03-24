@@ -112,15 +112,15 @@
 \maketitle
 
 \begin{abstract}
-  The aim of this text is to provide a brief description of Fift, a new programming language specifically designed for creating and managing TON Blockchain smart contracts, and its features used for interaction with the TON Virtual Machine~\cite{TVM} and the TON Blockchain~\cite{TBC}.
+  The aim of this text is to provide a brief description of Fift, a new programming language specifically designed for creating and managing ION Blockchain smart contracts, and its features used for interaction with the ION Virtual Machine~\cite{TVM} and the ION Blockchain~\cite{TBC}.
 \end{abstract}
 
 \section*{Introduction}
 \markbothsame{Introduction}
 
-This document provides a brief description of Fift, a stack-based general-purpose programming language optimized for creating, debugging, and managing TON Blockchain smart contracts.
+This document provides a brief description of Fift, a stack-based general-purpose programming language optimized for creating, debugging, and managing ION Blockchain smart contracts.
 
-Fift has been specifically designed to interact with the TON Virtual Machine (TON VM or TVM)~\cite{TVM} and the TON Blockchain~\cite{TBC}. In particular, it offers native support for 257-bit integer arithmetic and TVM cell manipulation shared with TVM, as well as an interface to the Ed25519-based cryptography employed by the TON Blockchain. A macro assembler for TVM code, useful for writing new smart contracts, is also included in the Fift distribution.
+Fift has been specifically designed to interact with the ION Virtual Machine (ION VM or TVM)~\cite{TVM} and the ION Blockchain~\cite{TBC}. In particular, it offers native support for 257-bit integer arithmetic and TVM cell manipulation shared with TVM, as well as an interface to the Ed25519-based cryptography employed by the ION Blockchain. A macro assembler for TVM code, useful for writing new smart contracts, is also included in the Fift distribution.
 
 Being a stack-based language, Fift is not unlike Forth. Because of the brevity of this text, some knowledge of Forth might be helpful for understanding Fift.\footnote{Good introductions to Forth exist; we can recommend~\cite{Brodie}.} However, there are significant differences between the two languages. For instance, Fift enforces runtime type-checking, and keeps values of different types (not only integers) in its stack.
 
@@ -134,7 +134,7 @@ Please note that the current version of this document describes a preliminary te
 \clearpage
 \mysection{Overview}\label{sect:overview}
 
-Fift is a simple stack-based programming language designed for testing and debugging the TON Virtual Machine \cite{TVM} and the TON Blockchain \cite{TBC}, but potentially useful for other purposes as well. When Fift is invoked (usually by executing a binary file called {\tt fift}), it either reads, parses, and interprets one or several source files indicated in the command line, or enters the interactive mode and interprets Fift commands read and parsed from the standard input. There is also a ``script mode'', activated by command line switch {\tt -s}, in which all command line arguments except the first one are passed to the Fift program by means of the variables {\tt \$$n$} and {\tt \$\#}. In this way, Fift can be used both for interactive experimentation and debugging as well as for writing simple scripts.
+Fift is a simple stack-based programming language designed for testing and debugging the ION Virtual Machine \cite{TVM} and the ION Blockchain \cite{TBC}, but potentially useful for other purposes as well. When Fift is invoked (usually by executing a binary file called {\tt fift}), it either reads, parses, and interprets one or several source files indicated in the command line, or enters the interactive mode and interprets Fift commands read and parsed from the standard input. There is also a ``script mode'', activated by command line switch {\tt -s}, in which all command line arguments except the first one are passed to the Fift program by means of the variables {\tt \$$n$} and {\tt \$\#}. In this way, Fift can be used both for interactive experimentation and debugging as well as for writing simple scripts.
 
 All data manipulated by Fift is kept in a (LIFO) stack. Each stack entry is supplemented by a {\em type tag}, which unambiguously determines the type of the value kept in the corresponding stack entry. The types of values supported by Fift include {\em Integer\/} (representing signed 257-bit integers), {\em Cell\/} (representing a TVM cell, which consists of up to 1023 data bits and up to four references to other cells as explained in \cite{TVM}), {\em Slice\/} (a partial view of a {\em Cell\/} used for parsing cells), and {\em Builder\/} (used for building new cells). These data types (and their implementations) are shared with TVM~\cite{TVM}, and can be safely passed from the Fift stack to the TVM stack and back when necessary (e.g., when TVM is invoked from Fift by using a Fift primitive such as {\tt runvmcode}).
 
@@ -1102,7 +1102,7 @@ However, custom defining words may perform more sophisticated actions when invok
 defines word {\tt hw}, which prints ``Hello, world!'' when invoked. The string with this message is computed once at compile time (when {\tt says} is invoked), not at execution time (when {\tt hw} is invoked).
 
 \mysection{Cell manipulation}
-We have discussed the basic Fift primitives not related to TVM or the TON Blockchain so far. Now we will turn to TON-specific words, used to manipulate {\em Cell\/}s.
+We have discussed the basic Fift primitives not related to TVM or the ION Blockchain so far. Now we will turn to ION-specific words, used to manipulate {\em Cell\/}s.
 
 \mysubsection{Slice literals}\label{p:slice.lit}
 Recall that a (TVM) {\em Cell\/} consists of at most 1023 data bits and at most four references to other {\em Cell\/}s, a {\em Slice\/} is a read-only view of a portion of a {\em Cell}, and a {\em Builder\/} is used to create new {\em Cell\/}s. Fift has special provisions for defining {\em Slice\/} literals (i.e., unnamed constants), which can also be transformed into {\em Cells\/} if necessary.
@@ -1239,7 +1239,7 @@ There are few words that operate on {\em Cell\/}s directly. The most important o
 \end{itemize}
 
 \mysubsection{Bag-of-cells operations}\label{p:boc.ops}
-A {\em bag of cells\/} is a collection of one or more cells along with all their descendants. It can usually be serialized into a sequence of bytes (represented by a {\em Bytes\/} value in Fift) and then saved into a file or transferred by network. Afterwards, it can be deserialized to recover the original cells. The TON Blockchain systematically represents different data structures (including the TON Blockchain blocks) as a tree of cells according to a certain TL-B scheme (cf.~\cite{TBC}, where this scheme is explained in detail), and then these trees of cells are routinely imported into bags of cells and serialized into binary files.
+A {\em bag of cells\/} is a collection of one or more cells along with all their descendants. It can usually be serialized into a sequence of bytes (represented by a {\em Bytes\/} value in Fift) and then saved into a file or transferred by network. Afterwards, it can be deserialized to recover the original cells. The ION Blockchain systematically represents different data structures (including the ION Blockchain blocks) as a tree of cells according to a certain TL-B scheme (cf.~\cite{TBC}, where this scheme is explained in detail), and then these trees of cells are routinely imported into bags of cells and serialized into binary files.
 
 Fift words for manipulating bags of cells include:
 \begin{itemize}
@@ -1252,7 +1252,7 @@ Fift words for manipulating bags of cells include:
   \item $+8$ stores hashes of some intermediate (non-leaf) cells (useful for lazy deserialization of large bags of cells).
   \item $+16$ stores cell cache bits to control caching of deserialized cells.
   \end{itemize}
-Typical values of $x$ are $x=0$ or $x=2$ for very small bags of cells (e.g., TON Blockchain external messages) and $x=31$ for large bags of cells (e.g., TON Blockchain blocks).
+Typical values of $x$ are $x=0$ or $x=2$ for very small bags of cells (e.g., ION Blockchain external messages) and $x=31$ for large bags of cells (e.g., ION Blockchain blocks).
 \item {\tt boc>B} ($c$ -- $B$), serializes a small ``standard'' bag of cells with root {\em Cell\/}~$c$ and all its descendants. Equivalent to {\tt 0 boc+>B}.
 \end{itemize}
 For instance, the cell created in~\ptref{p:builder.ops} with a value of TL-B {\tt Test} type may be serialized as follows:
@@ -1302,8 +1302,8 @@ Additionally, there are several words for directly packing (serializing) data in
 \item {\tt B+} ($B'$ $B''$ -- $B$), concatenates two {\em Bytes\/} sequences.
 \end{itemize}
 
-\mysection{TON-specific operations}
-This chapter describes the TON-specific Fift words, with the exception of the words used for {\em Cell\/} manipulation, already discussed in the previous chapter.
+\mysection{ION-specific operations}
+This chapter describes the ION-specific Fift words, with the exception of the words used for {\em Cell\/} manipulation, already discussed in the previous chapter.
 
 \mysubsection{Ed25519 cryptography}\label{p:ed25519.ops}
 Fift offers an interface to the same Ed25519 elliptic curve cryptography used by TVM, described in Appendix~$A$ of~\cite{TBC}:
@@ -1317,10 +1317,10 @@ Fift offers an interface to the same Ed25519 elliptic curve cryptography used by
 \end{itemize}
 
 \mysubsection{Smart-contract address parser}\label{p:smc.addr.ops}
-Two special words can be used to parse TON smart-contract addresses in human-readable (base64 or base64url) forms:
+Two special words can be used to parse ION smart-contract addresses in human-readable (base64 or base64url) forms:
 \begin{itemize}
-\item {\tt smca>\$} ($x$ $y$ $z$ -- $S$), packs a standard TON smart-contract address with workchain $x$ (a signed 32-bit {\em Integer}) and in-workchain address $y$ (an unsigned 256-bit {\em Integer\/}) into a 48-character string $S$ (the human-readable representation of the address) according to flags~$z$. Possible individual flags in~$z$ are: $+1$ for non-bounceable addresses, $+2$ for testnet-only addresses, and $+4$ for base64url output instead of base64.
-\item {\tt \$>smca} ($S$ -- $x$ $y$ $z$ $-1$ or $0$), unpacks a standard TON smart-contract address from its human-readable string representation~$S$. On success, returns the signed 32-bit workchain $x$, the unsigned 256-bit in-workchain address $y$, the flags $z$ (where $+1$ means that the address is non-bounceable, $+2$ that the address is testnet-only), and $-1$. On failure, pushes $0$.
+\item {\tt smca>\$} ($x$ $y$ $z$ -- $S$), packs a standard ION smart-contract address with workchain $x$ (a signed 32-bit {\em Integer}) and in-workchain address $y$ (an unsigned 256-bit {\em Integer\/}) into a 48-character string $S$ (the human-readable representation of the address) according to flags~$z$. Possible individual flags in~$z$ are: $+1$ for non-bounceable addresses, $+2$ for testnet-only addresses, and $+4$ for base64url output instead of base64.
+\item {\tt \$>smca} ($S$ -- $x$ $y$ $z$ $-1$ or $0$), unpacks a standard ION smart-contract address from its human-readable string representation~$S$. On success, returns the signed 32-bit workchain $x$, the unsigned 256-bit in-workchain address $y$, the flags $z$ (where $+1$ means that the address is non-bounceable, $+2$ that the address is testnet-only), and $-1$. On failure, pushes $0$.
 \end{itemize}
 A sample human-readable smart-contract address could be deserialized and displayed as follows:
 \begin{verbatim}
@@ -1328,7 +1328,7 @@ A sample human-readable smart-contract address could be deserialized and display
 $>smca 0= abort"bad address"
 rot . swap x. . cr
 \end{verbatim}
-outputs ``{\tt -1 538fa7\dots 0f7d 0}'', meaning that the specified address is in workchain $-1$ (the masterchain of the TON Blockchain), and that the 256-bit address inside workchain $-1$ is 0x538\dots f7d.
+outputs ``{\tt -1 538fa7\dots 0f7d 0}'', meaning that the specified address is in workchain $-1$ (the masterchain of the ION Blockchain), and that the 256-bit address inside workchain $-1$ is 0x538\dots f7d.
 
 \mysubsection{Dictionary manipulation}\label{p:hashmap.ops}
 Fift has several words for {\em hashmap\/} or {\em (TVM) dictionary\/} manipulation, corresponding to values of TL-B type {\tt HashmapE $n$ $X$} as described in~\cite[3.3]{TVM}. These (TVM) dictionaries are not to be confused with the Fift dictionary, which is a completely different thing. A dictionary of TL-B type {\tt HashmapE $n$ $X$} is essentially a key-value collection with distinct $n$-bit keys (where $0\leq n\leq 1023$) and values of an arbitrary TL-B type $X$. Dictionaries are represented by trees of cells (the complete layout may be found in \cite[3.3]{TVM}) and stored as values of type {\em Cell\/} or {\em Slice\/} in the Fift stack. Sometimes empty dictionaries are represented by the {\em Null\/} value.
@@ -1360,7 +1360,7 @@ TVM can be linked with the Fift interpreter. In this case, several Fift primitiv
 \item {\tt runvmcode} (\dots $s$ -- \dots $x$), invokes a new instance of TVM with the current continuation {\tt cc} initialized from {\em Slice\/} $s$, thus executing code~$s$ in TVM. The original Fift stack (without $s$) is passed in its entirety as the initial stack of TVM. When TVM terminates, its resulting stack is used as the new Fift stack, with the exit code $x$ pushed at its top. If $x$ is non-zero, indicating that TVM has been terminated by an unhandled exception, the next stack entry from the top contains the parameter of this exception, and $x$ is the exception code. All other entries are removed from the stack in this case.
 \item {\tt runvmdict} (\dots $s$ -- \dots $x$), invokes a new instance of TVM with the current continuation {\tt cc} initialized from {\em Slice\/} $s$ similarly to {\tt runvmcode}, but also initializes the special register {\tt c3} with the same value, and pushes a zero into the initial TVM stack before the TVM execution begins. In a typical application {\em Slice\/}~$s$ consists of a subroutine selection code that uses the top-of-stack {\em Integer\/} to select the subroutine to be executed, thus enabling the definition and execution of several mutually-recursive subroutines (cf.~\cite[4.6]{TVM} and~\ptref{p:asm.prog}). The selector equal to zero corresponds to the {\tt main()} subroutine in a large TVM program.
 \item {\tt runvm} (\dots $s$ $c$ -- \dots $x$ $c'$), invokes a new instance of TVM with both the current continuation {\tt cc} and the special register {\tt c3} initialized from {\em Slice\/}~$s$, similarly to {\tt runvmdict} (without pushing an extra zero to the initial TVM stack; if necessary, it can be pushed explicitly under $s$), and also initializes special register {\tt c4} (the ``root of persistent data'', cf.~\cite[1.4]{TVM}) with {\em Cell\/}~$c$. The final value of {\tt c4} is returned at the top of the final Fift stack as another {\em Cell\/}~$c'$. In this way one can emulate the execution of smart contracts that inspect or modify their persistent storage.
-\item {\tt runvmctx} (\dots $s$ $c$ $t$ -- \dots $x$ $c'$), a variant of {\tt runvm} that also initializes {\tt c7} (the ``context'') with {\em Tuple\/}~$t$. In this way the execution of a TVM smart contract inside TON Blockchain can be completely emulated, if the correct context is loaded into {\tt c7} (cf.~\cite[4.4.10]{TBC}).
+\item {\tt runvmctx} (\dots $s$ $c$ $t$ -- \dots $x$ $c'$), a variant of {\tt runvm} that also initializes {\tt c7} (the ``context'') with {\em Tuple\/}~$t$. In this way the execution of a TVM smart contract inside ION Blockchain can be completely emulated, if the correct context is loaded into {\tt c7} (cf.~\cite[4.4.10]{TBC}).
 \item {\tt gasrunvmcode} (\dots $s$ $z$ -- \dots $x$ $z'$), a gas-aware version of {\tt runvmcode} that accepts an extra {\em Integer\/} argument $z$ (the original gas limit) at the top of the stack, and returns the gas consumed by this TVM run as a new top-of-stack {\em Integer\/} value~$z'$.
 \item {\tt gasrunvmdict} (\dots $s$ $z$ -- \dots $x$ $z'$), a gas-aware version of {\tt runvmdict}.
 \item {\tt gasrunvm} (\dots $s$ $c$ $z$ -- \dots $x$ $c'$ $z'$), a gas-aware version of {\tt runvm}.
@@ -1664,7 +1664,7 @@ Notice that {\tt GEQINT} and {\tt LEQINT} are themselves macro definitions defin
 Incidentally, the above code can be shortened by two bytes by replacing {\tt IFNOT: DROP ZERO} with {\tt AND}.
 
 \mysubsection{Larger programs and subroutines}\label{p:asm.prog}
-Larger TVM programs, such as TON Blockchain smart contracts, typically consist of several mutually recursive subroutines, with one or several of them selected as top-level subroutines (called {\tt main()} or {\tt recv\_internal()} for smart contracts). The execution starts from one of the top-level subroutines, which is free to call any of the other defined subroutines, which in turn can call whatever other subroutines they need.
+Larger TVM programs, such as ION Blockchain smart contracts, typically consist of several mutually recursive subroutines, with one or several of them selected as top-level subroutines (called {\tt main()} or {\tt recv\_internal()} for smart contracts). The execution starts from one of the top-level subroutines, which is free to call any of the other defined subroutines, which in turn can call whatever other subroutines they need.
 
 Such TVM programs are implemented by means of a selector function, which accepts an extra integer argument in the TVM stack; this integer selects the actual subroutine to be invoked (cf.~\cite[4.6]{TVM}). Before execution, the code of this selector function is loaded both into special register {\tt c3} and into the current continuation {\tt cc}. The selector of the main function (usually zero) is pushed into the initial stack, and the TVM execution is started. Afterwards a subroutine can be invoked by means of a suitable TVM instruction, such as {\tt CALLDICT $n$}, where $n$ is the (integer) selector of the subroutine to be called.
 
@@ -1750,7 +1750,7 @@ Some observations and comments based on the previous example follow:
 \item A TVM program is opened by {\tt PROGRAM\{} and closed by either {\tt \}END>c} (which returns the assembled program as a {\em Cell\/}) or {\tt \}END>s} (which returns a {\em Slice\/}).
 \item A new subroutine is declared by means of the phrase {\tt NEWPROC $\langle\textit{name}\rangle$}. This declaration assigns the next positive integer as a selector for the newly-declared subroutine, and stores this integer into the constant $\langle\textit{name}\rangle$. For instance, the above declarations define {\tt add}, {\tt sub}, and {\tt mul} as integer constants equal to 1, 2, and 3, respectively.
 \item Some subroutines are predeclared and do not need to be declared again by {\tt NEWPROC}. For instance, {\tt main} is a subroutine identifier bound to the integer constant (selector) 0.
-\item Other predefined subroutine selectors such as {\tt recv\_internal} (equal to $0$) or {\tt recv\_external} (equal to $-1$), useful for implementing TON Blockchain smart contracts (cf.~\cite[4.4]{TBC}), can be declared by means of {\tt constant} (e.g., {\tt -1 constant recv\_external}).
+\item Other predefined subroutine selectors such as {\tt recv\_internal} (equal to $0$) or {\tt recv\_external} (equal to $-1$), useful for implementing ION Blockchain smart contracts (cf.~\cite[4.4]{TBC}), can be declared by means of {\tt constant} (e.g., {\tt -1 constant recv\_external}).
 \item A subroutine can be defined either with the aid of the word {\tt PROC}, which accepts the integer selector of the subroutine and the {\em Slice} containing the code for this subroutine, or with the aid of the construct {\tt $\langle\textit{selector}\rangle$ PROC:<\{ \dots\ \}>}, convenient for defining larger subroutines.
 \item {\tt CALLDICT} and {\tt JMPDICT} instructions may be assembled with the aid of the words {\tt CALL} and {\tt JMP}, which accept the integer selector of the subroutine to be called as an immediate argument passed in the Fift stack.
 \item The current implementation of the Fift assembler collects all subroutines into a dictionary with 14-bit signed integer keys. Therefore, all subroutine selectors must be in the range $-2^{13}\dots 2^{13}-1$.
@@ -1811,7 +1811,7 @@ execute implicit RET
 \bibitem{Brodie2}
   {\sc L.~Brodie}, {\sl Thinking Forth: A language and philosophy for solving problems}, Prentice Hall, 1984. Available at \url{http://thinking-forth.sourceforge.net/}.
 
-\bibitem{TON}
+\bibitem{ION}
   {\sc N.~Durov}, {\sl Telegram Open Network}, 2017.
 
 \bibitem{TVM}
@@ -1845,7 +1845,7 @@ For example, the active prefix word {\tt B\{}, used for defining {\em Bytes\/} l
 \item {\tt \$$n$} ( -- $S$), pushes the $n$-th command-line argument as a {\em String}~$S$, cf.~\ptref{p:cmdline.ops}. For instance, {\tt \$0} pushes the name of the script being executed, {\tt \$1} the first command line argument, and so on. Defined only when the Fift interpreter is invoked in script mode (with the {\tt -s} command line argument).
 \item {\tt \$=} ($S$ $S'$ -- $?$), returns $-1$ if strings $S$ and $S'$ are equal, $0$ otherwise, cf.~\ptref{p:string.cmp.ops}. Equivalent to {\tt \$cmp 0=}.
 \item {\tt \$>s} ($S$ -- $s$), transforms the {\em String\/}~$S$ into a {\em Slice}, cf.~\ptref{p:slice.ops}. Equivalent to {\tt <b swap \$, b> <s}.
-\item {\tt \$>smca} ($S$ -- $x$ $y$ $z$ $-1$ or $0$), unpacks a standard TON smart-contract address from its human-readable string representation~$S$, cf.~\ptref{p:smc.addr.ops}. On success, returns the signed 32-bit workchain $x$, the unsigned 256-bit in-workchain address $y$, the flags $z$ (where $+1$ means that the address is non-bounceable, $+2$ that the address is testnet-only), and $-1$. On failure, pushes $0$.
+\item {\tt \$>smca} ($S$ -- $x$ $y$ $z$ $-1$ or $0$), unpacks a standard ION smart-contract address from its human-readable string representation~$S$, cf.~\ptref{p:smc.addr.ops}. On success, returns the signed 32-bit workchain $x$, the unsigned 256-bit in-workchain address $y$, the flags $z$ (where $+1$ means that the address is non-bounceable, $+2$ that the address is testnet-only), and $-1$. On failure, pushes $0$.
 \item {\tt \$@} ($s$ $x$ -- $S$), fetches the first $x$ bytes (i.e., $8x$ bits) from {\em Slice}~$s$, and returns them as a UTF-8 {\em String\/}~$S$, cf.~\ptref{p:slice.ops}. If there are not enough data bits in $s$, throws an exception.
 \item {\tt \$@+} ($s$ $x$ -- $S$ $s'$), similar to {\tt \$@}, but returns the remainder of {\em Slice\/} $s$ as well, cf.~\ptref{p:slice.ops}.
 \item {\tt \$@?} ($s$ $x$ -- $S$ $-1$ or $0$), similar to {\tt \$@}, but uses a flag to indicate failure instead of throwing an exception, cf.~\ptref{p:slice.ops}.
@@ -2022,7 +2022,7 @@ For example, the active prefix word {\tt B\{}, used for defining {\em Bytes\/} l
   \item $+8$ stores hashes of some intermediate (non-leaf) cells (useful for lazy deserialization of large bags of cells).
   \item $+16$ stores cell cache bits to control caching of deserialized cells.
   \end{itemize}
-Typical values of $x$ are $x=0$ or $x=2$ for very small bags of cells (e.g., TON Blockchain external messages) and $x=31$ for large bags of cells (e.g., TON Blockchain blocks).
+Typical values of $x$ are $x=0$ or $x=2$ for very small bags of cells (e.g., ION Blockchain external messages) and $x=31$ for large bags of cells (e.g., ION Blockchain blocks).
 \item {\tt boc>B} ($c$ -- $B$), serializes a small ``standard'' bag of cells with root {\em Cell\/}~$c$ and all its descendants, cf.~\ptref{p:boc.ops}. Equivalent to {\tt 0 boc+>B}.
 \item {\tt box} ($x$ -- $p$), creates a new {\em Box\/} containing specified value~$x$, cf.~\ptref{p:variables}. Equivalent to {\tt hole tuck !}.
 \item {\tt brefs} ($b$ -- $x$), returns the number of references already stored in {\em Builder\/}~$b$, cf.~\ptref{p:builder.ops}. The result $x$ is an {\em Integer\/} in the range $0\dots4$.
@@ -2146,9 +2146,9 @@ Typical values of $x$ are $x=0$ or $x=2$ for very small bags of cells (e.g., TON
 \item {\tt sgn} ($x$ -- $y$), computes the sign of an {\em Integer\/} $x$ (i.e., pushes $1$ if $x>0$, $-1$ if $x<0$, and $0$ if $x=0$), cf.~\ptref{p:int.comp}. Equivalent to {\tt 0 cmp}.
 \item {\tt shash} ($s$ -- $B$), computes the $\Sha$-based representation hash of a {\em Slice\/} by first transforming it into a cell, cf.~\ptref{p:hash.ops}. Equivalent to {\tt s>c hashB}.
 \item {\tt sign} ($S$ $x$ -- $S'$), appends a minus sign ``{\tt -}'' to {\em String\/}~$S$ if {\em Integer\/}~$x$ is negative. Otherwise leaves $S$ intact.
-\item {\tt single} ($x$ -- $t$), creates new singleton $t=(x)$, i.e., a one-element {\em Tuple}. Equivalent to {\tt 1 tuple}.
+\item {\tt single} ($x$ -- $t$), creates new singleion $t=(x)$, i.e., a one-element {\em Tuple}. Equivalent to {\tt 1 tuple}.
 \item {\tt skipspc} ( -- ), skips blank characters from the current input line until a non-blank or an end-of-line character is found.
-\item {\tt smca>\$} ($x$ $y$ $z$ -- $S$), packs a standard TON smart-contract address with workchain $x$ (a signed 32-bit {\em Integer\/}) and in-workchain address $y$ (an unsigned 256-bit {\em Integer\/}) into a 48-character string $S$ (the human-readable representation of the address) according to flags~$z$, cf.~\ptref{p:smc.addr.ops}. Possible individual flags in~$z$ are: $+1$ for non-bounceable addresses, $+2$ for testnet-only addresses, and $+4$ for base64url output instead of base64.
+\item {\tt smca>\$} ($x$ $y$ $z$ -- $S$), packs a standard ION smart-contract address with workchain $x$ (a signed 32-bit {\em Integer\/}) and in-workchain address $y$ (an unsigned 256-bit {\em Integer\/}) into a 48-character string $S$ (the human-readable representation of the address) according to flags~$z$, cf.~\ptref{p:smc.addr.ops}. Possible individual flags in~$z$ are: $+1$ for non-bounceable addresses, $+2$ for testnet-only addresses, and $+4$ for base64url output instead of base64.
 \item {\tt space} ( -- ), outputs a single space. Equivalent to {\tt bl emit} or to {\tt ." "}.
 \item {\tt sr,} ($b$ $s$ -- $b'$), constructs a new {\em Cell\/} containing all data and references from {\em Slice\/}~$s$, and appends a reference to this cell to {\em Builder}~$b$, cf.~\ptref{p:builder.ops}. Equivalent to {\tt s>c ref,}.
 \item {\tt srefs} ($s$ -- $x$), returns the number of cell references $x$ remaining in {\em Slice}~$s$, cf.~\ptref{p:slice.ops}.
@@ -2179,7 +2179,7 @@ Typical values of $x$ are $x=0$ or $x=2$ for very small bags of cells (e.g., TON
 \item {\tt uncons} ($l$ -- $h$ $t$), decomposes a non-empty list into its head and its tail, cf.~\ptref{p:lists}. Equivalent to {\tt unpair}.
 \item {\tt \underline{undef?} $\langle\textit{word-name\/}\rangle$} ( -- $?$), checks whether the word $\langle\textit{word-name\/}\rangle$ is undefined at execution time, and returns $-1$ or $0$ accordingly.
 \item {\tt unpair} ($t$ -- $x$ $y$), unpacks a pair $t=(x,y)$, cf.~\ptref{p:tuples}. Equivalent to {\tt 2 untuple}.
-\item {\tt unsingle} ($t$ -- $x$), unpacks a singleton $t=(x)$. Equivalent to {\tt 1 untuple}.
+\item {\tt unsingle} ($t$ -- $x$), unpacks a singleion $t=(x)$. Equivalent to {\tt 1 untuple}.
 \item {\tt until} ($e$ -- ), an until loop, cf.~\ptref{p:loops}: executes {\em WordDef\/}~$e$, then removes the top-of-stack integer and checks whether it is zero. If it is, then begins a new iteration of the loop by executing $e$. Otherwise exits the loop.
 \item {\tt untriple} ($t$ -- $x$ $y$ $z$), unpacks a triple $t=(x,y,z)$, cf.~\ptref{p:tuples}. Equivalent to {\tt 3 untuple}.
 \item {\tt untuple} ($t$ $n$ -- $x_1$ \dots $x_n$), returns all components of a {\em Tuple\/}~$t=(x_1,\ldots,x_n)$, but only if its length is equal to~$n$, cf.~\ptref{p:tuples}. Otherwise throws an exception.

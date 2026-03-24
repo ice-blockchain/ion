@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -24,20 +24,20 @@
 #include "interfaces/validator-manager.h"
 #include "td/actor/actor.h"
 #include "td/utils/Time.h"
-#include "ton/ton-types.h"
+#include "ion/ion-types.h"
 
 #include "block.hpp"
 #include "proof.hpp"
 #include "shard.hpp"
 
-namespace ton {
+namespace ion {
 
 namespace validator {
 using td::Ref;
 
 class LiteQuery : public td::actor::Actor {
   td::BufferSlice query_;
-  td::actor::ActorId<ton::validator::ValidatorManager> manager_;
+  td::actor::ActorId<ion::validator::ValidatorManager> manager_;
   td::actor::ActorId<LiteServerCache> cache_;
   td::Timestamp timeout_;
   td::Promise<td::BufferSlice> promise_;
@@ -45,7 +45,7 @@ class LiteQuery : public td::actor::Actor {
   td::Promise<std::tuple<td::Ref<vm::CellSlice>, UnixTime, LogicalTime, std::unique_ptr<block::ConfigInfo>>>
       acc_state_promise_;
 
-  tl_object_ptr<ton::lite_api::Function> query_obj_;
+  tl_object_ptr<ion::lite_api::Function> query_obj_;
   bool use_cache_{false};
   td::Bits256 cache_key_;
 
@@ -67,7 +67,7 @@ class LiteQuery : public td::actor::Actor {
   td::BufferSlice shard_proof_, proof_;
   std::vector<Ref<vm::Cell>> roots_;
   std::vector<Ref<td::CntObject>> aux_objs_;
-  std::vector<ton::BlockIdExt> blk_ids_;
+  std::vector<ion::BlockIdExt> blk_ids_;
   std::unique_ptr<block::BlockProofChain> chain_;
   Ref<vm::Stack> stack_;
 
@@ -84,16 +84,16 @@ class LiteQuery : public td::actor::Actor {
     ls_version = 0x101,
     ls_capabilities = 7
   };  // version 1.1; +1 = build block proof chains, +2 = masterchainInfoExt, +4 = runSmcMethod
-  LiteQuery(td::BufferSlice data, td::actor::ActorId<ton::validator::ValidatorManager> manager,
+  LiteQuery(td::BufferSlice data, td::actor::ActorId<ion::validator::ValidatorManager> manager,
             td::actor::ActorId<LiteServerCache> cache, td::Promise<td::BufferSlice> promise);
-  LiteQuery(WorkchainId wc, StdSmcAddress acc_addr, td::actor::ActorId<ton::validator::ValidatorManager> manager,
+  LiteQuery(WorkchainId wc, StdSmcAddress acc_addr, td::actor::ActorId<ion::validator::ValidatorManager> manager,
             td::Promise<std::tuple<td::Ref<vm::CellSlice>, UnixTime, LogicalTime, std::unique_ptr<block::ConfigInfo>>>
                 promise);
-  static void run_query(td::BufferSlice data, td::actor::ActorId<ton::validator::ValidatorManager> manager,
+  static void run_query(td::BufferSlice data, td::actor::ActorId<ion::validator::ValidatorManager> manager,
                         td::actor::ActorId<LiteServerCache> cache, td::Promise<td::BufferSlice> promise);
 
   static void fetch_account_state(
-      WorkchainId wc, StdSmcAddress acc_addr, td::actor::ActorId<ton::validator::ValidatorManager> manager,
+      WorkchainId wc, StdSmcAddress acc_addr, td::actor::ActorId<ion::validator::ValidatorManager> manager,
       td::Promise<std::tuple<td::Ref<vm::CellSlice>, UnixTime, LogicalTime, std::unique_ptr<block::ConfigInfo>>>
           promise);
 
@@ -138,7 +138,7 @@ class LiteQuery : public td::actor::Actor {
   void perform_getTransactions(WorkchainId workchain, StdSmcAddress addr, LogicalTime lt, Bits256 hash, unsigned count);
   void continue_getTransactions(unsigned remaining, bool exact);
   void continue_getTransactions_2(BlockIdExt blkid, Ref<BlockData> block, unsigned remaining);
-  void abort_getTransactions(td::Status error, ton::BlockIdExt blkid);
+  void abort_getTransactions(td::Status error, ion::BlockIdExt blkid);
   void finish_getTransactions();
   void perform_getShardInfo(BlockIdExt blkid, ShardIdFull shard, bool exact);
   void perform_getAllShardsInfo(BlockIdExt blkid);
@@ -149,7 +149,7 @@ class LiteQuery : public td::actor::Actor {
   void perform_lookupBlock(BlockId blkid, int mode, LogicalTime lt, UnixTime utime);
   void perform_lookupBlockWithProof(BlockId blkid, BlockIdExt client_mc_blkid, int mode, LogicalTime lt,
                                     UnixTime utime);
-  void continue_lookupBlockWithProof_getHeaderProof(Ref<ton::validator::BlockData> block,
+  void continue_lookupBlockWithProof_getHeaderProof(Ref<ion::validator::BlockData> block,
                                                     AccountIdPrefixFull req_prefix, BlockSeqno masterchain_ref_seqno);
   void continue_lookupBlockWithProof_gotPrevBlockData(Ref<BlockData> prev_block, BlockSeqno masterchain_ref_seqno);
   void continue_lookupBlockWithProof_buildProofLinks(td::Ref<BlockData> cur_block,
@@ -167,12 +167,12 @@ class LiteQuery : public td::actor::Actor {
   void perform_getValidatorStats(BlockIdExt blkid, int mode, int count, Bits256 start_after, UnixTime min_utime);
   void continue_getValidatorStats(int mode, int limit, Bits256 start_after, UnixTime min_utime);
   bool construct_proof_chain(BlockIdExt id);
-  bool construct_proof_link_forward(ton::BlockIdExt cur, ton::BlockIdExt next);
-  bool construct_proof_link_forward_cont(ton::BlockIdExt cur, ton::BlockIdExt next);
-  bool construct_proof_link_back(ton::BlockIdExt cur, ton::BlockIdExt next);
-  bool construct_proof_link_back_cont(ton::BlockIdExt cur, ton::BlockIdExt next);
-  bool adjust_last_proof_link(ton::BlockIdExt cur, Ref<vm::Cell> block_root);
-  bool finish_proof_chain(ton::BlockIdExt id);
+  bool construct_proof_link_forward(ion::BlockIdExt cur, ion::BlockIdExt next);
+  bool construct_proof_link_forward_cont(ion::BlockIdExt cur, ion::BlockIdExt next);
+  bool construct_proof_link_back(ion::BlockIdExt cur, ion::BlockIdExt next);
+  bool construct_proof_link_back_cont(ion::BlockIdExt cur, ion::BlockIdExt next);
+  bool adjust_last_proof_link(ion::BlockIdExt cur, Ref<vm::Cell> block_root);
+  bool finish_proof_chain(ion::BlockIdExt id);
   void perform_getShardBlockProof(BlockIdExt blkid);
   void continue_getShardBlockProof(Ref<BlockData> cur_block,
                                    std::vector<std::pair<BlockIdExt, td::BufferSlice>> result);
@@ -190,10 +190,10 @@ class LiteQuery : public td::actor::Actor {
   void perform_nonfinal_getValidatorGroups(int mode, ShardIdFull shard);
   void perform_nonfinal_getPendingShardBlocks(int mode, ShardIdFull shard);
 
-  void load_prevKeyBlock(ton::BlockIdExt blkid, td::Promise<std::pair<BlockIdExt, Ref<BlockQ>>>);
-  void continue_loadPrevKeyBlock(ton::BlockIdExt blkid, td::Result<std::pair<Ref<MasterchainState>, BlockIdExt>> res,
+  void load_prevKeyBlock(ion::BlockIdExt blkid, td::Promise<std::pair<BlockIdExt, Ref<BlockQ>>>);
+  void continue_loadPrevKeyBlock(ion::BlockIdExt blkid, td::Result<std::pair<Ref<MasterchainState>, BlockIdExt>> res,
                                  td::Promise<std::pair<BlockIdExt, Ref<BlockQ>>>);
-  void finish_loadPrevKeyBlock(ton::BlockIdExt blkid, td::Result<Ref<BlockData>> res,
+  void finish_loadPrevKeyBlock(ion::BlockIdExt blkid, td::Result<Ref<BlockData>> res,
                                td::Promise<std::pair<BlockIdExt, Ref<BlockQ>>> promise);
 
   void get_block_handle_checked(BlockIdExt blkid, td::Promise<ConstBlockHandle> promise);
@@ -235,4 +235,4 @@ class LiteQuery : public td::actor::Actor {
 };
 
 }  // namespace validator
-}  // namespace ton
+}  // namespace ion

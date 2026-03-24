@@ -7,4 +7,4 @@ target_link_libraries(test-runtime PRIVATE
     td-test-main
 )
 
-ton_test(test-runtime)
+ion_test(test-runtime)

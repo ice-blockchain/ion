@@ -260,7 +260,7 @@
 # 1.9.1 Fixed typo that caused the LATEX_SMALL_IMAGES option to fail to
 #       activate.
 #
-# 1.9.0 Add support for the multibib package (thanks to Antonio LaTorre).
+# 1.9.0 Add support for the multibib package (thanks to Anionio LaTorre).
 #
 # 1.8.2 Fix corner case when an argument name was also a variable containing
 #       the text of an argument.  In this case, the CMake IF was matching

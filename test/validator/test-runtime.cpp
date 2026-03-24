@@ -1,7 +1,7 @@
 #include "td/utils/tests.h"
 #include "validator/consensus/runtime.h"
 
-namespace ton::runtime::test_simple_message_to_self {
+namespace ion::runtime::test_simple_message_to_self {
 namespace {
 
 // We want to spawn a MainBus and SampleActor with it. SampleActor publishes an event, which it then
@@ -28,7 +28,7 @@ bool g_event_received = false;
 
 class SampleActor : public SpawnsWith<MainBus>, public ConnectsTo<MainBus> {
  public:
-  TON_RUNTIME_DEFINE_EVENT_HANDLER();
+  ION_RUNTIME_DEFINE_EVENT_HANDLER();
 
   void start_up() {
     EXPECT_EQ(owning_bus()->bus_cookie, 42);
@@ -58,9 +58,9 @@ TEST(Runtime, SimpleMessageToSelf) {
 }
 
 }  // namespace
-}  // namespace ton::runtime::test_simple_message_to_self
+}  // namespace ion::runtime::test_simple_message_to_self
 
-namespace ton::runtime::test_bus_tree {
+namespace ion::runtime::test_bus_tree {
 namespace {
 
 // We want to create and then destroy the following bus tree:
@@ -96,7 +96,7 @@ struct Level2Bus : Bus {
 
 class RootController : public SpawnsWith<RootBus>, public ConnectsTo<RootBus, Level1Bus> {
  public:
-  TON_RUNTIME_DEFINE_EVENT_HANDLER();
+  ION_RUNTIME_DEFINE_EVENT_HANDLER();
 
   void start_up() {
     EXPECT_EQ(get_name(), td::Slice("RootController"));
@@ -115,7 +115,7 @@ class RootController : public SpawnsWith<RootBus>, public ConnectsTo<RootBus, Le
 
 class Level1Controller : public SpawnsWith<Level1Bus>, public ConnectsTo<Level1Bus, Level2Bus> {
  public:
-  TON_RUNTIME_DEFINE_EVENT_HANDLER();
+  ION_RUNTIME_DEFINE_EVENT_HANDLER();
 
   void start_up() {
     auto bus = owning_bus();
@@ -147,7 +147,7 @@ class Level1Controller : public SpawnsWith<Level1Bus>, public ConnectsTo<Level1B
 
 class Level1Worker : public SpawnsWith<Level1Bus>, public ConnectsTo<Level1Bus> {
  public:
-  TON_RUNTIME_DEFINE_EVENT_HANDLER();
+  ION_RUNTIME_DEFINE_EVENT_HANDLER();
 
   void start_up() {
     EXPECT_EQ(get_name(), PSTRING() << "Level1[" << owning_bus()->id << "].Level1Worker");
@@ -161,7 +161,7 @@ class Level1Worker : public SpawnsWith<Level1Bus>, public ConnectsTo<Level1Bus> 
 
 class Level2Worker : public SpawnsWith<Level2Bus>, public ConnectsTo<Level2Bus> {
  public:
-  TON_RUNTIME_DEFINE_EVENT_HANDLER();
+  ION_RUNTIME_DEFINE_EVENT_HANDLER();
 
   void start_up() {
     EXPECT_EQ(get_name(), td::Slice("Level1[0].Level2.Level2Worker"));
@@ -187,9 +187,9 @@ TEST(Runtime, BusTree) {
 }
 
 }  // namespace
-}  // namespace ton::runtime::test_bus_tree
+}  // namespace ion::runtime::test_bus_tree
 
-namespace ton::runtime::test_inheritance {
+namespace ion::runtime::test_inheritance {
 namespace {
 
 struct ParentBus : Bus {
@@ -240,7 +240,7 @@ bool g_ran_5th = false;
 
 class ParentBusActor : public SpawnsWith<ParentBus>, public ConnectsTo<ParentBus> {
  public:
-  TON_RUNTIME_DEFINE_EVENT_HANDLER();
+  ION_RUNTIME_DEFINE_EVENT_HANDLER();
 
   void start_up() {  // 1st
     check_bus(owning_bus());
@@ -268,7 +268,7 @@ class ParentBusActor : public SpawnsWith<ParentBus>, public ConnectsTo<ParentBus
 
 class ChildBusActor : public SpawnsWith<ChildBus>, public ConnectsTo<ChildBus> {
  public:
-  TON_RUNTIME_DEFINE_EVENT_HANDLER();
+  ION_RUNTIME_DEFINE_EVENT_HANDLER();
 
   template <>
   void handle(BusHandle<ChildBus> bus, std::shared_ptr<const ParentBus::ParentEvent> event) {  // 2nd
@@ -330,9 +330,9 @@ TEST(Runtime, Inheritance) {
 }
 
 }  // namespace
-}  // namespace ton::runtime::test_inheritance
+}  // namespace ion::runtime::test_inheritance
 
-namespace ton::runtime::test_runtime_lifetime {
+namespace ion::runtime::test_runtime_lifetime {
 namespace {
 // Lifetime of detail::Runtime should be extended while there are running actors even if user-facing
 // Runtime is destroyed.
@@ -418,9 +418,9 @@ TEST(Runtime, Lifetime) {
 }
 
 }  // namespace
-}  // namespace ton::runtime::test_runtime_lifetime
+}  // namespace ion::runtime::test_runtime_lifetime
 
-namespace ton::runtime::test_requests {
+namespace ion::runtime::test_requests {
 namespace {
 
 struct MainBus : Bus {
@@ -445,7 +445,7 @@ bool g_observer_triggered = false;
 
 class Provider : public SpawnsWith<MainBus>, public ConnectsTo<MainBus> {
  public:
-  TON_RUNTIME_DEFINE_EVENT_HANDLER();
+  ION_RUNTIME_DEFINE_EVENT_HANDLER();
 
   template <>
   td::actor::Task<int> process(BusHandle<MainBus> bus, std::shared_ptr<MainBus::MultiplyBy25Request> request) {
@@ -458,7 +458,7 @@ class Provider : public SpawnsWith<MainBus>, public ConnectsTo<MainBus> {
 
 class Consumer : public SpawnsWith<MainBus>, public ConnectsTo<MainBus> {
  public:
-  TON_RUNTIME_DEFINE_EVENT_HANDLER();
+  ION_RUNTIME_DEFINE_EVENT_HANDLER();
 
   void start_up() override {
     run().start().detach();
@@ -476,7 +476,7 @@ class Consumer : public SpawnsWith<MainBus>, public ConnectsTo<MainBus> {
 
 class Observer : public SpawnsWith<MainBus>, public ConnectsTo<MainBus> {
  public:
-  TON_RUNTIME_DEFINE_EVENT_HANDLER();
+  ION_RUNTIME_DEFINE_EVENT_HANDLER();
 
   template <>
   void handle(BusHandle<MainBus> bus, std::shared_ptr<const MainBus::MultiplyBy25Request> request) {
@@ -504,4 +504,4 @@ TEST(Runtime, Requests) {
 }
 
 }  // namespace
-}  // namespace ton::runtime::test_requests
+}  // namespace ion::runtime::test_requests

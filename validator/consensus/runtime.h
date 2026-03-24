@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025-2026, TON CORE TECHNOLOGIES CO. L.L.C
+ * Copyright (c) 2025-2026, ION CORE TECHNOLOGIES CO. L.L.C
  *
  * SPDX-License-Identifier: LGPL-2.0-or-later
  */
@@ -20,7 +20,7 @@
 #include "td/utils/logging.h"
 #include "td/utils/type_traits.h"
 
-namespace ton::runtime {
+namespace ion::runtime {
 
 namespace detail {
 
@@ -640,12 +640,12 @@ class Runtime {
   std::shared_ptr<detail::Runtime> impl_ = std::make_shared<detail::Runtime>();
 };
 
-#define TON_RUNTIME_DEFINE_EVENT_HANDLER()                                                            \
-  template <::td::In<ConnectToBuses> B, ::ton::runtime::detail::ValidPublishTargetFor<B> E>           \
-  constexpr void handle(::ton::runtime::BusHandle<B> bus, ::std::shared_ptr<E const> event) = delete; \
+#define ION_RUNTIME_DEFINE_EVENT_HANDLER()                                                            \
+  template <::td::In<ConnectToBuses> B, ::ion::runtime::detail::ValidPublishTargetFor<B> E>           \
+  constexpr void handle(::ion::runtime::BusHandle<B> bus, ::std::shared_ptr<E const> event) = delete; \
                                                                                                       \
-  template <::td::In<ConnectToBuses> B, ::ton::runtime::detail::ValidRequestFor<B> E>                 \
-  constexpr td::actor::Task<typename E::ReturnType> process(::ton::runtime::BusHandle<B> bus,         \
+  template <::td::In<ConnectToBuses> B, ::ion::runtime::detail::ValidRequestFor<B> E>                 \
+  constexpr td::actor::Task<typename E::ReturnType> process(::ion::runtime::BusHandle<B> bus,         \
                                                             ::std::shared_ptr<E> request) = delete;
 
-}  // namespace ton::runtime
+}  // namespace ion::runtime

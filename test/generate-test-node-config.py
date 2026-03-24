@@ -8,7 +8,7 @@ import hashlib
 
 configname="server.list"
 
-binary="../ton-build/generate-random-id"
+binary="../ion-build/generate-random-id"
 
 ids=[]
 catchains=[]
@@ -140,7 +140,7 @@ def generate_global_config():
 
     config['validator'] = validators
 
-    with open('ton-global.config.json', 'w') as outfile:
+    with open('ion-global.config.json', 'w') as outfile:
         json.dump(config, outfile, indent=2)
 
 def generate_local_config(ip,port):
@@ -192,7 +192,7 @@ def generate_local_config(ip,port):
             'pub':'Fv8DAtv6nqnrHIPpmv4LGIw0D9cMoF40JXQdM2WVMQM=', 'port':(int(port) + 1000)}
     config['control'] = [controlserver]
 
-    with open('ton-local.' + ip + '.' + port + '.config.json', 'w') as outfile:
+    with open('ion-local.' + ip + '.' + port + '.config.json', 'w') as outfile:
         json.dump(config, outfile, indent=2)
 
 

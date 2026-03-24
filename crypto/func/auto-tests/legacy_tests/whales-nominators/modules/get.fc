@@ -119,7 +119,7 @@ _ get_member(slice address) method_id {
 
 _ supported_interfaces() method_id {
     return (
-        123515602279859691144772641439386770278, ;; org.ton.introspection.v0
-        256184278959413194623484780286929323492 ;; com.tonwhales.nominators:v0
+        123515602279859691144772641439386770278, ;; org.ion.introspection.v0
+        256184278959413194623484780286929323492 ;; com.ionwhales.nominators:v0
     );
 }

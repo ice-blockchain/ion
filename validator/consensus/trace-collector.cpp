@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025-2026, TON CORE TECHNOLOGIES CO. L.L.C
+ * Copyright (c) 2025-2026, ION CORE TECHNOLOGIES CO. L.L.C
  *
  * SPDX-License-Identifier: LGPL-2.0-or-later
  */
@@ -9,11 +9,11 @@
 #include "bus.h"
 #include "stats.h"
 
-namespace ton::validator::consensus {
+namespace ion::validator::consensus {
 
 namespace {
 
-class ConsensusTraceTag : public ton::stats::Tag {
+class ConsensusTraceTag : public ion::stats::Tag {
  public:
   std::string_view name() const override {
     return "consensus-trace";
@@ -24,7 +24,7 @@ ConsensusTraceTag consensus_trace;
 
 class TraceCollectorImpl : public runtime::SpawnsWith<Bus>, public runtime::ConnectsTo<Bus> {
  public:
-  TON_RUNTIME_DEFINE_EVENT_HANDLER();
+  ION_RUNTIME_DEFINE_EVENT_HANDLER();
 
   template <>
   void handle(BusHandle, std::shared_ptr<const StopRequested>) {
@@ -32,7 +32,7 @@ class TraceCollectorImpl : public runtime::SpawnsWith<Bus>, public runtime::Conn
   }
 
   void start_up() override {
-    recorder = ton::stats::recorder_for(consensus_trace);
+    recorder = ion::stats::recorder_for(consensus_trace);
     id = owning_bus()->session_id;
   }
 
@@ -60,7 +60,7 @@ class TraceCollectorImpl : public runtime::SpawnsWith<Bus>, public runtime::Conn
   }
 
   ValidatorSessionId id;
-  std::unique_ptr<ton::stats::Recorder> recorder;
+  std::unique_ptr<ion::stats::Recorder> recorder;
   std::vector<stats::tl::TimestampedEventRef> events;
 };
 
@@ -70,4 +70,4 @@ void TraceCollector::register_in(runtime::Runtime& runtime) {
   runtime.register_actor<TraceCollectorImpl>("TraceCollector");
 }
 
-}  // namespace ton::validator::consensus
+}  // namespace ion::validator::consensus

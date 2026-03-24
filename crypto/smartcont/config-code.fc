@@ -1,6 +1,6 @@
 ;; Simple configuration smart contract
 ;; Currently deployed config-contract in mainnet can be found
-;; on https://verifier.ton.org/Ef9VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVbxn
+;; on https://verifier.ion.org/Ef9VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVbxn
 
 () set_conf_param(int index, cell value) impure {
   var cs = get_data().begin_parse();

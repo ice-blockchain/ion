@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -28,7 +28,7 @@
 #include "SmartContract.h"
 #include "transaction.h"
 
-namespace ton {
+namespace ion {
 int SmartContract::Answer::output_actions_count(td::Ref<vm::Cell> list) {
   int i = -1;
   do {
@@ -203,14 +203,14 @@ std::shared_ptr<const block::Config> try_fetch_config_from_c7(td::Ref<vm::Tuple>
   }
   auto config_dict = std::make_unique<vm::Dictionary>(config_cell, 32);
   auto config_addr_cell = config_dict->lookup_ref(td::BitArray<32>::zero());
-  ton::StdSmcAddress config_addr;
+  ion::StdSmcAddress config_addr;
   if (config_addr_cell.is_null()) {
-    config_addr = ton::StdSmcAddress::zero();
+    config_addr = ion::StdSmcAddress::zero();
   } else {
     auto config_addr_cs = vm::load_cell_slice(std::move(config_addr_cell));
     if (config_addr_cs.size() != 0x100) {
       LOG(WARNING) << "Config parameter 0 with config address has wrong size";
-      config_addr = ton::StdSmcAddress::zero();
+      config_addr = ion::StdSmcAddress::zero();
     } else {
       config_addr_cs.fetch_bits_to(config_addr);
     }
@@ -405,4 +405,4 @@ SmartContract::Answer SmartContract::send_internal_message(td::Ref<vm::Cell> cel
       args.set_stack(prepare_vm_stack(td::make_refint(args.amount), vm::load_cell_slice_ref(cell), args, 0))
           .set_method_id(0));
 }
-}  // namespace ton
+}  // namespace ion

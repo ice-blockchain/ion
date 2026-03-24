@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain source code.
+    This file is part of ION Blockchain source code.
 
-    TON Blockchain is free software; you can redistribute it and/or
+    ION Blockchain is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
     as published by the Free Software Foundation; either version 2
     of the License, or (at your option) any later version.
 
-    TON Blockchain is distributed in the hope that it will be useful,
+    ION Blockchain is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with TON Blockchain.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain.  If not, see <http://www.gnu.org/licenses/>.
 
     In addition, as a special exception, the copyright holders give permission
     to link the code of portions of this program with the OpenSSL library.
@@ -54,7 +54,7 @@ Config::Config() {
   out_port = 3278;
 }
 
-Config::Config(const ton::ton_api::engine_validator_config &config) {
+Config::Config(const ion::ton_api::engine_validator_config &config) {
   out_port = static_cast<td::uint16>(config.out_port_);
   if (!out_port) {
     out_port = 3278;
@@ -62,13 +62,13 @@ Config::Config(const ton::ton_api::engine_validator_config &config) {
   for (auto &addr : config.addrs_) {
     td::IPAddress in_ip;
     td::IPAddress out_ip;
-    std::shared_ptr<ton::adnl::AdnlProxy> proxy = nullptr;
+    std::shared_ptr<ion::adnl::AdnlProxy> proxy = nullptr;
     std::vector<AdnlCategory> categories;
     std::vector<AdnlCategory> priority_categories;
-    ton::ton_api::downcast_call(
+    ion::ton_api::downcast_call(
         *addr.get(),
         td::overloaded(
-            [&](const ton::ton_api::engine_addr &obj) {
+            [&](const ion::ton_api::engine_addr &obj) {
               in_ip.init_ipv4_port(td::IPAddress::ipv4_to_str(obj.ip_), static_cast<td::uint16>(obj.port_)).ensure();
               out_ip = in_ip;
               for (auto &cat : obj.categories_) {
@@ -78,13 +78,13 @@ Config::Config(const ton::ton_api::engine_validator_config &config) {
                 priority_categories.push_back(td::narrow_cast<td::uint8>(cat));
               }
             },
-            [&](const ton::ton_api::engine_addrProxy &obj) {
+            [&](const ion::ton_api::engine_addrProxy &obj) {
               in_ip.init_ipv4_port(td::IPAddress::ipv4_to_str(obj.in_ip_), static_cast<td::uint16>(obj.in_port_))
                   .ensure();
               out_ip.init_ipv4_port(td::IPAddress::ipv4_to_str(obj.out_ip_), static_cast<td::uint16>(obj.out_port_))
                   .ensure();
               if (obj.proxy_type_) {
-                auto R = ton::adnl::AdnlProxy::create(*obj.proxy_type_.get());
+                auto R = ion::adnl::AdnlProxy::create(*obj.proxy_type_.get());
                 R.ensure();
                 proxy = R.move_as_ok();
                 for (auto &cat : obj.categories_) {
@@ -99,84 +99,84 @@ Config::Config(const ton::ton_api::engine_validator_config &config) {
     config_add_network_addr(in_ip, out_ip, std::move(proxy), categories, priority_categories).ensure();
   }
   for (auto &adnl : config.adnl_) {
-    config_add_adnl_addr(ton::PublicKeyHash{adnl->id_}, td::narrow_cast<td::uint8>(adnl->category_)).ensure();
+    config_add_adnl_addr(ion::PublicKeyHash{adnl->id_}, td::narrow_cast<td::uint8>(adnl->category_)).ensure();
   }
   for (auto &dht : config.dht_) {
-    config_add_dht_node(ton::PublicKeyHash{dht->id_}).ensure();
+    config_add_dht_node(ion::PublicKeyHash{dht->id_}).ensure();
   }
 
   for (auto &serv : config.control_) {
-    auto key = ton::PublicKeyHash{serv->id_};
+    auto key = ion::PublicKeyHash{serv->id_};
     config_add_control_interface(key, serv->port_).ensure();
 
     for (auto &proc : serv->allowed_) {
-      config_add_control_process(key, serv->port_, ton::PublicKeyHash{proc->id_}, proc->permissions_).ensure();
+      config_add_control_process(key, serv->port_, ion::PublicKeyHash{proc->id_}, proc->permissions_).ensure();
     }
   }
 
   if (config.gc_) {
     for (auto &gc : config.gc_->ids_) {
-      config_add_gc(ton::PublicKeyHash{gc}).ensure();
+      config_add_gc(ion::PublicKeyHash{gc}).ensure();
     }
   }
 }
 
-ton::tl_object_ptr<ton::ton_api::engine_validator_config> Config::tl() const {
-  std::vector<ton::tl_object_ptr<ton::ton_api::engine_Addr>> addrs_vec;
+ion::tl_object_ptr<ion::ton_api::engine_validator_config> Config::tl() const {
+  std::vector<ion::tl_object_ptr<ion::ton_api::engine_Addr>> addrs_vec;
   for (auto &x : addrs) {
     if (x.second.proxy) {
-      addrs_vec.push_back(ton::create_tl_object<ton::ton_api::engine_addrProxy>(
+      addrs_vec.push_back(ion::create_tl_object<ion::ton_api::engine_addrProxy>(
           static_cast<td::int32>(x.second.in_addr.get_ipv4()), x.second.in_addr.get_port(),
           static_cast<td::int32>(x.first.addr.get_ipv4()), x.first.addr.get_port(), x.second.proxy->tl(),
           std::vector<td::int32>(x.second.cats.begin(), x.second.cats.end()),
           std::vector<td::int32>(x.second.priority_cats.begin(), x.second.priority_cats.end())));
     } else {
-      addrs_vec.push_back(ton::create_tl_object<ton::ton_api::engine_addr>(
+      addrs_vec.push_back(ion::create_tl_object<ion::ton_api::engine_addr>(
           static_cast<td::int32>(x.first.addr.get_ipv4()), x.first.addr.get_port(),
           std::vector<td::int32>(x.second.cats.begin(), x.second.cats.end()),
           std::vector<td::int32>(x.second.priority_cats.begin(), x.second.priority_cats.end())));
     }
   }
-  std::vector<ton::tl_object_ptr<ton::ton_api::engine_adnl>> adnl_vec;
+  std::vector<ion::tl_object_ptr<ion::ton_api::engine_adnl>> adnl_vec;
   for (auto &x : adnl_ids) {
-    adnl_vec.push_back(ton::create_tl_object<ton::ton_api::engine_adnl>(x.first.tl(), x.second));
+    adnl_vec.push_back(ion::create_tl_object<ion::ton_api::engine_adnl>(x.first.tl(), x.second));
   }
-  std::vector<ton::tl_object_ptr<ton::ton_api::engine_dht>> dht_vec;
+  std::vector<ion::tl_object_ptr<ion::ton_api::engine_dht>> dht_vec;
   for (auto &x : dht_ids) {
-    dht_vec.push_back(ton::create_tl_object<ton::ton_api::engine_dht>(x.tl()));
+    dht_vec.push_back(ion::create_tl_object<ion::ton_api::engine_dht>(x.tl()));
   }
 
-  std::vector<ton::tl_object_ptr<ton::ton_api::engine_validator>> val_vec;
-  std::vector<ton::tl_object_ptr<ton::ton_api::engine_collator>> col_vec;
+  std::vector<ion::tl_object_ptr<ion::ton_api::engine_validator>> val_vec;
+  std::vector<ion::tl_object_ptr<ion::ton_api::engine_collator>> col_vec;
 
-  std::vector<ton::tl_object_ptr<ton::ton_api::engine_validator_fullNodeSlave>> full_node_slaves_vec;
-  std::vector<ton::tl_object_ptr<ton::ton_api::engine_validator_fullNodeMaster>> full_node_masters_vec;
+  std::vector<ion::tl_object_ptr<ion::ton_api::engine_validator_fullNodeSlave>> full_node_slaves_vec;
+  std::vector<ion::tl_object_ptr<ion::ton_api::engine_validator_fullNodeMaster>> full_node_masters_vec;
 
-  std::vector<ton::tl_object_ptr<ton::ton_api::engine_liteServer>> liteserver_vec;
+  std::vector<ion::tl_object_ptr<ion::ton_api::engine_liteServer>> liteserver_vec;
 
-  std::vector<ton::tl_object_ptr<ton::ton_api::engine_controlInterface>> control_vec;
+  std::vector<ion::tl_object_ptr<ion::ton_api::engine_controlInterface>> control_vec;
   for (auto &x : controls) {
-    std::vector<ton::tl_object_ptr<ton::ton_api::engine_controlProcess>> control_proc_vec;
+    std::vector<ion::tl_object_ptr<ion::ton_api::engine_controlProcess>> control_proc_vec;
     for (auto &y : x.second.clients) {
-      control_proc_vec.push_back(ton::create_tl_object<ton::ton_api::engine_controlProcess>(y.first.tl(), y.second));
+      control_proc_vec.push_back(ion::create_tl_object<ion::ton_api::engine_controlProcess>(y.first.tl(), y.second));
     }
-    control_vec.push_back(ton::create_tl_object<ton::ton_api::engine_controlInterface>(x.second.key.tl(), x.first,
+    control_vec.push_back(ion::create_tl_object<ion::ton_api::engine_controlInterface>(x.second.key.tl(), x.first,
                                                                                        std::move(control_proc_vec)));
   }
-  std::vector<ton::tl_object_ptr<ton::ton_api::tonNode_shardId>> shard_vec;
+  std::vector<ion::tl_object_ptr<ion::ton_api::tonNode_shardId>> shard_vec;
 
-  auto gc_vec = ton::create_tl_object<ton::ton_api::engine_gc>(std::vector<td::Bits256>{});
+  auto gc_vec = ion::create_tl_object<ion::ton_api::engine_gc>(std::vector<td::Bits256>{});
   for (auto &id : gc) {
     gc_vec->ids_.push_back(id.tl());
   }
-  return ton::create_tl_object<ton::ton_api::engine_validator_config>(
+  return ion::create_tl_object<ion::ton_api::engine_validator_config>(
       out_port, std::move(addrs_vec), std::move(adnl_vec), std::move(dht_vec), std::move(val_vec), std::move(col_vec),
-      ton::PublicKeyHash::zero().tl(), std::move(full_node_slaves_vec), std::move(full_node_masters_vec), nullptr,
+      ion::PublicKeyHash::zero().tl(), std::move(full_node_slaves_vec), std::move(full_node_masters_vec), nullptr,
       nullptr, std::move(liteserver_vec), std::move(control_vec), std::move(shard_vec), std::move(gc_vec));
 }
 
 td::Result<bool> Config::config_add_network_addr(td::IPAddress in_ip, td::IPAddress out_ip,
-                                                 std::shared_ptr<ton::adnl::AdnlProxy> proxy,
+                                                 std::shared_ptr<ion::adnl::AdnlProxy> proxy,
                                                  std::vector<AdnlCategory> cats, std::vector<AdnlCategory> prio_cats) {
   Addr addr{out_ip};
 
@@ -216,7 +216,7 @@ td::Result<bool> Config::config_add_network_addr(td::IPAddress in_ip, td::IPAddr
   }
 }
 
-td::Result<bool> Config::config_add_adnl_addr(ton::PublicKeyHash addr, AdnlCategory cat) {
+td::Result<bool> Config::config_add_adnl_addr(ion::PublicKeyHash addr, AdnlCategory cat) {
   auto it = adnl_ids.find(addr);
   if (it != adnl_ids.end()) {
     if (it->second != cat) {
@@ -232,25 +232,25 @@ td::Result<bool> Config::config_add_adnl_addr(ton::PublicKeyHash addr, AdnlCateg
   }
 }
 
-td::Result<bool> Config::config_add_dht_node(ton::PublicKeyHash id) {
+td::Result<bool> Config::config_add_dht_node(ion::PublicKeyHash id) {
   if (dht_ids.count(id) > 0) {
     return false;
   }
   if (adnl_ids.count(id) == 0) {
-    return td::Status::Error(ton::ErrorCode::notready, "to-be-added dht node not in adnl nodes list");
+    return td::Status::Error(ion::ErrorCode::notready, "to-be-added dht node not in adnl nodes list");
   }
   incref(id);
   dht_ids.insert(id);
   return true;
 }
 
-td::Result<bool> Config::config_add_control_interface(ton::PublicKeyHash key, td::int32 port) {
+td::Result<bool> Config::config_add_control_interface(ion::PublicKeyHash key, td::int32 port) {
   auto it = controls.find(port);
   if (it != controls.end()) {
     if (it->second.key == key) {
       return false;
     } else {
-      return td::Status::Error(ton::ErrorCode::error, "duplicate port");
+      return td::Status::Error(ion::ErrorCode::error, "duplicate port");
     }
   } else {
     incref(key);
@@ -259,14 +259,14 @@ td::Result<bool> Config::config_add_control_interface(ton::PublicKeyHash key, td
   }
 }
 
-td::Result<bool> Config::config_add_control_process(ton::PublicKeyHash key, td::int32 port, ton::PublicKeyHash id,
+td::Result<bool> Config::config_add_control_process(ion::PublicKeyHash key, td::int32 port, ion::PublicKeyHash id,
                                                     td::uint32 permissions) {
   if (controls.count(port) == 0) {
-    return td::Status::Error(ton::ErrorCode::error, "unknown control interface");
+    return td::Status::Error(ion::ErrorCode::error, "unknown control interface");
   }
   auto &v = controls[port];
   if (v.key != key) {
-    return td::Status::Error(ton::ErrorCode::error, "unknown control interface");
+    return td::Status::Error(ion::ErrorCode::error, "unknown control interface");
   }
 
   auto it = v.clients.find(id);
@@ -290,11 +290,11 @@ td::Result<bool> Config::config_add_control_process(ton::PublicKeyHash key, td::
   }
 }
 
-td::Result<bool> Config::config_add_gc(ton::PublicKeyHash key) {
+td::Result<bool> Config::config_add_gc(ion::PublicKeyHash key) {
   return gc.insert(key).second;
 }
 
-void Config::decref(ton::PublicKeyHash key) {
+void Config::decref(ion::PublicKeyHash key) {
   auto v = keys_refcnt[key]--;
   CHECK(v > 0);
   if (v == 1) {
@@ -325,13 +325,13 @@ td::Result<bool> Config::config_del_network_addr(td::IPAddress a, std::vector<Ad
   }
 }
 
-td::Result<bool> Config::config_del_adnl_addr(ton::PublicKeyHash addr) {
+td::Result<bool> Config::config_del_adnl_addr(ion::PublicKeyHash addr) {
   if (adnl_ids.count(addr) == 0) {
     return false;
   }
 
   if (dht_ids.count(addr)) {
-    return td::Status::Error(ton::ErrorCode::error, "adnl addr still in use");
+    return td::Status::Error(ion::ErrorCode::error, "adnl addr still in use");
   }
 
   decref(addr);
@@ -339,7 +339,7 @@ td::Result<bool> Config::config_del_adnl_addr(ton::PublicKeyHash addr) {
   return true;
 }
 
-td::Result<bool> Config::config_del_dht_node(ton::PublicKeyHash id) {
+td::Result<bool> Config::config_del_dht_node(ion::PublicKeyHash id) {
   if (dht_ids.count(id) == 0) {
     return false;
   }
@@ -359,7 +359,7 @@ td::Result<bool> Config::config_del_control_interface(td::int32 port) {
   }
 }
 
-td::Result<bool> Config::config_del_control_process(td::int32 port, ton::PublicKeyHash id) {
+td::Result<bool> Config::config_del_control_process(td::int32 port, ion::PublicKeyHash id) {
   auto it = controls.find(port);
   if (it != controls.end()) {
     return it->second.clients.erase(id);
@@ -368,7 +368,7 @@ td::Result<bool> Config::config_del_control_process(td::int32 port, ton::PublicK
   }
 }
 
-td::Result<bool> Config::config_del_gc(ton::PublicKeyHash key) {
+td::Result<bool> Config::config_del_gc(ion::PublicKeyHash key) {
   return gc.erase(key);
 }
 
@@ -397,13 +397,13 @@ void DhtServer::alarm() {
           R.ensure();
           td::actor::send_closure(SelfId, &DhtServer::deleted_key, x);
         });
-        td::actor::send_closure(keyring_, &ton::keyring::Keyring::del_key, x, std::move(P));
+        td::actor::send_closure(keyring_, &ion::keyring::Keyring::del_key, x, std::move(P));
       }
     }
   }
 }
 
-void DhtServer::deleted_key(ton::PublicKeyHash x) {
+void DhtServer::deleted_key(ion::PublicKeyHash x) {
   CHECK(running_gc_.count(x) == 1);
   running_gc_.erase(x);
   auto R = config_.config_del_gc(x);
@@ -417,20 +417,20 @@ td::Status DhtServer::load_global_config() {
   TRY_RESULT_PREFIX(conf_data, td::read_file(global_config_), "failed to read: ");
   TRY_RESULT_PREFIX(conf_json, td::json_decode(conf_data.as_slice()), "failed to parse json: ");
 
-  ton::ton_api::config_global conf;
-  TRY_STATUS_PREFIX(ton::ton_api::from_json(conf, conf_json.get_object()), "json does not fit TL scheme: ");
+  ion::ton_api::config_global conf;
+  TRY_STATUS_PREFIX(ion::ton_api::from_json(conf, conf_json.get_object()), "json does not fit TL scheme: ");
 
   // TODO
   // add adnl static nodes
   //if (conf.adnl_) {
-  //  td::actor::send_closure(adnl_, &ton::adnl::Adnl::add_static_nodes_from_config,
+  //  td::actor::send_closure(adnl_, &ion::adnl::Adnl::add_static_nodes_from_config,
   //                          std::move(conf.adnl_->static_nodes_));
   //}
   if (!conf.dht_) {
-    return td::Status::Error(ton::ErrorCode::error, "does not contain [dht] section");
+    return td::Status::Error(ion::ErrorCode::error, "does not contain [dht] section");
   }
 
-  TRY_RESULT_PREFIX(dht, ton::dht::Dht::create_global_config(std::move(conf.dht_)), "bad [dht] section: ");
+  TRY_RESULT_PREFIX(dht, ion::dht::Dht::create_global_config(std::move(conf.dht_)), "bad [dht] section: ");
   dht_config_ = std::move(dht);
 
   return td::Status::OK();
@@ -456,10 +456,10 @@ void DhtServer::load_empty_local_config(td::Promise<td::Unit> promise) {
   }
 
   {
-    auto pk = ton::PrivateKey{ton::privkeys::Ed25519::random()};
+    auto pk = ion::PrivateKey{ion::privkeys::Ed25519::random()};
     keys_.emplace(pk.compute_short_id(), pk.compute_public_key());
     auto id = pk.compute_short_id();
-    td::actor::send_closure(keyring_, &ton::keyring::Keyring::add_key, std::move(pk), false, ig.get_promise());
+    td::actor::send_closure(keyring_, &ion::keyring::Keyring::add_key, std::move(pk), false, ig.get_promise());
     config_.config_add_adnl_addr(id, 0).ensure();
     config_.config_add_dht_node(id).ensure();
   }
@@ -483,8 +483,8 @@ void DhtServer::load_local_config(td::Promise<td::Unit> promise) {
   }
   auto conf_json = conf_json_R.move_as_ok();
 
-  ton::ton_api::config_local conf;
-  auto S = ton::ton_api::from_json(conf, conf_json.get_object());
+  ion::ton_api::config_local conf;
+  auto S = ion::ton_api::from_json(conf, conf_json.get_object());
   if (S.is_error()) {
     promise.set_error(S.move_as_error_prefix("json does not fit TL scheme"));
     return;
@@ -509,32 +509,32 @@ void DhtServer::load_local_config(td::Promise<td::Unit> promise) {
   }
 
   for (auto &local_id : conf.local_ids_) {
-    ton::PrivateKey pk{local_id->id_};
+    ion::PrivateKey pk{local_id->id_};
     keys_.emplace(pk.compute_short_id(), pk.compute_public_key());
-    td::actor::send_closure(keyring_, &ton::keyring::Keyring::add_key, std::move(pk), false, ig.get_promise());
+    td::actor::send_closure(keyring_, &ion::keyring::Keyring::add_key, std::move(pk), false, ig.get_promise());
   }
 
   if (conf.dht_.size() > 0) {
     for (auto &d : conf.dht_) {
-      ton::ton_api::downcast_call(*d.get(), td::overloaded(
-                                                [&](ton::ton_api::dht_config_local &obj) {
-                                                  auto node_id = ton::adnl::AdnlNodeIdShort{obj.id_->id_};
+      ion::ton_api::downcast_call(*d.get(), td::overloaded(
+                                                [&](ion::ton_api::dht_config_local &obj) {
+                                                  auto node_id = ion::adnl::AdnlNodeIdShort{obj.id_->id_};
                                                   auto it = keys_.find(node_id.pubkey_hash());
                                                   if (it == keys_.end()) {
                                                     ig.get_promise().set_error(td::Status::Error(
-                                                        ton::ErrorCode::error, "cannot find private key for dht"));
+                                                        ion::ErrorCode::error, "cannot find private key for dht"));
                                                     return;
                                                   }
 
                                                   config_.config_add_adnl_addr(node_id.pubkey_hash(), 0).ensure();
                                                   config_.config_add_dht_node(node_id.pubkey_hash()).ensure();
                                                 },
-                                                [&](ton::ton_api::dht_config_random_local &obj) {
+                                                [&](ion::ton_api::dht_config_random_local &obj) {
                                                   for (td::int32 i = 0; i < obj.cnt_; i++) {
-                                                    auto pk = ton::PrivateKey{ton::privkeys::Ed25519::random()};
+                                                    auto pk = ion::PrivateKey{ion::privkeys::Ed25519::random()};
                                                     keys_.emplace(pk.compute_short_id(), pk.compute_public_key());
                                                     auto id = pk.compute_short_id();
-                                                    td::actor::send_closure(keyring_, &ton::keyring::Keyring::add_key,
+                                                    td::actor::send_closure(keyring_, &ion::keyring::Keyring::add_key,
                                                                             std::move(pk), false, ig.get_promise());
                                                     config_.config_add_adnl_addr(id, 0).ensure();
                                                     config_.config_add_dht_node(id).ensure();
@@ -542,22 +542,22 @@ void DhtServer::load_local_config(td::Promise<td::Unit> promise) {
                                                 }));
     }
   } else {
-    auto pk = ton::PrivateKey{ton::privkeys::Ed25519::random()};
+    auto pk = ion::PrivateKey{ion::privkeys::Ed25519::random()};
     keys_.emplace(pk.compute_short_id(), pk.compute_public_key());
     auto id = pk.compute_short_id();
-    td::actor::send_closure(keyring_, &ton::keyring::Keyring::add_key, std::move(pk), false, ig.get_promise());
+    td::actor::send_closure(keyring_, &ion::keyring::Keyring::add_key, std::move(pk), false, ig.get_promise());
     config_.config_add_adnl_addr(id, 0).ensure();
     config_.config_add_dht_node(id).ensure();
   }
 
   for (auto &ci : conf.control_) {
-    ton::PrivateKey pk{ci->priv_};
+    ion::PrivateKey pk{ci->priv_};
     keys_.emplace(pk.compute_short_id(), pk.compute_public_key());
     auto short_id = pk.compute_short_id();
-    td::actor::send_closure(keyring_, &ton::keyring::Keyring::add_key, std::move(pk), false, ig.get_promise());
+    td::actor::send_closure(keyring_, &ion::keyring::Keyring::add_key, std::move(pk), false, ig.get_promise());
 
     config_.config_add_control_interface(short_id, ci->port_).ensure();
-    config_.config_add_control_process(short_id, ci->port_, ton::PublicKeyHash{ci->pub_}, 0x7fffffff).ensure();
+    config_.config_add_control_process(short_id, ci->port_, ion::PublicKeyHash{ci->pub_}, 0x7fffffff).ensure();
   }
 }
 
@@ -597,8 +597,8 @@ void DhtServer::load_config(td::Promise<td::Unit> promise) {
   }
   auto conf_json = conf_json_R.move_as_ok();
 
-  ton::ton_api::engine_validator_config conf;
-  auto S = ton::ton_api::from_json(conf, conf_json.get_object());
+  ion::ton_api::engine_validator_config conf;
+  auto S = ion::ton_api::from_json(conf, conf_json.get_object());
   if (S.is_error()) {
     promise.set_error(S.move_as_error_prefix("json does not fit TL scheme"));
     return;
@@ -611,7 +611,7 @@ void DhtServer::load_config(td::Promise<td::Unit> promise) {
   ig.add_promise(std::move(promise));
 
   for (auto &key : config_.keys_refcnt) {
-    td::actor::send_closure(keyring_, &ton::keyring::Keyring::add_key_short, key.first, get_key_promise(ig));
+    td::actor::send_closure(keyring_, &ion::keyring::Keyring::add_key_short, key.first, get_key_promise(ig));
   }
 
   write_config(ig.get_promise());
@@ -631,9 +631,9 @@ void DhtServer::write_config(td::Promise<td::Unit> promise) {
   promise.set_value(td::Unit());
 }
 
-td::Promise<ton::PublicKey> DhtServer::get_key_promise(td::MultiPromise::InitGuard &ig) {
+td::Promise<ion::PublicKey> DhtServer::get_key_promise(td::MultiPromise::InitGuard &ig) {
   auto P = td::PromiseCreator::lambda(
-      [SelfId = actor_id(this), promise = ig.get_promise()](td::Result<ton::PublicKey> R) mutable {
+      [SelfId = actor_id(this), promise = ig.get_promise()](td::Result<ion::PublicKey> R) mutable {
         if (R.is_error()) {
           promise.set_error(R.move_as_error());
         } else {
@@ -644,7 +644,7 @@ td::Promise<ton::PublicKey> DhtServer::get_key_promise(td::MultiPromise::InitGua
   return std::move(P);
 }
 
-void DhtServer::got_key(ton::PublicKey key) {
+void DhtServer::got_key(ion::PublicKey key) {
   keys_[key.compute_short_id()] = key;
 }
 
@@ -654,9 +654,9 @@ void DhtServer::start() {
 }
 
 void DhtServer::start_adnl() {
-  adnl_network_manager_ = ton::adnl::AdnlNetworkManager::create(config_.out_port);
-  adnl_ = ton::adnl::Adnl::create(db_root_, keyring_.get());
-  td::actor::send_closure(adnl_, &ton::adnl::Adnl::register_network_manager, adnl_network_manager_.get());
+  adnl_network_manager_ = ion::adnl::AdnlNetworkManager::create(config_.out_port);
+  adnl_ = ion::adnl::Adnl::create(db_root_, keyring_.get());
+  td::actor::send_closure(adnl_, &ion::adnl::Adnl::register_network_manager, adnl_network_manager_.get());
 
   for (auto &addr : config_.addrs) {
     add_addr(addr.first, addr.second);
@@ -668,7 +668,7 @@ void DhtServer::start_adnl() {
 }
 
 void DhtServer::add_addr(const Config::Addr &addr, const Config::AddrCats &cats) {
-  ton::adnl::AdnlCategoryMask cat_mask;
+  ion::adnl::AdnlCategoryMask cat_mask;
   for (auto cat : cats.cats) {
     cat_mask[cat] = true;
   }
@@ -676,10 +676,10 @@ void DhtServer::add_addr(const Config::Addr &addr, const Config::AddrCats &cats)
     cat_mask[cat] = true;
   }
   if (!cats.proxy) {
-    td::actor::send_closure(adnl_network_manager_, &ton::adnl::AdnlNetworkManager::add_self_addr, addr.addr,
+    td::actor::send_closure(adnl_network_manager_, &ion::adnl::AdnlNetworkManager::add_self_addr, addr.addr,
                             std::move(cat_mask), cats.cats.size() ? 0 : 1);
   } else {
-    td::actor::send_closure(adnl_network_manager_, &ton::adnl::AdnlNetworkManager::add_proxy_addr, cats.in_addr,
+    td::actor::send_closure(adnl_network_manager_, &ion::adnl::AdnlNetworkManager::add_proxy_addr, cats.in_addr,
                             static_cast<td::uint16>(addr.addr.get_port()), cats.proxy, std::move(cat_mask),
                             cats.cats.size() ? 0 : 1);
   }
@@ -688,26 +688,26 @@ void DhtServer::add_addr(const Config::Addr &addr, const Config::AddrCats &cats)
 
   for (auto cat : cats.cats) {
     CHECK(cat >= 0);
-    ton::adnl::AdnlAddress x = ton::adnl::AdnlAddressImpl::create(
-        ton::create_tl_object<ton::ton_api::adnl_address_udp>(cats.in_addr.get_ipv4(), cats.in_addr.get_port()));
+    ion::adnl::AdnlAddress x = ion::adnl::AdnlAddressImpl::create(
+        ion::create_tl_object<ion::ton_api::adnl_address_udp>(cats.in_addr.get_ipv4(), cats.in_addr.get_port()));
     addr_lists_[cat].add_addr(std::move(x));
     addr_lists_[cat].set_version(ts);
-    addr_lists_[cat].set_reinit_date(ton::adnl::Adnl::adnl_start_time());
+    addr_lists_[cat].set_reinit_date(ion::adnl::Adnl::adnl_start_time());
   }
   for (auto cat : cats.priority_cats) {
     CHECK(cat >= 0);
-    ton::adnl::AdnlAddress x = ton::adnl::AdnlAddressImpl::create(
-        ton::create_tl_object<ton::ton_api::adnl_address_udp>(cats.in_addr.get_ipv4(), cats.in_addr.get_port()));
+    ion::adnl::AdnlAddress x = ion::adnl::AdnlAddressImpl::create(
+        ion::create_tl_object<ion::ton_api::adnl_address_udp>(cats.in_addr.get_ipv4(), cats.in_addr.get_port()));
     prio_addr_lists_[cat].add_addr(std::move(x));
     prio_addr_lists_[cat].set_version(ts);
-    prio_addr_lists_[cat].set_reinit_date(ton::adnl::Adnl::adnl_start_time());
+    prio_addr_lists_[cat].set_reinit_date(ion::adnl::Adnl::adnl_start_time());
   }
 }
 
-void DhtServer::add_adnl(ton::PublicKeyHash id, AdnlCategory cat) {
+void DhtServer::add_adnl(ion::PublicKeyHash id, AdnlCategory cat) {
   CHECK(addr_lists_[cat].size() > 0);
   CHECK(keys_.count(id) > 0);
-  td::actor::send_closure(adnl_, &ton::adnl::Adnl::add_id, ton::adnl::AdnlNodeIdFull{keys_[id]}, addr_lists_[cat], cat);
+  td::actor::send_closure(adnl_, &ion::adnl::Adnl::add_id, ion::adnl::AdnlNodeIdFull{keys_[id]}, addr_lists_[cat], cat);
 }
 
 void DhtServer::started_adnl() {
@@ -716,7 +716,7 @@ void DhtServer::started_adnl() {
 
 void DhtServer::start_dht() {
   for (auto &dht : config_.dht_ids) {
-    auto D = ton::dht::Dht::create(ton::adnl::AdnlNodeIdShort{dht}, db_root_, dht_config_, keyring_.get(), adnl_.get());
+    auto D = ion::dht::Dht::create(ion::adnl::AdnlNodeIdShort{dht}, db_root_, dht_config_, keyring_.get(), adnl_.get());
     D.ensure();
 
     dht_nodes_[dht] = D.move_as_ok();
@@ -726,7 +726,7 @@ void DhtServer::start_dht() {
   }
 
   CHECK(!default_dht_node_.is_zero());
-  td::actor::send_closure(adnl_, &ton::adnl::Adnl::register_dht_node, dht_nodes_[default_dht_node_].get());
+  td::actor::send_closure(adnl_, &ion::adnl::Adnl::register_dht_node, dht_nodes_[default_dht_node_].get());
 
   started_dht();
 }
@@ -736,12 +736,12 @@ void DhtServer::started_dht() {
 }
 
 void DhtServer::start_control_interface() {
-  class Callback : public ton::adnl::Adnl::Callback {
+  class Callback : public ion::adnl::Adnl::Callback {
    public:
-    void receive_message(ton::adnl::AdnlNodeIdShort src, ton::adnl::AdnlNodeIdShort dst,
+    void receive_message(ion::adnl::AdnlNodeIdShort src, ion::adnl::AdnlNodeIdShort dst,
                          td::BufferSlice data) override {
     }
-    void receive_query(ton::adnl::AdnlNodeIdShort src, ton::adnl::AdnlNodeIdShort dst, td::BufferSlice data,
+    void receive_query(ion::adnl::AdnlNodeIdShort src, ion::adnl::AdnlNodeIdShort dst, td::BufferSlice data,
                        td::Promise<td::BufferSlice> promise) override {
       td::actor::send_closure(id_, &DhtServer::process_control_query, src, dst, std::move(data), std::move(promise));
     }
@@ -753,16 +753,16 @@ void DhtServer::start_control_interface() {
     td::actor::ActorId<DhtServer> id_;
   };
 
-  std::vector<ton::adnl::AdnlNodeIdShort> c_ids;
+  std::vector<ion::adnl::AdnlNodeIdShort> c_ids;
   std::vector<td::uint16> ports;
 
   for (auto &s : config_.controls) {
-    td::actor::send_closure(adnl_, &ton::adnl::Adnl::add_id, ton::adnl::AdnlNodeIdFull{keys_[s.second.key]},
-                            ton::adnl::AdnlAddressList{}, static_cast<td::uint8>(255));
-    td::actor::send_closure(adnl_, &ton::adnl::Adnl::subscribe, ton::adnl::AdnlNodeIdShort{s.second.key},
+    td::actor::send_closure(adnl_, &ion::adnl::Adnl::add_id, ion::adnl::AdnlNodeIdFull{keys_[s.second.key]},
+                            ion::adnl::AdnlAddressList{}, static_cast<td::uint8>(255));
+    td::actor::send_closure(adnl_, &ion::adnl::Adnl::subscribe, ion::adnl::AdnlNodeIdShort{s.second.key},
                             std::string(""), std::make_unique<Callback>(actor_id(this)));
 
-    c_ids.push_back(ton::adnl::AdnlNodeIdShort{s.second.key});
+    c_ids.push_back(ion::adnl::AdnlNodeIdShort{s.second.key});
     ports.push_back(static_cast<td::uint16>(s.first));
 
     for (auto &p : s.second.clients) {
@@ -771,14 +771,14 @@ void DhtServer::start_control_interface() {
   }
 
   auto P = td::PromiseCreator::lambda(
-      [SelfId = actor_id(this)](td::Result<td::actor::ActorOwn<ton::adnl::AdnlExtServer>> R) {
+      [SelfId = actor_id(this)](td::Result<td::actor::ActorOwn<ion::adnl::AdnlExtServer>> R) {
         R.ensure();
         td::actor::send_closure(SelfId, &DhtServer::started_control_interface, R.move_as_ok());
       });
-  td::actor::send_closure(adnl_, &ton::adnl::Adnl::create_ext_server, std::move(c_ids), std::move(ports), std::move(P));
+  td::actor::send_closure(adnl_, &ion::adnl::Adnl::create_ext_server, std::move(c_ids), std::move(ports), std::move(P));
 }
 
-void DhtServer::started_control_interface(td::actor::ActorOwn<ton::adnl::AdnlExtServer> control_ext_server) {
+void DhtServer::started_control_interface(td::actor::ActorOwn<ion::adnl::AdnlExtServer> control_ext_server) {
   control_ext_server_ = std::move(control_ext_server);
   started();
 }
@@ -787,9 +787,9 @@ void DhtServer::started() {
   started_ = true;
 }
 
-void DhtServer::add_adnl_node(ton::PublicKey key, AdnlCategory cat, td::Promise<td::Unit> promise) {
+void DhtServer::add_adnl_node(ion::PublicKey key, AdnlCategory cat, td::Promise<td::Unit> promise) {
   if (cat < 0 || static_cast<td::uint32>(cat) > max_cat()) {
-    promise.set_error(td::Status::Error(ton::ErrorCode::protoviolation, "bad category value"));
+    promise.set_error(td::Status::Error(ion::ErrorCode::protoviolation, "bad category value"));
     return;
   }
 
@@ -805,13 +805,13 @@ void DhtServer::add_adnl_node(ton::PublicKey key, AdnlCategory cat, td::Promise<
   }
 
   if (!adnl_.empty()) {
-    td::actor::send_closure(adnl_, &ton::adnl::Adnl::add_id, ton::adnl::AdnlNodeIdFull{key}, addr_lists_[cat], cat);
+    td::actor::send_closure(adnl_, &ion::adnl::Adnl::add_id, ion::adnl::AdnlNodeIdFull{key}, addr_lists_[cat], cat);
   }
 
   write_config(std::move(promise));
 }
 
-void DhtServer::add_dht_node(ton::PublicKeyHash key_hash, td::Promise<td::Unit> promise) {
+void DhtServer::add_dht_node(ion::PublicKeyHash key_hash, td::Promise<td::Unit> promise) {
   auto R = config_.config_add_dht_node(key_hash);
   if (R.is_error()) {
     promise.set_error(R.move_as_error());
@@ -825,7 +825,7 @@ void DhtServer::add_dht_node(ton::PublicKeyHash key_hash, td::Promise<td::Unit> 
 
   if (dht_nodes_.size() > 0) {
     auto D =
-        ton::dht::Dht::create(ton::adnl::AdnlNodeIdShort{key_hash}, db_root_, dht_config_, keyring_.get(), adnl_.get());
+        ion::dht::Dht::create(ion::adnl::AdnlNodeIdShort{key_hash}, db_root_, dht_config_, keyring_.get(), adnl_.get());
     D.ensure();
 
     dht_nodes_[key_hash] = D.move_as_ok();
@@ -838,7 +838,7 @@ void DhtServer::add_dht_node(ton::PublicKeyHash key_hash, td::Promise<td::Unit> 
   write_config(std::move(promise));
 }
 
-void DhtServer::add_control_interface(ton::PublicKeyHash id, td::int32 port, td::Promise<td::Unit> promise) {
+void DhtServer::add_control_interface(ion::PublicKeyHash id, td::int32 port, td::Promise<td::Unit> promise) {
   auto R = config_.config_add_control_interface(id, port);
   if (R.is_error()) {
     promise.set_error(R.move_as_error());
@@ -850,13 +850,13 @@ void DhtServer::add_control_interface(ton::PublicKeyHash id, td::int32 port, td:
     return;
   }
 
-  td::actor::send_closure(control_ext_server_, &ton::adnl::AdnlExtServer::add_local_id, ton::adnl::AdnlNodeIdShort{id});
-  td::actor::send_closure(control_ext_server_, &ton::adnl::AdnlExtServer::add_tcp_port, static_cast<td::uint16>(port));
+  td::actor::send_closure(control_ext_server_, &ion::adnl::AdnlExtServer::add_local_id, ion::adnl::AdnlNodeIdShort{id});
+  td::actor::send_closure(control_ext_server_, &ion::adnl::AdnlExtServer::add_tcp_port, static_cast<td::uint16>(port));
 
   write_config(std::move(promise));
 }
 
-void DhtServer::add_control_process(ton::PublicKeyHash id, td::int32 port, ton::PublicKeyHash pub,
+void DhtServer::add_control_process(ion::PublicKeyHash id, td::int32 port, ion::PublicKeyHash pub,
                                     td::int32 permissions, td::Promise<td::Unit> promise) {
   auto R = config_.config_add_control_process(id, port, pub, permissions);
   if (R.is_error()) {
@@ -875,96 +875,96 @@ void DhtServer::add_control_process(ton::PublicKeyHash id, td::int32 port, ton::
 }
 
 td::BufferSlice DhtServer::create_control_query_error(td::Status error) {
-  return ton::serialize_tl_object(
-      ton::create_tl_object<ton::ton_api::engine_validator_controlQueryError>(error.code(), error.message().str()),
+  return ion::serialize_tl_object(
+      ion::create_tl_object<ion::ton_api::engine_validator_controlQueryError>(error.code(), error.message().str()),
       true);
 }
 
-void DhtServer::run_control_query(ton::ton_api::engine_validator_getTime &query, td::BufferSlice data,
-                                  ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
+void DhtServer::run_control_query(ion::ton_api::engine_validator_getTime &query, td::BufferSlice data,
+                                  ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
   if (!(perm & DhtServerPermissions::vep_default)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
-  auto obj = ton::create_tl_object<ton::ton_api::engine_validator_time>(static_cast<td::int32>(td::Clocks::system()));
-  promise.set_value(ton::serialize_tl_object(obj, true));
+  auto obj = ion::create_tl_object<ion::ton_api::engine_validator_time>(static_cast<td::int32>(td::Clocks::system()));
+  promise.set_value(ion::serialize_tl_object(obj, true));
 }
 
-void DhtServer::run_control_query(ton::ton_api::engine_validator_importPrivateKey &query, td::BufferSlice data,
-                                  ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
+void DhtServer::run_control_query(ion::ton_api::engine_validator_importPrivateKey &query, td::BufferSlice data,
+                                  ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
   if (!(perm & DhtServerPermissions::vep_default)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (keyring_.empty()) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started keyring")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started keyring")));
     return;
   }
 
-  auto pk = ton::PrivateKey{query.key_};
+  auto pk = ion::PrivateKey{query.key_};
   auto P = td::PromiseCreator::lambda(
       [promise = std::move(promise), hash = pk.compute_short_id()](td::Result<td::Unit> R) mutable {
         if (R.is_error()) {
           promise.set_value(create_control_query_error(R.move_as_error()));
         } else {
           promise.set_value(
-              ton::serialize_tl_object(ton::create_tl_object<ton::ton_api::engine_validator_keyHash>(hash.tl()), true));
+              ion::serialize_tl_object(ion::create_tl_object<ion::ton_api::engine_validator_keyHash>(hash.tl()), true));
         }
       });
 
-  td::actor::send_closure(keyring_, &ton::keyring::Keyring::add_key, std::move(pk), false, std::move(P));
+  td::actor::send_closure(keyring_, &ion::keyring::Keyring::add_key, std::move(pk), false, std::move(P));
 }
 
-void DhtServer::run_control_query(ton::ton_api::engine_validator_exportPrivateKey &query, td::BufferSlice data,
-                                  ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
+void DhtServer::run_control_query(ion::ton_api::engine_validator_exportPrivateKey &query, td::BufferSlice data,
+                                  ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
   if (!(perm & DhtServerPermissions::vep_unsafe)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (keyring_.empty()) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started keyring")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started keyring")));
     return;
   }
 
-  promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not implemented")));
+  promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not implemented")));
 }
 
-void DhtServer::run_control_query(ton::ton_api::engine_validator_exportPublicKey &query, td::BufferSlice data,
-                                  ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
+void DhtServer::run_control_query(ion::ton_api::engine_validator_exportPublicKey &query, td::BufferSlice data,
+                                  ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
   if (!(perm & DhtServerPermissions::vep_default)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (keyring_.empty()) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started keyring")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started keyring")));
     return;
   }
 
-  auto P = td::PromiseCreator::lambda([promise = std::move(promise)](td::Result<ton::PublicKey> R) mutable {
+  auto P = td::PromiseCreator::lambda([promise = std::move(promise)](td::Result<ion::PublicKey> R) mutable {
     if (R.is_error()) {
       promise.set_value(create_control_query_error(R.move_as_error()));
     } else {
       auto pub = R.move_as_ok();
-      promise.set_value(ton::serialize_tl_object(pub.tl(), true));
+      promise.set_value(ion::serialize_tl_object(pub.tl(), true));
     }
   });
 
-  td::actor::send_closure(keyring_, &ton::keyring::Keyring::get_public_key, ton::PublicKeyHash{query.key_hash_},
+  td::actor::send_closure(keyring_, &ion::keyring::Keyring::get_public_key, ion::PublicKeyHash{query.key_hash_},
                           std::move(P));
 }
 
-void DhtServer::run_control_query(ton::ton_api::engine_validator_generateKeyPair &query, td::BufferSlice data,
-                                  ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
+void DhtServer::run_control_query(ion::ton_api::engine_validator_generateKeyPair &query, td::BufferSlice data,
+                                  ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
   if (!(perm & DhtServerPermissions::vep_default)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (keyring_.empty()) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started keyring")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started keyring")));
     return;
   }
 
-  auto pk = ton::PrivateKey{ton::privkeys::Ed25519::random()};
+  auto pk = ion::PrivateKey{ion::privkeys::Ed25519::random()};
 
   auto P = td::PromiseCreator::lambda(
       [promise = std::move(promise), hash = pk.compute_short_id()](td::Result<td::Unit> R) mutable {
@@ -972,28 +972,28 @@ void DhtServer::run_control_query(ton::ton_api::engine_validator_generateKeyPair
           promise.set_value(create_control_query_error(R.move_as_error()));
         } else {
           promise.set_value(
-              ton::serialize_tl_object(ton::create_tl_object<ton::ton_api::engine_validator_keyHash>(hash.tl()), true));
+              ion::serialize_tl_object(ion::create_tl_object<ion::ton_api::engine_validator_keyHash>(hash.tl()), true));
         }
       });
 
-  td::actor::send_closure(keyring_, &ton::keyring::Keyring::add_key, std::move(pk), false, std::move(P));
+  td::actor::send_closure(keyring_, &ion::keyring::Keyring::add_key, std::move(pk), false, std::move(P));
 }
 
-void DhtServer::run_control_query(ton::ton_api::engine_validator_addAdnlId &query, td::BufferSlice data,
-                                  ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
+void DhtServer::run_control_query(ion::ton_api::engine_validator_addAdnlId &query, td::BufferSlice data,
+                                  ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
   if (!(perm & DhtServerPermissions::vep_modify)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (!started_) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
 
   TRY_RESULT_PROMISE(promise, cat, td::narrow_cast_safe<td::uint8>(query.category_));
 
   auto P = td::PromiseCreator::lambda(
-      [SelfId = actor_id(this), cat, promise = std::move(promise)](td::Result<ton::PublicKey> R) mutable {
+      [SelfId = actor_id(this), cat, promise = std::move(promise)](td::Result<ion::PublicKey> R) mutable {
         if (R.is_error()) {
           promise.set_value(create_control_query_error(R.move_as_error_prefix("failed to get public key: ")));
           return;
@@ -1004,28 +1004,28 @@ void DhtServer::run_control_query(ton::ton_api::engine_validator_addAdnlId &quer
             promise.set_value(create_control_query_error(R.move_as_error_prefix("failed to add adnl node: ")));
           } else {
             promise.set_value(
-                ton::serialize_tl_object(ton::create_tl_object<ton::ton_api::engine_validator_success>(), true));
+                ion::serialize_tl_object(ion::create_tl_object<ion::ton_api::engine_validator_success>(), true));
           }
         });
         td::actor::send_closure(SelfId, &DhtServer::add_adnl_node, pub, cat, std::move(P));
       });
 
-  td::actor::send_closure(keyring_, &ton::keyring::Keyring::get_public_key, ton::PublicKeyHash{query.key_hash_},
+  td::actor::send_closure(keyring_, &ion::keyring::Keyring::get_public_key, ion::PublicKeyHash{query.key_hash_},
                           std::move(P));
 }
 
-void DhtServer::run_control_query(ton::ton_api::engine_validator_addDhtId &query, td::BufferSlice data,
-                                  ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
+void DhtServer::run_control_query(ion::ton_api::engine_validator_addDhtId &query, td::BufferSlice data,
+                                  ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
   if (!(perm & DhtServerPermissions::vep_modify)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (!started_) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
 
-  auto P = td::PromiseCreator::lambda([SelfId = actor_id(this), key_hash = ton::PublicKeyHash{query.key_hash_},
+  auto P = td::PromiseCreator::lambda([SelfId = actor_id(this), key_hash = ion::PublicKeyHash{query.key_hash_},
                                        promise = std::move(promise)](td::Result<td::Unit> R) mutable {
     if (R.is_error()) {
       promise.set_value(create_control_query_error(R.move_as_error_prefix("failed to get public key: ")));
@@ -1036,20 +1036,20 @@ void DhtServer::run_control_query(ton::ton_api::engine_validator_addDhtId &query
         promise.set_value(create_control_query_error(R.move_as_error_prefix("failed to add adnl node: ")));
       } else {
         promise.set_value(
-            ton::serialize_tl_object(ton::create_tl_object<ton::ton_api::engine_validator_success>(), true));
+            ion::serialize_tl_object(ion::create_tl_object<ion::ton_api::engine_validator_success>(), true));
       }
     });
     td::actor::send_closure(SelfId, &DhtServer::add_dht_node, key_hash, std::move(P));
   });
 
-  td::actor::send_closure(keyring_, &ton::keyring::Keyring::check_key, ton::PublicKeyHash{query.key_hash_},
+  td::actor::send_closure(keyring_, &ion::keyring::Keyring::check_key, ion::PublicKeyHash{query.key_hash_},
                           std::move(P));
 }
 
-void DhtServer::run_control_query(ton::ton_api::engine_validator_getConfig &query, td::BufferSlice data,
-                                  ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
+void DhtServer::run_control_query(ion::ton_api::engine_validator_getConfig &query, td::BufferSlice data,
+                                  ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
   if (!(perm & DhtServerPermissions::vep_default)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
 
@@ -1057,14 +1057,14 @@ void DhtServer::run_control_query(ton::ton_api::engine_validator_getConfig &quer
   promise.set_value(td::BufferSlice{s});
 }
 
-void DhtServer::run_control_query(ton::ton_api::engine_validator_sign &query, td::BufferSlice data,
-                                  ton::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
+void DhtServer::run_control_query(ion::ton_api::engine_validator_sign &query, td::BufferSlice data,
+                                  ion::PublicKeyHash src, td::uint32 perm, td::Promise<td::BufferSlice> promise) {
   if (!(perm & DhtServerPermissions::vep_unsafe)) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::error, "not authorized")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::error, "not authorized")));
     return;
   }
   if (!started_) {
-    promise.set_value(create_control_query_error(td::Status::Error(ton::ErrorCode::notready, "not started")));
+    promise.set_value(create_control_query_error(td::Status::Error(ion::ErrorCode::notready, "not started")));
     return;
   }
 
@@ -1072,23 +1072,23 @@ void DhtServer::run_control_query(ton::ton_api::engine_validator_sign &query, td
     if (R.is_error()) {
       promise.set_value(create_control_query_error(R.move_as_error()));
     } else {
-      promise.set_value(ton::serialize_tl_object(
-          ton::create_tl_object<ton::ton_api::engine_validator_signature>(R.move_as_ok()), true));
+      promise.set_value(ion::serialize_tl_object(
+          ion::create_tl_object<ion::ton_api::engine_validator_signature>(R.move_as_ok()), true));
     }
   });
-  td::actor::send_closure(keyring_, &ton::keyring::Keyring::sign_message, ton::PublicKeyHash{query.key_hash_},
+  td::actor::send_closure(keyring_, &ion::keyring::Keyring::sign_message, ion::PublicKeyHash{query.key_hash_},
                           std::move(query.data_), std::move(P));
 }
 
-void DhtServer::process_control_query(ton::adnl::AdnlNodeIdShort src, ton::adnl::AdnlNodeIdShort dst,
+void DhtServer::process_control_query(ion::adnl::AdnlNodeIdShort src, ion::adnl::AdnlNodeIdShort dst,
                                       td::BufferSlice data, td::Promise<td::BufferSlice> promise) {
-  auto G = ton::fetch_tl_object<ton::ton_api::engine_validator_controlQuery>(std::move(data), true);
+  auto G = ion::fetch_tl_object<ion::ton_api::engine_validator_controlQuery>(std::move(data), true);
   if (G.is_error()) {
     promise.set_error(G.move_as_error_prefix("failed to parse validator query: "));
     return;
   }
   data = std::move(G.move_as_ok()->data_);
-  auto F = ton::fetch_tl_object<ton::ton_api::Function>(data.clone(), true);
+  auto F = ion::fetch_tl_object<ion::ton_api::Function>(data.clone(), true);
   if (F.is_error()) {
     promise.set_error(F.move_as_error_prefix("failed to parse validator query: "));
     return;
@@ -1097,11 +1097,11 @@ void DhtServer::process_control_query(ton::adnl::AdnlNodeIdShort src, ton::adnl:
 
   auto it = control_permissions_.find(src.pubkey_hash());
   if (it == control_permissions_.end()) {
-    promise.set_error(td::Status::Error(ton::ErrorCode::protoviolation, "forbidden"));
+    promise.set_error(td::Status::Error(ion::ErrorCode::protoviolation, "forbidden"));
     return;
   }
 
-  ton::ton_api::downcast_call(*f.get(), [&](auto &obj) {
+  ion::ton_api::downcast_call(*f.get(), [&](auto &obj) {
     run_control_query(obj, std::move(data), src.pubkey_hash(), it->second, std::move(promise));
   });
 }
@@ -1115,7 +1115,7 @@ void DhtServer::run() {
     std::_Exit(2);
   }
 
-  keyring_ = ton::keyring::Keyring::create(db_root_ + "/keyring");
+  keyring_ = ion::keyring::Keyring::create(db_root_ + "/keyring");
   // TODO wait for password
   started_keyring_ = true;
 
@@ -1181,7 +1181,7 @@ int main(int argc, char *argv[]) {
   std::vector<std::function<void()>> acts;
 
   td::OptionParser p;
-  p.set_description("dht server for TON DHT network");
+  p.set_description("dht server for ION DHT network");
   p.add_option('v', "verbosity", "set verbosity level", [&](td::Slice arg) {
     int v = VERBOSITY_NAME(FATAL) + (td::to_integer<int>(arg));
     SET_VERBOSITY_LEVEL(v);
@@ -1231,10 +1231,10 @@ int main(int argc, char *argv[]) {
                          try {
                            v = std::stoi(arg.str());
                          } catch (...) {
-                           return td::Status::Error(ton::ErrorCode::error, "bad value for --threads: not a number");
+                           return td::Status::Error(ion::ErrorCode::error, "bad value for --threads: not a number");
                          }
                          if (v <= 0) {
-                           return td::Status::Error(ton::ErrorCode::error, "bad value for --threads: should be > 0");
+                           return td::Status::Error(ion::ErrorCode::error, "bad value for --threads: should be > 0");
                          }
                          if (v > 127) {
                            LOG(WARNING) << "`--threads " << v << "` is too big, effective value will be 127";

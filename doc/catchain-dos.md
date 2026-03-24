@@ -1,6 +1,6 @@
 # Catchain DoS protection
 ## Consensus-safe upgrade
-Since catchain protocol describes the way validators come to consensus, it should be updated in simultaneous manner to ensure that at any moment of time at least 2/3 of validators (measured by weight) are using the same version of the protocol. Innate way to do it in TON is to use Configuration parameters, when absence or old version of some configuration parameter corresponds to the old behavior, while new version controls updated catchain protocol behavior.
+Since catchain protocol describes the way validators come to consensus, it should be updated in simultaneous manner to ensure that at any moment of time at least 2/3 of validators (measured by weight) are using the same version of the protocol. Innate way to do it in ION is to use Configuration parameters, when absence or old version of some configuration parameter corresponds to the old behavior, while new version controls updated catchain protocol behavior.
 
 That way, update of catchain protocol should be done in the following way: each validator upgrades its node software and votes for a new config parameter. This method ensures that switching to updated catchain protocol will happen only after 3/4 (more than 2/3) of validators upgrade.
 

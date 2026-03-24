@@ -7,7 +7,7 @@
 
 #include "quic-sender.h"
 
-namespace ton::quic {
+namespace ion::quic {
 
 static td::uint32 get_magic(const td::BufferSlice &data) {
   return data.size() >= 4 ? td::as<td::uint32>(data.data()) : 0;
@@ -355,7 +355,7 @@ td::actor::Task<> QuicSender::add_local_id_coro(adnl::AdnlNodeIdShort local_id) 
 
   auto server = co_await QuicServer::create(
       port, td::Ed25519::PrivateKey(local_keys_.at(local_id).as_octet_string()),
-      std::make_unique<ServerCallback>(local_id, actor_id(this), server_options_.inbound_stream_max_size), "ton",
+      std::make_unique<ServerCallback>(local_id, actor_id(this), server_options_.inbound_stream_max_size), "ion",
       "0.0.0.0", server_options_);
   servers_[local_id] = std::move(server);
 
@@ -425,7 +425,7 @@ td::actor::Task<td::Unit> QuicSender::init_connection_inner(AdnlPath path, std::
 
   auto server = server_iter->second.get();
   auto connection_id =
-      co_await ask(server, &QuicServer::connect, peer_host, peer_port, std::move(client_key), td::Slice("ton"))
+      co_await ask(server, &QuicServer::connect, peer_host, peer_port, std::move(client_key), td::Slice("ion"))
           .trace("connect");
   conn->cid = connection_id;
   conn->path = path;
@@ -582,4 +582,4 @@ void QuicSender::on_answer(Connection &connection, QuicStreamID stream_id, ton_a
   connection.responses.erase(it);
 }
 
-}  // namespace ton::quic
+}  // namespace ion::quic

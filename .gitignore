@@ -26,8 +26,8 @@ dev/
 # Work directory for integration tests
 test/integration/.network
 
-test/tontester/tests/tl/generated
-test/tontester/src/tonapi
+test/iontester/tests/tl/generated
+test/iontester/src/ionapi
 build-mingw64/
 build-ucrt64/
 build/

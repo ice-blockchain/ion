@@ -1,55 +1,55 @@
 include(AndroidThirdParty)
 
-get_filename_component(TON_SOURCE_DIR "${CMAKE_CURRENT_LIST_DIR}/.." ABSOLUTE)
-set(TON_THIRD_PARTY_SOURCE_DIR "${TON_SOURCE_DIR}/third-party")
-set(TON_THIRD_PARTY_BINARY_DIR "${CMAKE_BINARY_DIR}/third-party")
+get_filename_component(ION_SOURCE_DIR "${CMAKE_CURRENT_LIST_DIR}/.." ABSOLUTE)
+set(ION_THIRD_PARTY_SOURCE_DIR "${ION_SOURCE_DIR}/third-party")
+set(ION_THIRD_PARTY_BINARY_DIR "${CMAKE_BINARY_DIR}/third-party")
 
 if (NOT OPENSSL_CRYPTO_LIBRARY)
 
-    set(OPENSSL_SOURCE_DIR ${TON_THIRD_PARTY_SOURCE_DIR}/openssl)
+    set(OPENSSL_SOURCE_DIR ${ION_THIRD_PARTY_SOURCE_DIR}/openssl)
     if (ANDROID)
-      set(OPENSSL_INSTALL_DIR ${TON_ANDROID_THIRD_PARTY_DIR}/crypto/${TON_ANDROID_OPENSSL_DIR})
+      set(OPENSSL_INSTALL_DIR ${ION_ANDROID_THIRD_PARTY_DIR}/crypto/${ION_ANDROID_OPENSSL_DIR})
       set(OPENSSL_BINARY_DIR ${OPENSSL_INSTALL_DIR})
-      set(OPENSSL_BUILD_DIR ${TON_THIRD_PARTY_BINARY_DIR}/openssl-android-${TON_ANDROID_OPENSSL_DIR})
-      set(OPENSSL_BUILD_ROOT ${TON_THIRD_PARTY_BINARY_DIR})
+      set(OPENSSL_BUILD_DIR ${ION_THIRD_PARTY_BINARY_DIR}/openssl-android-${ION_ANDROID_OPENSSL_DIR})
+      set(OPENSSL_BUILD_ROOT ${ION_THIRD_PARTY_BINARY_DIR})
       set(OPENSSL_CONFIGURE_SCRIPT ${OPENSSL_BUILD_DIR}/Configure)
       set(OPENSSL_INCLUDE_DIR ${OPENSSL_INSTALL_DIR}/include)
       set(OPENSSL_ANDROID_ENV
         ${CMAKE_COMMAND} -E env
-        ANDROID_NDK_ROOT=${TON_ANDROID_NDK_ROOT}
-        ANDROID_NDK_HOME=${TON_ANDROID_NDK_ROOT}
-        ANDROID_NDK=${TON_ANDROID_NDK_ROOT}
+        ANDROID_NDK_ROOT=${ION_ANDROID_NDK_ROOT}
+        ANDROID_NDK_HOME=${ION_ANDROID_NDK_ROOT}
+        ANDROID_NDK=${ION_ANDROID_NDK_ROOT}
         PERL=/usr/bin/perl
-        CC=${TON_ANDROID_CC}
-        CXX=${TON_ANDROID_CXX}
-        AR=${TON_ANDROID_AR}
-        RANLIB=${TON_ANDROID_RANLIB}
-        NM=${TON_ANDROID_NM}
-        PATH=${TON_ANDROID_NDK_BIN}:$ENV{PATH}
+        CC=${ION_ANDROID_CC}
+        CXX=${ION_ANDROID_CXX}
+        AR=${ION_ANDROID_AR}
+        RANLIB=${ION_ANDROID_RANLIB}
+        NM=${ION_ANDROID_NM}
+        PATH=${ION_ANDROID_NDK_BIN}:$ENV{PATH}
       )
       set(OPENSSL_ANDROID_MAKE_ARGS
-        CC=${TON_ANDROID_CC}
-        CXX=${TON_ANDROID_CXX}
-        AR=${TON_ANDROID_AR}
-        RANLIB=${TON_ANDROID_RANLIB}
-        NM=${TON_ANDROID_NM}
+        CC=${ION_ANDROID_CC}
+        CXX=${ION_ANDROID_CXX}
+        AR=${ION_ANDROID_AR}
+        RANLIB=${ION_ANDROID_RANLIB}
+        NM=${ION_ANDROID_NM}
       )
-      if (TON_ANDROID_ARCH STREQUAL "arm")
+      if (ION_ANDROID_ARCH STREQUAL "arm")
         set(OPENSSL_CONFIGURE_TARGET android-arm)
-      elseif (TON_ANDROID_ARCH STREQUAL "arm64")
+      elseif (ION_ANDROID_ARCH STREQUAL "arm64")
         set(OPENSSL_CONFIGURE_TARGET android-arm64)
-      elseif (TON_ANDROID_ARCH STREQUAL "x86")
+      elseif (ION_ANDROID_ARCH STREQUAL "x86")
         set(OPENSSL_CONFIGURE_TARGET android-x86)
-      elseif (TON_ANDROID_ARCH STREQUAL "x86_64")
+      elseif (ION_ANDROID_ARCH STREQUAL "x86_64")
         set(OPENSSL_CONFIGURE_TARGET android-x86_64)
       else()
-        message(FATAL_ERROR "Unsupported Android arch for OpenSSL: ${TON_ANDROID_ARCH}")
+        message(FATAL_ERROR "Unsupported Android arch for OpenSSL: ${ION_ANDROID_ARCH}")
       endif()
       set(CMD ${OPENSSL_ANDROID_ENV}
         /usr/bin/perl ./Configure ${OPENSSL_CONFIGURE_TARGET} --prefix=${OPENSSL_INSTALL_DIR}
-          no-shared no-dso no-unit-test no-tests no-apps enable-quic --libdir=lib -D__ANDROID_API__=${TON_ANDROID_API})
+          no-shared no-dso no-unit-test no-tests no-apps enable-quic --libdir=lib -D__ANDROID_API__=${ION_ANDROID_API})
     else()
-      set(OPENSSL_BINARY_DIR ${TON_THIRD_PARTY_BINARY_DIR}/openssl)
+      set(OPENSSL_BINARY_DIR ${ION_THIRD_PARTY_BINARY_DIR}/openssl)
       set(OPENSSL_INCLUDE_DIR ${OPENSSL_BINARY_DIR}/include)
       if (APPLE)
         # Detect macOS architecture
@@ -107,7 +107,7 @@ if (NOT OPENSSL_CRYPTO_LIBRARY)
     endif()
 
     if (MSVC)
-      set(OPENSSL_BINARY_DIR ${TON_THIRD_PARTY_BINARY_DIR}/openssl)
+      set(OPENSSL_BINARY_DIR ${ION_THIRD_PARTY_BINARY_DIR}/openssl)
       set(OPENSSL_CRYPTO_LIBRARY ${OPENSSL_BINARY_DIR}/lib/libcrypto.lib)
       set(OPENSSL_SSL_LIBRARY ${OPENSSL_BINARY_DIR}/lib/libssl.lib)
       set(OPENSSL_INCLUDE_DIR ${OPENSSL_BINARY_DIR}/include)
@@ -163,7 +163,7 @@ if (NOT OPENSSL_CRYPTO_LIBRARY)
         OUTPUT ${OPENSSL_CRYPTO_LIBRARY} ${OPENSSL_SSL_LIBRARY}
       )
     elseif (USE_EMSCRIPTEN OR EMSCRIPTEN)
-      set(OPENSSL_BINARY_DIR ${TON_THIRD_PARTY_SOURCE_DIR}/openssl)
+      set(OPENSSL_BINARY_DIR ${ION_THIRD_PARTY_SOURCE_DIR}/openssl)
       set(OPENSSL_CRYPTO_LIBRARY ${OPENSSL_BINARY_DIR}/libcrypto.a)
       set(OPENSSL_INCLUDE_DIR ${OPENSSL_BINARY_DIR}/include)
       add_custom_command(
@@ -205,7 +205,7 @@ if (NOT OPENSSL_CRYPTO_LIBRARY)
       if (ANDROID)
         set(OPENSSL_NEEDS_BUILD FALSE)
         set(OPENSSL_ARCH_STAMP ${OPENSSL_BUILD_DIR}/.android_arch)
-        set(OPENSSL_ARCH_EXPECTED "${TON_ANDROID_ABI};${TON_ANDROID_API};${TON_ANDROID_CC}")
+        set(OPENSSL_ARCH_EXPECTED "${ION_ANDROID_ABI};${ION_ANDROID_API};${ION_ANDROID_CC}")
         if (EXISTS ${OPENSSL_ARCH_STAMP})
           file(READ ${OPENSSL_ARCH_STAMP} OPENSSL_ARCH_CURRENT)
           string(STRIP "${OPENSSL_ARCH_CURRENT}" OPENSSL_ARCH_CURRENT)

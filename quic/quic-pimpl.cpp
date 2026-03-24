@@ -8,7 +8,7 @@
 
 #include "quic-pimpl.h"
 
-namespace ton::quic {
+namespace ion::quic {
 
 static constexpr ngtcp2_tstamp NGTCP2_TSTAMP_INF = std::numeric_limits<ngtcp2_tstamp>::max();
 
@@ -676,4 +676,4 @@ int QuicConnectionPImpl::extend_max_stream_data_cb(ngtcp2_conn*, int64_t stream_
   pimpl->on_extend_max_stream_data(stream_id);
   return 0;
 }
-}  // namespace ton::quic
+}  // namespace ion::quic

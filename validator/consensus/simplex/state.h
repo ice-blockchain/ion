@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025-2026, TON CORE TECHNOLOGIES CO. L.L.C
+ * Copyright (c) 2025-2026, ION CORE TECHNOLOGIES CO. L.L.C
  *
  * SPDX-License-Identifier: LGPL-2.0-or-later
  */
@@ -12,7 +12,7 @@
 
 #include "td/utils/int_types.h"
 
-namespace ton::validator::consensus::simplex {
+namespace ion::validator::consensus::simplex {
 
 template <typename WindowState, typename SlotState, typename WindowParams, typename SlotParams>
   requires std::is_constructible_v<WindowState, const WindowParams&> &&
@@ -118,4 +118,4 @@ class ConsensusState {
   std::deque<std::shared_ptr<Window>> windows_;
 };
 
-}  // namespace ton::validator::consensus::simplex
+}  // namespace ion::validator::consensus::simplex

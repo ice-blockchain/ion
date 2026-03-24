@@ -6,7 +6,7 @@
 #include "quic-pimpl.h"
 #include "quic-server.h"
 
-namespace ton::quic {
+namespace ion::quic {
 
 td::Result<td::actor::ActorOwn<QuicServer>> QuicServer::create(int port, td::Ed25519::PrivateKey server_key,
                                                                std::unique_ptr<Callback> callback, td::Slice alpn,
@@ -619,4 +619,4 @@ td::Result<QuicStreamID> QuicServer::send_stream(QuicConnectionId cid, std::vari
   return sid;
 }
 
-}  // namespace ton::quic
+}  // namespace ion::quic

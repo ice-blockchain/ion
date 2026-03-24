@@ -1,25 +1,25 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "common/delay.h"
 #include "interfaces/validator-full-id.h"
 
 #include "shard-block-retainer.hpp"
 
-namespace ton::validator {
+namespace ion::validator {
 
 void ShardBlockRetainer::start_up() {
   if (last_masterchain_state_.not_null()) {
@@ -200,4 +200,4 @@ bool ShardBlockRetainer::is_block_outdated(const BlockIdExt& block_id) const {
   return shard_desc.not_null() && shard_desc->top_block_id().seqno() >= block_id.seqno();
 }
 
-}  // namespace ton::validator
+}  // namespace ion::validator

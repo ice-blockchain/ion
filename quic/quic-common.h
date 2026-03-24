@@ -11,7 +11,7 @@
 #include "td/utils/misc.h"
 #include "td/utils/port/IPAddress.h"
 
-namespace ton::quic {
+namespace ion::quic {
 using QuicStreamID = int64_t;
 
 enum class CongestionControlAlgo {
@@ -101,12 +101,12 @@ inline td::StringBuilder& operator<<(td::StringBuilder& sb, CongestionControlAlg
   return sb << "unknown";
 }
 
-}  // namespace ton::quic
+}  // namespace ion::quic
 
 namespace std {
 template <>
-struct hash<ton::quic::QuicConnectionId> {
-  size_t operator()(const ton::quic::QuicConnectionId& cid) const noexcept {
+struct hash<ion::quic::QuicConnectionId> {
+  size_t operator()(const ion::quic::QuicConnectionId& cid) const noexcept {
     auto slice = cid.as_slice();
     size_t h = 0;
     for (size_t i = 0; i < slice.size(); ++i) {

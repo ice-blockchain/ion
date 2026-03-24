@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025-2026, TON CORE TECHNOLOGIES CO. L.L.C
+ * Copyright (c) 2025-2026, ION CORE TECHNOLOGIES CO. L.L.C
  *
  * SPDX-License-Identifier: LGPL-2.0-or-later
  */
@@ -9,7 +9,7 @@
 
 #include "bus.h"
 
-namespace ton::validator::consensus {
+namespace ion::validator::consensus {
 
 namespace {
 
@@ -136,4 +136,4 @@ std::string TraceEvent::contents_to_string() const {
   return PSTRING() << "{event=" << event->to_string() << "}";
 }
 
-}  // namespace ton::validator::consensus
+}  // namespace ion::validator::consensus

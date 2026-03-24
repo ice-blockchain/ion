@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2026, TON CORE TECHNOLOGIES CO. L.L.C
+ * Copyright (c) 2026, ION CORE TECHNOLOGIES CO. L.L.C
  *
  * SPDX-License-Identifier: LGPL-2.0-or-later
  */
@@ -11,7 +11,7 @@
 
 #include "chain-state.h"
 
-namespace ton::validator::consensus {
+namespace ion::validator::consensus {
 
 td::actor::Task<td::Ref<ChainState>> ChainState::from_manager(td::actor::ActorId<ManagerFacade> manager,
                                                               ShardIdFull shard, std::vector<BlockIdExt> blocks,
@@ -166,4 +166,4 @@ td::StringBuilder& operator<<(td::StringBuilder& sb, const ChainState& state) {
   return sb << "ChainState{min_mc_block_id=" << state.min_mc_block_id().to_str() << ", tip=" << blocks << "}";
 }
 
-}  // namespace ton::validator::consensus
+}  // namespace ion::validator::consensus

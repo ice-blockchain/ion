@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -24,7 +24,7 @@
 #include "td/utils/StringBuilder.h"
 #include "td/utils/bits.h"
 #include "tl/tlblib.hpp"
-#include "ton/ton-types.h"
+#include "ion/ion-types.h"
 #include "vm/boc.h"
 #include "vm/cells.h"
 #include "vm/cellslice.h"
@@ -48,24 +48,24 @@ struct PublicKey {
 };
 
 struct StdAddress {
-  ton::WorkchainId workchain{ton::workchainInvalid};
+  ion::WorkchainId workchain{ion::workchainInvalid};
   bool bounceable{true};  // addresses must be bounceable by default
   bool testnet{false};
-  ton::StdSmcAddress addr;
+  ion::StdSmcAddress addr;
   StdAddress() = default;
-  StdAddress(ton::WorkchainId _wc, const ton::StdSmcAddress& _addr, bool _bounce = true, bool _testnet = false)
+  StdAddress(ion::WorkchainId _wc, const ion::StdSmcAddress& _addr, bool _bounce = true, bool _testnet = false)
       : workchain(_wc), bounceable(_bounce), testnet(_testnet), addr(_addr) {
   }
-  StdAddress(ton::WorkchainId _wc, td::ConstBitPtr _addr, bool _bounce = true, bool _testnet = false)
+  StdAddress(ion::WorkchainId _wc, td::ConstBitPtr _addr, bool _bounce = true, bool _testnet = false)
       : workchain(_wc), bounceable(_bounce), testnet(_testnet), addr(_addr) {
   }
   explicit StdAddress(std::string serialized);
   explicit StdAddress(td::Slice from);
   bool is_valid() const {
-    return workchain != ton::workchainInvalid;
+    return workchain != ion::workchainInvalid;
   }
   bool invalidate() {
-    workchain = ton::workchainInvalid;
+    workchain = ion::workchainInvalid;
     return false;
   }
   std::string rserialize(bool base64_url = false) const;
@@ -84,21 +84,21 @@ inline td::StringBuilder& operator<<(td::StringBuilder& sb, const StdAddress& ad
   return sb << addr.workchain << " : " << addr.addr.to_hex();
 }
 
-bool parse_std_account_addr(td::Slice acc_string, ton::WorkchainId& wc, ton::StdSmcAddress& addr,
+bool parse_std_account_addr(td::Slice acc_string, ion::WorkchainId& wc, ion::StdSmcAddress& addr,
                             bool* bounceable = nullptr, bool* testnet_only = nullptr);
 
 struct ShardId {
-  ton::WorkchainId workchain_id;
+  ion::WorkchainId workchain_id;
   int shard_pfx_len;
   unsigned long long shard_pfx;
-  ShardId(ton::WorkchainId wc_id = ton::workchainInvalid)
+  ShardId(ion::WorkchainId wc_id = ion::workchainInvalid)
       : workchain_id(wc_id), shard_pfx_len(0), shard_pfx(1ULL << 63) {
   }
-  ShardId(ton::WorkchainId wc_id, unsigned long long sh_pfx);
-  ShardId(ton::ShardIdFull ton_shard);
-  ShardId(ton::BlockId ton_block);
-  ShardId(const ton::BlockIdExt& ton_block);
-  ShardId(ton::WorkchainId wc_id, unsigned long long sh_pfx, int sh_pfx_len);
+  ShardId(ion::WorkchainId wc_id, unsigned long long sh_pfx);
+  ShardId(ion::ShardIdFull ion_shard);
+  ShardId(ion::BlockId ion_block);
+  ShardId(const ion::BlockIdExt& ion_block);
+  ShardId(ion::WorkchainId wc_id, unsigned long long sh_pfx, int sh_pfx_len);
   ShardId(vm::CellSlice& cs) {
     deserialize(cs);
   }
@@ -106,18 +106,18 @@ struct ShardId {
     vm::CellSlice cs{*cs_ref};
     deserialize(cs);
   }
-  explicit operator ton::ShardIdFull() const {
-    return ton::ShardIdFull{workchain_id, shard_pfx};
+  explicit operator ion::ShardIdFull() const {
+    return ion::ShardIdFull{workchain_id, shard_pfx};
   }
   bool operator==(const ShardId& other) const {
     return workchain_id == other.workchain_id && shard_pfx == other.shard_pfx;
   }
   void invalidate() {
-    workchain_id = ton::workchainInvalid;
+    workchain_id = ion::workchainInvalid;
     shard_pfx_len = 0;
   }
   bool is_valid() const {
-    return workchain_id != ton::workchainInvalid;
+    return workchain_id != ion::workchainInvalid;
   }
   void show(std::ostream& os) const;
   std::string to_str() const;
@@ -129,15 +129,15 @@ struct ShardId {
 };
 
 struct EnqueuedMsgDescr {
-  ton::AccountIdPrefixFull src_prefix_, cur_prefix_, next_prefix_, dest_prefix_;
-  ton::LogicalTime lt_;
-  ton::LogicalTime enqueued_lt_;
-  ton::Bits256 hash_;
+  ion::AccountIdPrefixFull src_prefix_, cur_prefix_, next_prefix_, dest_prefix_;
+  ion::LogicalTime lt_;
+  ion::LogicalTime enqueued_lt_;
+  ion::Bits256 hash_;
   Ref<vm::Cell> msg_;
   Ref<vm::Cell> msg_env_;
   EnqueuedMsgDescr() = default;
-  EnqueuedMsgDescr(ton::AccountIdPrefixFull cur_pfx, ton::AccountIdPrefixFull next_pfx, ton::LogicalTime lt,
-                   ton::LogicalTime enqueued_lt, td::ConstBitPtr hash)
+  EnqueuedMsgDescr(ion::AccountIdPrefixFull cur_pfx, ion::AccountIdPrefixFull next_pfx, ion::LogicalTime lt,
+                   ion::LogicalTime enqueued_lt, td::ConstBitPtr hash)
       : cur_prefix_(cur_pfx), next_prefix_(next_pfx), lt_(lt), enqueued_lt_(enqueued_lt), hash_(hash) {
   }
   bool is_valid() const {
@@ -145,7 +145,7 @@ struct EnqueuedMsgDescr {
   }
   bool check_key(td::ConstBitPtr key) const;
   bool invalidate() {
-    next_prefix_.workchain = cur_prefix_.workchain = ton::workchainInvalid;
+    next_prefix_.workchain = cur_prefix_.workchain = ion::workchainInvalid;
     return false;
   }
   bool unpack(vm::CellSlice& cs);
@@ -154,24 +154,24 @@ struct EnqueuedMsgDescr {
   }
 };
 
-using compute_shard_end_lt_func_t = std::function<ton::LogicalTime(ton::AccountIdPrefixFull)>;
+using compute_shard_end_lt_func_t = std::function<ion::LogicalTime(ion::AccountIdPrefixFull)>;
 
 struct MsgProcessedUpto {
-  ton::ShardId shard;
-  ton::BlockSeqno mc_seqno;
-  ton::LogicalTime last_inmsg_lt;
-  ton::Bits256 last_inmsg_hash;
+  ion::ShardId shard;
+  ion::BlockSeqno mc_seqno;
+  ion::LogicalTime last_inmsg_lt;
+  ion::Bits256 last_inmsg_hash;
   compute_shard_end_lt_func_t compute_shard_end_lt;
   MsgProcessedUpto() = default;
-  MsgProcessedUpto(ton::ShardId _shard, ton::BlockSeqno _mcseqno, ton::LogicalTime _lt, td::ConstBitPtr _hash)
+  MsgProcessedUpto(ion::ShardId _shard, ion::BlockSeqno _mcseqno, ion::LogicalTime _lt, td::ConstBitPtr _hash)
       : shard(_shard), mc_seqno(_mcseqno), last_inmsg_lt(_lt), last_inmsg_hash(_hash) {
   }
   bool operator<(const MsgProcessedUpto& other) const& {
     return shard < other.shard || (shard == other.shard && mc_seqno < other.mc_seqno);
   }
   bool contains(const MsgProcessedUpto& other) const&;
-  bool contains(ton::ShardId other_shard, ton::LogicalTime other_lt, td::ConstBitPtr other_hash,
-                ton::BlockSeqno other_mc_seqno) const&;
+  bool contains(ion::ShardId other_shard, ion::LogicalTime other_lt, td::ConstBitPtr other_hash,
+                ion::BlockSeqno other_mc_seqno) const&;
   // NB: this is for checking whether we have already imported an internal message
   bool already_processed(const EnqueuedMsgDescr& msg) const;
   bool can_check_processed() const {
@@ -186,31 +186,31 @@ static inline std::ostream& operator<<(std::ostream& os, const MsgProcessedUpto&
 }
 
 struct MsgProcessedUptoCollection {
-  ton::ShardIdFull owner;
+  ion::ShardIdFull owner;
   bool valid{false};
   std::vector<MsgProcessedUpto> list;
-  MsgProcessedUptoCollection(ton::ShardIdFull _owner) : owner(_owner) {
+  MsgProcessedUptoCollection(ion::ShardIdFull _owner) : owner(_owner) {
   }
-  MsgProcessedUptoCollection(ton::ShardIdFull _owner, Ref<vm::CellSlice> cs_ref);
-  static std::unique_ptr<MsgProcessedUptoCollection> unpack(ton::ShardIdFull _owner, Ref<vm::CellSlice> cs_ref);
+  MsgProcessedUptoCollection(ion::ShardIdFull _owner, Ref<vm::CellSlice> cs_ref);
+  static std::unique_ptr<MsgProcessedUptoCollection> unpack(ion::ShardIdFull _owner, Ref<vm::CellSlice> cs_ref);
   bool is_valid() const {
     return valid;
   }
-  bool insert(ton::BlockSeqno mc_seqno, ton::LogicalTime last_proc_lt, td::ConstBitPtr last_proc_hash);
-  bool insert_infty(ton::BlockSeqno mc_seqno, ton::LogicalTime last_proc_lt = ~0ULL);
+  bool insert(ion::BlockSeqno mc_seqno, ion::LogicalTime last_proc_lt, td::ConstBitPtr last_proc_hash);
+  bool insert_infty(ion::BlockSeqno mc_seqno, ion::LogicalTime last_proc_lt = ~0ULL);
   bool compactify();
   bool pack(vm::CellBuilder& cb);
   bool is_reduced() const;
   bool contains(const MsgProcessedUpto& other) const;
   bool contains(const MsgProcessedUptoCollection& other) const;
   const MsgProcessedUpto* is_simple_update_of(const MsgProcessedUptoCollection& other, bool& ok) const;
-  ton::BlockSeqno min_mc_seqno() const;
-  bool split(ton::ShardIdFull new_owner);
+  ion::BlockSeqno min_mc_seqno() const;
+  bool split(ion::ShardIdFull new_owner);
   bool combine_with(const MsgProcessedUptoCollection& other);
   // NB: this is for checking whether we have already imported an internal message
   bool already_processed(const EnqueuedMsgDescr& msg) const;
   bool can_check_processed() const;
-  bool for_each_mcseqno(std::function<bool(ton::BlockSeqno)>) const;
+  bool for_each_mcseqno(std::function<bool(ion::BlockSeqno)>) const;
   std::ostream& print(std::ostream& os) const;
   std::string to_str() const;
 };
@@ -268,27 +268,27 @@ struct ParamLimits {
 
 struct BlockLimits {
   ParamLimits bytes, gas, lt_delta, collated_data;
-  ton::LogicalTime start_lt{0};
+  ion::LogicalTime start_lt{0};
   ImportedMsgQueueLimits imported_msg_queue;
   const vm::CellUsageTree* usage_tree{nullptr};
   bool deserialize(vm::CellSlice& cs);
   int classify_size(td::uint64 size) const;
   int classify_gas(td::uint64 gas) const;
-  int classify_lt(ton::LogicalTime lt) const;
+  int classify_lt(ion::LogicalTime lt) const;
   int classify_collated_data_size(td::uint64 size) const;
-  int classify(td::uint64 size, td::uint64 gas, ton::LogicalTime lt, td::uint64 collated_size) const;
-  bool fits(unsigned cls, td::uint64 size, td::uint64 gas, ton::LogicalTime lt, td::uint64 collated_size) const;
+  int classify(td::uint64 size, td::uint64 gas, ion::LogicalTime lt, td::uint64 collated_size) const;
+  bool fits(unsigned cls, td::uint64 size, td::uint64 gas, ion::LogicalTime lt, td::uint64 collated_size) const;
 };
 
 struct BlockLimitStatus {
   const BlockLimits& limits;
-  ton::LogicalTime cur_lt;
+  ion::LogicalTime cur_lt;
   td::uint64 gas_used{};
   vm::NewCellStorageStat st_stat;
   unsigned accounts{}, transactions{}, extra_out_msgs{};
   td::uint64 collated_data_size_estimate = 0;
   unsigned public_library_diff{};
-  BlockLimitStatus(const BlockLimits& limits_, ton::LogicalTime lt = 0)
+  BlockLimitStatus(const BlockLimits& limits_, ion::LogicalTime lt = 0)
       : limits(limits_), cur_lt(std::max(limits_.start_lt, lt)) {
   }
   void reset() {
@@ -303,7 +303,7 @@ struct BlockLimitStatus {
   td::uint64 estimate_block_size(const vm::NewCellStorageStat::Stat* extra = nullptr) const;
   int classify() const;
   bool fits(unsigned cls) const;
-  bool would_fit(unsigned cls, ton::LogicalTime end_lt, td::uint64 more_gas,
+  bool would_fit(unsigned cls, ion::LogicalTime end_lt, td::uint64 more_gas,
                  const vm::NewCellStorageStat::Stat* extra = nullptr) const;
   double load_fraction(unsigned cls) const;
   bool add_cell(Ref<vm::Cell> cell) {
@@ -314,7 +314,7 @@ struct BlockLimitStatus {
     st_stat.add_proof(std::move(cell), limits.usage_tree);
     return true;
   }
-  bool update_lt(ton::LogicalTime lt) {
+  bool update_lt(ion::LogicalTime lt) {
     cur_lt = std::max(lt, cur_lt);
     return true;
   }
@@ -429,14 +429,14 @@ std::ostream& operator<<(std::ostream& os, const CurrencyCollection& cc);
 
 struct ShardState {
   enum { verbosity = 0 };
-  ton::BlockIdExt id_;
+  ion::BlockIdExt id_;
   Ref<vm::Cell> root_;
   int global_id_;
-  ton::UnixTime utime_;
-  ton::LogicalTime lt_;
-  ton::BlockSeqno mc_blk_seqno_, min_ref_mc_seqno_, vert_seqno_;
-  ton::BlockIdExt mc_blk_ref_;
-  ton::LogicalTime mc_blk_lt_;
+  ion::UnixTime utime_;
+  ion::LogicalTime lt_;
+  ion::BlockSeqno mc_blk_seqno_, min_ref_mc_seqno_, vert_seqno_;
+  ion::BlockIdExt mc_blk_ref_;
+  ion::LogicalTime mc_blk_lt_;
   bool before_split_{false};
   std::unique_ptr<vm::AugmentedDictionary> account_dict_;
   std::unique_ptr<vm::Dictionary> shard_libraries_;
@@ -460,15 +460,15 @@ struct ShardState {
     id_.invalidate();
     return false;
   }
-  td::Status unpack_state(ton::BlockIdExt id, Ref<vm::Cell> state_root);
-  td::Status unpack_state_ext(ton::BlockIdExt id, Ref<vm::Cell> state_root, int global_id,
-                              ton::BlockSeqno prev_mc_block_seqno, bool after_split, bool clear_history,
-                              std::function<bool(ton::BlockSeqno)> for_each_mcseqno);
+  td::Status unpack_state(ion::BlockIdExt id, Ref<vm::Cell> state_root);
+  td::Status unpack_state_ext(ion::BlockIdExt id, Ref<vm::Cell> state_root, int global_id,
+                              ion::BlockSeqno prev_mc_block_seqno, bool after_split, bool clear_history,
+                              std::function<bool(ion::BlockSeqno)> for_each_mcseqno);
   td::Status merge_with(ShardState& sib);
-  td::Result<std::unique_ptr<vm::AugmentedDictionary>> compute_split_out_msg_queue(ton::ShardIdFull subshard);
+  td::Result<std::unique_ptr<vm::AugmentedDictionary>> compute_split_out_msg_queue(ion::ShardIdFull subshard);
   td::Result<std::shared_ptr<block::MsgProcessedUptoCollection>> compute_split_processed_upto(
-      ton::ShardIdFull subshard);
-  td::Status split(ton::ShardIdFull subshard);
+      ion::ShardIdFull subshard);
+  td::Status split(ion::ShardIdFull subshard);
   td::Status unpack_out_msg_queue_info(Ref<vm::Cell> out_msg_queue_info);
   bool clear_load_history() {
     overload_history_ = underload_history_ = 0;
@@ -479,10 +479,10 @@ struct ShardState {
   }
   td::Status check_before_split(bool before_split) const;
   td::Status check_global_id(int req_global_id) const;
-  td::Status check_mc_blk_seqno(ton::BlockSeqno last_mc_block_seqno) const;
-  bool update_prev_utime_lt(ton::UnixTime& prev_utime, ton::LogicalTime& prev_lt) const;
+  td::Status check_mc_blk_seqno(ion::BlockSeqno last_mc_block_seqno) const;
+  bool update_prev_utime_lt(ion::UnixTime& prev_utime, ion::LogicalTime& prev_lt) const;
 
-  bool for_each_mcseqno(std::function<bool(ton::BlockSeqno)> func) const {
+  bool for_each_mcseqno(std::function<bool(ion::BlockSeqno)> func) const {
     return processed_upto_ && processed_upto_->for_each_mcseqno(std::move(func));
   }
 };
@@ -527,7 +527,7 @@ std::ostream& operator<<(std::ostream& os, const ValueFlow& vflow);
 struct DiscountedCounter {
   struct SetZero {};
   bool valid;
-  ton::UnixTime last_updated;
+  ion::UnixTime last_updated;
   td::uint64 total;
   td::uint64 cnt2048;
   td::uint64 cnt65536;
@@ -535,7 +535,7 @@ struct DiscountedCounter {
   }
   DiscountedCounter(SetZero) : valid(true), last_updated(0), total(0), cnt2048(0), cnt65536(0) {
   }
-  DiscountedCounter(ton::UnixTime _lastupd, td::uint64 _total, td::uint64 _cnt2048, td::uint64 _cnt65536)
+  DiscountedCounter(ion::UnixTime _lastupd, td::uint64 _total, td::uint64 _cnt2048, td::uint64 _cnt65536)
       : valid(true), last_updated(_lastupd), total(_total), cnt2048(_cnt2048), cnt65536(_cnt65536) {
   }
   static DiscountedCounter Zero() {
@@ -566,11 +566,11 @@ struct DiscountedCounter {
     return last_updated == other.last_updated && total == other.total && cnt2048 <= other.cnt2048 + 1 &&
            other.cnt2048 <= cnt2048 + 1 && cnt65536 <= other.cnt65536 + 1 && other.cnt65536 <= cnt65536 + 1;
   }
-  bool modified_since(ton::UnixTime utime) const {
+  bool modified_since(ion::UnixTime utime) const {
     return last_updated >= utime;
   }
   bool validate();
-  bool increase_by(unsigned count, ton::UnixTime now);
+  bool increase_by(unsigned count, ion::UnixTime now);
   bool fetch(vm::CellSlice& cs);
   bool unpack(Ref<vm::CellSlice> csr);
   bool store(vm::CellBuilder& cb) const;
@@ -589,11 +589,11 @@ bool store_CreatorStats(vm::CellBuilder& cb, const DiscountedCounter& mc_cnt, co
 bool unpack_CreatorStats(Ref<vm::CellSlice> cs, DiscountedCounter& mc_cnt, DiscountedCounter& shard_cnt);
 
 struct BlockProofLink {
-  ton::BlockIdExt from, to;
+  ion::BlockIdExt from, to;
   bool is_key{false}, is_fwd{false};
   Ref<vm::Cell> dest_proof, state_proof, proof;
   Ref<BlockSignatureSet> sig_set;
-  BlockProofLink(ton::BlockIdExt _from, ton::BlockIdExt _to, bool _iskey = false)
+  BlockProofLink(ion::BlockIdExt _from, ion::BlockIdExt _to, bool _iskey = false)
       : from(_from), to(_to), is_key(_iskey), is_fwd(to.seqno() > from.seqno()) {
   }
   bool incomplete() const {
@@ -603,18 +603,18 @@ struct BlockProofLink {
 };
 
 struct BlockProofChain {
-  ton::BlockIdExt from, to;
+  ion::BlockIdExt from, to;
   int mode;
   td::uint32 last_utime{0};
   bool complete{false}, has_key_block{false}, has_utime{false}, valid{false};
-  ton::BlockIdExt key_blkid;
+  ion::BlockIdExt key_blkid;
   std::vector<BlockProofLink> links;
   std::size_t link_count() const {
     return links.size();
   }
-  BlockProofChain(ton::BlockIdExt _from, ton::BlockIdExt _to, int _mode = 0) : from(_from), to(_to), mode(_mode) {
+  BlockProofChain(ion::BlockIdExt _from, ion::BlockIdExt _to, int _mode = 0) : from(_from), to(_to), mode(_mode) {
   }
-  BlockProofLink& new_link(const ton::BlockIdExt& cur, const ton::BlockIdExt& next, bool iskey = false) {
+  BlockProofLink& new_link(const ion::BlockIdExt& cur, const ion::BlockIdExt& next, bool iskey = false) {
     links.emplace_back(cur, next, iskey);
     return links.back();
   }
@@ -686,20 +686,20 @@ class MtCarloComputeShare {
   void gen_vset();
 };
 
-int filter_out_msg_queue(vm::AugmentedDictionary& out_queue, ton::ShardIdFull old_shard, ton::ShardIdFull subshard,
+int filter_out_msg_queue(vm::AugmentedDictionary& out_queue, ion::ShardIdFull old_shard, ion::ShardIdFull subshard,
                          td::uint64* queue_size = nullptr);
 
 std::ostream& operator<<(std::ostream& os, const ShardId& shard_id);
 
-bool pack_std_smc_addr_to(char result[48], bool base64_url, ton::WorkchainId wc, const ton::StdSmcAddress& addr,
+bool pack_std_smc_addr_to(char result[48], bool base64_url, ion::WorkchainId wc, const ion::StdSmcAddress& addr,
                           bool bounceable, bool testnet);
-std::string pack_std_smc_addr(bool base64_url, ton::WorkchainId wc, const ton::StdSmcAddress& addr, bool bounceable,
+std::string pack_std_smc_addr(bool base64_url, ion::WorkchainId wc, const ion::StdSmcAddress& addr, bool bounceable,
                               bool testnet);
-bool unpack_std_smc_addr(const char packed[48], ton::WorkchainId& wc, ton::StdSmcAddress& addr, bool& bounceable,
+bool unpack_std_smc_addr(const char packed[48], ion::WorkchainId& wc, ion::StdSmcAddress& addr, bool& bounceable,
                          bool& testnet);
-bool unpack_std_smc_addr(td::Slice packed, ton::WorkchainId& wc, ton::StdSmcAddress& addr, bool& bounceable,
+bool unpack_std_smc_addr(td::Slice packed, ion::WorkchainId& wc, ion::StdSmcAddress& addr, bool& bounceable,
                          bool& testnet);
-bool unpack_std_smc_addr(std::string packed, ton::WorkchainId& wc, ton::StdSmcAddress& addr, bool& bounceable,
+bool unpack_std_smc_addr(std::string packed, ion::WorkchainId& wc, ion::StdSmcAddress& addr, bool& bounceable,
                          bool& testnet);
 
 bool store_UInt7(vm::CellBuilder& cb, unsigned long long value);
@@ -719,52 +719,52 @@ bool config_params_present(vm::Dictionary& dict, Ref<vm::Cell> param_dict_root);
 bool add_extra_currency(Ref<vm::Cell> extra1, Ref<vm::Cell> extra2, Ref<vm::Cell>& res);
 bool sub_extra_currency(Ref<vm::Cell> extra1, Ref<vm::Cell> extra2, Ref<vm::Cell>& res);
 
-ton::AccountIdPrefixFull interpolate_addr(const ton::AccountIdPrefixFull& src, const ton::AccountIdPrefixFull& dest,
+ion::AccountIdPrefixFull interpolate_addr(const ion::AccountIdPrefixFull& src, const ion::AccountIdPrefixFull& dest,
                                           int used_dest_bits);
-bool interpolate_addr_to(const ton::AccountIdPrefixFull& src, const ton::AccountIdPrefixFull& dest, int used_dest_bits,
-                         ton::AccountIdPrefixFull& res);
+bool interpolate_addr_to(const ion::AccountIdPrefixFull& src, const ion::AccountIdPrefixFull& dest, int used_dest_bits,
+                         ion::AccountIdPrefixFull& res);
 // result: (transit_addr_dest_bits, nh_addr_dest_bits)
-std::pair<int, int> perform_hypercube_routing(ton::AccountIdPrefixFull src, ton::AccountIdPrefixFull dest,
-                                              ton::ShardIdFull cur, int used_dest_bits = 0);
+std::pair<int, int> perform_hypercube_routing(ion::AccountIdPrefixFull src, ion::AccountIdPrefixFull dest,
+                                              ion::ShardIdFull cur, int used_dest_bits = 0);
 
 bool compute_out_msg_queue_key(Ref<vm::Cell> msg_env, td::BitArray<352>& key);
 
-bool unpack_block_prev_blk(Ref<vm::Cell> block_root, const ton::BlockIdExt& id, std::vector<ton::BlockIdExt>& prev,
-                           ton::BlockIdExt& mc_blkid, bool& after_split, ton::BlockIdExt* fetch_blkid = nullptr);
-td::Status unpack_block_prev_blk_ext(Ref<vm::Cell> block_root, const ton::BlockIdExt& id,
-                                     std::vector<ton::BlockIdExt>& prev, ton::BlockIdExt& mc_blkid, bool& after_split,
-                                     ton::BlockIdExt* fetch_blkid = nullptr);
-td::Status unpack_block_prev_blk_try(Ref<vm::Cell> block_root, const ton::BlockIdExt& id,
-                                     std::vector<ton::BlockIdExt>& prev, ton::BlockIdExt& mc_blkid, bool& after_split,
-                                     ton::BlockIdExt* fetch_blkid = nullptr);
-td::Status check_block_header(Ref<vm::Cell> block_root, const ton::BlockIdExt& id,
-                              ton::Bits256* store_shard_hash_to = nullptr);
+bool unpack_block_prev_blk(Ref<vm::Cell> block_root, const ion::BlockIdExt& id, std::vector<ion::BlockIdExt>& prev,
+                           ion::BlockIdExt& mc_blkid, bool& after_split, ion::BlockIdExt* fetch_blkid = nullptr);
+td::Status unpack_block_prev_blk_ext(Ref<vm::Cell> block_root, const ion::BlockIdExt& id,
+                                     std::vector<ion::BlockIdExt>& prev, ion::BlockIdExt& mc_blkid, bool& after_split,
+                                     ion::BlockIdExt* fetch_blkid = nullptr);
+td::Status unpack_block_prev_blk_try(Ref<vm::Cell> block_root, const ion::BlockIdExt& id,
+                                     std::vector<ion::BlockIdExt>& prev, ion::BlockIdExt& mc_blkid, bool& after_split,
+                                     ion::BlockIdExt* fetch_blkid = nullptr);
+td::Status check_block_header(Ref<vm::Cell> block_root, const ion::BlockIdExt& id,
+                              ion::Bits256* store_shard_hash_to = nullptr);
 
 std::unique_ptr<vm::Dictionary> get_block_create_stats_dict(Ref<vm::Cell> state_root);
 
 std::unique_ptr<vm::AugmentedDictionary> get_prev_blocks_dict(Ref<vm::Cell> state_root);
-bool get_old_mc_block_id(vm::AugmentedDictionary* prev_blocks_dict, ton::BlockSeqno seqno, ton::BlockIdExt& blkid,
-                         ton::LogicalTime* end_lt = nullptr);
-bool get_old_mc_block_id(vm::AugmentedDictionary& prev_blocks_dict, ton::BlockSeqno seqno, ton::BlockIdExt& blkid,
-                         ton::LogicalTime* end_lt = nullptr);
-bool unpack_old_mc_block_id(Ref<vm::CellSlice> old_blk_info, ton::BlockSeqno seqno, ton::BlockIdExt& blkid,
-                            ton::LogicalTime* end_lt = nullptr);
-bool check_old_mc_block_id(vm::AugmentedDictionary* prev_blocks_dict, const ton::BlockIdExt& blkid);
-bool check_old_mc_block_id(vm::AugmentedDictionary& prev_blocks_dict, const ton::BlockIdExt& blkid);
+bool get_old_mc_block_id(vm::AugmentedDictionary* prev_blocks_dict, ion::BlockSeqno seqno, ion::BlockIdExt& blkid,
+                         ion::LogicalTime* end_lt = nullptr);
+bool get_old_mc_block_id(vm::AugmentedDictionary& prev_blocks_dict, ion::BlockSeqno seqno, ion::BlockIdExt& blkid,
+                         ion::LogicalTime* end_lt = nullptr);
+bool unpack_old_mc_block_id(Ref<vm::CellSlice> old_blk_info, ion::BlockSeqno seqno, ion::BlockIdExt& blkid,
+                            ion::LogicalTime* end_lt = nullptr);
+bool check_old_mc_block_id(vm::AugmentedDictionary* prev_blocks_dict, const ion::BlockIdExt& blkid);
+bool check_old_mc_block_id(vm::AugmentedDictionary& prev_blocks_dict, const ion::BlockIdExt& blkid);
 
-td::Result<Ref<vm::Cell>> get_block_transaction(Ref<vm::Cell> block_root, ton::WorkchainId workchain,
-                                                const ton::StdSmcAddress& addr, ton::LogicalTime lt);
-td::Result<Ref<vm::Cell>> get_block_transaction_try(Ref<vm::Cell> block_root, ton::WorkchainId workchain,
-                                                    const ton::StdSmcAddress& addr, ton::LogicalTime lt);
+td::Result<Ref<vm::Cell>> get_block_transaction(Ref<vm::Cell> block_root, ion::WorkchainId workchain,
+                                                const ion::StdSmcAddress& addr, ion::LogicalTime lt);
+td::Result<Ref<vm::Cell>> get_block_transaction_try(Ref<vm::Cell> block_root, ion::WorkchainId workchain,
+                                                    const ion::StdSmcAddress& addr, ion::LogicalTime lt);
 
 bool get_transaction_in_msg(Ref<vm::Cell> trans_ref, Ref<vm::Cell>& in_msg);
 bool is_transaction_in_msg(Ref<vm::Cell> trans_ref, Ref<vm::Cell> msg);
 bool is_transaction_out_msg(Ref<vm::Cell> trans_ref, Ref<vm::Cell> msg);
-bool get_transaction_id(Ref<vm::Cell> trans_ref, ton::StdSmcAddress& account_addr, ton::LogicalTime& lt);
-bool get_transaction_owner(Ref<vm::Cell> trans_ref, ton::StdSmcAddress& addr);
+bool get_transaction_id(Ref<vm::Cell> trans_ref, ion::StdSmcAddress& account_addr, ion::LogicalTime& lt);
+bool get_transaction_owner(Ref<vm::Cell> trans_ref, ion::StdSmcAddress& addr);
 
-td::uint32 compute_validator_set_hash(ton::CatchainSeqno cc_seqno, ton::ShardIdFull from,
-                                      const std::vector<ton::ValidatorDescr>& nodes);
+td::uint32 compute_validator_set_hash(ion::CatchainSeqno cc_seqno, ion::ShardIdFull from,
+                                      const std::vector<ion::ValidatorDescr>& nodes);
 
 td::Result<Ref<vm::Cell>> get_config_data_from_smc(Ref<vm::Cell> acc_root);
 td::Result<Ref<vm::Cell>> get_config_data_from_smc(Ref<vm::CellSlice> acc_csr);
@@ -775,21 +775,21 @@ bool is_public_library(td::ConstBitPtr key, Ref<vm::CellSlice> val);
 bool parse_hex_hash(const char* str, const char* end, td::Bits256& hash);
 bool parse_hex_hash(td::Slice str, td::Bits256& hash);
 
-bool parse_block_id_ext(const char* str, const char* end, ton::BlockIdExt& blkid);
-bool parse_block_id_ext(td::Slice str, ton::BlockIdExt& blkid);
+bool parse_block_id_ext(const char* str, const char* end, ion::BlockIdExt& blkid);
+bool parse_block_id_ext(td::Slice str, ion::BlockIdExt& blkid);
 
 bool unpack_account_dispatch_queue(Ref<vm::CellSlice> csr, vm::Dictionary& dict, td::uint64& dict_size);
 Ref<vm::CellSlice> pack_account_dispatch_queue(const vm::Dictionary& dict, td::uint64 dict_size);
 Ref<vm::CellSlice> get_dispatch_queue_min_lt_account(const vm::AugmentedDictionary& dispatch_queue,
-                                                     ton::StdSmcAddress& addr);
-bool remove_dispatch_queue_entry(vm::AugmentedDictionary& dispatch_queue, const ton::StdSmcAddress& addr,
-                                 ton::LogicalTime lt);
+                                                     ion::StdSmcAddress& addr);
+bool remove_dispatch_queue_entry(vm::AugmentedDictionary& dispatch_queue, const ion::StdSmcAddress& addr,
+                                 ion::LogicalTime lt);
 
 struct MsgMetadata {
   td::uint32 depth;
-  ton::WorkchainId initiator_wc;
-  ton::StdSmcAddress initiator_addr;
-  ton::LogicalTime initiator_lt;
+  ion::WorkchainId initiator_wc;
+  ion::StdSmcAddress initiator_addr;
+  ion::LogicalTime initiator_lt;
 
   bool unpack(vm::CellSlice& cs);
   bool pack(vm::CellBuilder& cb) const;

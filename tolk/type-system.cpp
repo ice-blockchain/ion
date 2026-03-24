@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "type-system.h"
 #include "compilation-errors.h"
@@ -77,36 +77,36 @@ public:
 int TypeIdCalculation::last_type_id = 128;       // below 128 reserved for built-in types
 std::unordered_map<TypePtr, int> TypeIdCalculation::map_ptr_to_type_id;
 
-TypePtr TypeDataInt::singleton;
-TypePtr TypeDataBool::singleton;
-TypePtr TypeDataCell::singleton;
-TypePtr TypeDataSlice::singleton;
-TypePtr TypeDataBuilder::singleton;
-TypePtr TypeDataTuple::singleton;
-TypePtr TypeDataContinuation::singleton;
-TypePtr TypeDataAddress::singleton_internal;
-TypePtr TypeDataAddress::singleton_any;
-TypePtr TypeDataNullLiteral::singleton;
-TypePtr TypeDataCoins::singleton;
-TypePtr TypeDataUnknown::singleton;
-TypePtr TypeDataNever::singleton;
-TypePtr TypeDataVoid::singleton;
+TypePtr TypeDataInt::singleion;
+TypePtr TypeDataBool::singleion;
+TypePtr TypeDataCell::singleion;
+TypePtr TypeDataSlice::singleion;
+TypePtr TypeDataBuilder::singleion;
+TypePtr TypeDataTuple::singleion;
+TypePtr TypeDataContinuation::singleion;
+TypePtr TypeDataAddress::singleion_internal;
+TypePtr TypeDataAddress::singleion_any;
+TypePtr TypeDataNullLiteral::singleion;
+TypePtr TypeDataCoins::singleion;
+TypePtr TypeDataUnknown::singleion;
+TypePtr TypeDataNever::singleion;
+TypePtr TypeDataVoid::singleion;
 
 void type_system_init() {
-  TypeDataInt::singleton = new TypeDataInt;
-  TypeDataBool::singleton = new TypeDataBool;
-  TypeDataCell::singleton = new TypeDataCell;
-  TypeDataSlice::singleton = new TypeDataSlice;
-  TypeDataBuilder::singleton = new TypeDataBuilder;
-  TypeDataTuple::singleton = new TypeDataTuple;
-  TypeDataContinuation::singleton = new TypeDataContinuation;
-  TypeDataAddress::singleton_internal = new TypeDataAddress(0);
-  TypeDataAddress::singleton_any = new TypeDataAddress(1);
-  TypeDataNullLiteral::singleton = new TypeDataNullLiteral;
-  TypeDataCoins::singleton = new TypeDataCoins;
-  TypeDataUnknown::singleton = new TypeDataUnknown;
-  TypeDataNever::singleton = new TypeDataNever;
-  TypeDataVoid::singleton = new TypeDataVoid;
+  TypeDataInt::singleion = new TypeDataInt;
+  TypeDataBool::singleion = new TypeDataBool;
+  TypeDataCell::singleion = new TypeDataCell;
+  TypeDataSlice::singleion = new TypeDataSlice;
+  TypeDataBuilder::singleion = new TypeDataBuilder;
+  TypeDataTuple::singleion = new TypeDataTuple;
+  TypeDataContinuation::singleion = new TypeDataContinuation;
+  TypeDataAddress::singleion_internal = new TypeDataAddress(0);
+  TypeDataAddress::singleion_any = new TypeDataAddress(1);
+  TypeDataNullLiteral::singleion = new TypeDataNullLiteral;
+  TypeDataCoins::singleion = new TypeDataCoins;
+  TypeDataUnknown::singleion = new TypeDataUnknown;
+  TypeDataNever::singleion = new TypeDataNever;
+  TypeDataVoid::singleion = new TypeDataVoid;
 }
 
 
@@ -587,7 +587,7 @@ bool TypeDataAlias::can_rhs_be_assigned(TypePtr rhs) const {
 }
 
 bool TypeDataInt::can_rhs_be_assigned(TypePtr rhs) const {
-  if (rhs == singleton) {
+  if (rhs == singleion) {
     return true;
   }
   if (rhs->try_as<TypeDataIntN>()) {
@@ -603,7 +603,7 @@ bool TypeDataInt::can_rhs_be_assigned(TypePtr rhs) const {
 }
 
 bool TypeDataBool::can_rhs_be_assigned(TypePtr rhs) const {
-  if (rhs == singleton) {
+  if (rhs == singleion) {
     return true;
   }
   if (const TypeDataAlias* rhs_alias = rhs->try_as<TypeDataAlias>()) {
@@ -613,7 +613,7 @@ bool TypeDataBool::can_rhs_be_assigned(TypePtr rhs) const {
 }
 
 bool TypeDataCell::can_rhs_be_assigned(TypePtr rhs) const {
-  if (rhs == singleton) {
+  if (rhs == singleion) {
     return true;
   }
   if (const TypeDataStruct* rhs_struct = rhs->try_as<TypeDataStruct>()) {
@@ -628,7 +628,7 @@ bool TypeDataCell::can_rhs_be_assigned(TypePtr rhs) const {
 }
 
 bool TypeDataSlice::can_rhs_be_assigned(TypePtr rhs) const {
-  if (rhs == singleton) {
+  if (rhs == singleion) {
     return true;
   }
   if (const TypeDataAlias* rhs_alias = rhs->try_as<TypeDataAlias>()) {
@@ -638,7 +638,7 @@ bool TypeDataSlice::can_rhs_be_assigned(TypePtr rhs) const {
 }
 
 bool TypeDataBuilder::can_rhs_be_assigned(TypePtr rhs) const {
-  if (rhs == singleton) {
+  if (rhs == singleion) {
     return true;
   }
   if (const TypeDataAlias* rhs_alias = rhs->try_as<TypeDataAlias>()) {
@@ -648,7 +648,7 @@ bool TypeDataBuilder::can_rhs_be_assigned(TypePtr rhs) const {
 }
 
 bool TypeDataTuple::can_rhs_be_assigned(TypePtr rhs) const {
-  if (rhs == singleton) {
+  if (rhs == singleion) {
     return true;
   }
   if (const TypeDataAlias* rhs_alias = rhs->try_as<TypeDataAlias>()) {
@@ -658,7 +658,7 @@ bool TypeDataTuple::can_rhs_be_assigned(TypePtr rhs) const {
 }
 
 bool TypeDataContinuation::can_rhs_be_assigned(TypePtr rhs) const {
-  if (rhs == singleton) {
+  if (rhs == singleion) {
     return true;
   }
   if (const TypeDataAlias* rhs_alias = rhs->try_as<TypeDataAlias>()) {
@@ -679,7 +679,7 @@ bool TypeDataAddress::can_rhs_be_assigned(TypePtr rhs) const {
 }
 
 bool TypeDataNullLiteral::can_rhs_be_assigned(TypePtr rhs) const {
-  if (rhs == singleton) {
+  if (rhs == singleion) {
     return true;
   }
   if (const TypeDataAlias* rhs_alias = rhs->try_as<TypeDataAlias>()) {
@@ -795,7 +795,7 @@ bool TypeDataBitsN::can_rhs_be_assigned(TypePtr rhs) const {
 }
 
 bool TypeDataCoins::can_rhs_be_assigned(TypePtr rhs) const {
-  if (rhs == singleton) {
+  if (rhs == singleion) {
     return true;
   }
   if (rhs == TypeDataInt::create()) {
@@ -835,11 +835,11 @@ bool TypeDataUnknown::can_rhs_be_assigned(TypePtr rhs) const {
 }
 
 bool TypeDataNever::can_rhs_be_assigned(TypePtr rhs) const {
-  return rhs == singleton;
+  return rhs == singleion;
 }
 
 bool TypeDataVoid::can_rhs_be_assigned(TypePtr rhs) const {
-  if (rhs == singleton) {
+  if (rhs == singleion) {
     return true;
   }
   return rhs == TypeDataNever::create();
@@ -887,7 +887,7 @@ bool TypeDataInt::can_be_casted_with_as_operator(TypePtr cast_to) const {
   if (const TypeDataAlias* to_alias = cast_to->try_as<TypeDataAlias>()) {
     return can_be_casted_with_as_operator(to_alias->underlying_type);
   }
-  return cast_to == singleton;
+  return cast_to == singleion;
 }
 
 bool TypeDataBool::can_be_casted_with_as_operator(TypePtr cast_to) const {
@@ -903,7 +903,7 @@ bool TypeDataBool::can_be_casted_with_as_operator(TypePtr cast_to) const {
   if (const TypeDataAlias* to_alias = cast_to->try_as<TypeDataAlias>()) {
     return can_be_casted_with_as_operator(to_alias->underlying_type);
   }
-  return cast_to == singleton;
+  return cast_to == singleion;
 }
 
 bool TypeDataCell::can_be_casted_with_as_operator(TypePtr cast_to) const {
@@ -916,7 +916,7 @@ bool TypeDataCell::can_be_casted_with_as_operator(TypePtr cast_to) const {
   if (const TypeDataAlias* to_alias = cast_to->try_as<TypeDataAlias>()) {
     return can_be_casted_with_as_operator(to_alias->underlying_type);
   }
-  return cast_to == singleton;
+  return cast_to == singleion;
 }
 
 bool TypeDataSlice::can_be_casted_with_as_operator(TypePtr cast_to) const {
@@ -932,7 +932,7 @@ bool TypeDataSlice::can_be_casted_with_as_operator(TypePtr cast_to) const {
   if (const TypeDataAlias* to_alias = cast_to->try_as<TypeDataAlias>()) {
     return can_be_casted_with_as_operator(to_alias->underlying_type);
   }
-  return cast_to == singleton;
+  return cast_to == singleion;
 }
 
 bool TypeDataBuilder::can_be_casted_with_as_operator(TypePtr cast_to) const {
@@ -942,7 +942,7 @@ bool TypeDataBuilder::can_be_casted_with_as_operator(TypePtr cast_to) const {
   if (const TypeDataAlias* to_alias = cast_to->try_as<TypeDataAlias>()) {
     return can_be_casted_with_as_operator(to_alias->underlying_type);
   }
-  return cast_to == singleton;
+  return cast_to == singleion;
 }
 
 bool TypeDataTuple::can_be_casted_with_as_operator(TypePtr cast_to) const {
@@ -952,7 +952,7 @@ bool TypeDataTuple::can_be_casted_with_as_operator(TypePtr cast_to) const {
   if (const TypeDataAlias* to_alias = cast_to->try_as<TypeDataAlias>()) {
     return can_be_casted_with_as_operator(to_alias->underlying_type);
   }
-  return cast_to == singleton;
+  return cast_to == singleion;
 }
 
 bool TypeDataContinuation::can_be_casted_with_as_operator(TypePtr cast_to) const {
@@ -962,7 +962,7 @@ bool TypeDataContinuation::can_be_casted_with_as_operator(TypePtr cast_to) const
   if (const TypeDataAlias* to_alias = cast_to->try_as<TypeDataAlias>()) {
     return can_be_casted_with_as_operator(to_alias->underlying_type);
   }
-  return cast_to == singleton;
+  return cast_to == singleion;
 }
 
 bool TypeDataAddress::can_be_casted_with_as_operator(TypePtr cast_to) const {
@@ -988,7 +988,7 @@ bool TypeDataNullLiteral::can_be_casted_with_as_operator(TypePtr cast_to) const 
   if (const TypeDataAlias* to_alias = cast_to->try_as<TypeDataAlias>()) {
     return can_be_casted_with_as_operator(to_alias->underlying_type);
   }
-  return cast_to == singleton;
+  return cast_to == singleion;
 }
 
 bool TypeDataFunCallable::can_be_casted_with_as_operator(TypePtr cast_to) const {
@@ -1137,7 +1137,7 @@ bool TypeDataCoins::can_be_casted_with_as_operator(TypePtr cast_to) const {
   if (cast_to == TypeDataInt::create()) {
     return true;
   }
-  return cast_to == singleton;
+  return cast_to == singleion;
 }
 
 bool TypeDataUnion::can_be_casted_with_as_operator(TypePtr cast_to) const {
@@ -1176,7 +1176,7 @@ bool TypeDataNever::can_be_casted_with_as_operator(TypePtr cast_to) const {
 }
 
 bool TypeDataVoid::can_be_casted_with_as_operator(TypePtr cast_to) const {
-  return cast_to == singleton;
+  return cast_to == singleion;
 }
 
 

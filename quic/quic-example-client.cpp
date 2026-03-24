@@ -10,19 +10,19 @@
 
 class QuicTester : public td::actor::Actor {
  public:
-  class Callback : public ton::quic::QuicServer::Callback {
+  class Callback : public ion::quic::QuicServer::Callback {
    public:
     explicit Callback(td::actor::ActorId<QuicTester> tester) : tester_(std::move(tester)) {
     }
 
-    void on_connected(ton::quic::QuicConnectionId cid, td::SecureString public_key, bool is_outbound) override {
+    void on_connected(ion::quic::QuicConnectionId cid, td::SecureString public_key, bool is_outbound) override {
       auto public_key_b64 = td::base64_encode(public_key.as_slice());
       LOG(INFO) << "connected";
       LOG(INFO) << "server public key: " << public_key_b64;
       td::actor::send_closure(tester_, &QuicTester::on_connected, cid);
     }
 
-    td::Status on_stream(ton::quic::QuicConnectionId cid, ton::quic::QuicStreamID sid, td::BufferSlice data,
+    td::Status on_stream(ion::quic::QuicConnectionId cid, ion::quic::QuicStreamID sid, td::BufferSlice data,
                          bool is_end) override {
       std::cout.flush();
       std::cout.write(data.data(), static_cast<std::streamsize>(data.size()));
@@ -35,7 +35,7 @@ class QuicTester : public td::actor::Actor {
       return td::Status::OK();
     }
 
-    void on_closed(ton::quic::QuicConnectionId cid) override {
+    void on_closed(ion::quic::QuicConnectionId cid) override {
       LOG(INFO) << "connection closed";
       std::exit(0);
     }
@@ -57,7 +57,7 @@ class QuicTester : public td::actor::Actor {
 
     auto cb = std::make_unique<Callback>(actor_id(this));
     auto R =
-        ton::quic::QuicServer::create(local_port_, std::move(client_key_), std::move(cb), alpn_.as_slice(), "0.0.0.0");
+        ion::quic::QuicServer::create(local_port_, std::move(client_key_), std::move(cb), alpn_.as_slice(), "0.0.0.0");
     if (R.is_error()) {
       LOG(ERROR) << "failed to start local QUIC client: " << R.error();
       std::exit(1);
@@ -72,7 +72,7 @@ class QuicTester : public td::actor::Actor {
       std::exit(1);
     }
 
-    send_closure(server_, &ton::quic::QuicServer::connect, host_.as_slice(), port_, client_key_copy_r.move_as_ok(),
+    send_closure(server_, &ion::quic::QuicServer::connect, host_.as_slice(), port_, client_key_copy_r.move_as_ok(),
                  alpn_.as_slice(), [](auto R) {
                    if (R.is_error()) {
                      LOG(ERROR) << "connection failed: " << R.error();
@@ -81,18 +81,18 @@ class QuicTester : public td::actor::Actor {
                  });
   }
 
-  void on_connected(ton::quic::QuicConnectionId cid) {
+  void on_connected(ion::quic::QuicConnectionId cid) {
     td::actor::send_closure(
-        server_.get(), &ton::quic::QuicServer::open_stream, cid,
-        td::PromiseCreator::lambda([server = server_.get(), cid](td::Result<ton::quic::QuicStreamID> R) {
+        server_.get(), &ion::quic::QuicServer::open_stream, cid,
+        td::PromiseCreator::lambda([server = server_.get(), cid](td::Result<ion::quic::QuicStreamID> R) {
           if (R.is_error()) {
             LOG(ERROR) << "open_stream failed: " << R.error();
             std::exit(1);
           }
           auto sid = R.move_as_ok();
-          td::actor::send_closure(server, &ton::quic::QuicServer::send_stream_data, cid, sid,
+          td::actor::send_closure(server, &ion::quic::QuicServer::send_stream_data, cid, sid,
                                   td::BufferSlice("GET /\r\n"));
-          td::actor::send_closure(server, &ton::quic::QuicServer::send_stream_end, cid, sid);
+          td::actor::send_closure(server, &ion::quic::QuicServer::send_stream_end, cid, sid);
         }));
   }
 
@@ -103,7 +103,7 @@ class QuicTester : public td::actor::Actor {
   int local_port_;
   td::Ed25519::PrivateKey client_key_;
 
-  td::actor::ActorOwn<ton::quic::QuicServer> server_;
+  td::actor::ActorOwn<ion::quic::QuicServer> server_;
 };
 
 int main(int argc, char** argv) {

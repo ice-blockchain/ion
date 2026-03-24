@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025-2026, TON CORE TECHNOLOGIES CO. L.L.C
+ * Copyright (c) 2025-2026, ION CORE TECHNOLOGIES CO. L.L.C
  *
  * SPDX-License-Identifier: LGPL-2.0-or-later
  */
@@ -8,7 +8,7 @@
 
 #include "validator/consensus/bus.h"
 
-namespace ton::validator::consensus::null {
+namespace ion::validator::consensus::null {
 
 namespace tl {
 
@@ -44,4 +44,4 @@ struct Consensus {
   static void register_in(runtime::Runtime&);
 };
 
-}  // namespace ton::validator::consensus::null
+}  // namespace ion::validator::consensus::null

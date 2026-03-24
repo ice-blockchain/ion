@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025-2026, TON CORE TECHNOLOGIES CO. L.L.C
+ * Copyright (c) 2025-2026, ION CORE TECHNOLOGIES CO. L.L.C
  *
  * SPDX-License-Identifier: LGPL-2.0-or-later
  */
@@ -10,7 +10,7 @@
 
 #include "certificate.h"
 
-namespace ton::validator::consensus::simplex {
+namespace ion::validator::consensus::simplex {
 
 struct BroadcastVote {
   Vote vote;
@@ -117,4 +117,4 @@ struct MetricCollector {
   static void register_in(runtime::Runtime&);
 };
 
-}  // namespace ton::validator::consensus::simplex
+}  // namespace ion::validator::consensus::simplex

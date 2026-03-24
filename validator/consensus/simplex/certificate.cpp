@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025-2026, TON CORE TECHNOLOGIES CO. L.L.C
+ * Copyright (c) 2025-2026, ION CORE TECHNOLOGIES CO. L.L.C
  *
  * SPDX-License-Identifier: LGPL-2.0-or-later
  */
@@ -9,7 +9,7 @@
 
 #include "certificate.h"
 
-namespace ton::validator::consensus::simplex {
+namespace ion::validator::consensus::simplex {
 
 template <ValidVote T>
 td::Result<td::Ref<Certificate<T>>> Certificate<T>::from_tl(tl::voteSignatureSet&& set, T vote, const Bus& bus) {
@@ -78,7 +78,7 @@ td::Ref<block::BlockSignatureSet> Certificate<T>::to_signature_set(const Candida
 {
   CHECK(candidate->id == vote.id);
 
-  std::vector<ton::BlockSignature> block_signatures;
+  std::vector<ion::BlockSignature> block_signatures;
   for (const auto& [validator, signature] : signatures) {
     block_signatures.emplace_back(validator.get_using(bus).short_id.bits256_value(), signature.clone());
   }
@@ -96,4 +96,4 @@ template struct Certificate<SkipVote>;
 template struct Certificate<FinalizeVote>;
 template struct Certificate<Vote>;
 
-}  // namespace ton::validator::consensus::simplex
+}  // namespace ion::validator::consensus::simplex

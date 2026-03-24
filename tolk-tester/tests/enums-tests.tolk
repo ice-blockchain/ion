@@ -12,7 +12,7 @@ enum InvertedColor {
     Red = Color.Blue,
     Green = Color.Green,
     Blue = Color.Red,
-    OneTon = ton("1"),
+    OneTon = ion("1"),
 }
 
 type ColorAlias = Color

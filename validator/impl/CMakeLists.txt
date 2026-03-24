@@ -1,4 +1,4 @@
-set(TON_VALIDATOR_SOURCE
+set(ION_VALIDATOR_SOURCE
   accept-block.cpp
   block.cpp
   check-proof.cpp
@@ -34,14 +34,14 @@ set(TON_VALIDATOR_SOURCE
   top-shard-descr.hpp
   validate-query.hpp)
 
-add_library(ton_validator STATIC ${TON_VALIDATOR_SOURCE})
+add_library(ion_validator STATIC ${ION_VALIDATOR_SOURCE})
 
-target_include_directories(ton_validator PUBLIC
+target_include_directories(ion_validator PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>/..
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>/../crypto
   ${OPENSSL_INCLUDE_DIR}
 )
 
-target_link_libraries(ton_validator PRIVATE tdutils tdactor adnl tl_api tl_lite_api tl-lite-utils dht tdfec
-  overlay catchain validatorsession ton_crypto ton_block)
+target_link_libraries(ion_validator PRIVATE tdutils tdactor adnl tl_api tl_lite_api tl-lite-utils dht tdfec
+  overlay catchain validatorsession ion_crypto ion_block)

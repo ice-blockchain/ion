@@ -1,11 +1,11 @@
 include(AndroidThirdParty)
 
-get_filename_component(TON_SOURCE_DIR "${CMAKE_CURRENT_LIST_DIR}/.." ABSOLUTE)
-set(TON_THIRD_PARTY_SOURCE_DIR "${TON_SOURCE_DIR}/third-party")
-set(TON_THIRD_PARTY_BINARY_DIR "${CMAKE_BINARY_DIR}/third-party")
+get_filename_component(ION_SOURCE_DIR "${CMAKE_CURRENT_LIST_DIR}/.." ABSOLUTE)
+set(ION_THIRD_PARTY_SOURCE_DIR "${ION_SOURCE_DIR}/third-party")
+set(ION_THIRD_PARTY_BINARY_DIR "${CMAKE_BINARY_DIR}/third-party")
 
-set(MHD_SOURCE_DIR ${TON_THIRD_PARTY_SOURCE_DIR}/libmicrohttpd)
-set(MHD_BINARY_DIR ${TON_THIRD_PARTY_BINARY_DIR}/libmicrohttpd)
+set(MHD_SOURCE_DIR ${ION_THIRD_PARTY_SOURCE_DIR}/libmicrohttpd)
+set(MHD_BINARY_DIR ${ION_THIRD_PARTY_BINARY_DIR}/libmicrohttpd)
 
 if (USE_EMSCRIPTEN OR EMSCRIPTEN)
   message(STATUS "libmicrohttpd is not built for emscripten")
@@ -60,7 +60,7 @@ elseif (MSVC)
     OUTPUT ${MHD_LIBRARY}
   )
 elseif (ANDROID)
-  set(MHD_BINARY_DIR ${TON_ANDROID_THIRD_PARTY_DIR}/libmicrohttpd/${TON_ANDROID_ARCH_DIR})
+  set(MHD_BINARY_DIR ${ION_ANDROID_THIRD_PARTY_DIR}/libmicrohttpd/${ION_ANDROID_ARCH_DIR})
   set(MHD_LIBRARY ${MHD_BINARY_DIR}/lib/libmicrohttpd.a)
   set(MHD_INCLUDE_DIR ${MHD_BINARY_DIR}/include)
 
@@ -77,34 +77,34 @@ elseif (ANDROID)
       WORKING_DIRECTORY ${MHD_SOURCE_DIR}
       COMMAND ${CMAKE_COMMAND} -E rm -f ${MHD_LIBRARY}
       COMMAND ${CMAKE_COMMAND} -E env
-        CC=${TON_ANDROID_CC}
-        CXX=${TON_ANDROID_CXX}
-        AR=${TON_ANDROID_AR}
-        RANLIB=${TON_ANDROID_RANLIB}
+        CC=${ION_ANDROID_CC}
+        CXX=${ION_ANDROID_CXX}
+        AR=${ION_ANDROID_AR}
+        RANLIB=${ION_ANDROID_RANLIB}
         CFLAGS=${MHD_CFLAGS}
-        ./configure --host=${TON_ANDROID_HOST} --prefix=${MHD_BINARY_DIR} --enable-static --disable-tests --disable-benchmark --disable-shared --disable-https --with-pic --disable-doc
+        ./configure --host=${ION_ANDROID_HOST} --prefix=${MHD_BINARY_DIR} --enable-static --disable-tests --disable-benchmark --disable-shared --disable-https --with-pic --disable-doc
       COMMAND ${CMAKE_COMMAND} -E env
-        CC=${TON_ANDROID_CC}
-        CXX=${TON_ANDROID_CXX}
-        AR=${TON_ANDROID_AR}
-        RANLIB=${TON_ANDROID_RANLIB}
+        CC=${ION_ANDROID_CC}
+        CXX=${ION_ANDROID_CXX}
+        AR=${ION_ANDROID_AR}
+        RANLIB=${ION_ANDROID_RANLIB}
         CFLAGS=${MHD_CFLAGS}
         make clean
       COMMAND ${CMAKE_COMMAND} -E env
-        CC=${TON_ANDROID_CC}
-        CXX=${TON_ANDROID_CXX}
-        AR=${TON_ANDROID_AR}
-        RANLIB=${TON_ANDROID_RANLIB}
+        CC=${ION_ANDROID_CC}
+        CXX=${ION_ANDROID_CXX}
+        AR=${ION_ANDROID_AR}
+        RANLIB=${ION_ANDROID_RANLIB}
         CFLAGS=${MHD_CFLAGS}
         make -j16
       COMMAND ${CMAKE_COMMAND} -E env
-        CC=${TON_ANDROID_CC}
-        CXX=${TON_ANDROID_CXX}
-        AR=${TON_ANDROID_AR}
-        RANLIB=${TON_ANDROID_RANLIB}
+        CC=${ION_ANDROID_CC}
+        CXX=${ION_ANDROID_CXX}
+        AR=${ION_ANDROID_AR}
+        RANLIB=${ION_ANDROID_RANLIB}
         CFLAGS=${MHD_CFLAGS}
         make install
-      COMMAND ${TON_ANDROID_RANLIB} ${MHD_LIBRARY}
+      COMMAND ${ION_ANDROID_RANLIB} ${MHD_LIBRARY}
       COMMENT "Build libmicrohttpd (Android)"
       DEPENDS ${MHD_SOURCE_DIR}
       OUTPUT ${MHD_LIBRARY}

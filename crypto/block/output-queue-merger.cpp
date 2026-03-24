@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2017-2020 Telegram Systems LLP
 */
@@ -57,7 +57,7 @@ bool OutputQueueMerger::MsgKeyValue::invalidate() {
   return false;
 }
 
-ton::LogicalTime OutputQueueMerger::MsgKeyValue::get_node_lt(Ref<vm::Cell> node, int key_pfx_len) {
+ion::LogicalTime OutputQueueMerger::MsgKeyValue::get_node_lt(Ref<vm::Cell> node, int key_pfx_len) {
   if (node.is_null() || (unsigned)key_pfx_len > (unsigned)max_key_len) {
     return std::numeric_limits<td::uint64>::max();
   }
@@ -148,7 +148,7 @@ void OutputQueueMerger::add_root(int src, Ref<vm::Cell> outmsg_root, td::int32 m
   src_remaining_msgs_[src] = msg_limit;
 }
 
-OutputQueueMerger::OutputQueueMerger(ton::ShardIdFull queue_for, std::vector<OutputQueueMerger::Neighbor> neighbors)
+OutputQueueMerger::OutputQueueMerger(ion::ShardIdFull queue_for, std::vector<OutputQueueMerger::Neighbor> neighbors)
     : eof(false), failed(false) {
   common_pfx.bits().store_int(queue_for.workchain, 32);
   int l = queue_for.pfx_len();

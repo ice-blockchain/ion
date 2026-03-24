@@ -14,16 +14,16 @@
 
 class QuicHttpServer : public td::actor::Actor {
  public:
-  class ServerCallback final : public ton::quic::QuicServer::Callback {
+  class ServerCallback final : public ion::quic::QuicServer::Callback {
    public:
     explicit ServerCallback(td::actor::ActorId<QuicHttpServer> server) : server_(std::move(server)) {
     }
 
-    void on_connected(ton::quic::QuicConnectionId cid, td::SecureString public_key, bool is_outbound) override {
+    void on_connected(ion::quic::QuicConnectionId cid, td::SecureString public_key, bool is_outbound) override {
       td::actor::send_closure(server_, &QuicHttpServer::on_connected, cid, std::move(public_key));
     }
 
-    td::Status on_stream(ton::quic::QuicConnectionId cid, ton::quic::QuicStreamID sid, td::BufferSlice data,
+    td::Status on_stream(ion::quic::QuicConnectionId cid, ion::quic::QuicStreamID sid, td::BufferSlice data,
                          bool is_end) override {
       td::actor::send_closure(server_, &QuicHttpServer::on_stream_data, cid, sid, std::move(data));
       if (is_end) {
@@ -32,7 +32,7 @@ class QuicHttpServer : public td::actor::Actor {
       return td::Status::OK();
     }
 
-    void on_closed(ton::quic::QuicConnectionId cid) override {
+    void on_closed(ion::quic::QuicConnectionId cid) override {
       td::actor::send_closure(server_, &QuicHttpServer::on_closed, cid);
     }
 
@@ -53,7 +53,7 @@ class QuicHttpServer : public td::actor::Actor {
     auto public_key_b64 = td::base64_encode(public_key_r.ok().as_octet_string().as_slice());
 
     auto cb = std::make_unique<ServerCallback>(actor_id(this));
-    auto R = ton::quic::QuicServer::create(port_, std::move(server_key_), std::move(cb), alpn_.as_slice(),
+    auto R = ion::quic::QuicServer::create(port_, std::move(server_key_), std::move(cb), alpn_.as_slice(),
                                            bind_host_.as_slice());
     if (R.is_error()) {
       LOG(ERROR) << "failed to start QUIC server: " << R.error();
@@ -66,23 +66,23 @@ class QuicHttpServer : public td::actor::Actor {
   }
 
  private:
-  void on_connected(ton::quic::QuicConnectionId cid, td::SecureString public_key) {
+  void on_connected(ion::quic::QuicConnectionId cid, td::SecureString public_key) {
     auto public_key_b64 = td::base64_encode(public_key.as_slice());
     LOG(INFO) << "connected: CID, peer public key: " << public_key_b64;
   }
 
-  void on_closed(ton::quic::QuicConnectionId cid) {
+  void on_closed(ion::quic::QuicConnectionId cid) {
     request_buf_.erase(cid);
     LOG(INFO) << "connection closed";
   }
 
-  void on_stream_data(ton::quic::QuicConnectionId cid, ton::quic::QuicStreamID sid, td::BufferSlice data) {
+  void on_stream_data(ion::quic::QuicConnectionId cid, ion::quic::QuicStreamID sid, td::BufferSlice data) {
     auto &buf = request_buf_[cid][sid];
     auto s = data.as_slice();
     buf.append(s.data(), s.size());
   }
 
-  void on_stream_end(ton::quic::QuicConnectionId cid, ton::quic::QuicStreamID sid) {
+  void on_stream_end(ion::quic::QuicConnectionId cid, ion::quic::QuicStreamID sid) {
     auto it = request_buf_.find(cid);
     std::string req;
     if (it != request_buf_.end()) {
@@ -123,8 +123,8 @@ class QuicHttpServer : public td::actor::Actor {
     const auto &stored = responses_.back();
 
     LOG(INFO) << "request finished, replying on stream " << sid;
-    td::actor::send_closure(server_.get(), &ton::quic::QuicServer::send_stream_data, cid, sid, td::BufferSlice(stored));
-    td::actor::send_closure(server_.get(), &ton::quic::QuicServer::send_stream_end, cid, sid);
+    td::actor::send_closure(server_.get(), &ion::quic::QuicServer::send_stream_data, cid, sid, td::BufferSlice(stored));
+    td::actor::send_closure(server_.get(), &ion::quic::QuicServer::send_stream_end, cid, sid);
 
     while (responses_.size() > 1024) {
       responses_.pop_front();
@@ -136,9 +136,9 @@ class QuicHttpServer : public td::actor::Actor {
   td::BufferSlice alpn_;
   td::BufferSlice bind_host_;
 
-  td::actor::ActorOwn<ton::quic::QuicServer> server_;
+  td::actor::ActorOwn<ion::quic::QuicServer> server_;
 
-  std::map<ton::quic::QuicConnectionId, std::map<ton::quic::QuicStreamID, std::string>> request_buf_;
+  std::map<ion::quic::QuicConnectionId, std::map<ion::quic::QuicStreamID, std::string>> request_buf_;
 
   std::deque<std::string> responses_;
 };

@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain source code.
+    This file is part of ION Blockchain source code.
 
-    TON Blockchain is free software; you can redistribute it and/or
+    ION Blockchain is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
     as published by the Free Software Foundation; either version 2
     of the License, or (at your option) any later version.
 
-    TON Blockchain is distributed in the hope that it will be useful,
+    ION Blockchain is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with TON Blockchain.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain.  If not, see <http://www.gnu.org/licenses/>.
 
     In addition, as a special exception, the copyright holders give permission
     to link the code of portions of this program with the OpenSSL library.
@@ -31,21 +31,21 @@
 #include "adnl/adnl-ext-client.h"
 #include "terminal/terminal.h"
 #include "tl-utils/tl-utils.hpp"
-#include "ton/ton-types.h"
+#include "ion/ion-types.h"
 #include "vm/cells.h"
 
 #include "validator-engine-console-query.h"
 
 class ValidatorEngineConsole : public td::actor::Actor {
  private:
-  td::actor::ActorOwn<ton::adnl::AdnlExtClient> client_;
+  td::actor::ActorOwn<ion::adnl::AdnlExtClient> client_;
   td::actor::ActorOwn<td::TerminalIO> io_;
 
   bool readline_enabled_ = true;
 
   td::IPAddress remote_addr_;
-  ton::PrivateKey private_key_;
-  ton::PublicKey server_public_key_;
+  ion::PrivateKey private_key_;
+  ion::PublicKey server_public_key_;
 
   bool ready_ = false;
   bool inited_ = false;
@@ -55,7 +55,7 @@ class ValidatorEngineConsole : public td::actor::Actor {
   bool ex_mode_ = false;
   std::vector<td::BufferSlice> ex_queries_;
 
-  std::unique_ptr<ton::adnl::AdnlExtClient::Callback> make_callback();
+  std::unique_ptr<ion::adnl::AdnlExtClient::Callback> make_callback();
 
   std::map<std::string, std::unique_ptr<QueryRunner>> query_runners_;
   std::map<std::string, std::string> alternate_names_;

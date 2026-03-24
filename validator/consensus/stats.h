@@ -1,12 +1,12 @@
 /*
- * Copyright (c) 2026, TON CORE TECHNOLOGIES CO. L.L.C
+ * Copyright (c) 2026, ION CORE TECHNOLOGIES CO. L.L.C
  *
  * SPDX-License-Identifier: LGPL-2.0-or-later
  */
 
 #include "types.h"
 
-namespace ton::validator::consensus::stats {
+namespace ion::validator::consensus::stats {
 
 namespace tl {
 
@@ -212,4 +212,4 @@ class MetricCollector {
   virtual void collect_block_accepted(const BlockAccepted& event) = 0;
 };
 
-}  // namespace ton::validator::consensus::stats
+}  // namespace ion::validator::consensus::stats

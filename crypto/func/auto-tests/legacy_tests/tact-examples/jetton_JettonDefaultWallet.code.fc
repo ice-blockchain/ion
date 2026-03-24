@@ -336,8 +336,8 @@ _ $__gen_get_get_wallet_data() method_id(97026) {
     $self'balance = ($self'balance + $msg'amount);
     throw_unless(62972, ($self'balance >= 0));
     int $msgValue = $ctx'value;
-    int $tonBalanceBeforeMsg = (__tact_my_balance() - $msgValue);
-    int $storageFee = (10000000 - min($tonBalanceBeforeMsg, 10000000));
+    int $ionBalanceBeforeMsg = (__tact_my_balance() - $msgValue);
+    int $storageFee = (10000000 - min($ionBalanceBeforeMsg, 10000000));
     $msgValue = ($msgValue - ($storageFee + 10000000));
     if (($msg'forwardTonAmount > 0)) {
         int $fwdFee = $__gen_Context_readForwardFee(($ctx'bounced, $ctx'sender, $ctx'value, $ctx'raw));
@@ -428,9 +428,9 @@ _ $__gen_get_get_wallet_data() method_id(97026) {
 
 _ supported_interfaces() method_id {
     return (
-        "org.ton.introspection.v0"H >> 128,
-        "org.ton.abi.ipfs.v0"H >> 128,
-        "org.ton.jetton.wallet"H >> 128
+        "org.ion.introspection.v0"H >> 128,
+        "org.ion.abi.ipfs.v0"H >> 128,
+        "org.ion.jetton.wallet"H >> 128
     );
 }
 

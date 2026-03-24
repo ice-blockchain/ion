@@ -1,4 +1,4 @@
-fun f(x: slice = ton("0.04")) {
+fun f(x: slice = ion("0.04")) {
 }
 
 /**

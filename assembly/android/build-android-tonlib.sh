@@ -40,16 +40,16 @@ export ANDROID_NDK_ROOT="${ROOT_DIR}/android-ndk-r27d"
 export NDK_PLATFORM="android-21"
 export ANDROID_PLATFORM="android-21"
 
-rm -rf "${ROOT_DIR}/example/android/src/drinkless/org/ton/TonApi.java"
+rm -rf "${ROOT_DIR}/example/android/src/drinkless/org/ion/TonApi.java"
 cd "${ROOT_DIR}/example/android/" || exit
 
 rm -f CMakeCache.txt build.ninja rules.ninja .ninja_*
 rm -rf CMakeFiles
 cmake -GNinja . \
 -DCMAKE_C_COMPILER=clang-21 -DCMAKE_CXX_COMPILER=clang++-21 \
--DTON_ONLY_TONLIB=ON
+-DION_ONLY_TONLIB=ON
 
-test $? -eq 0 || { echo "Can't configure TON"; exit 1; }
+test $? -eq 0 || { echo "Can't configure ION"; exit 1; }
 
 ninja prepare_cross_compiling
 
@@ -65,6 +65,6 @@ find . -name "*.debug" -type f -delete
 if [ "$with_artifacts" = true ]; then
   cd ../..
   mkdir -p artifacts/tonlib-android-jni
-  cp example/android/src/drinkless/org/ton/TonApi.java artifacts/tonlib-android-jni/
+  cp example/android/src/drinkless/org/ion/TonApi.java artifacts/tonlib-android-jni/
   cp -R example/android/libs/* artifacts/tonlib-android-jni/
 fi

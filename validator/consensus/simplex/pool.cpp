@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025-2026, TON CORE TECHNOLOGIES CO. L.L.C
+ * Copyright (c) 2025-2026, ION CORE TECHNOLOGIES CO. L.L.C
  *
  * SPDX-License-Identifier: LGPL-2.0-or-later
  */
@@ -12,7 +12,7 @@
 #include "state.h"
 #include "stats.h"
 
-namespace ton::validator::consensus::simplex {
+namespace ion::validator::consensus::simplex {
 
 namespace {
 
@@ -280,7 +280,7 @@ class PoolImpl : public runtime::SpawnsWith<Bus>, public runtime::ConnectsTo<Bus
   };
 
  public:
-  TON_RUNTIME_DEFINE_EVENT_HANDLER();
+  ION_RUNTIME_DEFINE_EVENT_HANDLER();
 
   void start_up() override {
     auto &bus = *owning_bus();
@@ -807,4 +807,4 @@ void Pool::register_in(runtime::Runtime &runtime) {
   runtime.register_actor<PoolImpl>("SimplexPool");
 }
 
-}  // namespace ton::validator::consensus::simplex
+}  // namespace ion::validator::consensus::simplex

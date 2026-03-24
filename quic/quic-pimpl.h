@@ -16,7 +16,7 @@
 #include "openssl-utils.h"
 #include "quic-common.h"
 
-namespace ton::quic {
+namespace ion::quic {
 
 struct QuicConnectionOptions {
   static constexpr size_t DEFAULT_MAX_WINDOW = 24 << 20;
@@ -251,4 +251,4 @@ struct QuicConnectionPImpl {
   static int alpn_select_cb(SSL* ssl, const unsigned char** out, unsigned char* outlen, const unsigned char* in,
                             unsigned int inlen, void* arg);
 };
-}  // namespace ton::quic
+}  // namespace ion::quic

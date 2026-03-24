@@ -1,4 +1,4 @@
-This document collects some recommendations and best practices that could be followed when developing new smart contracts for TON Blockchain.
+This document collects some recommendations and best practices that could be followed when developing new smart contracts for ION Blockchain.
 
 1. Internal messages
 ~~~~~~~~~~~~~~~~~~~~
@@ -7,7 +7,7 @@ Smart contracts interact with each other by sending the so-called *internal mess
 
 This approach leads to the necessity of distinguishing whether an internal message is intended as a "query" or as a "response", or doesn't require any additional processing (like a "simple money transfer"). Furthermore, when a response is received, there must be a means to understand to which query it corresponds.
 
-In order to achieve this goal, the following recommended internal message layout can be used (notice that the TON Blockchain does not enforce any restrictions on the message body, so these are indeed just recommendations):
+In order to achieve this goal, the following recommended internal message layout can be used (notice that the ION Blockchain does not enforce any restrictions on the message body, so these are indeed just recommendations):
 
 0) The body of the message can be embedded into the message itself, or be stored in a separate cell referred to from the message, as indicated by the TL-B scheme fragment
 
@@ -41,7 +41,7 @@ Notice that unknown "responses" (with an *op* in the range 2^31 .. 2^32-1) shoul
 
 In general, if a smart contract wants to send a query to another smart contract, it should pay for sending the internal message to the destination smart contract (message forwarding fees), for processing this message at the destination (gas fees), and for sending back the answer if required (message forwarding fees).
 
-In most cases, the sender will attach a small amount of Grams (e.g., one Gram) to the internal message (sufficient to pay for the processing of this message), and set its "bounce" flag (i.e., send a bounceable internal message); the receiver will return the unused portion of the received value with the answer (deducting message forwarding fees from it). This is normally accomplished by invoking SENDRAWMSG with mode=64 (cf. Appendix A of TON VM documentation).
+In most cases, the sender will attach a small amount of Grams (e.g., one Gram) to the internal message (sufficient to pay for the processing of this message), and set its "bounce" flag (i.e., send a bounceable internal message); the receiver will return the unused portion of the received value with the answer (deducting message forwarding fees from it). This is normally accomplished by invoking SENDRAWMSG with mode=64 (cf. Appendix A of ION VM documentation).
 
 If the receiver is unable to parse the received message and terminates with a non-zero exit code (for example, because of an unhandled cell deserialization exception), the message will be automatically "bounced" back to its sender, with the "bounce" flag cleared and the "bounced" flag set. The body of the bounced message will be the same as that of the original message; therefore, it is important to check the "bounced" flag of incoming internal messages before parsing the *op* field in the smart contract and processing the corresponding query (otherwise there is a risk that the query contained in a bounced message will be processed by its original sender as a new separate query). If the "bounced" flag is set, special code could find out which query has failed (e.g., by deserializing *op* and *query_id* from the bounced message) and take appropriate action. A simpler smart contract might simply ignore all bounced messages (terminate with zero exit code if "bounced" flag is set).
 
@@ -61,7 +61,7 @@ It is a good idea not to allow the end user (e.g., of a wallet) to send unbounce
 4. External messages
 ~~~~~~~~~~~~~~~~~~~~
 
-External messages are sent from the outside to the smart contracts residing in the TON Blockchain to make them perform certain actions. For instance, a wallet smart contract expects to receive external messages containing orders (e.g., internal messages to be sent from the wallet smart contract) signed by the wallet's owner; when such an external message is received by the wallet smart contract, it first checks the signature, then accepts the message (by running the TVM primitive ACCEPT), and then performs whatever actions are required.
+External messages are sent from the outside to the smart contracts residing in the ION Blockchain to make them perform certain actions. For instance, a wallet smart contract expects to receive external messages containing orders (e.g., internal messages to be sent from the wallet smart contract) signed by the wallet's owner; when such an external message is received by the wallet smart contract, it first checks the signature, then accepts the message (by running the TVM primitive ACCEPT), and then performs whatever actions are required.
 
 Notice that all external messages must be protected against replay attacks. The validators normally remove an external message from the pool of suggested external messages (received from network); however, in some situations another validator could process the same external message twice (thus creating a second transaction for the same external message, leading to the duplication of the original action). Even worse, a malicious actor could extract the external message from the block containing the processing transaction and re-send it later. This could force a wallet smart contract to repeat a payment, for example.
 
@@ -74,4 +74,4 @@ In general, an external message begins with a 256-bit signature (if needed), a 3
 5. Get-methods
 ~~~~~~~~~~~~~~
 
-Some smart contracts are expected to implement certain well-defined get-methods. For instance, any subdomain resolver smart contract for TON DNS is expected to implement the get-method "dnsresolve". Custom smart contracts may define their specific get-methods. Our only general recommendation at this point is to implement the get-method "seqno" (without parameters) that returns the current *seqno* of a smart contract that uses sequence numbers to prevent replay attacks related to inbound external methods, whenever such a method makes sense.
+Some smart contracts are expected to implement certain well-defined get-methods. For instance, any subdomain resolver smart contract for ION DNS is expected to implement the get-method "dnsresolve". Custom smart contracts may define their specific get-methods. Our only general recommendation at this point is to implement the get-method "seqno" (without parameters) that returns the current *seqno* of a smart contract that uses sequence numbers to prevent replay attacks related to inbound external methods, whenever such a method makes sense.

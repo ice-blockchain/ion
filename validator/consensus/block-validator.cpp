@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025-2026, TON CORE TECHNOLOGIES CO. L.L.C
+ * Copyright (c) 2025-2026, ION CORE TECHNOLOGIES CO. L.L.C
  *
  * SPDX-License-Identifier: LGPL-2.0-or-later
  */
@@ -9,13 +9,13 @@
 #include "bus.h"
 #include "stats.h"
 
-namespace ton::validator::consensus {
+namespace ion::validator::consensus {
 
 namespace {
 
 class BlockValidatorImpl : public runtime::SpawnsWith<Bus>, public runtime::ConnectsTo<Bus> {
  public:
-  TON_RUNTIME_DEFINE_EVENT_HANDLER();
+  ION_RUNTIME_DEFINE_EVENT_HANDLER();
 
   template <>
   void handle(BusHandle, std::shared_ptr<const StopRequested>) {
@@ -78,4 +78,4 @@ void BlockValidator::register_in(runtime::Runtime& runtime) {
   runtime.register_actor<BlockValidatorImpl>("BlockValidator");
 }
 
-}  // namespace ton::validator::consensus
+}  // namespace ion::validator::consensus

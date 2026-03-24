@@ -6,13 +6,13 @@
 #include "td/actor/actor.h"
 #include "td/utils/buffer.h"
 #include "td/utils/port/FileFd.h"
-#include "ton/ton-types.h"
+#include "ion/ion-types.h"
 #include "validator/interfaces/block-handle.h"
 
 #include "filedb.hpp"
 #include "package.hpp"
 
-namespace ton {
+namespace ion {
 
 namespace validator {
 
@@ -95,4 +95,4 @@ class ArchiveManager : public td::actor::Actor {
 
 }  // namespace validator
 
-}  // namespace ton
+}  // namespace ion

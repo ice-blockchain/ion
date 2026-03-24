@@ -1,14 +1,14 @@
 /*
- * Copyright (c) 2026, TON CORE TECHNOLOGIES CO. L.L.C
+ * Copyright (c) 2026, ION CORE TECHNOLOGIES CO. L.L.C
  *
  * SPDX-License-Identifier: LGPL-2.0-or-later
  */
 
-#include "ton/ton-tl.hpp"
+#include "ion/ion-tl.hpp"
 
 #include "stats.h"
 
-namespace ton::validator::consensus::stats {
+namespace ion::validator::consensus::stats {
 
 std::unique_ptr<Id> Id::create(ShardIdFull shard, td::uint32 cc_seqno, size_t idx, size_t total_validators,
                                ValidatorWeight weight, ValidatorWeight total_weight,
@@ -187,4 +187,4 @@ void BlockAccepted::collect_to(MetricCollector& collector) const {
 BlockAccepted::BlockAccepted(CandidateId id) : id_(id) {
 }
 
-}  // namespace ton::validator::consensus::stats
+}  // namespace ion::validator::consensus::stats

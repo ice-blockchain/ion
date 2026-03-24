@@ -104,14 +104,14 @@
 
 \begin{abstract}
   The aim of this text is to provide a description of the Telegram
-  Open Network Virtual Machine (TON VM or TVM), used to execute smart
-  contracts in the TON Blockchain.
+  Open Network Virtual Machine (ION VM or TVM), used to execute smart
+  contracts in the ION Blockchain.
 \end{abstract}
 
 \section*{Introduction}
 \markbothsame{Introduction}
 
-The primary purpose of the Telegram Open Network Virtual Machine (TON VM or TVM) is to execute smart-contract code in the TON Blockchain. TVM must support all operations required to parse incoming messages and persistent data, and to create new messages and modify persistent data.
+The primary purpose of the Telegram Open Network Virtual Machine (ION VM or TVM) is to execute smart-contract code in the ION Blockchain. TVM must support all operations required to parse incoming messages and persistent data, and to create new messages and modify persistent data.
 
 Additionally, TVM must meet the following requirements:
 \begin{itemize}
@@ -121,7 +121,7 @@ Additionally, TVM must meet the following requirements:
 \end{itemize}
 The design of TVM is guided by these requirements. While this document describes a preliminary and experimental version of TVM,\footnote{The production version will likely require some tweaks and modifications prior to launch, which will become apparent only after using the experimental version in the test environment for some time.} the backward compatibility mechanisms built into the system allow us to be relatively unconcerned with the efficiency of the operation encoding used for TVM code in this preliminary version.
 
-TVM is not intended to be implemented in hardware (e.g., in a specialized microprocessor chip); rather, it should be implemented in software running on conventional hardware. This consideration lets us incorporate some high-level concepts and operations in TVM that would require convoluted microcode in a hardware implementation but pose no significant problems for a software implementation. Such operations are useful for achieving high code density and minimizing the byte (or storage cell) profile of smart-contract code when deployed in the TON Blockchain.
+TVM is not intended to be implemented in hardware (e.g., in a specialized microprocessor chip); rather, it should be implemented in software running on conventional hardware. This consideration lets us incorporate some high-level concepts and operations in TVM that would require convoluted microcode in a hardware implementation but pose no significant problems for a software implementation. Such operations are useful for achieving high code density and minimizing the byte (or storage cell) profile of smart-contract code when deployed in the ION Blockchain.
 
 \clearpage
 \tableofcontents
@@ -170,13 +170,13 @@ In some respects TVM performs a kind of dynamic typing using run-time type check
 
 An alternative would be to somehow analyze the smart-contract code for type correctness and type safety before allowing its execution in the VM, or even before allowing it to be uploaded into the blockchain as the code of a smart contract. Such a static analysis of code for a Turing-complete machine appears to be a time-consuming and non-trivial problem (likely to be equivalent to the stopping problem for Turing machines), something we would rather avoid in a blockchain smart-contract context.
 
-One should bear in mind that one always can implement compilers from statically typed high-level smart-contract languages into the TVM code (and we do expect that most smart contracts for TON will be written in such languages), just as one can compile statically typed languages into conventional machine code (e.g., x86 architecture). If the compiler works correctly, the resulting machine code will never generate any run-time type-checking exceptions. All type tags attached to values processed by TVM will always have expected values and may be safely ignored during the analysis of the resulting TVM code, apart from the fact that the run-time generation and verification of these type tags by TVM will slightly slow down the execution of the TVM code.
+One should bear in mind that one always can implement compilers from statically typed high-level smart-contract languages into the TVM code (and we do expect that most smart contracts for ION will be written in such languages), just as one can compile statically typed languages into conventional machine code (e.g., x86 architecture). If the compiler works correctly, the resulting machine code will never generate any run-time type-checking exceptions. All type tags attached to values processed by TVM will always have expected values and may be safely ignored during the analysis of the resulting TVM code, apart from the fact that the run-time generation and verification of these type tags by TVM will slightly slow down the execution of the TVM code.
 
 \nxsubpoint\label{sp:val.types}\emb{Preliminary list of value types}
 A preliminary list of value types supported by TVM is as follows:
 \begin{itemize}
 \item {\em Integer\/} --- Signed 257-bit integers, representing integer numbers in the range $-2^{256}\ldots2^{256}-1$, as well as a special ``not-a-number'' value \texttt{NaN}.
-\item {\em Cell\/} --- A {\em TVM cell\/} consists of at most 1023 bits of data, and of at most four references to other cells. All persistent data (including TVM code) in the TON Blockchain is represented as a collection of TVM cells (cf.~\cite[2.5.14]{TON}).
+\item {\em Cell\/} --- A {\em TVM cell\/} consists of at most 1023 bits of data, and of at most four references to other cells. All persistent data (including TVM code) in the ION Blockchain is represented as a collection of TVM cells (cf.~\cite[2.5.14]{ION}).
 \item {\em Tuple\/} --- An ordered collection of up to 255 components, having arbitrary value types, possibly distinct. May be used to represent non-persistent values of arbitrary algebraic data types.
 \item {\em Null\/} --- A type with exactly one value~$\bot$, used for representing empty lists, empty branches of binary trees, absence of return value in some situations, and so on.
 \item {\em Slice\/} --- A {\em TVM cell slice}, or {\em slice\/} for short, is a contiguous ``sub-cell'' of an existing cell, containing some of its bits of data and some of its references. Essentially, a slice is a read-only view for a subcell of a cell. Slices are used for unpacking data previously stored (or serialized) in a cell or a tree of cells.
@@ -194,7 +194,7 @@ TVM {\em instructions}, also called {\em primitives\/} and sometimes {\em (built
 \item {\em Arithmetic primitives\/} --- Perform the usual integer arithmetic operations on values of type {\em Integer}.
 \item {\em Cell (manipulation) primitives\/} --- Create new cells and store data in them ({\em cell creation primitives}) or read data from previously created cells ({\em cell parsing primitives}). Because all memory and persistent storage of TVM consists of cells, these cell manipulation primitives actually correspond to ``memory access instructions'' of other architectures. Cell creation primitives usually work with values of type {\em Builder}, while cell parsing primitives work with {\em Slice\/}s.
 \item {\em Continuation\/} and {\em control flow primitives\/} --- Create and modify {\em Continuation\/}s, as well as execute existing {\em Continuation\/}s in different ways, including conditional and repeated execution.
-\item {\em Custom\/} or {\em application-specific primitives\/} --- Efficiently perform specific high-level actions required by the application (in our case, the TON Blockchain), such as computing hash functions, performing elliptic curve cryptography, sending new blockchain messages, creating new smart contracts, and so on. These primitives correspond to standard library functions rather than microprocessor instructions.
+\item {\em Custom\/} or {\em application-specific primitives\/} --- Efficiently perform specific high-level actions required by the application (in our case, the ION Blockchain), such as computing hash functions, performing elliptic curve cryptography, sending new blockchain messages, creating new smart contracts, and so on. These primitives correspond to standard library functions rather than microprocessor instructions.
 \end{itemize}
 
 \mysubsection{Control registers}
@@ -213,10 +213,10 @@ The original version of TVM defines and uses the following control registers:
 \item \texttt{c2} --- Contains the {\em exception handler}. This value is a {\em Continuation},  invoked whenever an exception is triggered.
 \item \texttt{c3} --- Contains the {\em current dictionary}, essentially a hashmap containing the code of all functions used in the program. For reasons explained later in~\ptref{p:func.rec.dict}, this value is also a {\em Continuation}, not a {\em Cell\/} as one might expect.
 \item \texttt{c4} --- Contains the {\em root of persistent data}, or simply the {\em data}. This value is a {\em Cell}. When the code of a smart contract is invoked, \texttt{c4} points to the root cell of its persistent data kept in the blockchain state. If the smart contract needs to modify this data, it changes \texttt{c4} before returning.
-\item \texttt{c5} --- Contains the {\em output actions}. It is also a {\em Cell\/} initialized by a reference to an empty cell, but its final value is considered one of the smart contract outputs. For instance, the {\tt SENDMSG} primitive, specific for the TON Blockchain, simply inserts the message into a list stored in the output actions.
-\item \texttt{c7} --- Contains the {\em root of temporary data}. It is a {\em Tuple}, initialized by a reference to an empty {\em Tuple\/} before invoking the smart contract and discarded after its termination.\footnote{In the TON Blockchain context, \texttt{c7} is initialized with a singleton {\em Tuple}, the only component of which is a {\em Tuple\/} containing blockchain-specific data. The smart contract is free to modify \texttt{c7} to store its temporary data provided the first component of this {\em Tuple\/} remains intact.}
+\item \texttt{c5} --- Contains the {\em output actions}. It is also a {\em Cell\/} initialized by a reference to an empty cell, but its final value is considered one of the smart contract outputs. For instance, the {\tt SENDMSG} primitive, specific for the ION Blockchain, simply inserts the message into a list stored in the output actions.
+\item \texttt{c7} --- Contains the {\em root of temporary data}. It is a {\em Tuple}, initialized by a reference to an empty {\em Tuple\/} before invoking the smart contract and discarded after its termination.\footnote{In the ION Blockchain context, \texttt{c7} is initialized with a singleion {\em Tuple}, the only component of which is a {\em Tuple\/} containing blockchain-specific data. The smart contract is free to modify \texttt{c7} to store its temporary data provided the first component of this {\em Tuple\/} remains intact.}
 \end{itemize}
-More control registers may be defined in the future for specific TON Block\-chain or high-level programming language purposes, if necessary.
+More control registers may be defined in the future for specific ION Block\-chain or high-level programming language purposes, if necessary.
 
 \mysubsection{Total state of TVM (SCCCG)}\label{p:tvm.state}
 The total state of TVM consists of the following components:
@@ -421,7 +421,7 @@ In other words, the programmer should always act as if the objects themselves we
 \nxsubpoint\label{sp:no.cyclic}\emb{Absence of circular references}
 One might attempt to create a circular reference between two cells, $A$ and $B$, as follows: first create $A$ and write some data into it; then create $B$ and write some data into it, along with a reference to previously constructed cell~$A$; finally, add a reference to $B$ into $A$. While it may seem that after this sequence of operations we obtain a cell $A$, which refers to $B$, which in turn refers to~$A$, this is not the case. In fact, we obtain a new cell $A'$, which contains a copy of the data originally stored into cell $A$ along with a reference to cell $B$, which contains a reference to (the original) cell~$A$.
 
-In this way the transparent copy-on-write mechanism and the ``everything is a value'' paradigm enable us to create new cells using only previously constructed cells, thus forbidding the appearance of circular references. This property also applies to all other data structures: for instance, the absence of circular references enables TVM to use reference counting to immediately free unused memory instead of relying on garbage collectors. Similarly, this property is crucial for storing data in the TON Blockchain.
+In this way the transparent copy-on-write mechanism and the ``everything is a value'' paradigm enable us to create new cells using only previously constructed cells, thus forbidding the appearance of circular references. This property also applies to all other data structures: for instance, the absence of circular references enables TVM to use reference counting to immediately free unused memory instead of relying on garbage collectors. Similarly, this property is crucial for storing data in the ION Blockchain.
 
 \clearpage
 \mysection{Cells, memory, and persistent storage}
@@ -494,7 +494,7 @@ The TVM code itself is also represented by a tree of cells. Indeed, TVM code is 
 The exact way in which the TVM code (e.g., TVM assembly code) is transformed into a tree of cells is explained later (cf.~\ptref{sp:ord.cont.exec} and~\ptref{p:instr.encode}), in sections discussing control flow instructions, continuations, and TVM instruction encoding.
 
 \nxsubpoint\emb{``Everything is a bag of cells'' paradigm}
-As described in \cite[2.5.14]{TON}, all the data used by the TON Blockchain, including the blocks themselves and the blockchain state, can be represented---and are represented---as collections, or ``bags'', of cells. We see that TVM's structure of data (cf.~\ptref{sp:data.boc}) and code (cf.~\ptref{sp:code.boc}) nicely fits into this ``everything is a bag of cells'' paradigm. In this way, TVM can naturally be used to execute smart contracts in the TON Blockchain, and the TON Blockchain can be used to store the code and persistent data of these smart contracts between invocations of TVM. (Of course, both TVM and the TON Blockchain have been designed so that this would become possible.)
+As described in \cite[2.5.14]{ION}, all the data used by the ION Blockchain, including the blocks themselves and the blockchain state, can be represented---and are represented---as collections, or ``bags'', of cells. We see that TVM's structure of data (cf.~\ptref{sp:data.boc}) and code (cf.~\ptref{sp:code.boc}) nicely fits into this ``everything is a bag of cells'' paradigm. In this way, TVM can naturally be used to execute smart contracts in the ION Blockchain, and the ION Blockchain can be used to store the code and persistent data of these smart contracts between invocations of TVM. (Of course, both TVM and the ION Blockchain have been designed so that this would become possible.)
 \mysubsection{Data manipulation instructions and cells}\label{p:cell.manip}
 The next large group of TVM instructions consists of {\em data manipulation instructions}, also known as {\em cell manipulation instructions\/} or simply {\em cell instructions}. They correspond to memory access instructions of other architectures.
 
@@ -550,7 +550,7 @@ Integer serialization primitives can be classified according to the above taxono
 Integer serialization instructions have mnemonics like \texttt{STU 20} (``store an unsigned 20-bit integer value'') or \texttt{STIXQ} (``quietly store an integer value of variable length provided in the stack''). The full list of these instructions---including their mnemonics, descriptions, and opcodes---is provided in~\ptref{sp:prim.ser}.
 
 \nxsubpoint\emb{Integers in cells are big-endian by default}
-Notice that the default order of bits in {\em Integer\/}s serialized into {\em Cell\/}s is {\em big-endian}, not little-endian.\footnote{Negative numbers are represented using two's complement. For instance, integer $-17$ is serialized by instruction {\tt STI 8} into bitstring {\tt xEF}.} In this respect {\em TVM is a big-endian machine}. However, this affects only the serialization of integers inside cells. The internal representation of the {\em Integer\/} value type is implementation-dependent and irrelevant for the operation of TVM. Besides, there are some special primitives such as {\tt STULE} for (de)serializing little-endian integers, which must be stored into an integral number of bytes (otherwise ``little-endianness'' does not make sense, unless one is also willing to revert the order of bits inside octets). Such primitives are useful for interfacing with the little-endian world---for instance, for parsing custom-format messages arriving to a TON Blockchain smart contract from the outside world.
+Notice that the default order of bits in {\em Integer\/}s serialized into {\em Cell\/}s is {\em big-endian}, not little-endian.\footnote{Negative numbers are represented using two's complement. For instance, integer $-17$ is serialized by instruction {\tt STI 8} into bitstring {\tt xEF}.} In this respect {\em TVM is a big-endian machine}. However, this affects only the serialization of integers inside cells. The internal representation of the {\em Integer\/} value type is implementation-dependent and irrelevant for the operation of TVM. Besides, there are some special primitives such as {\tt STULE} for (de)serializing little-endian integers, which must be stored into an integral number of bytes (otherwise ``little-endianness'' does not make sense, unless one is also willing to revert the order of bits inside octets). Such primitives are useful for interfacing with the little-endian world---for instance, for parsing custom-format messages arriving to a ION Blockchain smart contract from the outside world.
 
 \nxsubpoint\emb{Other serialization primitives}
 Other cell creation primitives serialize bitstrings (i.e., cell slices without references), either taken from the stack or supplied as literal arguments; cell slices (which are concatenated to the cell builder in an obvious way); other {\em Builder\/}s (which are also concatenated); and cell references (\texttt{STREF}).
@@ -884,7 +884,7 @@ In this way, the called subroutine can return control to the caller by switching
 \nxsubpoint\label{sp:callx.num.args}\emb{Determining the number of arguments passed to and/or return values accepted from a subroutine}
 Similarly to {\tt JMPX} and {\tt RET}, {\tt CALLX} also has special (rarely used) forms, which allow us to explicitly specify the number $n''$ of arguments passed from the current stack to the called subroutine (by default, $n''$ equals the depth of the current stack, i.e., it is passed in its entirety). Furthermore, a second number $n'''$ can be specified, used to set {\tt nargs} of the modified {\tt cc} continuation before storing it into the new~{\tt c0}; the new {\tt nargs} equals the depth of the old stack minus $n''$ plus $n'''$. This means that the caller is willing to pass exactly $n''$ arguments to the called subroutine, and is willing to accept exactly $n'''$ results in their stead.
 
-Such forms of {\tt CALLX} and {\tt RET} are mostly intended for library functions that accept functional arguments and want to invoke them safely. Another application is related to the ``virtualization support'' of TVM, which enables TVM code to run other TVM code inside a ``virtual TVM machine''. Such virtualization techniques might be useful for implementing sophisticated payment channels in the TON Blockchain (cf.~\cite[5]{TON}).
+Such forms of {\tt CALLX} and {\tt RET} are mostly intended for library functions that accept functional arguments and want to invoke them safely. Another application is related to the ``virtualization support'' of TVM, which enables TVM code to run other TVM code inside a ``virtual TVM machine''. Such virtualization techniques might be useful for implementing sophisticated payment channels in the ION Blockchain (cf.~\cite[5]{ION}).
 
 \nxsubpoint\label{sp:call.cc}
 \emb{\texttt{CALLCC}: call with current continuation}
@@ -967,7 +967,7 @@ When somebody wants to invoke a method $m$ of $o$ with arguments $x_1$, $x_2$, \
 \nxsubpoint\emb{Serializable objects}
 Another way of representing Smalltalk-style objects as continuations, or even as trees of cells, consists in using the {\tt JMPREFDATA} primitive (a variant of {\tt JMPXDATA}, cf.~\ptref{sp:call.cc}), which takes the first cell reference from the code of the current continuation, transforms the cell referred to into a simple ordinary continuation, and transfers control to it, first pushing the remainder of the current continuation as a {\em Slice} into the stack. In this way, an object might be represented by a cell $\tilde o$ that contains {\tt JMPREFDATA} at the beginning of its data, and the actual code of the object in the first reference (one might say that the first reference of cell $\tilde o$ is the {\em class} of object $\tilde o$). Remaining data and references of this cell will be used for storing the fields of the object.
 
-Such objects have the advantage of being trees of cells, and not just continuations, meaning that they can be stored into the persistent storage of a TON smart contract.
+Such objects have the advantage of being trees of cells, and not just continuations, meaning that they can be stored into the persistent storage of a ION smart contract.
 
 \nxsubpoint\emb{Unique continuations and capabilities}
 It might make sense (in a future revision of TVM) to mark some continuations as {\em unique}, meaning that they cannot be copied, even in a delayed manner, by increasing their reference counter to a value greater than one. If an opaque continuation is unique, it essentially becomes a {\em capability}, which can either be used by its owner exactly once or be transferred to somebody else.
@@ -993,7 +993,7 @@ The exception handling itself consists in a control transfer to the exception ha
 Notice that if the continuation in {\tt c2} has a value for {\tt c2} in its savelist, it will be used to set up the new value of {\tt c2} before executing the exception handler. In particular, if the exception handler invokes \texttt{THROWANY}, it will re-throw the original exception with the restored value of {\tt c2}. This trick enables the exception handler to handle only some exceptions, and pass the rest to an outer exception handler.
 
 \nxsubpoint\emb{Default exception handler}
-When an instance of TVM is created, {\tt c2} contains a reference to the ``default exception handler continuation'', which is an {\tt ec\_fatal} extraordinary continuation (cf.~\ptref{sp:extraord.cont}). Its execution leads to the termination of the execution of TVM, with the arguments $v$ and $n$ of the exception returned to the outside caller. In the context of the TON Blockchain, $n$ will be stored as a part of the transaction's result.
+When an instance of TVM is created, {\tt c2} contains a reference to the ``default exception handler continuation'', which is an {\tt ec\_fatal} extraordinary continuation (cf.~\ptref{sp:extraord.cont}). Its execution leads to the termination of the execution of TVM, with the arguments $v$ and $n$ of the exception returned to the outside caller. In the context of the ION Blockchain, $n$ will be stored as a part of the transaction's result.
 
 \nxsubpoint\emb{{\tt TRY} primitive}
 A {\tt TRY} primitive can be used to implement C++-like exception handling. This primitive accepts two continuations, $c$ and $c'$. It stores the old value of {\tt c2} into the savelist of $c'$, sets {\tt c2} to $c'$, and executes $c$ just as {\tt EXECUTE} would, but additionally saving the old value of {\tt c2} into the savelist of the new {\tt c0} as well. Usually a version of the {\tt TRY} primitive with an explicit number of arguments $n''$ passed to the continuation $c$ is used.
@@ -1173,7 +1173,7 @@ For example, imagine a version of TVM that uses two new codepages, 2 and 3. Most
 Alternatively, one might create a couple of codepages---say, 4 and 5---which differ only in their cell deserialisation primitives. For instance, in codepage 4 they might work as before, while in codepage 5 they might deserialize data not from the beginning of a {\em Slice}, but from its end. Two new instructions---say, {\tt CLD} and {\tt STD}---might be used for switching to codepage 4 or codepage 5. Clearly, we have now described a status flag, affecting the execution of some instructions in a certain new manner.
 
 \nxsubpoint\emb{Setting the codepage in the code itself}\label{sp:setcp.opc}
-For convenience, we reserve some opcode in all codepages---say, {\tt FF $n$}---for the instruction {\tt SETCP $n$}, with $n$ from 0 to 255 (cf.~\ptref{p:prim.codepage}). Then by inserting such an instruction into the very beginning of (the main function of) a program (e.g., a TON Blockchain smart contract) or a library function, we can ensure that the code will always be executed in the intended codepage.
+For convenience, we reserve some opcode in all codepages---say, {\tt FF $n$}---for the instruction {\tt SETCP $n$}, with $n$ from 0 to 255 (cf.~\ptref{p:prim.codepage}). Then by inserting such an instruction into the very beginning of (the main function of) a program (e.g., a ION Blockchain smart contract) or a library function, we can ensure that the code will always be executed in the intended codepage.
 
 \mysubsection{Instruction encoding}\label{p:instr.encode}
 
@@ -1234,7 +1234,7 @@ In practice, instruction encodings used in TVM and other virtual machines offer 
 This section provides details about the experimental instruction encoding for codepage zero, as described elsewhere in this document (cf.\ Appendix~\ptref{app:opcodes}) and used in the preliminary test version of TVM.
 
 \nxsubpoint\emb{Upgradability}
-First of all, even if this preliminary version somehow gets into the production version of the TON Blockchain, the codepage mechanism (cf.~\ptref{p:codepages}) enables us to introduce better versions later without compromising backward compatibility.\footnote{Notice that any modifications after launch cannot be done unilaterally; rather they would require the support of at least two-thirds of validators.} So in the meantime, we are free to experiment.
+First of all, even if this preliminary version somehow gets into the production version of the ION Blockchain, the codepage mechanism (cf.~\ptref{p:codepages}) enables us to introduce better versions later without compromising backward compatibility.\footnote{Notice that any modifications after launch cannot be done unilaterally; rather they would require the support of at least two-thirds of validators.} So in the meantime, we are free to experiment.
 
 \nxsubpoint\emb{Choice of instructions}
 We opted to include many ``experimental'' and not strictly necessary instructions in codepage zero just to see how they might be used in real code. For example, we have both the basic (cf.~\ptref{sp:stack.basic}) and the compound (cf.~\ptref{sp:stack.comp}) stack manipulation primitives, as well as some ``unsystematic'' ones such as {\tt ROT} (mostly borrowed from Forth). If such primitives are rarely used, their inclusion just wastes some part of the opcode space and makes the encodings of other instructions slightly less effective, something we can afford at this stage of TVM's development.
@@ -1272,7 +1272,7 @@ The list of all instructions available in codepage zero, along with their encodi
 %\bibitem{Birman}
 %  {\sc K.~Birman}, {\sl Reliable Distributed Systems: Technologies, Web Services and Applications}, Springer, 2005.
 
-\bibitem{TON}
+\bibitem{ION}
   {\sc N.~Durov}, {\sl Telegram Open Network}, 2017.
 
 \end{thebibliography}
@@ -1400,7 +1400,7 @@ The following primitives work with (the only) value~$\bot$ of type {\em Null}, u
 \begin{itemize}
 \item {\tt 6F0$n$} --- {\tt TUPLE $n$} ($x_1$ \dots $x_n$ -- $t$), creates a new {\em Tuple\/}~$t=(x_1,\ldots,x_n)$ containing $n$ values $x_1$, \dots, $x_n$, where $0\leq n\leq 15$.
 \item {\tt 6F00} --- {\tt NIL} ( -- $t$), pushes the only {\em Tuple\/}~$t=()$ of length zero.
-\item {\tt 6F01} --- {\tt SINGLE} ($x$ -- $t$), creates a singleton $t:=(x)$, i.e., a {\em Tuple\/} of length one.
+\item {\tt 6F01} --- {\tt SINGLE} ($x$ -- $t$), creates a singleion $t:=(x)$, i.e., a {\em Tuple\/} of length one.
 \item {\tt 6F02} --- {\tt PAIR} or {\tt CONS} ($x$ $y$ -- $t$), creates pair $t:=(x,y)$.
 \item {\tt 6F03} --- {\tt TRIPLE} ($x$ $y$ $z$ -- $t$), creates triple $t:=(x,y,z)$.
 \item {\tt 6F1$k$} --- {\tt INDEX $k$} ($t$ -- $x$), returns the $k$-th element of a {\em Tuple\/}~$t$, where $0\leq k\leq 15$. In other words, returns $x_{k+1}$ if $t=(x_1,\ldots,x_n)$. If $k\geq n$, throws a range check exception.
@@ -1408,7 +1408,7 @@ The following primitives work with (the only) value~$\bot$ of type {\em Null}, u
 \item {\tt 6F11} --- {\tt SECOND} or {\tt CDR} ($t$ -- $y$), returns the second element of a {\em Tuple}.
 \item {\tt 6F12} --- {\tt THIRD} ($t$ -- $z$), returns the third element of a {\em Tuple}.
 \item {\tt 6F2$n$} --- {\tt UNTUPLE $n$} ($t$ -- $x_1$ \dots $x_n$), unpacks a {\em Tuple\/}~$t=(x_1,\ldots,x_n)$ of length equal to $0\leq n\leq 15$. If $t$ is not a {\em Tuple}, of if $|t|\neq n$, a type check exception is thrown.
-\item {\tt 6F21} --- {\tt UNSINGLE} ($t$ -- $x$), unpacks a singleton $t=(x)$.
+\item {\tt 6F21} --- {\tt UNSINGLE} ($t$ -- $x$), unpacks a singleion $t=(x)$.
 \item {\tt 6F22} --- {\tt UNPAIR} or {\tt UNCONS} ($t$ -- $x$ $y$), unpacks a pair $t=(x,y)$.
 \item {\tt 6F23} --- {\tt UNTRIPLE} ($t$ -- $x$ $y$ $z$), unpacks a triple $t=(x,y,z)$.
 \item {\tt 6F3$k$} --- {\tt UNPACKFIRST $k$} ($t$ -- $x_1$ \dots $x_k$), unpacks first $0\leq k\leq 15$ elements of a {\em Tuple\/}~$t$. If $|t|<k$, throws a type check exception.
@@ -1710,11 +1710,11 @@ All these primitives first check whether there is enough space in the Builder, a
 \item {\tt CF3E} --- {\tt BCHKREFSQ} ($b$ $y$ -- $?$), checks whether $y$ references can be stored into $b$, $0\leq y\leq 7$.
 \item {\tt CF3F} --- {\tt BCHKBITREFSQ} ($b$ $x$ $y$ -- $?$), checks whether $x$ bits and $y$ references can be stored into $b$, $0\leq x\leq 1023$, $0\leq y\leq 7$.
 \item {\tt CF40} --- {\tt STZEROES} ($b$ $n$ -- $b'$), stores $n$ binary zeroes into {\em Builder} $b$.
-\item {\tt CF41} --- {\tt STONES} ($b$ $n$ -- $b'$), stores $n$ binary ones into {\em Builder} $b$.
+\item {\tt CF41} --- {\tt SIONES} ($b$ $n$ -- $b'$), stores $n$ binary ones into {\em Builder} $b$.
 \item {\tt CF42} --- {\tt STSAME} ($b$ $n$ $x$ -- $b'$), stores $n$ binary $x$es ($0\leq x\leq1$) into {\em Builder} $b$.
 \item {\tt CFC0\_$xysss$} --- {\tt STSLICECONST $sss$} ($b$ -- $b'$), stores a constant subslice $sss$ consisting of $0\leq x\leq 3$ references and up to $8y+1$ data bits, with $0\leq y\leq 7$. Completion bit is assumed.
 \item {\tt CF81} --- {\tt STSLICECONST `0'} or {\tt STZERO} ($b$ -- $b'$), stores one binary zero.
-\item {\tt CF83} --- {\tt STSLICECONST `1'} or {\tt STONE} ($b$ -- $b'$), stores one binary one.
+\item {\tt CF83} --- {\tt STSLICECONST `1'} or {\tt SIONE} ($b$ -- $b'$), stores one binary one.
 \item {\tt CFA2} --- equivalent to {\tt STREFCONST}.
 \item {\tt CFA3} --- almost equivalent to {\tt STSLICECONST `1'}; {\tt STREFCONST}.
 \item {\tt CFC2} --- equivalent to {\tt STREF2CONST}.
@@ -1992,7 +1992,7 @@ Opcodes starting with {\tt F4} and {\tt F5} are reserved for dictionary operatio
 \nxsubpoint\emb{Dictionary serialization and deserialization}
 \begin{itemize}
 \item {\tt CE} --- {\tt STDICTS} ($s$ $b$ -- $b'$), stores a {\em Slice\/}-represented dictionary~$s$ into {\em Builder\/}~$b$. It is actually a synonym for {\tt STSLICE}.
-\item {\tt F400} --- {\tt STDICT} or {\tt STOPTREF} ($D$ $b$ -- $b'$), stores dictionary $D$ into {\em Builder\/} $b$, returing the resulting {\em Builder\/} $b'$. In other words, if $D$ is a cell, performs {\tt STONE} and {\tt STREF}; if $D$ is {\em Null}, performs {\tt NIP} and {\tt STZERO}; otherwise throws a type checking exception.
+\item {\tt F400} --- {\tt STDICT} or {\tt STOPTREF} ($D$ $b$ -- $b'$), stores dictionary $D$ into {\em Builder\/} $b$, returing the resulting {\em Builder\/} $b'$. In other words, if $D$ is a cell, performs {\tt SIONE} and {\tt STREF}; if $D$ is {\em Null}, performs {\tt NIP} and {\tt STZERO}; otherwise throws a type checking exception.
 \item {\tt F401} --- {\tt SKIPDICT} or {\tt SKIPOPTREF} ($s$ -- $s'$), equivalent to {\tt LDDICT}; {\tt NIP}.
 \item {\tt F402} --- {\tt LDDICTS} ($s$ -- $s'$ $s''$), loads (parses) a ({\em Slice\/}-represented) dictionary $s'$ from {\em Slice\/}~$s$, and returns the remainder of~$s$ as $s''$. This is a ``split function'' for all $\HashmapE(n,X)$ dictionary types.
 \item {\tt F403} --- {\tt PLDDICTS} ($s$ -- $s'$), preloads a ({\em Slice\/}-represented) dictionary $s'$ from {\em Slice\/}~$s$. Approximately equivalent to {\tt LDDICTS}; {\tt DROP}.
@@ -2186,7 +2186,7 @@ These primitives are completely similar to their non-prefix code counterparts {\
 \end{itemize}
 
 \mysubsection{Application-specific primitives}\label{p:prim.app}
-Opcode range {\tt F8}\dots{\tt FB} is reserved for the {\em application-specific primitives}. When TVM is used to execute TON Blockchain smart contracts, these application-specific primitives are in fact TON Blockchain-specific.
+Opcode range {\tt F8}\dots{\tt FB} is reserved for the {\em application-specific primitives}. When TVM is used to execute ION Blockchain smart contracts, these application-specific primitives are in fact ION Blockchain-specific.
 
 \nxsubpoint\emb{External actions and access to blockchain configuration data}
 Some of the primitives listed below pretend to produce some externally visible actions, such as sending a message to another smart contract. In fact, the execution of a smart contract in TVM never has any effect apart from a modification of the TVM state. All external actions are collected into a linked list stored in special register {\tt c5} (``output actions''). Additionally, some primitives use the data kept in the first component of the {\em Tuple\/} stored in {\tt c7} (``root of temporary data'', cf.~\ptref{sp:cr.list}). Smart contracts are free to modify any other data kept in the cell {\tt c7}, provided the first reference remains intact (otherwise some application-specific primitives would be likely to throw exceptions when invoked).
@@ -2206,7 +2206,7 @@ Of the following primitives, only the first two are ``pure'' in the sense that t
 \end{itemize}
 
 \nxsubpoint\emb{Pseudo-random number generator primitives}
-The pseudo-random number generator uses the random seed (parameter \#6, cf.~\ptref{sp:prim.conf.param}), an unsigned 256-bit {\em Integer}, and (sometimes) other data kept in {\tt c7}. The initial value of the random seed before a smart contract is executed in TON Blockchain is a hash of the smart contract address and the global block random seed. If there are several runs of the same smart contract inside a block, then all of these runs will have the same random seed. This can be fixed, for example, by running {\tt LTIME; ADDRAND} before using the pseudo-random number generator for the first time.
+The pseudo-random number generator uses the random seed (parameter \#6, cf.~\ptref{sp:prim.conf.param}), an unsigned 256-bit {\em Integer}, and (sometimes) other data kept in {\tt c7}. The initial value of the random seed before a smart contract is executed in ION Blockchain is a hash of the smart contract address and the global block random seed. If there are several runs of the same smart contract inside a block, then all of these runs will have the same random seed. This can be fixed, for example, by running {\tt LTIME; ADDRAND} before using the pseudo-random number generator for the first time.
 \begin{itemize}
 \item {\tt F810} --- {\tt RANDU256} ( -- $x$), generates a new pseudo-random unsigned 256-bit {\em Integer}~$x$. The algorithm is as follows: if $r$ is the old value of the random seed, considered as a 32-byte array (by constructing the big-endian representation of an unsigned 256-bit integer), then its $\opsc{sha512}(r)$ is computed; the first 32 bytes of this hash are stored as the new value $r'$ of the random seed, and the remaining 32 bytes are returned as the next random value~$x$.
 \item {\tt F811} --- {\tt RAND} ($y$ -- $z$), generates a new pseudo-random integer $z$ in the range $0\ldots y-1$ (or $y\ldots-1$, if $y<0$). More precisely, an unsigned random value $x$ is generated as in {\tt RAND256U}; then $z:=\lfloor xy/2^{256}\rfloor$ is computed. Equivalent to {\tt RANDU256; MULRSHIFT 256}.
@@ -2216,7 +2216,7 @@ The pseudo-random number generator uses the random seed (parameter \#6, cf.~\ptr
 \end{itemize}
 
 \nxsubpoint\emb{Configuration primitives}\label{sp:prim.conf.param}
-The following primitives read configuration data provided in the {\em Tuple\/} stored in the first component of the {\em Tuple\/} at {\tt c7}. Whenever TVM is invoked for executing TON Blockchain smart contracts, this {\em Tuple\/} is initialized by a {\em SmartContractInfo\/} structure; configuration primitives assume that it has remained intact.
+The following primitives read configuration data provided in the {\em Tuple\/} stored in the first component of the {\em Tuple\/} at {\tt c7}. Whenever TVM is invoked for executing ION Blockchain smart contracts, this {\em Tuple\/} is initialized by a {\em SmartContractInfo\/} structure; configuration primitives assume that it has remained intact.
 \begin{itemize}
 \item {\tt F82$i$} --- {\tt GETPARAM $i$} ( -- $x$), returns the $i$-th parameter from the {\em Tuple\/} provided at {\tt c7} for $0\leq i<16$. Equivalent to {\tt PUSH c7}; {\tt FIRST}; {\tt INDEX $i$}. If one of these internal operations fails, throws an appropriate type checking or range checking exception.
 \item {\tt F823} --- {\tt NOW} ( -- $x$), returns the current Unix time as an {\em Integer}. If it is impossible to recover the requested value starting from {\tt c7}, throws a type checking or range checking exception as appropriate. Equivalent to {\tt GETPARAM 3}.
@@ -2257,7 +2257,7 @@ The ``global variables'' may be helpful in implementing some high-level smart-co
 \item {\tt F941} --- {\tt CDATASIZE} ($c$ $n$ -- $x$ $y$ $z$), a non-quiet version of {\tt CDATASIZEQ} that throws a cell overflow exception (8) on failure.
 \item {\tt F942} --- {\tt SDATASIZEQ} ($s$ $n$ -- $x$ $y$ $z$ $-1$ or $0$), similar to {\tt CDATASIZEQ}, but accepting a {\em Slice\/}~$s$ instead of a {\em Cell\/}. The returned value of $x$ does not take into account the cell that contains the slice~$s$ itself; however, the data bits and the cell references of $s$ are accounted for in $y$ and~$z$.
 \item {\tt F943} --- {\tt SDATASIZE} ($s$ $n$ -- $x$ $y$ $z$), a non-quiet version of {\tt SDATASIZEQ} that throws a cell overflow exception (8) on failure.
-\item {\tt F944}--{\tt F97F} --- Reserved for miscellaneous TON-specific primitives that do not fall into any other specific category.
+\item {\tt F944}--{\tt F97F} --- Reserved for miscellaneous ION-specific primitives that do not fall into any other specific category.
 \end{itemize}
 
 \nxsubpoint\emb{Currency manipulation primitives}
@@ -2368,7 +2368,7 @@ The following primitives, which begin with byte {\tt FF}, typically are used at 
 
 \clearpage
 \myappendix{Formal properties and specifications of TVM}
-This appendix discusses certain formal properties of TVM that are necessary for executing smart contracts in the TON Blockchain and validating such executions afterwards.
+This appendix discusses certain formal properties of TVM that are necessary for executing smart contracts in the ION Blockchain and validating such executions afterwards.
 
 \mysubsection{Serialization of the TVM state}
 Recall that a virtual machine used for executing smart contracts in a block\-chain must be {\em deterministic}, otherwise the validation of each execution would require the inclusion of all  intermediate steps of the execution into a block, or at least of the choices made when indeterministic operations have been performed.
@@ -2474,14 +2474,14 @@ We see that using TVM itself as a host machine for a reference implementation of
 
 In that case, one must carefully implement and check only a handful of primitives to obtain a stripped-down version of TVM, and compare the reference implementation $P$ running on this stripped-down version to the full custom TVM implementation being verified. In particular, if there are any doubts about the validity of a specific run of a custom TVM implementation, they can now be easily resolved with the aid of the reference implementation.
 
-\nxsubpoint\emb{Relevance for the TON Blockchain}
-The TON Blockchain adopts this approach to validate the runs of TVM (e.g., those used for processing inbound messages by smart contracts) when the validators' results do not match one another. In this case, a reference implementation of TVM, stored inside the masterchain as a configurable parameter (thus defining the current revision of TVM), is used to obtain the correct result.
+\nxsubpoint\emb{Relevance for the ION Blockchain}
+The ION Blockchain adopts this approach to validate the runs of TVM (e.g., those used for processing inbound messages by smart contracts) when the validators' results do not match one another. In this case, a reference implementation of TVM, stored inside the masterchain as a configurable parameter (thus defining the current revision of TVM), is used to obtain the correct result.
 
 \nxsubpoint\emb{Codepage $-1$}\label{sp:cp.minusone}
 {\em Codepage $-1$} of TVM is reserved for the stripped-down version of TVM. Its main purpose is to execute the reference implementation of the step function of the full TVM. This codepage contains only special versions of arithmetic primitives working with ``tiny integers'' (64-bit signed integers); therefore, TVM's 257-bit {\em Integer} arithmetic must be defined in terms of 64-bit arithmetic. Elliptic curve cryptography primitives are also implemented directly in codepage $-1$, without using any third-party libraries. Finally, a reference implementation of the $\Sha$ hash function is also provided in codepage $-1$.
 
 \nxsubpoint\emb{Codepage $-2$}
-This bootstrapping process could be iterated even further, by providing an emulator of the stripped-down version of TVM written for an even simpler version of TVM that supports only boolean values (or integers 0 and 1)---a ``codepage $-2$''. All 64-bit arithmetic used in codepage $-1$ would then need to be defined by means of boolean operations, thus providing a reference implementation for the stripped-down version of TVM used in codepage $-1$. In this way, if some of the TON Blockchain validators did not agree on the results of their 64-bit arithmetic, they could regress to this reference implementation to find the correct answer.\footnote{The preliminary version of TVM does not use codepage $-2$ for this purpose. This may change in the future.}
+This bootstrapping process could be iterated even further, by providing an emulator of the stripped-down version of TVM written for an even simpler version of TVM that supports only boolean values (or integers 0 and 1)---a ``codepage $-2$''. All 64-bit arithmetic used in codepage $-1$ would then need to be defined by means of boolean operations, thus providing a reference implementation for the stripped-down version of TVM used in codepage $-1$. In this way, if some of the ION Blockchain validators did not agree on the results of their 64-bit arithmetic, they could regress to this reference implementation to find the correct answer.\footnote{The preliminary version of TVM does not use codepage $-2$ for this purpose. This may change in the future.}
 
 \clearpage
 \myappendix{Code density of stack and register machines}\label{app:code.density}

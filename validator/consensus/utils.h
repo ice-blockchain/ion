@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025-2026, TON CORE TECHNOLOGIES CO. L.L.C
+ * Copyright (c) 2025-2026, ION CORE TECHNOLOGIES CO. L.L.C
  *
  * SPDX-License-Identifier: LGPL-2.0-or-later
  */
@@ -10,9 +10,9 @@
 #include "td/actor/common.h"
 #include "td/actor/coro_task.h"
 #include "td/utils/Status.h"
-#include "ton/ton-types.h"
+#include "ion/ion-types.h"
 
-namespace ton::validator::consensus {
+namespace ion::validator::consensus {
 
 td::Result<double> get_candidate_gen_utime_exact(const BlockCandidate& candidate);
 
@@ -73,4 +73,4 @@ class SharedFuture {
   std::vector<td::Promise<T>> promises_;
 };
 
-}  // namespace ton::validator::consensus
+}  // namespace ion::validator::consensus

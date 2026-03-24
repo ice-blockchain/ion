@@ -79,14 +79,14 @@ struct MyOptions {
     allowPenalty: bool = false
     closeTo: (int8, int8)? = null
     sn: void
-    sub: SubParams = { sub3: ton("0.05") }
+    sub: SubParams = { sub3: ion("0.05") }
     coeff: int16 = 2
 }
 
 const opts1 = MyOptions { allowPenalty: true }
 const opts2 = MyOptions { coeff: 3, sub: { sub1: false, sub3: 0 } }
 const opts3: MyOptions = { coeff: 0, closeTo: null, allowPenalty: true }
-const opts4: MyOptions = { sub: { sub3: ton("1") }, closeTo: (3, 4), coeff: 55 }
+const opts4: MyOptions = { sub: { sub3: ion("1") }, closeTo: (3, 4), coeff: 55 }
 
 @noinline
 fun MyOptions.equals(self, rhs: MyOptions = {}) {
@@ -97,7 +97,7 @@ struct Wrapper<T> {
     item: T
 }
 
-const wOneTon = Wrapper<coins> { item: ton("1") }
+const wOneTon = Wrapper<coins> { item: ion("1") }
 const wNoTon: Wrapper<int> = { item: 0 }
 const wNoSubParams: Wrapper<SubParams>? = null
 
@@ -201,7 +201,7 @@ fun test15() {
         opts1.equals({ closeTo: null, allowPenalty: true }),
         opts2.equals({ coeff: 3, sub: { sub1: false, sub3: 0 } }),
         opts3.equals({ closeTo: null, coeff: 0, allowPenalty: true }),
-        opts4.equals({ sub: { sub3: ton("1") }, coeff: 55, closeTo: (3, 4) })
+        opts4.equals({ sub: { sub3: ion("1") }, coeff: 55, closeTo: (3, 4) })
     )
 }
 

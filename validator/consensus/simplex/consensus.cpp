@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025-2026, TON CORE TECHNOLOGIES CO. L.L.C
+ * Copyright (c) 2025-2026, ION CORE TECHNOLOGIES CO. L.L.C
  *
  * SPDX-License-Identifier: LGPL-2.0-or-later
  */
@@ -10,7 +10,7 @@
 
 #include "bus.h"
 
-namespace ton::validator::consensus::simplex {
+namespace ion::validator::consensus::simplex {
 
 namespace {
 
@@ -35,7 +35,7 @@ class ConsensusImpl : public runtime::SpawnsWith<Bus>, public runtime::ConnectsT
   using State = ConsensusState<WindowState, SlotState, td::Unit, td::Unit>;
 
  public:
-  TON_RUNTIME_DEFINE_EVENT_HANDLER();
+  ION_RUNTIME_DEFINE_EVENT_HANDLER();
 
   void start_up() override {
     auto [awaiter, promise] = td::actor::StartedTask<StartEvent>::make_bridge();
@@ -459,4 +459,4 @@ void Consensus::register_in(runtime::Runtime& runtime) {
   runtime.register_actor<ConsensusImpl>("SimplexConsensus");
 }
 
-}  // namespace ton::validator::consensus::simplex
+}  // namespace ion::validator::consensus::simplex

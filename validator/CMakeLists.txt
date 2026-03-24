@@ -202,7 +202,7 @@ set(FULL_NODE_SOURCE
 
 add_library(validator-db OBJECT ${VALIDATOR_DB_SOURCE})
 target_include_directories(validator-db PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
-target_link_libraries(validator-db PUBLIC tdactor adnl rldp tl_api dht tdfec overlay catchain validatorsession ton_db)
+target_link_libraries(validator-db PUBLIC tdactor adnl rldp tl_api dht tdfec overlay catchain validatorsession ion_db)
 
 add_library(validator STATIC ${VALIDATOR_SOURCE})
 add_library(validator-disk STATIC ${DISK_VALIDATOR_SOURCE})
@@ -214,13 +214,13 @@ if (MSVC)
   # Newer MSVC (17.11 / 19.41+) ICEs with the old workaround, so only apply it to older toolsets.
   if (MSVC_VERSION LESS 1941)
     include(CheckCXXCompilerFlag)
-    check_cxx_compiler_flag("/d2ssaoptimizer-" TON_MSVC_HAS_D2SSAOPT)
-    set(TON_MSVC_CONSENSUS_OPTS "/Od" "/GL-")
-    if (TON_MSVC_HAS_D2SSAOPT)
-      list(APPEND TON_MSVC_CONSENSUS_OPTS "/d2ssaoptimizer-")
+    check_cxx_compiler_flag("/d2ssaoptimizer-" ION_MSVC_HAS_D2SSAOPT)
+    set(ION_MSVC_CONSENSUS_OPTS "/Od" "/GL-")
+    if (ION_MSVC_HAS_D2SSAOPT)
+      list(APPEND ION_MSVC_CONSENSUS_OPTS "/d2ssaoptimizer-")
     endif()
     set_source_files_properties(consensus/simplex/consensus.cpp PROPERTIES
-      COMPILE_OPTIONS "${TON_MSVC_CONSENSUS_OPTS}")
+      COMPILE_OPTIONS "${ION_MSVC_CONSENSUS_OPTS}")
   endif()
 endif()
 
@@ -258,4 +258,4 @@ target_link_libraries(validator-disk PRIVATE validator-db)
 
 target_link_libraries(validator-hardfork PRIVATE validator-db)
 
-target_link_libraries(full-node PRIVATE tdactor adnl rldp rldp2 tl_api dht tdfec overlay catchain validatorsession ton_db)
+target_link_libraries(full-node PRIVATE tdactor adnl rldp rldp2 tl_api dht tdfec overlay catchain validatorsession ion_db)

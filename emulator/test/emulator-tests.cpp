@@ -212,7 +212,7 @@ const char *config_boc =
     "ouIJ+wQs5QTzBpsSHSXLcAP71t4YT+jYHLpx5Gv3HFoOzL5rhg0Ukud8G3adF8AYlRAEG+Zf0n"
     "TrwaPPTPlLjegNsGkoz7UV5wz7oYQet9+SNmRfAAQb5m0tqyXFYp4ntucDLTwJV1gxwoh6JoJL1Y0rfwfLQhUABBvqSCHVak+"
     "jIc9ANutTAfHpZNM3YdGky7yaDzsTrg"
-    "0WhIAgN9eAG2AbcAP70AGCAXHtaQJNqiST0rNTs8mUZSo5H6vM7gvA+3q7+iAD+9FgzFlOZUrfRtonCQzjDSFzrRv4l/"
+    "0WhIAgN9eAG2AbcAP70AGCAXHtaQJNqiST0rNTs8mUZSo5H6vM7gvA+3q7+iAD+9FgzFlOZUrfRionCQzjDSFzrRv4l/"
     "94TFs9oi+RQ6kgIBIAG6AbsCASAB1gHXAgEg"
     "AbwBvQIBIAHKAcsCASABvgG/"
     "AgEgAcQBxQBBvqg93lUVxmlCEks5kL8jTFcqg8lElfAi8dSee8j2jFDIAgEgAcABwQICcwHCAcMAQb5gqEQiOqBKE6++9fJCR6LRVtNC"
@@ -310,10 +310,10 @@ constexpr td::int64 Ton = 1000000000;
 TEST(Emulator, wallet_int_and_ext_msg) {
   td::Ed25519::PrivateKey priv_key = td::Ed25519::generate_private_key().move_as_ok();
   auto pub_key = priv_key.get_public_key().move_as_ok();
-  ton::WalletV3::InitData init_data;
+  ion::WalletV3::InitData init_data;
   init_data.public_key = pub_key.as_octet_string();
   init_data.wallet_id = 239;
-  auto wallet = ton::WalletV3::create(init_data, 2);
+  auto wallet = ion::WalletV3::create(init_data, 2);
 
   auto address = wallet->get_address();
 
@@ -379,7 +379,7 @@ TEST(Emulator, wallet_int_and_ext_msg) {
           vm::CellBuilder()
               .store_ones(1)
               .store_zeroes(1)
-              .append_cellslice(vm::load_cell_slice(ton::GenericAccount::get_init_state(wallet->get_state())))
+              .append_cellslice(vm::load_cell_slice(ion::GenericAccount::get_init_state(wallet->get_state())))
               .as_cellslice_ref();
       message.body = vm::CellBuilder().store_zeroes(1).as_cellslice_ref();
 
@@ -430,8 +430,8 @@ TEST(Emulator, wallet_int_and_ext_msg) {
           tlb::unpack_cell(shard_account.account, account));
     CHECK(shard_account.last_trans_hash == trans_hash);
     CHECK(shard_account.last_trans_lt == lt);
-    ton::WorkchainId wc;
-    ton::StdSmcAddress addr;
+    ion::WorkchainId wc;
+    ion::StdSmcAddress addr;
     CHECK(block::tlb::t_MsgAddressInt.extract_std_address(account.addr, wc, addr));
     CHECK(address.workchain == wc);
     CHECK(address.addr == addr);
@@ -440,9 +440,9 @@ TEST(Emulator, wallet_int_and_ext_msg) {
   // emulate external message
   {
     auto ext_body = wallet->make_a_gift_message(
-        priv_key, utime + 60, {ton::WalletV3::Gift{block::StdAddress(0, ton::StdSmcAddress()), 1 * Ton}});
+        priv_key, utime + 60, {ion::WalletV3::Gift{block::StdAddress(0, ion::StdSmcAddress()), 1 * Ton}});
     CHECK(ext_body.is_ok());
-    auto ext_msg = ton::GenericAccount::create_ext_message(address, {}, ext_body.move_as_ok());
+    auto ext_msg = ion::GenericAccount::create_ext_message(address, {}, ext_body.move_as_ok());
     auto ext_msg_boc = td::base64_encode(std_boc_serialize(ext_msg).move_as_ok());
     std::string ext_emu_res =
         transaction_emulator_emulate_transaction(emulator, shard_account_after_boc_b64.c_str(), ext_msg_boc.c_str());
@@ -481,8 +481,8 @@ TEST(Emulator, wallet_int_and_ext_msg) {
           tlb::unpack_cell(ext_shard_account.account, ext_account));
     CHECK(ext_shard_account.last_trans_hash == ext_trans_hash);
     CHECK(ext_shard_account.last_trans_lt == ext_trans.lt);
-    ton::WorkchainId wc;
-    ton::StdSmcAddress addr;
+    ion::WorkchainId wc;
+    ion::StdSmcAddress addr;
     CHECK(block::tlb::t_MsgAddressInt.extract_std_address(ext_account.addr, wc, addr));
     CHECK(address.workchain == wc);
     CHECK(address.addr == addr);
@@ -492,15 +492,15 @@ TEST(Emulator, wallet_int_and_ext_msg) {
 TEST(Emulator, tvm_emulator) {
   td::Ed25519::PrivateKey priv_key = td::Ed25519::generate_private_key().move_as_ok();
   auto pub_key = priv_key.get_public_key().move_as_ok();
-  ton::WalletV3::InitData init_data;
+  ion::WalletV3::InitData init_data;
   init_data.public_key = pub_key.as_octet_string();
   init_data.wallet_id = 239;
   init_data.seqno = 1337;
-  auto wallet = ton::WalletV3::create(init_data, 2);
+  auto wallet = ion::WalletV3::create(init_data, 2);
 
-  auto code = ton::SmartContractCode::get_code(ton::SmartContractCode::Type::WalletV3, 2);
+  auto code = ion::SmartContractCode::get_code(ion::SmartContractCode::Type::WalletV3, 2);
   auto code_boc_b64 = td::base64_encode(std_boc_serialize(code).move_as_ok());
-  auto data = ton::WalletV3::get_init_data(init_data);
+  auto data = ion::WalletV3::get_init_data(init_data);
   auto data_boc_b64 = td::base64_encode(std_boc_serialize(data).move_as_ok());
 
   void *tvm_emulator = tvm_emulator_create(code_boc_b64.c_str(), data_boc_b64.c_str(), 1);
@@ -574,8 +574,8 @@ TEST(Emulator, tvm_emulator_extra_currencies) {
   auto tuple = stack_res.write().pop_tuple();
   CHECK(tuple->size() == 2);
 
-  auto ton_balance = tuple->at(0).as_int();
-  CHECK(ton_balance == 1000);
+  auto ion_balance = tuple->at(0).as_int();
+  CHECK(ion_balance == 1000);
 
   auto cell = tuple->at(1).as_cell();
   auto dict = vm::Dictionary{cell, 32};

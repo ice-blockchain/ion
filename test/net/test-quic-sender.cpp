@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain source code.
+    This file is part of ION Blockchain source code.
 
-    TON Blockchain is free software; you can redistribute it and/or
+    ION Blockchain is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
     as published by the Free Software Foundation; either version 2
     of the License, or (at your option) any later version.
 
-    TON Blockchain is distributed in the hope that it will be useful,
+    ION Blockchain is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with TON Blockchain.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <atomic>
 #include <optional>
@@ -50,24 +50,24 @@ int next_port() {
   return g_config.port_counter.fetch_add(1);
 }
 
-ton::PrivateKey make_key(int seed) {
+ion::PrivateKey make_key(int seed) {
   td::Bits256 hash;
   auto seed_str = std::to_string(seed);
   td::sha256(td::Slice(seed_str), hash.as_slice());
-  return ton::PrivateKey{ton::privkeys::Ed25519{hash}};
+  return ion::PrivateKey{ion::privkeys::Ed25519{hash}};
 }
 
-ton::adnl::AdnlAddressList make_addr_list(td::Slice ip_str, int port) {
+ion::adnl::AdnlAddressList make_addr_list(td::Slice ip_str, int port) {
   td::IPAddress ip;
   ip.init_host_port(PSTRING() << ip_str << ":" << port).ensure();
-  ton::adnl::AdnlAddressList list;
+  ion::adnl::AdnlAddressList list;
   list.add_udp_address(ip).ensure();
   list.set_version(static_cast<td::int32>(td::Clocks::system()));
-  list.set_reinit_date(ton::adnl::Adnl::adnl_start_time());
+  list.set_reinit_date(ion::adnl::Adnl::adnl_start_time());
   return list;
 }
 
-class EchoCallback : public ton::adnl::Adnl::Callback {
+class EchoCallback : public ion::adnl::Adnl::Callback {
  public:
   std::shared_ptr<std::vector<td::BufferSlice>> received_messages;
 
@@ -75,14 +75,14 @@ class EchoCallback : public ton::adnl::Adnl::Callback {
       : received_messages(std::move(msgs)) {
   }
 
-  void receive_message(ton::adnl::AdnlNodeIdShort, ton::adnl::AdnlNodeIdShort, td::BufferSlice data) override {
+  void receive_message(ion::adnl::AdnlNodeIdShort, ion::adnl::AdnlNodeIdShort, td::BufferSlice data) override {
     LOG(ERROR) << "receive message message";
     if (received_messages) {
       received_messages->push_back(std::move(data));
     }
   }
 
-  void receive_query(ton::adnl::AdnlNodeIdShort, ton::adnl::AdnlNodeIdShort, td::BufferSlice data,
+  void receive_query(ion::adnl::AdnlNodeIdShort, ion::adnl::AdnlNodeIdShort, td::BufferSlice data,
                      td::Promise<td::BufferSlice> promise) override {
     promise.set_value(std::move(data));
   }
@@ -109,33 +109,33 @@ class DelayedResponse : public td::actor::Actor {
   td::Promise<td::BufferSlice> promise_;
 };
 
-class SlowEchoCallback : public ton::adnl::Adnl::Callback {
+class SlowEchoCallback : public ion::adnl::Adnl::Callback {
  public:
   double delay_seconds;
 
   explicit SlowEchoCallback(double delay) : delay_seconds(delay) {
   }
 
-  void receive_message(ton::adnl::AdnlNodeIdShort, ton::adnl::AdnlNodeIdShort, td::BufferSlice) override {
+  void receive_message(ion::adnl::AdnlNodeIdShort, ion::adnl::AdnlNodeIdShort, td::BufferSlice) override {
   }
 
-  void receive_query(ton::adnl::AdnlNodeIdShort, ton::adnl::AdnlNodeIdShort, td::BufferSlice data,
+  void receive_query(ion::adnl::AdnlNodeIdShort, ion::adnl::AdnlNodeIdShort, td::BufferSlice data,
                      td::Promise<td::BufferSlice> promise) override {
     td::actor::create_actor<DelayedResponse>("delay", delay_seconds, std::move(data), std::move(promise)).release();
   }
 };
 
-class LimitedEchoCallback : public ton::adnl::Adnl::Callback {
+class LimitedEchoCallback : public ion::adnl::Adnl::Callback {
  public:
   td::uint64 max_query_size;
 
   explicit LimitedEchoCallback(td::uint64 limit) : max_query_size(limit) {
   }
 
-  void receive_message(ton::adnl::AdnlNodeIdShort, ton::adnl::AdnlNodeIdShort, td::BufferSlice) override {
+  void receive_message(ion::adnl::AdnlNodeIdShort, ion::adnl::AdnlNodeIdShort, td::BufferSlice) override {
   }
 
-  void receive_query(ton::adnl::AdnlNodeIdShort, ton::adnl::AdnlNodeIdShort, td::BufferSlice data,
+  void receive_query(ion::adnl::AdnlNodeIdShort, ion::adnl::AdnlNodeIdShort, td::BufferSlice data,
                      td::Promise<td::BufferSlice> promise) override {
     if (data.size() > max_query_size) {
       promise.set_error(td::Status::Error("query too large"));
@@ -145,29 +145,29 @@ class LimitedEchoCallback : public ton::adnl::Adnl::Callback {
   }
 };
 
-class NeverRespondCallback : public ton::adnl::Adnl::Callback {
+class NeverRespondCallback : public ion::adnl::Adnl::Callback {
  public:
   std::vector<td::Promise<td::BufferSlice>> pending_;
 
-  void receive_message(ton::adnl::AdnlNodeIdShort, ton::adnl::AdnlNodeIdShort, td::BufferSlice) override {
+  void receive_message(ion::adnl::AdnlNodeIdShort, ion::adnl::AdnlNodeIdShort, td::BufferSlice) override {
   }
 
-  void receive_query(ton::adnl::AdnlNodeIdShort, ton::adnl::AdnlNodeIdShort, td::BufferSlice data,
+  void receive_query(ion::adnl::AdnlNodeIdShort, ion::adnl::AdnlNodeIdShort, td::BufferSlice data,
                      td::Promise<td::BufferSlice> promise) override {
     pending_.push_back(std::move(promise));
   }
 };
 
 struct TestNode {
-  ton::adnl::AdnlNodeIdShort id;
-  ton::PrivateKey key;
+  ion::adnl::AdnlNodeIdShort id;
+  ion::PrivateKey key;
   std::string ip{"127.0.0.1"};
   int port{0};
 
-  td::actor::ActorOwn<ton::keyring::Keyring> keyring;
-  td::actor::ActorOwn<ton::adnl::AdnlNetworkManager> network_manager;
-  td::actor::ActorOwn<ton::adnl::Adnl> adnl;
-  td::actor::ActorOwn<ton::quic::QuicSender> quic_sender;
+  td::actor::ActorOwn<ion::keyring::Keyring> keyring;
+  td::actor::ActorOwn<ion::adnl::AdnlNetworkManager> network_manager;
+  td::actor::ActorOwn<ion::adnl::Adnl> adnl;
+  td::actor::ActorOwn<ion::quic::QuicSender> quic_sender;
   std::shared_ptr<std::vector<td::BufferSlice>> received_messages;
 
   TestNode() = default;
@@ -199,47 +199,47 @@ class TestRunner : public td::actor::Actor {
     LOG(FATAL) << "Test timeout after " << timeout_ << "s";
   }
 
-  td::actor::Task<TestNode> create_node(std::string name, int port, std::optional<ton::PrivateKey> key = std::nullopt,
+  td::actor::Task<TestNode> create_node(std::string name, int port, std::optional<ion::PrivateKey> key = std::nullopt,
                                         std::string ip = "127.0.0.1") {
     TestNode node;
     node.ip = ip;
     node.port = port;
     node.key = key.value_or(make_key(port));
-    node.id = ton::adnl::AdnlNodeIdShort{node.key.compute_public_key().compute_short_id()};
+    node.id = ion::adnl::AdnlNodeIdShort{node.key.compute_public_key().compute_short_id()};
 
     std::string db = db_root_ + "/" + name;
     td::rmrf(db).ignore();
     td::mkdir(db).ensure();
 
-    node.keyring = ton::keyring::Keyring::create(db);
-    node.network_manager = ton::adnl::AdnlNetworkManager::create(static_cast<td::uint16>(port));
-    node.adnl = ton::adnl::Adnl::create(db, node.keyring.get());
+    node.keyring = ion::keyring::Keyring::create(db);
+    node.network_manager = ion::adnl::AdnlNetworkManager::create(static_cast<td::uint16>(port));
+    node.adnl = ion::adnl::Adnl::create(db, node.keyring.get());
 
-    td::actor::send_closure(node.adnl, &ton::adnl::Adnl::register_network_manager, node.network_manager.get());
+    td::actor::send_closure(node.adnl, &ion::adnl::Adnl::register_network_manager, node.network_manager.get());
 
-    ton::adnl::AdnlCategoryMask cat_mask;
+    ion::adnl::AdnlCategoryMask cat_mask;
     cat_mask[0] = true;
     td::IPAddress addr;
     addr.init_host_port(PSTRING() << ip << ":" << port).ensure();
-    td::actor::send_closure(node.network_manager, &ton::adnl::AdnlNetworkManager::add_self_addr, addr,
+    td::actor::send_closure(node.network_manager, &ion::adnl::AdnlNetworkManager::add_self_addr, addr,
                             std::move(cat_mask), 0);
 
-    co_await td::actor::ask(node.keyring, &ton::keyring::Keyring::add_key, node.key, true);
+    co_await td::actor::ask(node.keyring, &ion::keyring::Keyring::add_key, node.key, true);
 
     auto addr_list = make_addr_list(ip, port);
-    td::actor::send_closure(node.adnl, &ton::adnl::Adnl::add_id,
-                            ton::adnl::AdnlNodeIdFull{node.key.compute_public_key()}, addr_list, td::uint8(0));
+    td::actor::send_closure(node.adnl, &ion::adnl::Adnl::add_id,
+                            ion::adnl::AdnlNodeIdFull{node.key.compute_public_key()}, addr_list, td::uint8(0));
 
-    td::actor::send_closure(node.adnl, &ton::adnl::Adnl::subscribe, node.id, "Q", std::make_unique<EchoCallback>());
+    td::actor::send_closure(node.adnl, &ion::adnl::Adnl::subscribe, node.id, "Q", std::make_unique<EchoCallback>());
 
     node.received_messages = std::make_shared<std::vector<td::BufferSlice>>();
-    td::actor::send_closure(node.adnl, &ton::adnl::Adnl::subscribe, node.id, "M",
+    td::actor::send_closure(node.adnl, &ion::adnl::Adnl::subscribe, node.id, "M",
                             std::make_unique<EchoCallback>(node.received_messages));
 
-    node.quic_sender = td::actor::create_actor<ton::quic::QuicSender>(
-        "quic-" + name, td::actor::actor_dynamic_cast<ton::adnl::AdnlPeerTable>(node.adnl.get()), node.keyring.get());
+    node.quic_sender = td::actor::create_actor<ion::quic::QuicSender>(
+        "quic-" + name, td::actor::actor_dynamic_cast<ion::adnl::AdnlPeerTable>(node.adnl.get()), node.keyring.get());
 
-    td::actor::send_closure(node.quic_sender, &ton::quic::QuicSender::add_local_id, node.id);
+    td::actor::send_closure(node.quic_sender, &ion::quic::QuicSender::add_local_id, node.id);
 
     co_await td::actor::Yield{};
     co_return std::move(node);
@@ -247,17 +247,17 @@ class TestRunner : public td::actor::Actor {
 
   void add_peer(TestNode& from, const TestNode& to) {
     auto addr_list = make_addr_list(to.ip, to.port);
-    td::actor::send_closure(from.adnl, &ton::adnl::Adnl::add_peer, from.id,
-                            ton::adnl::AdnlNodeIdFull{to.key.compute_public_key()}, addr_list);
+    td::actor::send_closure(from.adnl, &ion::adnl::Adnl::add_peer, from.id,
+                            ion::adnl::AdnlNodeIdFull{to.key.compute_public_key()}, addr_list);
   }
 
   void set_slow_echo(TestNode& node, double delay) {
-    td::actor::send_closure(node.adnl, &ton::adnl::Adnl::subscribe, node.id, "S",
+    td::actor::send_closure(node.adnl, &ion::adnl::Adnl::subscribe, node.id, "S",
                             std::make_unique<SlowEchoCallback>(delay));
   }
 
   void set_never_respond(TestNode& node) {
-    td::actor::send_closure(node.adnl, &ton::adnl::Adnl::subscribe, node.id, "X",
+    td::actor::send_closure(node.adnl, &ion::adnl::Adnl::subscribe, node.id, "X",
                             std::make_unique<NeverRespondCallback>());
   }
 
@@ -268,7 +268,7 @@ class TestRunner : public td::actor::Actor {
     query.as_slice().substr(1).copy_from(data);
 
     auto [future, promise] = td::actor::StartedTask<td::BufferSlice>::make_bridge();
-    td::actor::send_closure(from.quic_sender, &ton::quic::QuicSender::send_query_ex, from.id, to.id, std::string("X"),
+    td::actor::send_closure(from.quic_sender, &ion::quic::QuicSender::send_query_ex, from.id, to.id, std::string("X"),
                             std::move(promise), td::Timestamp::in(timeout), std::move(query), max_answer_size);
     co_return co_await std::move(future);
   }
@@ -279,7 +279,7 @@ class TestRunner : public td::actor::Actor {
     query.as_slice().substr(1).copy_from(data);
 
     auto [future, promise] = td::actor::StartedTask<td::BufferSlice>::make_bridge();
-    td::actor::send_closure(from.quic_sender, &ton::quic::QuicSender::send_query, from.id, to.id, std::string("Q"),
+    td::actor::send_closure(from.quic_sender, &ion::quic::QuicSender::send_query, from.id, to.id, std::string("Q"),
                             std::move(promise), td::Timestamp::in(30.0), std::move(query));
     co_return co_await std::move(future);
   }
@@ -291,7 +291,7 @@ class TestRunner : public td::actor::Actor {
     query.as_slice().substr(1).copy_from(data);
 
     auto [future, promise] = td::actor::StartedTask<td::BufferSlice>::make_bridge();
-    td::actor::send_closure(from.quic_sender, &ton::quic::QuicSender::send_query_ex, from.id, to.id, std::string("Q"),
+    td::actor::send_closure(from.quic_sender, &ion::quic::QuicSender::send_query_ex, from.id, to.id, std::string("Q"),
                             std::move(promise), td::Timestamp::in(timeout), std::move(query), max_answer_size);
     co_return co_await std::move(future);
   }
@@ -303,7 +303,7 @@ class TestRunner : public td::actor::Actor {
     query.as_slice().substr(1).copy_from(data);
 
     auto [future, promise] = td::actor::StartedTask<td::BufferSlice>::make_bridge();
-    td::actor::send_closure(from.quic_sender, &ton::quic::QuicSender::send_query_ex, from.id, to.id, std::string("S"),
+    td::actor::send_closure(from.quic_sender, &ion::quic::QuicSender::send_query_ex, from.id, to.id, std::string("S"),
                             std::move(promise), td::Timestamp::in(timeout), std::move(query), max_answer_size);
     co_return co_await std::move(future);
   }
@@ -312,7 +312,7 @@ class TestRunner : public td::actor::Actor {
     td::BufferSlice msg(1 + data.size());
     msg.as_slice()[0] = 'M';
     msg.as_slice().substr(1).copy_from(data);
-    td::actor::send_closure(from.quic_sender, &ton::quic::QuicSender::send_message, from.id, to.id, std::move(msg));
+    td::actor::send_closure(from.quic_sender, &ion::quic::QuicSender::send_message, from.id, to.id, std::move(msg));
   }
 
  private:
@@ -378,7 +378,7 @@ TEST(QuicSender, ManyNodes) {
         if (i != j) {
           std::string msg = "Qfrom" + std::to_string(i) + "to" + std::to_string(j);
           auto [future, promise] = td::actor::StartedTask<td::BufferSlice>::make_bridge();
-          td::actor::send_closure(nodes[i].quic_sender, &ton::quic::QuicSender::send_query, nodes[i].id, nodes[j].id,
+          td::actor::send_closure(nodes[i].quic_sender, &ion::quic::QuicSender::send_query, nodes[i].id, nodes[j].id,
                                   std::string("Q"), std::move(promise), td::Timestamp::in(10.0), td::BufferSlice(msg));
           tasks.emplace_back(std::move(future), msg);
         }
@@ -541,7 +541,7 @@ TEST(QuicSender, ManyStreams) {
             data.as_slice()[0] = 'Q';
             td::Random::secure_bytes(data.as_slice().substr(1));
             auto [future, promise] = td::actor::StartedTask<td::BufferSlice>::make_bridge();
-            td::actor::send_closure(nodes[i].quic_sender, &ton::quic::QuicSender::send_query, nodes[i].id, nodes[j].id,
+            td::actor::send_closure(nodes[i].quic_sender, &ion::quic::QuicSender::send_query, nodes[i].id, nodes[j].id,
                                     std::string("Q"), std::move(promise), td::Timestamp::in(30.0), std::move(data));
             tasks.push_back(std::move(future));
             total++;
@@ -663,19 +663,19 @@ TEST(QuicSender, WrongPublicKey) {
     // A knows about B with WRONG key (use different key than B actually has)
     auto wrong_key = make_key(-100);
     auto wrong_addr_list = make_addr_list(b.ip, b.port);
-    td::actor::send_closure(a.adnl, &ton::adnl::Adnl::add_peer, a.id,
-                            ton::adnl::AdnlNodeIdFull{wrong_key.compute_public_key()}, wrong_addr_list);
+    td::actor::send_closure(a.adnl, &ion::adnl::Adnl::add_peer, a.id,
+                            ion::adnl::AdnlNodeIdFull{wrong_key.compute_public_key()}, wrong_addr_list);
 
     t.add_peer(b, a);  // B knows correct A
 
     // Try to send query - A thinks it's talking to wrong_key but B has different key
-    auto wrong_id = ton::adnl::AdnlNodeIdShort{wrong_key.compute_public_key().compute_short_id()};
+    auto wrong_id = ion::adnl::AdnlNodeIdShort{wrong_key.compute_public_key().compute_short_id()};
 
     td::BufferSlice query(6);
     query.as_slice().copy_from(td::Slice("Qtest"));
 
     auto [task, promise] = td::actor::StartedTask<td::BufferSlice>::make_bridge();
-    td::actor::send_closure(a.quic_sender, &ton::quic::QuicSender::send_query, a.id, wrong_id, std::string("Q"),
+    td::actor::send_closure(a.quic_sender, &ion::quic::QuicSender::send_query, a.id, wrong_id, std::string("Q"),
                             std::move(promise), td::Timestamp::in(5.0), std::move(query));
     auto result = co_await std::move(task).wrap();
 
@@ -739,7 +739,7 @@ TEST(QuicSender, LargeScale) {
         total_bytes += query_size;
 
         auto [future, promise] = td::actor::StartedTask<td::BufferSlice>::make_bridge();
-        td::actor::send_closure(nodes[sender_idx].quic_sender, &ton::quic::QuicSender::send_query, nodes[sender_idx].id,
+        td::actor::send_closure(nodes[sender_idx].quic_sender, &ion::quic::QuicSender::send_query, nodes[sender_idx].id,
                                 nodes[dest].id, std::string("Q"), std::move(promise), td::Timestamp::in(120.0),
                                 std::move(data));
         tasks.push_back(std::move(future));
@@ -970,7 +970,7 @@ TEST(QuicFairness, TwoConnectionsFairBandwidth) {
       data.as_slice()[0] = 'Q';
       td::Random::secure_bytes(data.as_slice().substr(1));
       auto [future, promise] = td::actor::StartedTask<td::BufferSlice>::make_bridge();
-      td::actor::send_closure(sender1.quic_sender, &ton::quic::QuicSender::send_query, sender1.id, hub.id,
+      td::actor::send_closure(sender1.quic_sender, &ion::quic::QuicSender::send_query, sender1.id, hub.id,
                               std::string("Q"), std::move(promise), td::Timestamp::in(60.0), std::move(data));
       tasks1.push_back(std::move(future));
     }
@@ -981,7 +981,7 @@ TEST(QuicFairness, TwoConnectionsFairBandwidth) {
       data.as_slice()[0] = 'Q';
       td::Random::secure_bytes(data.as_slice().substr(1));
       auto [future, promise] = td::actor::StartedTask<td::BufferSlice>::make_bridge();
-      td::actor::send_closure(sender2.quic_sender, &ton::quic::QuicSender::send_query, sender2.id, hub.id,
+      td::actor::send_closure(sender2.quic_sender, &ion::quic::QuicSender::send_query, sender2.id, hub.id,
                               std::string("Q"), std::move(promise), td::Timestamp::in(60.0), std::move(data));
       tasks2.push_back(std::move(future));
     }
@@ -1057,7 +1057,7 @@ TEST(QuicFairness, MultipleStreamsFairBandwidth) {
       data.as_slice()[0] = 'Q';
       td::Random::secure_bytes(data.as_slice().substr(1));
       auto [future, promise] = td::actor::StartedTask<td::BufferSlice>::make_bridge();
-      td::actor::send_closure(client.quic_sender, &ton::quic::QuicSender::send_query, client.id, server.id,
+      td::actor::send_closure(client.quic_sender, &ion::quic::QuicSender::send_query, client.id, server.id,
                               std::string("Q"), std::move(promise), td::Timestamp::in(30.0), std::move(data));
       tasks.push_back(std::move(future));
     }
@@ -1125,7 +1125,7 @@ TEST(QuicFairness, ManyConnectionsNoStarvation) {
         data.as_slice()[0] = 'Q';
         td::Random::secure_bytes(data.as_slice().substr(1));
         auto [future, promise] = td::actor::StartedTask<td::BufferSlice>::make_bridge();
-        td::actor::send_closure(senders[s].quic_sender, &ton::quic::QuicSender::send_query, senders[s].id, hub.id,
+        td::actor::send_closure(senders[s].quic_sender, &ion::quic::QuicSender::send_query, senders[s].id, hub.id,
                                 std::string("Q"), std::move(promise), td::Timestamp::in(60.0), std::move(data));
         all_tasks[s].push_back(std::move(future));
       }

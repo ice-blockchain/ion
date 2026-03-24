@@ -1,18 +1,18 @@
 /*
-    This file is part of TON Blockchain Library.
+    This file is part of ION Blockchain Library.
 
-    TON Blockchain Library is free software: you can redistribute it and/or modify
+    ION Blockchain Library is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    TON Blockchain Library is distributed in the hope that it will be useful,
+    ION Blockchain Library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with TON Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
+    along with ION Blockchain Library.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "lexer.h"
 #include "compilation-errors.h"
@@ -35,7 +35,7 @@ struct ChunkLexerBase {
 };
 
 template <class T>
-static T* singleton() {
+static T* singleion() {
   static T obj;
   return &obj;
 }
@@ -465,19 +465,19 @@ struct TolkLanguageGrammar {
   }
 
   static void init() {
-    trie.add_prefix("//", singleton<ChunkInlineComment>());
-    trie.add_prefix("/*", singleton<ChunkMultilineComment>());
-    trie.add_prefix(R"(")", singleton<ChunkString>());
-    trie.add_prefix(R"(""")", singleton<ChunkMultilineString>());
-    trie.add_prefix("@", singleton<ChunkAnnotation>());
-    trie.add_prefix(" ", singleton<ChunkSkipWhitespace>());
-    trie.add_prefix("\t", singleton<ChunkSkipWhitespace>());
-    trie.add_prefix("\r", singleton<ChunkSkipWhitespace>());
-    trie.add_prefix("\n", singleton<ChunkSkipWhitespace>());
+    trie.add_prefix("//", singleion<ChunkInlineComment>());
+    trie.add_prefix("/*", singleion<ChunkMultilineComment>());
+    trie.add_prefix(R"(")", singleion<ChunkString>());
+    trie.add_prefix(R"(""")", singleion<ChunkMultilineString>());
+    trie.add_prefix("@", singleion<ChunkAnnotation>());
+    trie.add_prefix(" ", singleion<ChunkSkipWhitespace>());
+    trie.add_prefix("\t", singleion<ChunkSkipWhitespace>());
+    trie.add_prefix("\r", singleion<ChunkSkipWhitespace>());
+    trie.add_prefix("\n", singleion<ChunkSkipWhitespace>());
 
-    trie.add_pattern("[0-9]", singleton<ChunkNumber>());
-    trie.add_pattern("[a-zA-Z_$]", singleton<ChunkIdentifierOrKeyword>());
-    trie.add_prefix("`", singleton<ChunkIdentifierInBackticks>());
+    trie.add_pattern("[0-9]", singleion<ChunkNumber>());
+    trie.add_pattern("[a-zA-Z_$]", singleion<ChunkIdentifierOrKeyword>());
+    trie.add_prefix("`", singleion<ChunkIdentifierInBackticks>());
 
     register_token("+", 1, tok_plus);
     register_token("-", 1, tok_minus);
